@@ -1,0 +1,122 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { getLocale, getT } from "@/i18n/server";
+import type { TFn } from "@/i18n/translator";
+import { clear, clientIp, hit, MINUTE } from "@/lib/throttle";
+import {
+  createSession,
+  destroySession,
+  findUserByEmail,
+  hashPassword,
+  isOwnerEmail,
+  safeNext,
+  verifyPassword,
+} from "@/lib/auth";
+
+export type FormState = { error?: string; fieldErrors?: Record<string, string[] | undefined>; ok?: boolean };
+
+type T = TFn<"errors">;
+
+/** Messages for checks that don't carry their own, in the request's language. */
+function fallbackErrors(t: T): z.core.$ZodErrorMap {
+  return (iss) => {
+    if (iss.code === "too_big" && iss.origin === "string") return t("field.tooLong", { max: Number(iss.maximum) });
+    return t("field.invalid");
+  };
+}
+
+const signupSchema = (t: T) =>
+  z.object({
+    fullName: z.string(t("field.fullName")).trim().min(2, t("field.fullName")),
+    email: z.string(t("field.email")).trim().pipe(z.email(t("field.email"))),
+    phone: z.string().trim().max(30).optional(),
+    password: z.string(t("field.passwordMin")).min(8, t("field.passwordMin")),
+    intent: z.enum(["buy", "sell", "both"]),
+  });
+
+export async function signup(_prev: FormState, formData: FormData): Promise<FormState> {
+  const t = await getT("errors");
+  const parsed = signupSchema(t).safeParse(
+    {
+      fullName: formData.get("fullName"),
+      email: formData.get("email"),
+      phone: formData.get("phone") || undefined,
+      password: formData.get("password"),
+      intent: formData.get("intent") || "both",
+    },
+    { error: fallbackErrors(t) },
+  );
+  if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  const { fullName, email, phone, password, intent } = parsed.data;
+  if (!(await hit(`signup-ip:${await clientIp()}`, 10, 60 * MINUTE))) return { error: t("tooMany") };
+
+  if (isOwnerEmail(email)) {
+    return { fieldErrors: { email: [t("signup.reserved")] } };
+  }
+  if (await findUserByEmail(email)) {
+    return { fieldErrors: { email: [t("signup.exists")] } };
+  }
+
+  const [user] = await db
+    .insert(users)
+    .values({
+      fullName,
+      email: email.toLowerCase(),
+      phone: phone || null,
+      passwordHash: await hashPassword(password),
+      intent,
+      // Notifications and emails go out in the language the account was created in.
+      locale: await getLocale(),
+    })
+    .returning({ id: users.id });
+
+  await createSession(user.id);
+  const fallback = intent === "sell" ? "/sell" : "/dashboard";
+  redirect(safeNext(formData.get("next"), fallback));
+}
+
+const loginSchema = (t: T) =>
+  z.object({
+    email: z.string(t("field.email")).trim().pipe(z.email(t("field.email"))),
+    password: z.string(t("field.password")).min(1, t("field.password")),
+  });
+
+export async function login(_prev: FormState, formData: FormData): Promise<FormState> {
+  const t = await getT("errors");
+  const parsed = loginSchema(t).safeParse(
+    { email: formData.get("email"), password: formData.get("password") },
+    { error: fallbackErrors(t) },
+  );
+  if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
+
+  // Throttle before bcrypt: 10 tries per account and 50 per IP every 15 minutes.
+  const emailKey = `login:${parsed.data.email.toLowerCase()}`;
+  const [okEmail, okIp] = await Promise.all([
+    hit(emailKey, 10, 15 * MINUTE),
+    hit(`login-ip:${await clientIp()}`, 50, 15 * MINUTE),
+  ]);
+  if (!okEmail || !okIp) return { error: t("tooMany") };
+
+  const user = await findUserByEmail(parsed.data.email);
+  if (!user?.passwordHash || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+    return { error: t("login.invalid") };
+  }
+  await clear(emailKey);
+  // Emails follow the language the user last used on the site.
+  const locale = await getLocale();
+  if (user.locale !== locale) await db.update(users).set({ locale }).where(eq(users.id, user.id));
+
+  // Admin rights come from the database only — owners get theirs from scripts/migrate.mjs.
+  await createSession(user.id);
+  redirect(safeNext(formData.get("next"), user.role === "admin" ? "/admin" : "/dashboard"));
+}
+
+export async function logout() {
+  await destroySession();
+  redirect("/");
+}

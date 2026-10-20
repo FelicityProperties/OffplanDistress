@@ -1,0 +1,768 @@
+[
+  {
+    "projectName": "Creek Edge Tower 2",
+    "developer": "Emaar",
+    "community": "Dubai Creek Harbour",
+    "unitType": "2br",
+    "sizeSqft": 1180,
+    "floor": "24",
+    "view": "Creek & Downtown skyline",
+    "originalPrice": 2350000,
+    "amountPaid": 940000,
+    "askingPrice": 770000,
+    "launchPrice": 3010000,
+    "handoverDate": "2027-06-30",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 353000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 353000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 353000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-06-30",
+        "amount": 704000
+      }
+    ],
+    "motivation": "urgent",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A 2-bedroom apartment in Creek Edge Tower 2 by Emaar, Dubai Creek Harbour, with 40% of the purchase price already paid to the developer. The seller is urgent to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 1656,
+    "ageDays": 3
+  },
+  {
+    "projectName": "Sobha Hartland II – 340 Riverside",
+    "developer": "Sobha",
+    "community": "Mohammed Bin Rashid City",
+    "unitType": "1br",
+    "sizeSqft": 812,
+    "floor": "11",
+    "view": "Lagoon",
+    "originalPrice": 1480000,
+    "amountPaid": 444000,
+    "askingPrice": 400000,
+    "launchPrice": 1810000,
+    "handoverDate": "2027-12-31",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 148000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 148000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 148000
+      },
+      {
+        "label": "Construction milestone 3",
+        "dueDate": "2027-05-15",
+        "amount": 148000
+      },
+      {
+        "label": "Construction milestone 4",
+        "dueDate": "2027-08-15",
+        "amount": 148000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-12-31",
+        "amount": 444000
+      }
+    ],
+    "motivation": "motivated",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A 1-bedroom apartment in Sobha Hartland II – 340 Riverside by Sobha, Mohammed Bin Rashid City, with 30% of the purchase price already paid to the developer. The seller is motivated to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1582672060674-bc2bd808a8b5?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 864,
+    "ageDays": 6
+  },
+  {
+    "projectName": "DAMAC Lagoons – Morocco 3",
+    "developer": "DAMAC",
+    "community": "Damac Lagoons",
+    "unitType": "townhouse",
+    "sizeSqft": 2310,
+    "floor": "G+2",
+    "view": "Crystal lagoon",
+    "originalPrice": 2890000,
+    "amountPaid": 1012000,
+    "askingPrice": 860000,
+    "launchPrice": 3580000,
+    "handoverDate": "2027-03-31",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 1012000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 1012000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-03-31",
+        "amount": 866000
+      }
+    ],
+    "motivation": "urgent",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A townhouse in DAMAC Lagoons – Morocco 3 by DAMAC, Damac Lagoons, with 35% of the purchase price already paid to the developer. The seller is urgent to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 1908,
+    "ageDays": 2
+  },
+  {
+    "projectName": "Binghatti Hills",
+    "developer": "Binghatti",
+    "community": "Jumeirah Village Circle",
+    "unitType": "studio",
+    "sizeSqft": 418,
+    "floor": "9",
+    "view": "Community",
+    "originalPrice": 680000,
+    "amountPaid": 340000,
+    "askingPrice": 315000,
+    "launchPrice": 780000,
+    "handoverDate": "2027-09-30",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 45000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 45000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 45000
+      },
+      {
+        "label": "Construction milestone 3",
+        "dueDate": "2027-05-15",
+        "amount": 45000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-09-30",
+        "amount": 205000
+      }
+    ],
+    "motivation": "flexible",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A studio in Binghatti Hills by Binghatti, Jumeirah Village Circle, with 50% of the purchase price already paid to the developer. The seller is flexible to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1526495124232-a04e1849168c?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 549,
+    "ageDays": 14
+  },
+  {
+    "projectName": "Ellington Upper House",
+    "developer": "Ellington",
+    "community": "Jumeirah Village Circle",
+    "unitType": "2br",
+    "sizeSqft": 1265,
+    "floor": "17",
+    "view": "Park",
+    "originalPrice": 2120000,
+    "amountPaid": 954000,
+    "askingPrice": 840000,
+    "launchPrice": 2540000,
+    "handoverDate": "2027-03-31",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 530000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 530000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-03-31",
+        "amount": 636000
+      }
+    ],
+    "motivation": "motivated",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A 2-bedroom apartment in Ellington Upper House by Ellington, Jumeirah Village Circle, with 45% of the purchase price already paid to the developer. The seller is motivated to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 1152,
+    "ageDays": 5
+  },
+  {
+    "projectName": "Palm Beach Towers 3",
+    "developer": "Nakheel",
+    "community": "Palm Jumeirah",
+    "unitType": "3br",
+    "sizeSqft": 2240,
+    "floor": "33",
+    "view": "Full sea & Atlantis",
+    "originalPrice": 7950000,
+    "amountPaid": 2385000,
+    "askingPrice": 2005000,
+    "launchPrice": 10340000,
+    "handoverDate": "2027-12-31",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 795000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 795000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 795000
+      },
+      {
+        "label": "Construction milestone 3",
+        "dueDate": "2027-05-15",
+        "amount": 795000
+      },
+      {
+        "label": "Construction milestone 4",
+        "dueDate": "2027-08-15",
+        "amount": 795000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-12-31",
+        "amount": 2385000
+      }
+    ],
+    "motivation": "urgent",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A 3-bedroom apartment in Palm Beach Towers 3 by Nakheel, Palm Jumeirah, with 30% of the purchase price already paid to the developer. The seller is urgent to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 3069,
+    "ageDays": 1
+  },
+  {
+    "projectName": "Bluewaters Bay",
+    "developer": "Meraas",
+    "community": "Dubai Marina",
+    "unitType": "1br",
+    "sizeSqft": 905,
+    "floor": "14",
+    "view": "Ain Dubai & sea",
+    "originalPrice": 2480000,
+    "amountPaid": 620000,
+    "askingPrice": 590000,
+    "launchPrice": 2930000,
+    "handoverDate": "2028-06-30",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 186000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 186000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 186000
+      },
+      {
+        "label": "Construction milestone 3",
+        "dueDate": "2027-05-15",
+        "amount": 186000
+      },
+      {
+        "label": "Construction milestone 4",
+        "dueDate": "2027-08-15",
+        "amount": 186000
+      },
+      {
+        "label": "Construction milestone 5",
+        "dueDate": "2027-11-15",
+        "amount": 186000
+      },
+      {
+        "label": "Construction milestone 6",
+        "dueDate": "2028-02-15",
+        "amount": 186000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2028-06-30",
+        "amount": 744000
+      }
+    ],
+    "motivation": "flexible",
+    "nocEligible": false,
+    "description": "Sample listing for illustration. A 1-bedroom apartment in Bluewaters Bay by Meraas, Dubai Marina, with 25% of the purchase price already paid to the developer. The seller is flexible to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 693,
+    "ageDays": 21
+  },
+  {
+    "projectName": "Danube Sportz",
+    "developer": "Danube",
+    "community": "Dubai South",
+    "unitType": "1br",
+    "sizeSqft": 702,
+    "floor": "6",
+    "view": "Pool",
+    "originalPrice": 790000,
+    "amountPaid": 158000,
+    "askingPrice": 140000,
+    "launchPrice": 920000,
+    "handoverDate": "2027-09-30",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 132000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 132000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 132000
+      },
+      {
+        "label": "Construction milestone 3",
+        "dueDate": "2027-05-15",
+        "amount": 132000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-09-30",
+        "amount": 236000
+      }
+    ],
+    "motivation": "motivated",
+    "nocEligible": false,
+    "description": "Sample listing for illustration. A 1-bedroom apartment in Danube Sportz by Danube, Dubai South, with 20% of the purchase price already paid to the developer. The seller is motivated to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 396,
+    "ageDays": 9
+  },
+  {
+    "projectName": "Azizi Venice 11",
+    "developer": "Azizi",
+    "community": "Dubai South",
+    "unitType": "studio",
+    "sizeSqft": 450,
+    "floor": "4",
+    "view": "Crystal lagoon",
+    "originalPrice": 610000,
+    "amountPaid": 244000,
+    "askingPrice": 210000,
+    "launchPrice": 730000,
+    "handoverDate": "2027-03-31",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 183000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 183000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-03-31",
+        "amount": 183000
+      }
+    ],
+    "motivation": "urgent",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A studio in Azizi Venice 11 by Azizi, Dubai South, with 40% of the purchase price already paid to the developer. The seller is urgent to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1546412414-e1885259563a?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 792,
+    "ageDays": 4
+  },
+  {
+    "projectName": "Address The Bay",
+    "developer": "Emaar",
+    "community": "Emaar Beachfront",
+    "unitType": "2br",
+    "sizeSqft": 1340,
+    "floor": "28",
+    "view": "Sea & Palm",
+    "originalPrice": 4150000,
+    "amountPaid": 1453000,
+    "askingPrice": 1265000,
+    "launchPrice": 5190000,
+    "handoverDate": "2027-09-30",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 484000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 484000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 484000
+      },
+      {
+        "label": "Construction milestone 3",
+        "dueDate": "2027-05-15",
+        "amount": 484000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-09-30",
+        "amount": 1245000
+      }
+    ],
+    "motivation": "motivated",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A 2-bedroom apartment in Address The Bay by Emaar, Emaar Beachfront, with 35% of the purchase price already paid to the developer. The seller is motivated to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 2304,
+    "ageDays": 7
+  },
+  {
+    "projectName": "The Lana Residences",
+    "developer": "Omniyat",
+    "community": "Business Bay",
+    "unitType": "3br",
+    "sizeSqft": 2685,
+    "floor": "21",
+    "view": "Canal & Burj Khalifa",
+    "originalPrice": 11400000,
+    "amountPaid": 3420000,
+    "askingPrice": 3080000,
+    "launchPrice": 13910000,
+    "handoverDate": "2028-03-31",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 912000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 912000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 912000
+      },
+      {
+        "label": "Construction milestone 3",
+        "dueDate": "2027-05-15",
+        "amount": 912000
+      },
+      {
+        "label": "Construction milestone 4",
+        "dueDate": "2027-08-15",
+        "amount": 912000
+      },
+      {
+        "label": "Construction milestone 5",
+        "dueDate": "2027-11-15",
+        "amount": 912000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2028-03-31",
+        "amount": 3420000
+      }
+    ],
+    "motivation": "flexible",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A 3-bedroom apartment in The Lana Residences by Omniyat, Business Bay, with 30% of the purchase price already paid to the developer. The seller is flexible to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 1071,
+    "ageDays": 18
+  },
+  {
+    "projectName": "Golf Hillside",
+    "developer": "Emaar",
+    "community": "Dubai Hills Estate",
+    "unitType": "4br",
+    "sizeSqft": 3420,
+    "floor": "G+1",
+    "view": "Golf course",
+    "originalPrice": 6250000,
+    "amountPaid": 3125000,
+    "askingPrice": 2690000,
+    "launchPrice": 7940000,
+    "handoverDate": "2027-06-30",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 625000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 625000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 625000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-06-30",
+        "amount": 1875000
+      }
+    ],
+    "motivation": "urgent",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A 4-bedroom apartment in Golf Hillside by Emaar, Dubai Hills Estate, with 50% of the purchase price already paid to the developer. The seller is urgent to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 2682,
+    "ageDays": 2
+  },
+  {
+    "projectName": "DAMAC Bay by Cavalli",
+    "developer": "DAMAC",
+    "community": "Dubai Marina",
+    "unitType": "2br",
+    "sizeSqft": 1405,
+    "floor": "42",
+    "view": "Full sea",
+    "originalPrice": 3980000,
+    "amountPaid": 1194000,
+    "askingPrice": 1110000,
+    "launchPrice": 4780000,
+    "handoverDate": "2027-12-31",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 398000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 398000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 398000
+      },
+      {
+        "label": "Construction milestone 3",
+        "dueDate": "2027-05-15",
+        "amount": 398000
+      },
+      {
+        "label": "Construction milestone 4",
+        "dueDate": "2027-08-15",
+        "amount": 398000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-12-31",
+        "amount": 1194000
+      }
+    ],
+    "motivation": "flexible",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A 2-bedroom apartment in DAMAC Bay by Cavalli by DAMAC, Dubai Marina, with 30% of the purchase price already paid to the developer. The seller is flexible to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1526495124232-a04e1849168c?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 657,
+    "ageDays": 25
+  },
+  {
+    "projectName": "Sobha One – Tower C",
+    "developer": "Sobha",
+    "community": "Business Bay",
+    "unitType": "1br",
+    "sizeSqft": 760,
+    "floor": "38",
+    "view": "Ras Al Khor sanctuary",
+    "originalPrice": 1690000,
+    "amountPaid": 592000,
+    "askingPrice": 520000,
+    "launchPrice": 2040000,
+    "handoverDate": "2027-09-30",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 197000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 197000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 197000
+      },
+      {
+        "label": "Construction milestone 3",
+        "dueDate": "2027-05-15",
+        "amount": 197000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-09-30",
+        "amount": 507000
+      }
+    ],
+    "motivation": "motivated",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A 1-bedroom apartment in Sobha One – Tower C by Sobha, Business Bay, with 35% of the purchase price already paid to the developer. The seller is motivated to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1582672060674-bc2bd808a8b5?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 1188,
+    "ageDays": 8
+  },
+  {
+    "projectName": "Binghatti Skyrise",
+    "developer": "Binghatti",
+    "community": "Business Bay",
+    "unitType": "studio",
+    "sizeSqft": 395,
+    "floor": "26",
+    "view": "Canal",
+    "originalPrice": 920000,
+    "amountPaid": 368000,
+    "askingPrice": 315000,
+    "launchPrice": 1080000,
+    "handoverDate": "2027-06-30",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 138000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 138000
+      },
+      {
+        "label": "Construction milestone 2",
+        "dueDate": "2027-02-15",
+        "amount": 138000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-06-30",
+        "amount": 276000
+      }
+    ],
+    "motivation": "urgent",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A studio in Binghatti Skyrise by Binghatti, Business Bay, with 40% of the purchase price already paid to the developer. The seller is urgent to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1546412414-e1885259563a?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 1386,
+    "ageDays": 3
+  },
+  {
+    "projectName": "Ellington Hillmont",
+    "developer": "Ellington",
+    "community": "Dubai Hills Estate",
+    "unitType": "3br",
+    "sizeSqft": 1980,
+    "floor": "8",
+    "view": "Park & skyline",
+    "originalPrice": 4050000,
+    "amountPaid": 1620000,
+    "askingPrice": 1440000,
+    "launchPrice": 4980000,
+    "handoverDate": "2027-03-31",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 1215000,
+    "paymentPlan": [
+      {
+        "label": "Construction milestone 1",
+        "dueDate": "2026-11-15",
+        "amount": 1215000
+      },
+      {
+        "label": "On handover",
+        "dueDate": "2027-03-31",
+        "amount": 1215000
+      }
+    ],
+    "motivation": "motivated",
+    "nocEligible": true,
+    "description": "Sample listing for illustration. A 3-bedroom apartment in Ellington Hillmont by Ellington, Dubai Hills Estate, with 40% of the purchase price already paid to the developer. The seller is motivated to exit, so a buyer can step into the remaining payment plan below today's launch price.",
+    "images": [
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=75",
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=75"
+    ],
+    "views": 981,
+    "ageDays": 12
+  }
+]

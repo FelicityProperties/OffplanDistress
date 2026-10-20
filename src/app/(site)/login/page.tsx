@@ -1,0 +1,35 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { AuthShell } from "@/components/AuthShell";
+import { LoginForm } from "@/components/auth/AuthForms";
+import { getT } from "@/i18n/server";
+import { getCurrentUser, safeNext } from "@/lib/auth";
+import { BRAND } from "@/lib/config";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("auth");
+  return { title: t("meta.login.title"), description: t("meta.login.description") };
+}
+
+export default async function LoginPage({ searchParams }: PageProps<"/login">) {
+  const { next } = await searchParams;
+  const target = safeNext(next, "");
+  if (await getCurrentUser()) redirect(target || "/dashboard");
+  const t = await getT("auth");
+
+  return (
+    <AuthShell title={t("login.title")} sub={t("login.sub", { brand: BRAND.name })}>
+      <LoginForm next={target || undefined} />
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        {t("login.newHere")}{" "}
+        <Link
+          href={target ? `/signup?next=${encodeURIComponent(target)}` : "/signup"}
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+        >
+          {t("login.createAccount")}
+        </Link>
+      </p>
+    </AuthShell>
+  );
+}
