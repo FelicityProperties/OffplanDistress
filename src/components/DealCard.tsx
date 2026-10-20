@@ -44,7 +44,7 @@ export async function DealCard({
             alt={`${deal.projectName}, ${community}`}
             className="transition-transform duration-500 group-hover:scale-105"
           />
-          <div className="absolute start-3 top-3 flex flex-wrap gap-1.5">
+          <div className="absolute start-3 end-14 top-3 flex flex-wrap gap-1.5">
             {discountPct != null && (
               <span className="rounded-full bg-success px-2.5 py-1 text-xs font-semibold text-success-foreground tabular shadow-sm">
                 {tc("vsLaunch", { pct: discountPct })}
