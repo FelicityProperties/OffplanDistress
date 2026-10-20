@@ -7,35 +7,41 @@ import { Field, FormMessage, SubmitButton } from "@/components/forms";
 import { selectClass } from "@/components/form-styles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/i18n/client";
 
 export function ProfileForm({ fullName, phone, intent }: { fullName: string; phone: string | null; intent: string }) {
+  const t = useT("dashboard");
+  const tc = useT("common");
   const [state, action] = useActionState(updateProfile, {});
   useEffect(() => {
-    if (state.ok) toast.success("Profile saved");
+    if (state.ok) toast.success(t("profile.saved"));
+    // Only on a new save result — not when the language (and so `t`) changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
   const fe = state.fieldErrors ?? {};
   return (
     <form action={action} className="space-y-4">
-      <Field label="Full name" htmlFor="fullName" error={fe.fullName}>
-        <Input id="fullName" name="fullName" defaultValue={fullName} required />
+      <Field label={t("profile.fullName")} htmlFor="fullName" error={fe.fullName}>
+        <Input id="fullName" name="fullName" defaultValue={fullName} required dir="auto" />
       </Field>
-      <Field label="Mobile / WhatsApp" htmlFor="phone" error={fe.phone}>
-        <Input id="phone" name="phone" type="tel" defaultValue={phone ?? ""} />
+      <Field label={t("profile.phone")} htmlFor="phone" error={fe.phone}>
+        <Input id="phone" name="phone" type="tel" defaultValue={phone ?? ""} dir="ltr" />
       </Field>
-      <Field label="I'm here to" htmlFor="intent" error={fe.intent}>
+      <Field label={t("profile.intent")} htmlFor="intent" error={fe.intent}>
         <select id="intent" name="intent" defaultValue={intent} className={selectClass}>
-          <option value="buy">Buy</option>
-          <option value="sell">Sell</option>
-          <option value="both">Buy and sell</option>
+          <option value="buy">{t("profile.intent.buy")}</option>
+          <option value="sell">{t("profile.intent.sell")}</option>
+          <option value="both">{t("profile.intent.both")}</option>
         </select>
       </Field>
       <FormMessage state={state} />
-      <SubmitButton pendingText="Saving…">Save profile</SubmitButton>
+      <SubmitButton pendingText={tc("saving")}>{t("profile.save")}</SubmitButton>
     </form>
   );
 }
 
 export function RequestKycButton({ disabled }: { disabled?: boolean }) {
+  const t = useT("dashboard");
   const [pending, start] = useTransition();
   return (
     <Button
@@ -44,12 +50,13 @@ export function RequestKycButton({ disabled }: { disabled?: boolean }) {
       disabled={disabled || pending}
       onClick={() =>
         start(async () => {
-          await requestKyc();
-          toast.success("Verification requested — our team will contact you");
+          const res = await requestKyc();
+          if (res.error) toast.error(res.error);
+          else toast.success(t("profile.kycRequested"));
         })
       }
     >
-      Request verification
+      {t("profile.requestKyc")}
     </Button>
   );
 }

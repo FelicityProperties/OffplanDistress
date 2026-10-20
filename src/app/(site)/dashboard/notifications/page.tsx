@@ -92,7 +92,7 @@ export default async function NotificationsPage() {
                         </time>
                       </span>
                       {n.body && (
-                        <span dir="auto" className="mt-1 block text-sm text-muted-foreground">
+                        <span dir="auto" className="mt-1 block whitespace-pre-line text-sm text-muted-foreground">
                           {n.body}
                         </span>
                       )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo } from "react";
+import { DirectionProvider } from "@radix-ui/react-direction";
 import { dirOf, type Locale } from "./config";
 import type { Namespace } from "./messages";
 import { translator } from "./translator";
@@ -8,7 +9,12 @@ import { translator } from "./translator";
 const LocaleContext = createContext<Locale>("en");
 
 export function I18nProvider({ locale, children }: { locale: Locale; children: React.ReactNode }) {
-  return <LocaleContext value={locale}>{children}</LocaleContext>;
+  // Radix primitives (Select, RadioGroup, Dropdown…) read their direction from this provider.
+  return (
+    <LocaleContext value={locale}>
+      <DirectionProvider dir={dirOf(locale)}>{children}</DirectionProvider>
+    </LocaleContext>
+  );
 }
 
 export function useLocale() {

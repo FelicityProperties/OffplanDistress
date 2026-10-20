@@ -86,8 +86,8 @@ export const TEMPLATES = {
     ar: { title: "انخفاض السعر على {project}", body: "انخفض السعر المطلوب من {from} إلى {to}.", cta: "عرض الصفقة" },
   },
   "search.matches": {
-    en: { title: "{count} new deals match “{name}”", body: "{list}", cta: "See matches" },
-    ar: { title: "{count} صفقات جديدة تطابق «{name}»", body: "{list}", cta: "عرض النتائج" },
+    en: { title: "New deals for “{name}”: {count}", body: "{list}", cta: "See matches" },
+    ar: { title: "صفقات جديدة تطابق «{name}»: {count}", body: "{list}", cta: "عرض النتائج" },
   },
   "password.reset": {
     en: { title: "Reset your password", body: "Someone asked to reset the password for this account. The link works for 1 hour. If it wasn't you, ignore this email.", cta: "Choose a new password" },

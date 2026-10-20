@@ -41,8 +41,12 @@ export async function toggleWatch(listingId: string): Promise<{ watching?: boole
     return { watching: false };
   }
 
-  const [l] = await db.select({ askingPrice: listings.askingPrice }).from(listings).where(eq(listings.id, listingId)).limit(1);
-  if (!l) return { error: (await getT("errors"))("watch.unavailable") };
+  const [l] = await db
+    .select({ askingPrice: listings.askingPrice, status: listings.status })
+    .from(listings)
+    .where(eq(listings.id, listingId))
+    .limit(1);
+  if (!l || !PUBLIC_STATUSES.includes(l.status)) return { error: (await getT("errors"))("watch.unavailable") };
   await db.insert(watchlist).values({ userId: user.id, listingId, savedPrice: l.askingPrice }).onConflictDoNothing();
   refresh();
   return { watching: true };

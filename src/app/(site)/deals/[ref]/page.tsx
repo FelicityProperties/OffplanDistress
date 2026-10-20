@@ -155,8 +155,10 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           </p>
           <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
             <Eye className="h-4 w-4" />
-            {t(row.watchers === 1 ? "watchers.one" : "watchers.many", { n: row.watchers })} · {t("ref")}{" "}
-            <bdi className="tabular">{refCode(l.refNo)}</bdi>
+            <span>
+              {t(row.watchers === 1 ? "watchers.one" : "watchers.many", { n: row.watchers })} · {t("ref")}{" "}
+              <bdi>{refCode(l.refNo)}</bdi>
+            </span>
           </p>
 
           <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">

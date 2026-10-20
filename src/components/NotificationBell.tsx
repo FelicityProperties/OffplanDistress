@@ -174,7 +174,7 @@ export function NotificationBell({
                     {n.title}
                   </span>
                   {n.body && (
-                    <span dir="auto" className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
+                    <span dir="auto" className="mt-0.5 line-clamp-2 block whitespace-pre-line text-xs text-muted-foreground">
                       {n.body}
                     </span>
                   )}

@@ -72,7 +72,7 @@ export async function approveListing(listingId: string) {
   const now = new Date();
   await db
     .update(listings)
-    .set({ status: "live", verified: true, publishedAt: now, rejectionReason: null, updatedAt: now })
+    .set({ status: "live", verified: true, publishedAt: before?.publishedAt ?? now, rejectionReason: null, updatedAt: now })
     .where(eq(listings.id, listingId));
   if (before && before.status !== "live") {
     await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });

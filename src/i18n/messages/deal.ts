@@ -84,7 +84,7 @@ export default defineMessages({
     "banner.private": "هذه الصفحة مرئية لك فقط — حالة الإعلان حالياً «{status}».",
 
     "badge.verified": "اتفاقية البيع والشراء وسجل الدفعات موثّقان",
-    "badge.nocEligible": "مؤهلة لشهادة عدم الممانعة",
+    "badge.nocEligible": "مؤهّلة لشهادة عدم الممانعة",
 
     "watchers.one": "عدد المتابعين: {n}",
     "watchers.many": "عدد المتابعين: {n}",

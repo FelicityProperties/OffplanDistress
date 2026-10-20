@@ -1,41 +1,46 @@
+import type { Metadata } from "next";
 import { PageTitle } from "@/components/Kpi";
 import { ProfileForm, RequestKycButton } from "@/components/ProfileForm";
 import { StatusPill } from "@/components/badges";
+import { getT } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 
-const KYC = {
-  not_started: { label: "Not started", tone: "muted" as const },
-  pending: { label: "In review", tone: "warning" as const },
-  verified: { label: "Verified", tone: "success" as const },
-};
+const KYC_TONE = {
+  not_started: "muted",
+  pending: "warning",
+  verified: "success",
+} as const;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("dashboard");
+  return { title: t("profile.title"), robots: { index: false } };
+}
 
 export default async function ProfilePage() {
   const user = await requireUser("/dashboard/profile");
-  const kyc = KYC[user.kycStatus];
+  const [t, tc] = await Promise.all([getT("dashboard"), getT("common")]);
 
   return (
     <div className="space-y-6">
-      <PageTitle title="Profile & KYC" />
+      <PageTitle title={t("profile.title")} />
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border bg-card p-6 shadow-card">
           <p className="mb-4 text-sm text-muted-foreground">
-            Signed in as <span className="font-medium text-foreground">{user.email}</span>
+            {t("profile.signedInAs")}{" "}
+            <bdi className="font-medium text-foreground">{user.email}</bdi>
           </p>
           <ProfileForm fullName={user.fullName} phone={user.phone} intent={user.intent} />
         </div>
         <div className="rounded-xl border bg-card p-6 shadow-card">
           <div className="flex items-center justify-between">
-            <p className="font-semibold">KYC status</p>
-            <StatusPill tone={kyc.tone}>{kyc.label}</StatusPill>
+            <p className="font-semibold">{t("profile.kycStatus")}</p>
+            <StatusPill tone={KYC_TONE[user.kycStatus]}>{tc(`kyc.${user.kycStatus}`)}</StatusPill>
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">
-            UAE law requires us to verify the identity of buyers and sellers before a transfer. Verified buyers&apos;
-            offers are shown to sellers with a “KYC verified” tag, which makes them more likely to be accepted.
-          </p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("profile.kycBody")}</p>
           <ul className="mt-4 space-y-2 text-sm">
-            <li>• Passport and Emirates ID (or visa page for non-residents)</li>
-            <li>• Proof of funds for the upfront amount (buyers)</li>
-            <li>• SPA and statement of account (sellers — upload on your listing)</li>
+            <li>• {t("profile.kycDocId")}</li>
+            <li>• {t("profile.kycDocFunds")}</li>
+            <li>• {t("profile.kycDocSpa")}</li>
           </ul>
           <div className="mt-6">
             <RequestKycButton disabled={user.kycStatus !== "not_started"} />
