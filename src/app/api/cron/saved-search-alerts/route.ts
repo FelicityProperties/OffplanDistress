@@ -108,13 +108,16 @@ function dealsHref(query: string) {
 }
 
 /**
- * Vercel Cron sends "Authorization: Bearer $CRON_SECRET" when that variable is set. Without a secret,
- * fall back to Vercel Cron's user agent so the job still runs on a fresh deployment.
+ * Vercel Cron sends "Authorization: Bearer $CRON_SECRET" once that variable is set. Fail closed without
+ * it: a user agent is trivially spoofed, and each run sends emails.
  */
 function authorised(request: Request) {
   const secret = process.env.CRON_SECRET;
-  if (secret) return safeEqual(request.headers.get("authorization") ?? "", `Bearer ${secret}`);
-  return (request.headers.get("user-agent") ?? "").startsWith("vercel-cron/");
+  if (!secret) {
+    console.error("[cron] CRON_SECRET is not set — refusing to run saved-search alerts");
+    return false;
+  }
+  return safeEqual(request.headers.get("authorization") ?? "", `Bearer ${secret}`);
 }
 
 function safeEqual(a: string, b: string) {

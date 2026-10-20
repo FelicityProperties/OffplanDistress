@@ -11,6 +11,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { PUBLIC_STATUSES } from "@/lib/config";
 import { refCode } from "@/lib/format";
 import { notify, notifyAdmins, type TemplateParams } from "@/lib/notify";
+import { clientIp, hit, MINUTE } from "@/lib/throttle";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
@@ -264,6 +265,7 @@ export async function createInquiry(_prev: FormState, formData: FormData): Promi
     { error: fallbackErrors(t) },
   );
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  if (!(await hit(`inquiry-ip:${await clientIp()}`, 10, 60 * MINUTE))) return { error: t("tooMany") };
   const v = parsed.data;
   await db.insert(inquiries).values({ ...v, userId: user?.id ?? null });
 

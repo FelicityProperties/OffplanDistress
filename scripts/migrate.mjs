@@ -62,9 +62,15 @@ async function ensureOwners(pool) {
     .filter(Boolean);
   const password = process.env.ADMIN_PASSWORD ?? "";
   if (password.length < 10) {
+    // Owner logins must only ever work with the ADMIN_PASSWORD hash: lock any existing owner row
+    // (e.g. one registered by someone else before sign-up blocked these emails).
+    const locked = await pool.query("update users set password_hash = null where lower(email) = any($1) returning id", [emails]);
+    if (locked.rowCount) {
+      await pool.query("delete from sessions where user_id = any($1)", [locked.rows.map((r) => r.id)]);
+    }
     console.warn(
       `[migrate] ADMIN_PASSWORD is not set (or shorter than 10 characters) — the owner login for ${emails.join(", ")} ` +
-        "won't work until you add it in Vercel → Settings → Environment Variables and redeploy.",
+        "is locked until you add it in Vercel → Settings → Environment Variables and redeploy.",
     );
     return;
   }

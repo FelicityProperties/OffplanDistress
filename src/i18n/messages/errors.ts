@@ -44,6 +44,7 @@ export default defineMessages({
     "listing.notFound": "Listing not found.",
     "listing.transferred": "This unit has already been transferred.",
     "listing.changeUnavailable": "That change isn't available for this listing right now.",
+    "listing.tooManyPending": "You already have 10 listings waiting for review. We'll verify those first.",
 
     "admin.ownAccess": "You can't remove your own admin access.",
     "admin.ownerAlwaysAdmin": "Owner accounts are always admins.",
@@ -53,6 +54,7 @@ export default defineMessages({
     "signup.reserved": "This email is reserved. If it's yours, log in instead.",
     "signup.exists": "An account with this email already exists — sign in instead.",
     "login.invalid": "Email or password is incorrect.",
+    tooMany: "Too many attempts. Please wait a few minutes and try again.",
 
     // Words placed inside notification sentences ("A cash buyer offered…", "New viewing request from…").
     "notify.financing.cash": "cash",
@@ -103,6 +105,7 @@ export default defineMessages({
     "listing.notFound": "الإعلان غير موجود.",
     "listing.transferred": "تم نقل ملكية هذه الوحدة بالفعل.",
     "listing.changeUnavailable": "هذا التغيير غير متاح لهذا الإعلان حالياً.",
+    "listing.tooManyPending": "لديك بالفعل 10 إعلانات بانتظار المراجعة. سنتحقق منها أولاً.",
 
     "admin.ownAccess": "لا يمكنك إزالة صلاحيات الإدارة من حسابك.",
     "admin.ownerAlwaysAdmin": "حسابات المالك تملك صلاحيات الإدارة دائماً.",
@@ -112,6 +115,7 @@ export default defineMessages({
     "signup.reserved": "هذا البريد الإلكتروني محجوز. إن كان بريدك، فسجّل الدخول بدلاً من ذلك.",
     "signup.exists": "يوجد حساب بهذا البريد الإلكتروني بالفعل، سجّل الدخول بدلاً من ذلك.",
     "login.invalid": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    tooMany: "محاولات كثيرة جداً. يُرجى الانتظار بضع دقائق ثم المحاولة مرة أخرى.",
 
     "notify.financing.cash": "دفع نقدي",
     "notify.financing.mortgage": "تمويل عقاري",

@@ -7,14 +7,23 @@ import { getCurrentUser } from "@/lib/auth";
 import { FILE_KINDS, MAX_UPLOAD_BYTES } from "@/lib/config";
 
 const ALLOWED = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
+// Per-listing limits for sellers (documents live in Postgres, so keep them bounded).
+const MAX_FILES = 30;
+const MAX_BYTES = 60 * 1024 * 1024;
+const MAX_PHOTOS = 20;
 
 export async function POST(request: Request, ctx: RouteContext<"/api/listings/[id]/files">) {
   const { id } = await ctx.params;
   const [user, t] = await Promise.all([getCurrentUser(), getT("sell")]);
   if (!user) return NextResponse.json({ error: t("upload.signIn") }, { status: 401 });
 
+  // Reject oversized bodies before buffering them.
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_UPLOAD_BYTES + 64 * 1024) {
+    return NextResponse.json({ error: t("upload.bodyTooLarge") }, { status: 413 });
+  }
+
   const [listing] = await db
-    .select({ sellerId: listings.sellerId, images: listings.images })
+    .select({ sellerId: listings.sellerId, images: listings.images, status: listings.status })
     .from(listings)
     .where(eq(listings.id, id))
     .limit(1);
@@ -37,6 +46,20 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
     return NextResponse.json({ error: t("upload.photoOnly") }, { status: 415 });
   }
 
+  const isAdmin = user.role === "admin";
+  if (!isAdmin) {
+    const [{ n, bytes }] = await db
+      .select({ n: sql<number>`count(*)::int`, bytes: sql<number>`coalesce(sum(${files.size}), 0)::bigint` })
+      .from(files)
+      .where(eq(files.listingId, id));
+    if (n >= MAX_FILES || Number(bytes) + file.size > MAX_BYTES) {
+      return NextResponse.json({ error: t("upload.quota") }, { status: 413 });
+    }
+    if (kind === "photo" && listing.images.length >= MAX_PHOTOS) {
+      return NextResponse.json({ error: t("upload.photoLimit") }, { status: 413 });
+    }
+  }
+
   const [row] = await db
     .insert(files)
     .values({
@@ -50,7 +73,9 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
     })
     .returning({ id: files.id });
 
-  if (kind === "photo") {
+  // Seller photos go into the public gallery while the listing is still in review (our team checks them
+  // before approving). Once it's live, new seller photos wait for an admin to add them from the review page.
+  if (kind === "photo" && (isAdmin || listing.status === "pending_review")) {
     await db
       .update(listings)
       .set({ images: sql`array_append(${listings.images}, ${`/api/files/${row.id}`})` })

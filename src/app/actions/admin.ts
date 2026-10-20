@@ -142,6 +142,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
     .update(listings)
     .set({
       status: v.status,
+      pausedByAdmin: v.status === "paused",
       verified: v.verified,
       nocEligible: v.nocEligible,
       launchPrice: v.launchPrice ?? null,

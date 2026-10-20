@@ -105,8 +105,18 @@ export async function requireAdmin(): Promise<SessionUser> {
   return user;
 }
 
+/** Same-site path for redirects after login, or null. */
+export function sameSitePath(next: unknown): string | null {
+  // Browsers drop tabs/newlines and treat "\" like "/", so "/<TAB>/evil.com" would become "//evil.com".
+  if (typeof next !== "string" || /[\x00-\x1f\x7f\\]/.test(next) || !/^\/(?!\/)/.test(next)) return null;
+  const base = "http://same-site.invalid";
+  const u = new URL(next, base);
+  const path = u.pathname + u.search + u.hash;
+  // "/..//evil.com" normalises to "//evil.com" — re-check after normalising.
+  return u.origin === base && /^\/(?!\/)/.test(path) ? path : null;
+}
+
 /** Only allow same-site relative redirects after login. */
 export function safeNext(next: unknown, fallback = "/dashboard") {
-  if (typeof next !== "string" || !/^\/(?![/\\])/.test(next)) return fallback;
-  return next;
+  return sameSitePath(next) ?? fallback;
 }

@@ -12,6 +12,7 @@ import { getT } from "@/i18n/server";
 import { createSession, findUserByEmail, hashPassword, isOwnerEmail, safeNext } from "@/lib/auth";
 import { emailEnabled, sendEmail } from "@/lib/email";
 import { renderTemplate } from "@/lib/notification-templates";
+import { clientIp, hit, MINUTE } from "@/lib/throttle";
 
 export type PasswordFormState = {
   error?: string;
@@ -71,6 +72,7 @@ export async function requestPasswordReset(_prev: PasswordFormState, formData: F
     .safeParse({ email: formData.get("email") });
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
   const { email } = parsed.data;
+  if (!(await hit(`reset-ip:${await clientIp()}`, 10, 60 * MINUTE))) return { error: (await getT("errors"))("tooMany") };
 
   if (!emailEnabled()) return { ok: true, noEmail: true, email };
 

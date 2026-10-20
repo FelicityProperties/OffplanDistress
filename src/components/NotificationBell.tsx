@@ -45,8 +45,8 @@ function applyOp(state: BellState, op: BellOp): BellState {
 
 /** Only same-site paths and http(s) links are followed; anything else is ignored. */
 function safeHref(href: string | null | undefined) {
-  if (!href) return null;
-  if (/^\/(?![/\\])/.test(href)) return href;
+  if (!href || /[\x00-\x1f\x7f\\]/.test(href)) return null;
+  if (/^\/(?!\/)/.test(href)) return href;
   if (/^https?:\/\//i.test(href)) return href;
   return null;
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { listings, users } from "@/db/schema";
@@ -101,6 +101,12 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
   const t = await getT("errors");
   const user = await getCurrentUser();
   if (!user) return { error: t("auth.signInToList") };
+
+  const [{ pending }] = await db
+    .select({ pending: sql<number>`count(*)::int` })
+    .from(listings)
+    .where(and(eq(listings.sellerId, user.id), eq(listings.status, "pending_review")));
+  if (pending >= 10) return { error: t("listing.tooManyPending") };
 
   const parsed = listingSchema(t).safeParse(readListingForm(formData), { error: fallbackErrors(t) });
   if (!parsed.success) {
@@ -214,7 +220,12 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
   const user = await getCurrentUser();
   if (!user) return { error: t("auth.signInAgain") };
   const [l] = await db
-    .select({ status: listings.status, verified: listings.verified, sellerId: listings.sellerId })
+    .select({
+      status: listings.status,
+      verified: listings.verified,
+      sellerId: listings.sellerId,
+      pausedByAdmin: listings.pausedByAdmin,
+    })
     .from(listings)
     .where(eq(listings.id, listingId))
     .limit(1);
@@ -222,11 +233,15 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
 
   let next: (typeof listings.$inferSelect)["status"] | null = null;
   if (action === "pause" && l.status === "live") next = "paused";
-  if (action === "resume" && l.status === "paused") next = l.verified ? "live" : "pending_review";
+  // A pause by our team (e.g. during a document dispute) can only be lifted by our team.
+  if (action === "resume" && l.status === "paused" && !l.pausedByAdmin) next = l.verified ? "live" : "pending_review";
   if (action === "withdraw" && !["transferred", "noc_in_progress", "withdrawn"].includes(l.status)) next = "withdrawn";
   if (!next) return { error: t("listing.changeUnavailable") };
 
-  await db.update(listings).set({ status: next, updatedAt: new Date() }).where(eq(listings.id, listingId));
+  await db
+    .update(listings)
+    .set({ status: next, pausedByAdmin: false, updatedAt: new Date() })
+    .where(eq(listings.id, listingId));
   refresh();
   return { ok: true };
 }

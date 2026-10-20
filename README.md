@@ -59,7 +59,7 @@ In-app notifications always work. Emails go out through [Resend](https://resend.
      emails in `ADMIN_EMAILS`). The repo is public, so owner emails can't be registered through the sign-up form;
      every build creates or repairs the owner login from this variable instead. To change the owner password,
      change the variable and redeploy.
-   - `CRON_SECRET` — any long random string; protects the daily alert job.
+   - `CRON_SECRET` — **required for alerts**: any long random string. The daily alert job refuses to run without it.
    - Optional: `RESEND_API_KEY` + `EMAIL_FROM` for email, `NEXT_PUBLIC_SITE_URL` for links in emails, and the
      `NEXT_PUBLIC_CONTACT_*` / `NEXT_PUBLIC_RERA_ORN` values shown on the site.
 3. Deploy. `npm run build` first runs `scripts/migrate.mjs`: it applies database migrations, sets up the owner

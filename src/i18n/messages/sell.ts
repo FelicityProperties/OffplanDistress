@@ -158,6 +158,9 @@ export default defineMessages({
     "upload.tooLarge": "{name} is larger than 4 MB.",
     "upload.badType": "{name}: upload a PDF, JPG, PNG or WebP.",
     "upload.photoOnly": "Photos must be images.",
+    "upload.bodyTooLarge": "Each file must be 4 MB or smaller.",
+    "upload.quota": "This listing has reached its upload limit. Contact our team if you need to add more files.",
+    "upload.photoLimit": "This listing already has the maximum of 20 photos.",
   },
   ar: {
     "meta.title": "بِع وحدتك على الخارطة بسرعة",
@@ -312,5 +315,8 @@ export default defineMessages({
     "upload.tooLarge": "حجم ⁨{name}⁩ أكبر من 4 ميغابايت.",
     "upload.badType": "⁨{name}⁩: ارفع ملف PDF أو JPG أو PNG أو WebP.",
     "upload.photoOnly": "يجب أن تكون الصور ملفات صور، وليس PDF.",
+    "upload.bodyTooLarge": "يجب ألا يتجاوز حجم كل ملف 4 ميغابايت.",
+    "upload.quota": "بلغ هذا الإعلان الحد الأقصى للملفات المرفوعة. تواصل مع فريقنا إذا كنت بحاجة إلى إضافة المزيد.",
+    "upload.photoLimit": "يضم هذا الإعلان بالفعل الحد الأقصى وهو 20 صورة.",
   },
 });

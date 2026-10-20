@@ -141,6 +141,8 @@ export const listings = pgTable(
     adminNotes: text("admin_notes"),
     rejectionReason: text("rejection_reason"),
     isSample: boolean("is_sample").notNull().default(false),
+    // set when our team pauses a listing, so the seller can't simply resume it
+    pausedByAdmin: boolean("paused_by_admin").notNull().default(false),
     views: integer("views").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -274,6 +276,18 @@ export const passwordResets = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("password_resets_user_idx").on(t.userId)],
+);
+
+/** Sliding-window rate limiting for login, sign-up, password resets and inquiries (see src/lib/throttle.ts). */
+export const authAttempts = pgTable(
+  "auth_attempts",
+  {
+    id: serial("id").primaryKey(),
+    // e.g. "login:user@example.com" or "signup-ip:1.2.3.4"
+    key: text("key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("auth_attempts_key_idx").on(t.key, t.createdAt)],
 );
 
 export type User = typeof users.$inferSelect;
