@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { useLocale, useT } from "@/i18n/client";
 import { formatAED } from "@/lib/format";
 
 export function OfferDialog({
@@ -36,15 +37,18 @@ export function OfferDialog({
   loginHref: string;
   disabledReason?: string;
 }) {
+  const t = useT("deal");
+  const tc = useT("common");
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [state, action] = useActionState(makeOffer, {});
 
   useEffect(() => {
     if (state.ok) {
       setOpen(false);
-      toast.success("Offer sent", { description: "We'll present it to the seller and update you in your dashboard." });
+      toast.success(t("offer.sent"), { description: t("offer.sentDescription") });
     }
-  }, [state]);
+  }, [state, t]);
 
   if (disabledReason) {
     return (
@@ -57,7 +61,7 @@ export function OfferDialog({
   if (!signedIn) {
     return (
       <Button asChild size="lg" variant="gold" className="w-full">
-        <Link href={loginHref}>Sign in to make an offer</Link>
+        <Link href={loginHref}>{t("offer.signIn")}</Link>
       </Button>
     );
   }
@@ -67,28 +71,26 @@ export function OfferDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="lg" variant="gold" className="w-full">
-          Make an offer
+          {t("offer.cta")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Make an offer</DialogTitle>
-          <DialogDescription>
-            {project} · Asking {formatAED(asking)} for the seller&apos;s equity
-          </DialogDescription>
+          <DialogTitle>{t("offer.title")}</DialogTitle>
+          <DialogDescription>{t("offer.description", { project, amount: formatAED(asking, locale) })}</DialogDescription>
         </DialogHeader>
         <form action={action} className="space-y-4">
           <input type="hidden" name="listingId" value={listingId} />
-          <Field label="Your offer to the seller (AED)" htmlFor="amount" error={fe.amount} hint="You'll also take over the remaining payment plan.">
+          <Field label={t("offer.amount")} htmlFor="amount" error={fe.amount} hint={t("offer.amountHint")}>
             <Input id="amount" name="amount" type="number" min={0} step={1000} defaultValue={Math.round((asking * 0.95) / 1000) * 1000} required />
           </Field>
           <div className="space-y-2">
-            <Label>Financing</Label>
+            <Label>{t("offer.financing")}</Label>
             <RadioGroup name="financing" defaultValue="cash" className="grid grid-cols-2 gap-2">
               {(
                 [
-                  ["cash", "Cash"],
-                  ["mortgage", "Mortgage at handover"],
+                  ["cash", tc("financing.cash")],
+                  ["mortgage", t("offer.mortgage")],
                 ] as const
               ).map(([v, l]) => (
                 <label
@@ -101,13 +103,13 @@ export function OfferDialog({
               ))}
             </RadioGroup>
           </div>
-          <Field label="Message to seller (optional)" htmlFor="message" error={fe.message}>
-            <Textarea id="message" name="message" placeholder="I can complete within 3 weeks…" />
+          <Field label={t("offer.message")} htmlFor="message" error={fe.message}>
+            <Textarea id="message" name="message" placeholder={t("offer.placeholder")} />
           </Field>
           <FormMessage state={state} />
           <DialogFooter>
-            <SubmitButton className="w-full" pendingText="Sending…">
-              Submit offer
+            <SubmitButton className="w-full" pendingText={tc("sending")}>
+              {t("offer.submit")}
             </SubmitButton>
           </DialogFooter>
         </form>

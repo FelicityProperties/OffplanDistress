@@ -2,21 +2,20 @@ import Link from "next/link";
 import { HandledToggle } from "@/components/admin/AdminControls";
 import { EmptyState, PageTitle } from "@/components/Kpi";
 import { StatusPill } from "@/components/badges";
+import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
 import { adminInquiries } from "@/lib/admin";
 import { refCode, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const TYPE = { info: "Info request", viewing: "Viewing request", contact: "Contact form" } as const;
-
 export default async function InquiriesPage() {
   await requireAdmin();
-  const rows = await adminInquiries();
+  const [rows, t, locale] = await Promise.all([adminInquiries(), getT("admin"), getLocale()]);
   return (
     <div className="space-y-6">
-      <PageTitle title="Inquiries" sub="Viewing requests, deal questions and contact-form messages." />
+      <PageTitle title={t("inquiries.title")} sub={t("inquiries.sub")} />
       {rows.length === 0 ? (
-        <EmptyState title="No inquiries yet" />
+        <EmptyState title={t("inquiries.empty")} />
       ) : (
         <div className="divide-y rounded-xl border bg-card shadow-card">
           {rows.map(({ inquiry: q, refNo, projectName }) => (
@@ -24,27 +23,27 @@ export default async function InquiriesPage() {
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-semibold">{q.name}</p>
-                  <StatusPill tone={q.type === "viewing" ? "gold" : "muted"}>{TYPE[q.type]}</StatusPill>
-                  <span className="text-xs text-muted-foreground">{timeAgo(q.createdAt)}</span>
+                  <StatusPill tone={q.type === "viewing" ? "gold" : "muted"}>{t(`inquiry.${q.type}`)}</StatusPill>
+                  <span className="text-xs text-muted-foreground">{timeAgo(q.createdAt, locale)}</span>
                 </div>
                 <p className="text-sm">
                   <a href={`mailto:${q.email}`} className="hover:underline">
-                    {q.email}
+                    <bdi dir="ltr">{q.email}</bdi>
                   </a>
                   {q.phone && (
                     <>
                       {" · "}
                       <a href={`tel:${q.phone}`} className="hover:underline">
-                        {q.phone}
+                        <bdi dir="ltr">{q.phone}</bdi>
                       </a>
                     </>
                   )}
                 </p>
                 {refNo && (
                   <p className="text-sm text-muted-foreground">
-                    Re:{" "}
+                    {t("inquiries.re")}{" "}
                     <Link href={`/deals/${refCode(refNo)}`} className="hover:underline">
-                      {projectName} ({refCode(refNo)})
+                      {projectName} (<bdi>{refCode(refNo)}</bdi>)
                     </Link>
                   </p>
                 )}

@@ -1,4 +1,5 @@
 import { BadgeCheck, FileCheck2, FileSignature, Handshake, KeyRound, Search, Upload } from "lucide-react";
+import { getT } from "@/i18n/server";
 import { BUYER_STEPS, SELLER_STEPS } from "@/lib/content";
 
 const ICONS = {
@@ -11,7 +12,10 @@ const ICONS = {
   sign: FileSignature,
 };
 
-export function StepsCard({ title, steps }: { title: string; steps: typeof SELLER_STEPS | typeof BUYER_STEPS }) {
+type Step = (typeof SELLER_STEPS)[number] | (typeof BUYER_STEPS)[number];
+
+export async function StepsCard({ title, steps }: { title: string; steps: readonly Step[] }) {
+  const t = await getT("home");
   return (
     <div className="rounded-2xl border bg-card p-6 shadow-card sm:p-8">
       <h3 className="text-2xl font-semibold">{title}</h3>
@@ -19,15 +23,15 @@ export function StepsCard({ title, steps }: { title: string; steps: typeof SELLE
         {steps.map((s, i) => {
           const Icon = ICONS[s.icon];
           return (
-            <li key={s.t} className="flex gap-4">
+            <li key={s.id} className="flex gap-4">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gold-soft text-gold-foreground">
                 <Icon className="h-5 w-5" />
               </span>
               <div>
                 <p className="font-semibold">
-                  <span className="text-muted-foreground tabular">0{i + 1}</span> · {s.t}
+                  <span className="text-muted-foreground tabular">0{i + 1}</span> · {t(`step.${s.id}.title`)}
                 </p>
-                <p className="text-sm text-muted-foreground">{s.d}</p>
+                <p className="text-sm text-muted-foreground">{t(`step.${s.id}.desc`)}</p>
               </div>
             </li>
           );

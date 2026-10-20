@@ -13,11 +13,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { COMMUNITIES, DEVELOPERS, MOTIVATION, UNIT_TYPES } from "@/lib/config";
+import { useLocale, useT } from "@/i18n/client";
+import type { TFn, TKey } from "@/i18n/translator";
+import { COMMUNITIES, DEVELOPERS, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
 import { formatAEDCompact } from "@/lib/format";
 
 const MAX_BUDGET = 8_000_000;
 const YEARS = [2026, 2027, 2028, 2029];
+
+/** Arabic/English community name; unknown names are shown as entered. */
+function communityName(tc: TFn<"common">, name: string) {
+  const key = `community.${name}` as TKey<"common">;
+  const label = tc(key);
+  return label === key ? name : label;
+}
 
 function useParamsUpdater() {
   const router = useRouter();
@@ -96,6 +105,8 @@ function RangeFilter({
 }
 
 function BudgetFilter() {
+  const t = useT("deals");
+  const locale = useLocale();
   const { params, update } = useParamsUpdater();
   const min = Number(params.get("minCash") ?? 0);
   const max = Number(params.get("maxCash") ?? MAX_BUDGET);
@@ -103,9 +114,9 @@ function BudgetFilter() {
   useEffect(() => setValue([min, max]), [min, max]);
   return (
     <div>
-      <p className="mb-1 text-sm font-semibold">Upfront cash to seller</p>
+      <p className="mb-1 text-sm font-semibold">{t("filters.budget")}</p>
       <p className="mb-3 text-xs text-muted-foreground tabular">
-        {formatAEDCompact(value[0])} – {value[1] >= MAX_BUDGET ? "Any" : formatAEDCompact(value[1])}
+        {formatAEDCompact(value[0], locale)} – {value[1] >= MAX_BUDGET ? t("filters.any") : formatAEDCompact(value[1], locale)}
       </p>
       <Slider
         min={0}
@@ -121,53 +132,75 @@ function BudgetFilter() {
             else p.delete("maxCash");
           })
         }
-        aria-label="Upfront cash budget"
+        aria-label={t("filters.budgetLabel")}
       />
     </div>
   );
 }
 
 export function FilterPanel() {
+  const t = useT("deals");
+  const tc = useT("common");
   const { params, update } = useParamsUpdater();
   const handoverBy = params.get("handoverBy") ?? "any";
   return (
     <div className="space-y-6">
       <BudgetFilter />
-      <CheckGroup label="Community" name="community" options={COMMUNITIES.filter((c) => c !== "Other").map((c) => [c, c])} />
-      <CheckGroup label="Developer" name="developer" options={DEVELOPERS.filter((d) => d !== "Other").map((d) => [d, d])} />
-      <CheckGroup label="Unit type" name="type" options={Object.entries(UNIT_TYPES)} />
-      <RangeFilter label="Min. % paid to developer" name="minPaid" max={60} step={5} format={(v) => `${v}%+`} />
-      <RangeFilter label="Min. discount vs launch" name="minDiscount" max={30} step={1} format={(v) => `${v}%+`} />
+      <CheckGroup
+        label={t("filters.community")}
+        name="community"
+        options={COMMUNITIES.filter((c) => c !== "Other").map((c) => [c, communityName(tc, c)])}
+      />
+      <CheckGroup label={t("filters.developer")} name="developer" options={DEVELOPERS.filter((d) => d !== "Other").map((d) => [d, d])} />
+      <CheckGroup
+        label={t("filters.unitType")}
+        name="type"
+        options={(Object.keys(UNIT_TYPES) as UnitTypeKey[]).map((k) => [k, tc(`unit.${k}`)])}
+      />
+      <RangeFilter
+        label={t("filters.minPaid")}
+        name="minPaid"
+        max={60}
+        step={5}
+        format={(v) => t("filters.atLeastPct", { v })}
+      />
+      <RangeFilter
+        label={t("filters.minDiscount")}
+        name="minDiscount"
+        max={30}
+        step={1}
+        format={(v) => t("filters.atLeastPct", { v })}
+      />
       <div>
-        <p className="mb-2 text-sm font-semibold">Handover by</p>
+        <p className="mb-2 text-sm font-semibold">{t("filters.handoverBy")}</p>
         <Select
           value={handoverBy}
           onValueChange={(v) => update((p) => (v === "any" ? p.delete("handoverBy") : p.set("handoverBy", v)))}
         >
-          <SelectTrigger aria-label="Handover by">
+          <SelectTrigger aria-label={t("filters.handoverBy")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="any">Any time</SelectItem>
+            <SelectItem value="any">{t("filters.anyTime")}</SelectItem>
             {YEARS.map((y) => (
               <SelectItem key={y} value={String(y)}>
-                End of {y}
+                {t("filters.endOfYear", { year: y })}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
       <CheckGroup
-        label="Seller motivation"
+        label={t("filters.motivation")}
         name="motivation"
-        options={Object.entries(MOTIVATION).map(([k, v]) => [k, v.label])}
+        options={(Object.keys(MOTIVATION) as (keyof typeof MOTIVATION)[]).map((k) => [k, tc(`motivation.${k}`)])}
       />
       <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
         <Checkbox
           checked={params.get("verified") === "1"}
           onCheckedChange={(on) => update((p) => (on ? p.set("verified", "1") : p.delete("verified")))}
         />
-        Verified listings only
+        {t("filters.verifiedOnly")}
       </label>
       <Button
         variant="outline"
@@ -178,13 +211,14 @@ export function FilterPanel() {
           })
         }
       >
-        Reset filters
+        {t("filters.reset")}
       </Button>
     </div>
   );
 }
 
 export function DealsToolbar() {
+  const t = useT("deals");
   const { params, update, pending } = useParamsUpdater();
   const [q, setQ] = useState(params.get("q") ?? "");
   const sort = params.get("sort") ?? "discount";
@@ -209,9 +243,9 @@ export function DealsToolbar() {
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search project, developer or community"
+          placeholder={t("search.placeholder")}
           className="h-11 ps-9"
-          aria-label="Search deals"
+          aria-label={t("search.label")}
         />
       </div>
       <div className="flex items-center gap-2">
@@ -219,28 +253,28 @@ export function DealsToolbar() {
           <SheetTrigger asChild>
             <Button variant="outline" className="h-11 lg:hidden">
               <SlidersHorizontal />
-              Filters
+              {t("filters.title")}
             </Button>
           </SheetTrigger>
           <SheetContent side="start" className="overflow-y-auto p-6">
-            <SheetTitle>Filters</SheetTitle>
+            <SheetTitle>{t("filters.title")}</SheetTitle>
             <div className="mt-6">
               <FilterPanel />
             </div>
           </SheetContent>
         </Sheet>
         <Label className="sr-only" htmlFor="sort">
-          Sort
+          {t("sort.label")}
         </Label>
         <Select value={sort} onValueChange={(v) => update((p) => p.set("sort", v))}>
           <SelectTrigger id="sort" className="h-11 w-52">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="discount">Biggest discount</SelectItem>
-            <SelectItem value="cash">Lowest upfront cash</SelectItem>
-            <SelectItem value="handover">Handover soonest</SelectItem>
-            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="discount">{t("sort.discount")}</SelectItem>
+            <SelectItem value="cash">{t("sort.cash")}</SelectItem>
+            <SelectItem value="handover">{t("sort.handover")}</SelectItem>
+            <SelectItem value="newest">{t("sort.newest")}</SelectItem>
           </SelectContent>
         </Select>
         <ToggleGroup
@@ -249,10 +283,10 @@ export function DealsToolbar() {
           onValueChange={(v) => v && update((p) => (v === "list" ? p.set("view", "list") : p.delete("view")))}
           className="hidden sm:flex"
         >
-          <ToggleGroupItem value="grid" aria-label="Grid view">
+          <ToggleGroupItem value="grid" aria-label={t("view.grid")}>
             <LayoutGrid className="h-4 w-4" />
           </ToggleGroupItem>
-          <ToggleGroupItem value="list" aria-label="List view">
+          <ToggleGroupItem value="list" aria-label={t("view.list")}>
             <List className="h-4 w-4" />
           </ToggleGroupItem>
         </ToggleGroup>
@@ -262,6 +296,7 @@ export function DealsToolbar() {
 }
 
 export function SaveSearchButton({ summary }: { summary: string }) {
+  const t = useT("deals");
   const router = useRouter();
   const params = useSearchParams();
   const [pending, start] = useTransition();
@@ -274,13 +309,13 @@ export function SaveSearchButton({ summary }: { summary: string }) {
         start(async () => {
           const res = await saveSearch(summary, params.toString());
           if (res.needsAuth) {
-            toast("Sign in to save searches and get alerts.");
+            toast(t("saveSearch.needsAuth"));
             router.push(`/login?next=${encodeURIComponent(`/deals?${params.toString()}`)}`);
-          } else toast.success("Search saved to your dashboard");
+          } else toast.success(t("saveSearch.saved"));
         })
       }
     >
-      <Bell /> Save search
+      <Bell /> {t("saveSearch.button")}
     </Button>
   );
 }

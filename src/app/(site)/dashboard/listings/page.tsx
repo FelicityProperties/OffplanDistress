@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertCircle, Eye, FileText, Heart, MessageSquare, Pencil, Plus } from "lucide-react";
 import { DealImage } from "@/components/DealImage";
@@ -6,29 +7,37 @@ import { ListingActions } from "@/components/ListingActions";
 import { Pipeline } from "@/components/Pipeline";
 import { ToneStatus } from "@/components/badges";
 import { Button } from "@/components/ui/button";
+import { getLocale, getT } from "@/i18n/server";
+import type { TKey } from "@/i18n/translator";
 import { requireUser } from "@/lib/auth";
-import { LISTING_STATUS, UNIT_TYPES } from "@/lib/config";
+import { COMMUNITIES, LISTING_STATUS } from "@/lib/config";
 import { myListings } from "@/lib/dashboard";
-import { formatAED, refCode } from "@/lib/format";
+import { formatAED, formatNumber, refCode } from "@/lib/format";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("dashboard");
+  return { title: t("listings.title"), robots: { index: false } };
+}
 
 export default async function MyListingsPage() {
   const user = await requireUser("/dashboard/listings");
-  const listings = await myListings(user.id);
+  const [listings, t, tc, locale] = await Promise.all([myListings(user.id), getT("dashboard"), getT("common"), getLocale()]);
+  const community = (c: string) => (COMMUNITIES.includes(c) ? tc(`community.${c}` as TKey<"common">) : c);
 
   return (
     <div className="space-y-6">
-      <PageTitle title="My listings" sub="Every unit you've listed with us and where it is in the process.">
+      <PageTitle title={t("listings.title")} sub={t("listings.sub")}>
         <Button asChild>
           <Link href="/sell">
-            <Plus /> List a unit
+            <Plus /> {t("listings.listUnit")}
           </Link>
         </Button>
       </PageTitle>
 
       {listings.length === 0 && (
-        <EmptyState title="You haven't listed a unit yet" sub="Listing is free. You only pay if we sell it.">
+        <EmptyState title={t("listings.emptyTitle")} sub={t("listings.emptySub")}>
           <Button asChild>
-            <Link href="/sell">List my unit</Link>
+            <Link href="/sell">{t("listMyUnit")}</Link>
           </Button>
         </EmptyState>
       )}
@@ -45,10 +54,11 @@ export default async function MyListingsPage() {
                   {l.projectName}
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  {refCode(l.refNo)} · {UNIT_TYPES[l.unitType]} · {l.community} · {formatAED(l.askingPrice)}
+                  <bdi>{refCode(l.refNo)}</bdi> · {tc(`unit.${l.unitType}`)} · {community(l.community)} ·{" "}
+                  {formatAED(l.askingPrice, locale)}
                 </p>
               </div>
-              <ToneStatus {...LISTING_STATUS[l.status]} />
+              <ToneStatus label={tc(`listing.${l.status}`)} tone={LISTING_STATUS[l.status].tone} />
             </div>
             <Pipeline status={l.status} />
             {l.status === "rejected" && l.rejectionReason && (
@@ -58,29 +68,29 @@ export default async function MyListingsPage() {
             )}
             {l.status === "pending_review" && l.docs === 0 && (
               <p className="flex items-start gap-2 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning">
-                <FileText className="mt-0.5 h-4 w-4 shrink-0" /> Upload your SPA and statement of account so we can verify
-                the unit.
+                <FileText className="mt-0.5 h-4 w-4 shrink-0" /> {t("listings.uploadDocs")}
               </p>
             )}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex gap-4 text-xs text-muted-foreground tabular">
                 <span className="inline-flex items-center gap-1">
                   <Eye className="h-3.5 w-3.5" />
-                  {l.views.toLocaleString("en-AE")} views
+                  {t(l.views === 1 ? "listings.views.one" : "listings.views.other", { n: formatNumber(l.views) })}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Heart className="h-3.5 w-3.5" />
-                  {l.watchers} watchers
+                  {t(l.watchers === 1 ? "listings.watchers.one" : "listings.watchers.other", { n: l.watchers })}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <MessageSquare className="h-3.5 w-3.5" />
-                  {l.offers} offers{l.pendingOffers ? ` (${l.pendingOffers} new)` : ""}
+                  {t(l.offers === 1 ? "listings.offers.one" : "listings.offers.other", { n: l.offers })}
+                  {l.pendingOffers ? t("listings.newOffers", { n: l.pendingOffers }) : ""}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" asChild>
                   <Link href={`/dashboard/listings/${l.id}`}>
-                    <Pencil /> Manage
+                    <Pencil /> {tc("manage")}
                   </Link>
                 </Button>
                 <ListingActions id={l.id} status={l.status} />

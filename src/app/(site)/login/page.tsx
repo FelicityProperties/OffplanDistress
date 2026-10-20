@@ -3,34 +3,32 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthShell } from "@/components/AuthShell";
 import { LoginForm } from "@/components/auth/AuthForms";
+import { getT } from "@/i18n/server";
 import { getCurrentUser, safeNext } from "@/lib/auth";
 import { BRAND } from "@/lib/config";
 
-export const metadata: Metadata = { title: "Log in", description: "Log in to manage your listings, offers and watchlist." };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("auth");
+  return { title: t("meta.login.title"), description: t("meta.login.description") };
+}
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { next } = await searchParams;
   const target = safeNext(next, "");
   if (await getCurrentUser()) redirect(target || "/dashboard");
+  const t = await getT("auth");
 
   return (
-    <AuthShell title="Welcome back" sub={`Log in to your ${BRAND.name} account.`}>
+    <AuthShell title={t("login.title")} sub={t("login.sub", { brand: BRAND.name })}>
       <LoginForm next={target || undefined} />
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        New here?{" "}
+        {t("login.newHere")}{" "}
         <Link
           href={target ? `/signup?next=${encodeURIComponent(target)}` : "/signup"}
           className="font-medium text-foreground underline-offset-4 hover:underline"
         >
-          Create an account
+          {t("login.createAccount")}
         </Link>
-      </p>
-      <p className="mt-2 text-center text-xs text-muted-foreground">
-        Forgot your password?{" "}
-        <Link href="/contact" className="underline-offset-4 hover:underline">
-          Contact us
-        </Link>{" "}
-        and we&apos;ll reset it.
       </p>
     </AuthShell>
   );

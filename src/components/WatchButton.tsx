@@ -6,6 +6,7 @@ import { Heart } from "lucide-react";
 import { toast } from "sonner";
 import { toggleWatch } from "@/app/actions/market";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
 export function WatchButton({
@@ -19,6 +20,7 @@ export function WatchButton({
   variant?: "icon" | "full";
   className?: string;
 }) {
+  const tc = useT("common");
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
@@ -31,23 +33,23 @@ export function WatchButton({
       setOptimistic(!optimistic);
       const res = await toggleWatch(listingId);
       if (res.needsAuth) {
-        toast("Create a free account to save deals to your watchlist.");
+        toast(tc("watchlistNeedsAuth"));
         router.push(`/login?next=${encodeURIComponent(pathname)}`);
       } else if (res.error) {
         toast.error(res.error);
       } else if (res.watching) {
-        toast.success("Added to your watchlist");
+        toast.success(tc("watchlistAdded"));
       }
     });
   }
 
-  const label = optimistic ? "Remove from watchlist" : "Add to watchlist";
+  const label = optimistic ? tc("removeFromWatchlist") : tc("addToWatchlist");
 
   if (variant === "full") {
     return (
       <Button type="button" variant="outline" onClick={onClick} disabled={pending} className={className}>
         <Heart className={cn(optimistic && "fill-destructive text-destructive")} />
-        {optimistic ? "On your watchlist" : "Add to watchlist"}
+        {optimistic ? tc("onWatchlist") : tc("addToWatchlist")}
       </Button>
     );
   }

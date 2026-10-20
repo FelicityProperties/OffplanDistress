@@ -14,8 +14,10 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { db } from "@/db";
 import { listings } from "@/db/schema";
+import { getLocale, getT } from "@/i18n/server";
+import type { TFn, TKey } from "@/i18n/translator";
 import { getCurrentUser } from "@/lib/auth";
-import { BRAND, FEES, PUBLIC_STATUSES, UNIT_TYPES } from "@/lib/config";
+import { BRAND, FEES, PUBLIC_STATUSES } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAED, formatDate, formatPct, formatQuarter, parseRefCode, refCode } from "@/lib/format";
 import { getListingByRef, similarDeals, watchedIds } from "@/lib/listings";
@@ -26,15 +28,35 @@ async function load(ref: string) {
   return getListingByRef(refNo);
 }
 
+/** Arabic/English community name; unknown names are shown as entered. */
+function communityName(tc: TFn<"common">, name: string) {
+  const key = `community.${name}` as TKey<"common">;
+  const label = tc(key);
+  return label === key ? name : label;
+}
+
+function developerName(tc: TFn<"common">, name: string) {
+  return name === "Other" ? tc("developer.Other") : name;
+}
+
 export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): Promise<Metadata> {
   const { ref } = await params;
-  const row = await load(ref);
-  if (!row || !PUBLIC_STATUSES.includes(row.listing.status)) return { title: "Deal unavailable", robots: { index: false } };
+  const [row, t, tc, locale] = await Promise.all([load(ref), getT("deal"), getT("common"), getLocale()]);
+  if (!row || !PUBLIC_STATUSES.includes(row.listing.status)) return { title: t("meta.unavailable"), robots: { index: false } };
   const l = row.listing;
   const a = analyzeDeal(l);
-  const pct = a.discountVsLaunch && a.discountVsLaunch > 0 ? ` — ${Math.round(a.discountVsLaunch * 100)}% below launch` : "";
-  const title = `${UNIT_TYPES[l.unitType]} in ${l.projectName}${pct}`;
-  const description = `${l.developer}, ${l.community}. ${formatPct(a.paidPct)} paid, handover ${formatQuarter(l.handoverDate)}. Take over the payment plan for ${formatAED(l.askingPrice)} upfront.`;
+  const vars = { unit: tc(`unit.${l.unitType}`), project: l.projectName };
+  const title =
+    a.discountVsLaunch && a.discountVsLaunch > 0
+      ? t("meta.titleDiscount", { ...vars, pct: Math.round(a.discountVsLaunch * 100) })
+      : t("meta.title", vars);
+  const description = t("meta.description", {
+    developer: developerName(tc, l.developer),
+    community: communityName(tc, l.community),
+    paid: formatPct(a.paidPct),
+    handover: formatQuarter(l.handoverDate, locale),
+    upfront: formatAED(l.askingPrice, locale),
+  });
   return {
     title,
     description,
@@ -55,49 +77,57 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     after(() => db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, l.id)));
   }
 
-  const [similar, watched] = await Promise.all([similarDeals(l), watchedIds(user?.id)]);
+  const [similar, watched, t, tc, locale] = await Promise.all([
+    similarDeals(l),
+    watchedIds(user?.id),
+    getT("deal"),
+    getT("common"),
+    getLocale(),
+  ]);
   const a = analyzeDeal(l);
+  const community = communityName(tc, l.community);
+  const developer = developerName(tc, l.developer);
   const discountPct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
   const plan = l.paymentPlan ?? [];
   const loginHref = `/login?next=${encodeURIComponent(`/deals/${refCode(l.refNo)}`)}`;
 
   const cost: [string, number][] = [
-    ["Asking price (seller equity)", l.askingPrice],
-    ["Remaining balance to developer", a.remaining],
+    [t("cost.asking"), l.askingPrice],
+    [t("cost.remaining"), a.remaining],
     ...(FEES.payer === "buyer"
       ? ([
-          [`${BRAND.name} fee (2%)`, a.commission],
-          ["VAT on fee (5%)", a.vat],
+          [t("cost.fee", { brand: BRAND.name, rate: formatPct(FEES.commissionRate) }), a.commission],
+          [t("cost.vat", { rate: formatPct(FEES.vatRate) }), a.vat],
         ] as [string, number][])
       : []),
-    ["DLD transfer fee (4%)", a.dld],
-    ["DLD registration & trustee fees (est.)", a.dldAdmin],
-    ["Developer NOC / admin (est.)", a.noc],
+    [t("cost.dld", { rate: formatPct(FEES.dldRate) }), a.dld],
+    [t("cost.dldAdmin"), a.dldAdmin],
+    [t("cost.noc"), a.noc],
   ];
 
   return (
     <div className="container-page py-8">
       <Link href="/deals" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" />
-        Back to deals
+        <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
+        {t("back")}
       </Link>
 
       {l.status !== "live" && (
         <div className="mt-4 rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-foreground">
           {PUBLIC_STATUSES.includes(l.status)
-            ? "The seller has accepted an offer on this unit. You can still save it or send a backup offer."
-            : `Only you can see this page — the listing is currently “${l.status.replace(/_/g, " ")}”.`}
+            ? t("banner.underOffer")
+            : t("banner.private", { status: tc(`listing.${l.status}`) })}
         </div>
       )}
 
       <Gallery
         images={l.images}
-        alt={`${l.projectName}, ${l.community}`}
+        alt={`${l.projectName}, ${community}`}
         badge={
           <div className="absolute start-4 top-4 flex gap-2">
             {discountPct != null && (
               <span className="rounded-full bg-success px-3 py-1 text-sm font-semibold text-success-foreground tabular">
-                −{discountPct}% vs launch
+                {tc("vsLaunch", { pct: discountPct })}
               </span>
             )}
             {l.isSample && <SampleBadge className="self-center" />}
@@ -108,32 +138,33 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
       <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px]">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-semibold uppercase tracking-wide text-muted-foreground">{l.developer}</span>
+            <span className="font-semibold uppercase tracking-wide text-muted-foreground">{developer}</span>
             {l.verified && (
               <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-medium text-success">
                 <BadgeCheck className="h-3.5 w-3.5" />
-                SPA & payment history verified
+                {t("badge.verified")}
               </span>
             )}
-            {l.nocEligible && <StatusPill tone="gold">NOC eligible</StatusPill>}
+            {l.nocEligible && <StatusPill tone="gold">{t("badge.nocEligible")}</StatusPill>}
             <MotivationBadge m={l.motivation} />
           </div>
           <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">{l.projectName}</h1>
           <p className="mt-1 text-muted-foreground">
-            {l.community} · {UNIT_TYPES[l.unitType]} · {l.sizeSqft.toLocaleString("en-AE")} sqft
-            {l.floor ? ` · Floor ${l.floor}` : ""}
+            {community} · {tc(`unit.${l.unitType}`)} · {tc("sqft", { n: l.sizeSqft.toLocaleString("en-AE") })}
+            {l.floor ? ` · ${tc("floor", { n: l.floor })}` : ""}
           </p>
           <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
             <Eye className="h-4 w-4" />
-            {row.watchers} {row.watchers === 1 ? "person" : "people"} watching · Ref {refCode(l.refNo)}
+            {t(row.watchers === 1 ? "watchers.one" : "watchers.many", { n: row.watchers })} · {t("ref")}{" "}
+            <bdi className="tabular">{refCode(l.refNo)}</bdi>
           </p>
 
           <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
             {[
-              ["View", l.view || "—"],
-              ["Handover", formatQuarter(l.handoverDate)],
-              ["Original price", formatAED(l.originalPrice)],
-              ["Launch price today", l.launchPrice ? formatAED(l.launchPrice) : "Being assessed"],
+              [t("facts.view"), l.view || "—"],
+              [tc("handover"), formatQuarter(l.handoverDate, locale)],
+              [t("facts.originalPrice"), formatAED(l.originalPrice, locale)],
+              [t("facts.launchPrice"), l.launchPrice ? formatAED(l.launchPrice, locale) : t("facts.beingAssessed")],
             ].map(([k, v]) => (
               <div key={k} className="bg-card p-4">
                 <p className="text-xs text-muted-foreground">{k}</p>
@@ -145,21 +176,29 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           {l.description && <p className="mt-8 whitespace-pre-line leading-relaxed text-muted-foreground">{l.description}</p>}
 
           <section className="mt-10">
-            <h2 className="text-2xl font-semibold">Payment plan</h2>
+            <h2 className="text-2xl font-semibold">{t("plan.title")}</h2>
             <div className="mt-4 rounded-xl border bg-card p-5 shadow-card">
               <div className="flex flex-wrap justify-between gap-2 text-sm">
                 <span>
-                  Paid to developer <span className="font-semibold tabular">{formatAED(l.amountPaid)}</span>
+                  {t("plan.paid")} <span className="font-semibold tabular">{formatAED(l.amountPaid, locale)}</span>
                 </span>
                 <span className="text-muted-foreground">
-                  Remaining <span className="font-semibold text-foreground tabular">{formatAED(a.remaining)}</span>
+                  {t("plan.remaining")}{" "}
+                  <span className="font-semibold text-foreground tabular">{formatAED(a.remaining, locale)}</span>
                 </span>
               </div>
               <Progress value={Math.round(a.paidPct * 100)} className="mt-3 h-3" />
               <p className="mt-2 text-xs text-muted-foreground tabular">
-                {formatPct(a.paidPct)} paid
+                {t("plan.paidPct", { pct: formatPct(a.paidPct) })}
                 {l.nextInstalmentDate &&
-                  ` · Next instalment ${l.nextInstalmentAmount ? formatAED(l.nextInstalmentAmount) : ""} on ${formatDate(l.nextInstalmentDate)}`}
+                  ` · ${
+                    l.nextInstalmentAmount
+                      ? t("plan.nextWithAmount", {
+                          amount: formatAED(l.nextInstalmentAmount, locale),
+                          date: formatDate(l.nextInstalmentDate, locale),
+                        })
+                      : t("plan.nextOn", { date: formatDate(l.nextInstalmentDate, locale) })
+                  }`}
               </p>
             </div>
             {plan.length > 0 && (
@@ -167,17 +206,17 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Milestone</TableHead>
-                      <TableHead>Due</TableHead>
-                      <TableHead className="text-end">Amount</TableHead>
+                      <TableHead>{t("plan.milestone")}</TableHead>
+                      <TableHead>{t("plan.due")}</TableHead>
+                      <TableHead className="text-end">{t("plan.amount")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {plan.map((s, i) => (
                       <TableRow key={`${s.label}-${i}`}>
                         <TableCell className="font-medium">{s.label}</TableCell>
-                        <TableCell className="text-muted-foreground">{formatDate(s.dueDate)}</TableCell>
-                        <TableCell className="text-end tabular">{formatAED(s.amount)}</TableCell>
+                        <TableCell className="text-muted-foreground">{formatDate(s.dueDate, locale)}</TableCell>
+                        <TableCell className="text-end tabular">{formatAED(s.amount, locale)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -187,23 +226,23 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           </section>
 
           <section className="mt-10">
-            <h2 className="text-2xl font-semibold">True cost to you</h2>
+            <h2 className="text-2xl font-semibold">{t("cost.title")}</h2>
             <div className="mt-4 rounded-xl border bg-card p-5 shadow-card">
               <dl className="space-y-2.5 text-sm">
                 {cost.map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-4">
                     <dt className="text-muted-foreground">{k}</dt>
-                    <dd className="tabular">{formatAED(v)}</dd>
+                    <dd className="tabular">{formatAED(v, locale)}</dd>
                   </div>
                 ))}
                 <div className="flex justify-between border-t pt-2.5 font-semibold">
-                  <dt>Total all-in</dt>
-                  <dd className="tabular">{formatAED(a.totalCost)}</dd>
+                  <dt>{t("cost.total")}</dt>
+                  <dd className="tabular">{formatAED(a.totalCost, locale)}</dd>
                 </div>
                 {a.launchAllIn != null && (
                   <div className="flex justify-between gap-4 text-muted-foreground">
-                    <dt>Buying new from the developer today (incl. 4% DLD)</dt>
-                    <dd className="tabular">{formatAED(a.launchAllIn)}</dd>
+                    <dt>{t("cost.launchAllIn", { rate: formatPct(FEES.dldRate) })}</dt>
+                    <dd className="tabular">{formatAED(a.launchAllIn, locale)}</dd>
                   </div>
                 )}
               </dl>
@@ -211,13 +250,13 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 <div className="mt-4 flex items-center justify-between rounded-lg bg-success-soft px-4 py-3 text-success">
                   <span className="inline-flex items-center gap-2 font-semibold">
                     <TrendingDown className="h-5 w-5" />
-                    Your net saving
+                    {t("cost.saving")}
                   </span>
-                  <span className="text-xl font-semibold tabular">{formatAED(a.savingVsLaunch)}</span>
+                  <span className="text-xl font-semibold tabular">{formatAED(a.savingVsLaunch, locale)}</span>
                 </div>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
-                DLD and developer fees are estimates and are confirmed when the NOC is issued.
+                {t("cost.disclaimer")}
               </p>
             </div>
           </section>
@@ -225,15 +264,15 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
 
         <aside>
           <div className="sticky top-24 rounded-2xl border bg-card p-6 shadow-lift">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Pay seller now</p>
-            <p className="mt-1 text-3xl font-semibold tabular">{formatAED(l.askingPrice)}</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("side.payNow")}</p>
+            <p className="mt-1 text-3xl font-semibold tabular">{formatAED(l.askingPrice, locale)}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              then {formatAED(a.remaining)} to {l.developer} per plan
+              {t("side.thenPlan", { amount: formatAED(a.remaining, locale), developer })}
             </p>
             {l.nextInstalmentDate && (
               <div className="mt-4 flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
                 <CalendarClock className="h-4 w-4 text-gold" />
-                Next instalment {formatDate(l.nextInstalmentDate)}
+                {t("side.nextInstalment", { date: formatDate(l.nextInstalmentDate, locale) })}
               </div>
             )}
             <div className="mt-6 grid gap-2">
@@ -243,7 +282,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 asking={l.askingPrice}
                 signedIn={!!user}
                 loginHref={loginHref}
-                disabledReason={isOwner ? "This is your listing" : l.isSample ? "Sample listing" : undefined}
+                disabledReason={isOwner ? t("offer.ownListing") : l.isSample ? t("offer.sampleListing") : undefined}
               />
               <WatchButton listingId={l.id} watching={watched.has(l.id)} variant="full" className="h-12" />
               <InquiryDialog
@@ -254,7 +293,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
             </div>
             <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
               <FileCheck2 className="h-4 w-4 shrink-0 text-gold" />
-              2% + VAT, charged only on successful transfer. We handle the NOC, assignment and DLD paperwork.
+              {t("side.feeNote")}
             </p>
           </div>
         </aside>
@@ -262,7 +301,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
 
       {similar.length > 0 && (
         <section className="mt-16">
-          <h2 className="text-2xl font-semibold">Similar deals</h2>
+          <h2 className="text-2xl font-semibold">{t("similar")}</h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {similar.map((s) => (
               <DealCard key={s.id} deal={s} watching={watched.has(s.id)} />

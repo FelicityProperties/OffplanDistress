@@ -3,28 +3,30 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthShell } from "@/components/AuthShell";
 import { SignupForm } from "@/components/auth/AuthForms";
+import { getT } from "@/i18n/server";
 import { getCurrentUser, safeNext } from "@/lib/auth";
 
-export const metadata: Metadata = {
-  title: "Create an account",
-  description: "Join as a buyer, seller or both to access verified distressed off-plan deals in Dubai.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("auth");
+  return { title: t("meta.signup.title"), description: t("meta.signup.description") };
+}
 
 export default async function SignupPage({ searchParams }: PageProps<"/signup">) {
   const { next, intent } = await searchParams;
   const target = safeNext(next, "");
   if (await getCurrentUser()) redirect(target || "/dashboard");
+  const [t, tc] = await Promise.all([getT("auth"), getT("common")]);
 
   return (
-    <AuthShell title="Create your account" sub="It takes under a minute. Free for buyers and sellers.">
+    <AuthShell title={t("signup.title")} sub={t("signup.sub")}>
       <SignupForm next={target || undefined} intent={typeof intent === "string" ? intent : undefined} />
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t("signup.haveAccount")}{" "}
         <Link
           href={target ? `/login?next=${encodeURIComponent(target)}` : "/login"}
           className="font-medium text-foreground underline-offset-4 hover:underline"
         >
-          Log in
+          {tc("logIn")}
         </Link>
       </p>
     </AuthShell>

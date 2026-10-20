@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { files, listings } from "@/db/schema";
+import { getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 import { FILE_KINDS, MAX_UPLOAD_BYTES } from "@/lib/config";
 
@@ -9,8 +10,8 @@ const ALLOWED = new Set(["application/pdf", "image/jpeg", "image/png", "image/we
 
 export async function POST(request: Request, ctx: RouteContext<"/api/listings/[id]/files">) {
   const { id } = await ctx.params;
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Please sign in." }, { status: 401 });
+  const [user, t] = await Promise.all([getCurrentUser(), getT("sell")]);
+  if (!user) return NextResponse.json({ error: t("upload.signIn") }, { status: 401 });
 
   const [listing] = await db
     .select({ sellerId: listings.sellerId, images: listings.images })
@@ -18,22 +19,22 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
     .where(eq(listings.id, id))
     .limit(1);
   if (!listing || (listing.sellerId !== user.id && user.role !== "admin")) {
-    return NextResponse.json({ error: "Listing not found." }, { status: 404 });
+    return NextResponse.json({ error: t("upload.notFound") }, { status: 404 });
   }
 
   const form = await request.formData();
   const file = form.get("file");
   const kind = String(form.get("kind") ?? "other");
-  if (!(file instanceof File)) return NextResponse.json({ error: "No file received." }, { status: 400 });
-  if (!(kind in FILE_KINDS)) return NextResponse.json({ error: "Unknown document type." }, { status: 400 });
+  if (!(file instanceof File)) return NextResponse.json({ error: t("upload.noFile") }, { status: 400 });
+  if (!(kind in FILE_KINDS)) return NextResponse.json({ error: t("upload.unknownKind") }, { status: 400 });
   if (file.size > MAX_UPLOAD_BYTES) {
-    return NextResponse.json({ error: `${file.name} is larger than 4 MB.` }, { status: 413 });
+    return NextResponse.json({ error: t("upload.tooLarge", { name: file.name }) }, { status: 413 });
   }
   if (!ALLOWED.has(file.type)) {
-    return NextResponse.json({ error: `${file.name}: upload a PDF, JPG, PNG or WebP.` }, { status: 415 });
+    return NextResponse.json({ error: t("upload.badType", { name: file.name }) }, { status: 415 });
   }
   if (kind === "photo" && !file.type.startsWith("image/")) {
-    return NextResponse.json({ error: "Photos must be images." }, { status: 415 });
+    return NextResponse.json({ error: t("upload.photoOnly") }, { status: 415 });
   }
 
   const [row] = await db

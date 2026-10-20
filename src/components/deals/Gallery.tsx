@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { DealImage } from "@/components/DealImage";
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
 export function Gallery({ images, alt, badge }: { images: string[]; alt: string; badge?: React.ReactNode }) {
+  const t = useT("deals");
   const [img, setImg] = useState(0);
   const thumbs = images.slice(0, 4);
   return (
@@ -20,7 +22,7 @@ export function Gallery({ images, alt, badge }: { images: string[]; alt: string;
               key={src}
               type="button"
               onClick={() => setImg(i)}
-              aria-label={`Show photo ${i + 1}`}
+              aria-label={t("gallery.showPhoto", { n: i + 1 })}
               className={cn(
                 "aspect-[4/3] flex-1 overflow-hidden rounded-xl ring-2 ring-transparent transition",
                 img === i && "ring-gold",
