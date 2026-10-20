@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { PageTitle } from "@/components/Kpi";
 import { SampleBadge } from "@/components/badges";
+import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
-import { LISTING_STATUS, UNIT_TYPES, type ListingStatusKey } from "@/lib/config";
+import { type ListingStatusKey } from "@/lib/config";
 import { adminListings } from "@/lib/admin";
 import { formatAEDCompact, refCode } from "@/lib/format";
 
@@ -10,18 +11,18 @@ const COLUMNS: ListingStatusKey[] = ["pending_review", "live", "under_offer", "n
 
 export default async function PipelinePage() {
   await requireAdmin();
-  const all = await adminListings();
+  const [all, t, tc, locale] = await Promise.all([adminListings(), getT("admin"), getT("common"), getLocale()]);
 
   return (
     <div className="space-y-6">
-      <PageTitle title="Deals pipeline" sub="Every listing by stage. Open one to move it forward." />
+      <PageTitle title={t("pipeline.title")} sub={t("pipeline.sub")} />
       <div className="flex gap-4 overflow-x-auto pb-4">
         {COLUMNS.map((stage) => {
           const items = all.filter((l) => l.status === stage);
           return (
             <div key={stage} className="w-60 shrink-0 rounded-xl bg-secondary p-3">
               <p className="mb-3 flex items-center justify-between text-sm font-semibold">
-                {LISTING_STATUS[stage].label}
+                {tc(`listing.${stage}`)}
                 <span className="text-xs text-muted-foreground tabular">{items.length}</span>
               </p>
               <div className="space-y-2">
@@ -29,15 +30,15 @@ export default async function PipelinePage() {
                   <Link key={l.id} href={`/admin/listings/${l.id}`} className="block rounded-lg border bg-card p-3 text-sm shadow-card hover:border-gold">
                     <p className="line-clamp-1 font-medium">{l.projectName}</p>
                     <p className="text-xs text-muted-foreground tabular">
-                      {refCode(l.refNo)} · {formatAEDCompact(l.askingPrice)} · {UNIT_TYPES[l.unitType]}
+                      <bdi>{refCode(l.refNo)}</bdi> · {formatAEDCompact(l.askingPrice, locale)} · {tc(`unit.${l.unitType}`)}
                     </p>
                     <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                      {l.offers} offers · {l.watchers} watching
+                      {t("pipeline.counts", { offers: l.offers, watchers: l.watchers })}
                       {l.isSample && <SampleBadge />}
                     </p>
                   </Link>
                 ))}
-                {items.length === 0 && <p className="px-1 text-xs text-muted-foreground">Empty</p>}
+                {items.length === 0 && <p className="px-1 text-xs text-muted-foreground">{t("pipeline.empty")}</p>}
               </div>
             </div>
           );

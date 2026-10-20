@@ -12,6 +12,7 @@ import {
   Inbox,
   LayoutDashboard,
   MessageSquare,
+  SearchCheck,
   UserRound,
   Users,
   type LucideIcon,
@@ -23,7 +24,9 @@ const ICONS = {
   listings: Building2,
   offers: Gavel,
   watchlist: Heart,
-  searches: Bell,
+  // Saved searches get their own glyph so they don't read as a second notifications item.
+  searches: SearchCheck,
+  bell: Bell,
   profile: UserRound,
   queue: ClipboardCheck,
   inquiries: MessageSquare,

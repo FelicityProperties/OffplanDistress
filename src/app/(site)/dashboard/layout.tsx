@@ -1,33 +1,45 @@
 import type { Metadata } from "next";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { AppShell } from "@/components/AppShell";
 import { db } from "@/db";
-import { listings, offers } from "@/db/schema";
+import { listings, notifications, offers } from "@/db/schema";
+import { getT } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 
-export const metadata: Metadata = { title: "My account", robots: { index: false } };
+export async function generateMetadata(): Promise<Metadata> {
+  const tc = await getT("common");
+  return { title: tc("myAccount"), robots: { index: false } };
+}
 
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
   const user = await requireUser("/dashboard");
-  const [counts] = await db
-    .select({
-      listings: sql<number>`count(distinct ${listings.id})::int`,
-      pendingOffers: sql<number>`count(${offers.id}) filter (where ${offers.status} = 'pending')::int`,
-    })
-    .from(listings)
-    .leftJoin(offers, eq(offers.listingId, listings.id))
-    .where(and(eq(listings.sellerId, user.id)));
+  const [[counts], [notif], t] = await Promise.all([
+    db
+      .select({
+        listings: sql<number>`count(distinct ${listings.id})::int`,
+        pendingOffers: sql<number>`count(${offers.id}) filter (where ${offers.status} = 'pending')::int`,
+      })
+      .from(listings)
+      .leftJoin(offers, eq(offers.listingId, listings.id))
+      .where(and(eq(listings.sellerId, user.id))),
+    db
+      .select({ unread: sql<number>`count(*)::int` })
+      .from(notifications)
+      .where(and(eq(notifications.userId, user.id), isNull(notifications.readAt))),
+    getT("notifications"),
+  ]);
 
   return (
     <AppShell
-      title={`Hi, ${user.fullName.split(" ")[0]}`}
+      title={t("shell.greeting", { name: user.fullName.split(" ")[0] })}
       items={[
-        { href: "/dashboard", label: "Overview", icon: "overview", exact: true },
-        { href: "/dashboard/listings", label: "My listings", icon: "listings", count: counts?.listings },
-        { href: "/dashboard/offers", label: "Offers", icon: "offers", count: counts?.pendingOffers },
-        { href: "/dashboard/watchlist", label: "Watchlist", icon: "watchlist" },
-        { href: "/dashboard/searches", label: "Saved searches", icon: "searches" },
-        { href: "/dashboard/profile", label: "Profile & KYC", icon: "profile" },
+        { href: "/dashboard", label: t("shell.overview"), icon: "overview", exact: true },
+        { href: "/dashboard/listings", label: t("shell.listings"), icon: "listings", count: counts?.listings },
+        { href: "/dashboard/offers", label: t("shell.offers"), icon: "offers", count: counts?.pendingOffers },
+        { href: "/dashboard/notifications", label: t("shell.notifications"), icon: "bell", count: notif?.unread },
+        { href: "/dashboard/watchlist", label: t("shell.watchlist"), icon: "watchlist" },
+        { href: "/dashboard/searches", label: t("shell.searches"), icon: "searches" },
+        { href: "/dashboard/profile", label: t("shell.profile"), icon: "profile" },
       ]}
     >
       {children}

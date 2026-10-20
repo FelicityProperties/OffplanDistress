@@ -1,17 +1,63 @@
 import Link from "next/link";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { LayoutDashboard, LogOut, Menu, ShieldCheck } from "lucide-react";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { Logo } from "@/components/Logo";
 import { NavLinks } from "@/components/NavLinks";
+import { NotificationBell, type BellItem } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { logout } from "@/app/actions/auth";
+import { db } from "@/db";
+import { notifications } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND } from "@/lib/config";
 
+const BELL_LIMIT = 8;
+
+/** Unread count + latest notifications for the header bell. A failure hides the bell rather than the header. */
+async function loadBell(userId: string): Promise<{ unread: number; items: BellItem[] } | null> {
+  try {
+    const [[count], latest] = await Promise.all([
+      db
+        .select({ unread: sql<number>`count(*)::int` })
+        .from(notifications)
+        .where(and(eq(notifications.userId, userId), isNull(notifications.readAt))),
+      db
+        .select({
+          id: notifications.id,
+          title: notifications.title,
+          body: notifications.body,
+          href: notifications.href,
+          readAt: notifications.readAt,
+          createdAt: notifications.createdAt,
+        })
+        .from(notifications)
+        .where(eq(notifications.userId, userId))
+        .orderBy(desc(notifications.createdAt))
+        .limit(BELL_LIMIT),
+    ]);
+    return {
+      unread: count?.unread ?? 0,
+      items: latest.map((n) => ({
+        id: n.id,
+        title: n.title,
+        body: n.body,
+        href: n.href,
+        read: n.readAt != null,
+        createdAt: n.createdAt.toISOString(),
+      })),
+    };
+  } catch (err) {
+    console.error("Loading notifications for the header failed", err);
+    return null;
+  }
+}
+
 export async function SiteHeader() {
-  const [user, t] = await Promise.all([getCurrentUser(), getT("common")]);
+  const [user, t, tn] = await Promise.all([getCurrentUser(), getT("common"), getT("notifications")]);
+  const bell = user ? await loadBell(user.id) : null;
   const firstName = user?.fullName.split(" ")[0];
   const nav = [
     { href: "/deals", label: t("browseDeals") },
@@ -38,6 +84,7 @@ export async function SiteHeader() {
                   </Link>
                 </Button>
               )}
+              {bell && <NotificationBell unread={bell.unread} items={bell.items} />}
               <Button asChild>
                 <Link href="/dashboard">
                   <LayoutDashboard /> {firstName ? t("accountOf", { name: firstName }) : t("myAccount")}
@@ -62,8 +109,20 @@ export async function SiteHeader() {
         </div>
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("openMenu")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative lg:hidden"
+              aria-label={
+                bell && bell.unread > 0
+                  ? `${t("openMenu")} (${tn("menu.hasUnread", { count: bell.unread })})`
+                  : t("openMenu")
+              }
+            >
               <Menu />
+              {bell && bell.unread > 0 && (
+                <span aria-hidden className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-gold ring-2 ring-background" />
+              )}
             </Button>
           </SheetTrigger>
           <SheetContent side="end" className="w-72">
@@ -76,6 +135,7 @@ export async function SiteHeader() {
                     <Button asChild>
                       <Link href="/dashboard">{t("myAccount")}</Link>
                     </Button>
+                    {bell && <NotificationBell variant="full" unread={bell.unread} items={bell.items} />}
                     {user.role === "admin" && (
                       <Button asChild variant="outline">
                         <Link href="/admin">{t("admin")}</Link>

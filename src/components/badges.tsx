@@ -1,9 +1,16 @@
+"use client";
+
+// Client module so the badges can read the visitor's language; every export takes plain, serialisable
+// props, so Server Components keep rendering them as before.
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils";
-import { MOTIVATION } from "@/lib/config";
+import type { MOTIVATION } from "@/lib/config";
 
 type Motivation = keyof typeof MOTIVATION;
 
-export function MotivationBadge({ m }: { m: Motivation }) {
+/** Seller-motivation chip. `label` overrides the translated text (optional, for callers that have their own). */
+export function MotivationBadge({ m, label }: { m: Motivation; label?: string }) {
+  const tc = useT("common");
   return (
     <span
       className={cn(
@@ -13,7 +20,7 @@ export function MotivationBadge({ m }: { m: Motivation }) {
         m === "flexible" && "bg-muted text-muted-foreground",
       )}
     >
-      {MOTIVATION[m].label}
+      {label ?? tc(`motivation.${m}`)}
     </span>
   );
 }
@@ -51,13 +58,15 @@ export function ToneStatus({ label, tone }: { label: string; tone: keyof typeof 
   return <StatusPill tone={TONE_MAP[tone]}>{label}</StatusPill>;
 }
 
-export function SampleBadge({ className }: { className?: string }) {
+/** "Sample" chip for illustrative listings. `label` overrides the translated text (optional). */
+export function SampleBadge({ className, label }: { className?: string; label?: string }) {
+  const tc = useT("common");
   return (
     <span
-      title="Illustrative listing to show how the marketplace works"
+      title={tc("sampleHint")}
       className={cn("rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground", className)}
     >
-      Sample
+      {label ?? tc("sample")}
     </span>
   );
 }

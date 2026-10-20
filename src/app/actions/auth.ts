@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { users } from "@/db/schema";
+import { getLocale, getT } from "@/i18n/server";
+import type { TFn } from "@/i18n/translator";
 import {
   createSession,
   destroySession,
@@ -17,30 +19,45 @@ import {
 
 export type FormState = { error?: string; fieldErrors?: Record<string, string[] | undefined>; ok?: boolean };
 
-const signupSchema = z.object({
-  fullName: z.string().trim().min(2, "Please enter your full name"),
-  email: z.string().trim().pipe(z.email("Enter a valid email")),
-  phone: z.string().trim().max(30).optional(),
-  password: z.string().min(8, "Use at least 8 characters"),
-  intent: z.enum(["buy", "sell", "both"]),
-});
+type T = TFn<"errors">;
+
+/** Messages for checks that don't carry their own, in the request's language. */
+function fallbackErrors(t: T): z.core.$ZodErrorMap {
+  return (iss) => {
+    if (iss.code === "too_big" && iss.origin === "string") return t("field.tooLong", { max: Number(iss.maximum) });
+    return t("field.invalid");
+  };
+}
+
+const signupSchema = (t: T) =>
+  z.object({
+    fullName: z.string(t("field.fullName")).trim().min(2, t("field.fullName")),
+    email: z.string(t("field.email")).trim().pipe(z.email(t("field.email"))),
+    phone: z.string().trim().max(30).optional(),
+    password: z.string(t("field.passwordMin")).min(8, t("field.passwordMin")),
+    intent: z.enum(["buy", "sell", "both"]),
+  });
 
 export async function signup(_prev: FormState, formData: FormData): Promise<FormState> {
-  const parsed = signupSchema.safeParse({
-    fullName: formData.get("fullName"),
-    email: formData.get("email"),
-    phone: formData.get("phone") || undefined,
-    password: formData.get("password"),
-    intent: formData.get("intent") || "both",
-  });
+  const t = await getT("errors");
+  const parsed = signupSchema(t).safeParse(
+    {
+      fullName: formData.get("fullName"),
+      email: formData.get("email"),
+      phone: formData.get("phone") || undefined,
+      password: formData.get("password"),
+      intent: formData.get("intent") || "both",
+    },
+    { error: fallbackErrors(t) },
+  );
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
   const { fullName, email, phone, password, intent } = parsed.data;
 
   if (isOwnerEmail(email)) {
-    return { fieldErrors: { email: ["This email is reserved. If it's yours, log in instead."] } };
+    return { fieldErrors: { email: [t("signup.reserved")] } };
   }
   if (await findUserByEmail(email)) {
-    return { fieldErrors: { email: ["An account with this email already exists — sign in instead."] } };
+    return { fieldErrors: { email: [t("signup.exists")] } };
   }
 
   const [user] = await db
@@ -51,6 +68,8 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
       phone: phone || null,
       passwordHash: await hashPassword(password),
       intent,
+      // Notifications and emails go out in the language the account was created in.
+      locale: await getLocale(),
     })
     .returning({ id: users.id });
 
@@ -59,18 +78,23 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
   redirect(safeNext(formData.get("next"), fallback));
 }
 
-const loginSchema = z.object({
-  email: z.string().trim().pipe(z.email("Enter a valid email")),
-  password: z.string().min(1, "Enter your password"),
-});
+const loginSchema = (t: T) =>
+  z.object({
+    email: z.string(t("field.email")).trim().pipe(z.email(t("field.email"))),
+    password: z.string(t("field.password")).min(1, t("field.password")),
+  });
 
 export async function login(_prev: FormState, formData: FormData): Promise<FormState> {
-  const parsed = loginSchema.safeParse({ email: formData.get("email"), password: formData.get("password") });
+  const t = await getT("errors");
+  const parsed = loginSchema(t).safeParse(
+    { email: formData.get("email"), password: formData.get("password") },
+    { error: fallbackErrors(t) },
+  );
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
 
   const user = await findUserByEmail(parsed.data.email);
   if (!user?.passwordHash || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
-    return { error: "Email or password is incorrect." };
+    return { error: t("login.invalid") };
   }
   const owner = isOwnerEmail(user.email);
   if (owner && user.role !== "admin") {

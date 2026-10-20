@@ -1,5 +1,13 @@
+import type { Locale } from "@/i18n/config";
+import type { Vars } from "@/i18n/define";
+import type { Namespace } from "@/i18n/messages";
+import { translator, type TKey } from "@/i18n/translator";
+import { formatAED } from "./format";
+
 // In-app + email copy for every notification, in each supported language.
-// {placeholders} are filled from the params passed to notify().
+// {placeholders} are filled from the params passed to notify(), resolved in each recipient's language.
+
+export type { Locale };
 
 type Copy = { title: string; body?: string; cta: string };
 type Template = { en: Copy; ar: Copy };
@@ -30,8 +38,8 @@ export const TEMPLATES = {
     ar: { title: "تم قبول عرضك على {project}", body: "قبل البائع مبلغ {amount}. سيتواصل معك فريق المعاملات لبدء إجراءات شهادة عدم الممانعة من المطوّر.", cta: "عرض عروضي" },
   },
   "offer.declined": {
-    en: { title: "Your offer on {project} was declined", body: "The seller declined {amount}. You can make a new offer while the unit is available.", cta: "View deal" },
-    ar: { title: "تم رفض عرضك على {project}", body: "رفض البائع مبلغ {amount}. يمكنك تقديم عرض جديد ما دامت الوحدة متاحة.", cta: "عرض الصفقة" },
+    en: { title: "Your offer on {project} was declined", body: "The seller declined {amount}. You can make a new offer while the unit is available.", cta: "View my offers" },
+    ar: { title: "تم رفض عرضك على {project}", body: "رفض البائع مبلغ {amount}. يمكنك تقديم عرض جديد ما دامت الوحدة متاحة.", cta: "عرض عروضي" },
   },
   "offer.countered": {
     en: { title: "Counter-offer on {project}: {amount}", body: "The seller countered your offer of {original} with {amount}.", cta: "Respond" },
@@ -53,6 +61,22 @@ export const TEMPLATES = {
     en: { title: "Deal agreed on {project} at {amount}", body: "Seller {seller}, buyer {buyer}. Start the developer NOC and move the listing to “NOC in progress”.", cta: "Open listing" },
     ar: { title: "تم الاتفاق على صفقة {project} بمبلغ {amount}", body: "البائع {seller}، المشتري {buyer}. ابدأ إجراءات شهادة عدم الممانعة وانقل الإعلان إلى «قيد إصدار عدم الممانعة».", cta: "فتح الإعلان" },
   },
+  "deal.noc_in_progress": {
+    en: { title: "NOC in progress for {project}", body: "We've applied to the developer for the NOC on {ref}. Next we'll book the DLD transfer at a trustee office and confirm the date with you.", cta: "View progress" },
+    ar: { title: "بدء إجراءات شهادة عدم الممانعة لـ {project}", body: "تقدّمنا إلى المطوّر بطلب شهادة عدم الممانعة للإعلان {ref}. سنحجز بعدها موعد نقل الملكية لدى مكتب أمين التسجيل ونؤكد معك الموعد.", cta: "متابعة التقدّم" },
+  },
+  "deal.transferred": {
+    en: { title: "Transfer complete: {project}", body: "The DLD transfer for {ref} is registered. Thank you for dealing with OffplanDistress.", cta: "View details" },
+    ar: { title: "اكتمل نقل الملكية: {project}", body: "تم تسجيل نقل ملكية {ref} لدى دائرة الأراضي والأملاك. شكراً لتعاملك مع OffplanDistress.", cta: "عرض التفاصيل" },
+  },
+  "kyc.requested.admin": {
+    en: { title: "Identity verification requested: {name}", body: "{name} ({email}) asked to verify their identity. Review their documents and update the KYC status.", cta: "Open users" },
+    ar: { title: "طلب التحقق من الهوية: {name}", body: "طلب {name} ({email}) التحقق من هويته. راجِع المستندات وحدّث حالة التحقق من الهوية.", cta: "فتح المستخدمين" },
+  },
+  "kyc.verified": {
+    en: { title: "Your identity is verified", body: "Our team has completed your KYC check. Your account now shows as verified.", cta: "View profile" },
+    ar: { title: "تم التحقق من هويتك", body: "أكمل فريقنا التحقق من هويتك، ويظهر حسابك الآن كحساب موثّق.", cta: "عرض الملف الشخصي" },
+  },
   "inquiry.received": {
     en: { title: "New {kind} from {name}", body: "{contact}\n{message}", cta: "Open inquiries" },
     ar: { title: "{kind} جديد من {name}", body: "{contact}\n{message}", cta: "فتح الاستفسارات" },
@@ -72,10 +96,28 @@ export const TEMPLATES = {
 } satisfies Record<string, Template>;
 
 export type TemplateKey = keyof typeof TEMPLATES;
-export type Locale = "en" | "ar";
 
-export function renderTemplate(key: TemplateKey, locale: Locale, params: Record<string, string | number>) {
+/** A word from a message namespace, translated for each recipient: { t: "errors", key: "notify.financing.cash" }. */
+export type TermParam = { [N in Namespace]: { t: N; key: TKey<N>; vars?: Vars } }[Namespace];
+
+/**
+ * One {placeholder} value. Plain strings/numbers are used as-is; { aed } is formatted as money and
+ * { t, key } is translated — both in the recipient's language.
+ */
+export type TemplateParam = string | number | null | undefined | { aed: number | null | undefined } | TermParam;
+export type TemplateParams = Record<string, TemplateParam>;
+
+export function resolveParam(p: TemplateParam, locale: Locale): string {
+  if (p == null) return "";
+  if (typeof p === "string" || typeof p === "number") return String(p);
+  if ("aed" in p) return formatAED(p.aed, locale);
+  return (translator(p.t, locale) as (key: string, vars?: Vars) => string)(p.key, p.vars);
+}
+
+export function renderTemplate(key: TemplateKey, locale: Locale, params: TemplateParams = {}) {
   const copy: Copy = TEMPLATES[key][locale] ?? TEMPLATES[key].en;
-  const fill = (s: string) => s.replace(/\{(\w+)\}/g, (_, k: string) => (params[k] != null ? String(params[k]) : ""));
+  const values: Record<string, string> = {};
+  for (const [k, v] of Object.entries(params)) values[k] = resolveParam(v, locale);
+  const fill = (s: string) => s.replace(/\{(\w+)\}/g, (_, k: string) => values[k] ?? "");
   return { title: fill(copy.title), body: copy.body ? fill(copy.body).trim() || null : null, cta: copy.cta };
 }

@@ -111,7 +111,8 @@ export function parseFilters(params: RawParams): DealFilters {
 
 export const PAGE_SIZE = 12;
 
-export async function searchDeals(f: DealFilters) {
+/** WHERE conditions for a set of deal filters: public listings matching every filter (sort/page ignored). */
+function dealConditions(f: DealFilters): SQL[] {
   const where: SQL[] = [inArray(listings.status, PUBLIC_STATUSES)];
   if (f.q) {
     const like = `%${f.q.replace(/[%_\\]/g, (m) => `\\${m}`)}%`;
@@ -135,6 +136,11 @@ export async function searchDeals(f: DealFilters) {
   if (f.handoverBy != null) where.push(lte(listings.handoverDate, `${f.handoverBy}-12-31`));
   if (f.minDiscount != null) where.push(sql`${discount} >= ${f.minDiscount / 100}`);
   if (f.verified) where.push(eq(listings.verified, true));
+  return where;
+}
+
+export async function searchDeals(f: DealFilters) {
+  const where = dealConditions(f);
 
   const order =
     f.sort === "cash"
@@ -154,6 +160,40 @@ export async function searchDeals(f: DealFilters) {
       .orderBy(...order, desc(listings.createdAt))
       .limit(PAGE_SIZE)
       .offset((f.page - 1) * PAGE_SIZE),
+    db.select({ total: sql<number>`count(*)::int` }).from(listings).where(condition),
+  ]);
+  return { rows: rows as ListingCard[], total };
+}
+
+/** Filters from a saved /deals query string ("community=Business+Bay&type=1br&type=2br"). */
+export function filtersFromQuery(query: string): DealFilters {
+  const grouped = new Map<string, string[]>();
+  for (const [k, v] of new URLSearchParams(query)) grouped.set(k, [...(grouped.get(k) ?? []), v]);
+  return parseFilters(Object.fromEntries([...grouped].map(([k, v]) => [k, v.length === 1 ? v[0] : v])));
+}
+
+const publishedOrCreated = sql`coalesce(${listings.publishedAt}, ${listings.createdAt})`;
+
+/**
+ * Live listings (no samples) matching the filters that went public after `since` — and, when given,
+ * no later than `until` — newest first, plus how many there are in total. Used by saved-search alerts.
+ */
+export async function newDealsSince(f: DealFilters, since: Date, opts: { until?: Date; limit?: number } = {}) {
+  const condition = and(
+    ...dealConditions(f),
+    eq(listings.status, "live"),
+    eq(listings.isSample, false),
+    // ISO strings + explicit cast: both database drivers (Neon HTTP, node-postgres) bind them the same way.
+    sql`${publishedOrCreated} > ${since.toISOString()}::timestamptz`,
+    opts.until ? sql`${publishedOrCreated} <= ${opts.until.toISOString()}::timestamptz` : undefined,
+  );
+  const [rows, [{ total }]] = await Promise.all([
+    db
+      .select(cardColumns)
+      .from(listings)
+      .where(condition)
+      .orderBy(desc(publishedOrCreated), desc(listings.createdAt))
+      .limit(opts.limit ?? 10),
     db.select({ total: sql<number>`count(*)::int` }).from(listings).where(condition),
   ]);
   return { rows: rows as ListingCard[], total };
