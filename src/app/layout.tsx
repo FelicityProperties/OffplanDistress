@@ -59,7 +59,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <I18nProvider locale={locale}>
           {children}
-          <Toaster position="top-center" richColors dir={dirOf(locale)} />
+          <Toaster
+            position="top-center"
+            richColors
+            dir={dirOf(locale)}
+            containerAriaLabel={locale === "ar" ? "الإشعارات" : "Notifications"}
+          />
         </I18nProvider>
       </body>
     </html>
