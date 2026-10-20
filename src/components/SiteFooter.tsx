@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { getT } from "@/i18n/server";
 import { BRAND } from "@/lib/config";
 
-export function SiteFooter() {
-  const legal = [BRAND.orn && `RERA ORN ${BRAND.orn}`, `Operated by ${BRAND.company}`, BRAND.location]
+export async function SiteFooter() {
+  const t = await getT("common");
+  const legal = [BRAND.orn && t("reraOrn", { orn: BRAND.orn }), t("operatedBy", { company: BRAND.company }), t("location")]
     .filter(Boolean)
     .join(" · ");
   return (
@@ -11,12 +13,9 @@ export function SiteFooter() {
       <div className="container-page grid gap-10 py-14 md:grid-cols-4">
         <div className="md:col-span-2">
           <Logo tone="light" />
-          <p className="mt-4 max-w-sm text-sm text-primary-foreground/70">
-            Dubai&apos;s marketplace for distressed off-plan units. Verified SPAs, protected settlement, developer NOC and
-            DLD transfer handled for you.
-          </p>
+          <p className="mt-4 max-w-sm text-sm text-primary-foreground/70">{t("footerBlurb")}</p>
           {(BRAND.email || BRAND.phone) && (
-            <p className="mt-4 text-sm text-primary-foreground/80">
+            <p className="mt-4 text-sm text-primary-foreground/80" dir="ltr">
               {BRAND.email && (
                 <a href={`mailto:${BRAND.email}`} className="hover:text-gold">
                   {BRAND.email}
@@ -33,41 +32,41 @@ export function SiteFooter() {
           <p className="mt-6 text-xs text-primary-foreground/50">{legal}</p>
         </div>
         <div>
-          <h4 className="font-sans text-sm font-semibold">Marketplace</h4>
+          <h4 className="font-sans text-sm font-semibold">{t("marketplace")}</h4>
           <ul className="mt-3 space-y-2 text-sm text-primary-foreground/70">
             <li>
               <Link href="/deals" className="hover:text-gold">
-                Browse deals
+                {t("browseDeals")}
               </Link>
             </li>
             <li>
               <Link href="/sell" className="hover:text-gold">
-                Sell my unit
+                {t("sellMyUnit")}
               </Link>
             </li>
             <li>
               <Link href="/dashboard" className="hover:text-gold">
-                My account
+                {t("myAccount")}
               </Link>
             </li>
           </ul>
         </div>
         <div>
-          <h4 className="font-sans text-sm font-semibold">Company</h4>
+          <h4 className="font-sans text-sm font-semibold">{t("company")}</h4>
           <ul className="mt-3 space-y-2 text-sm text-primary-foreground/70">
             <li>
               <Link href="/how-it-works" className="hover:text-gold">
-                How it works
+                {t("howItWorks")}
               </Link>
             </li>
             <li>
               <Link href="/fees" className="hover:text-gold">
-                Fees
+                {t("fees")}
               </Link>
             </li>
             <li>
               <Link href="/contact" className="hover:text-gold">
-                Contact us
+                {t("contactUs")}
               </Link>
             </li>
           </ul>
@@ -75,8 +74,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-primary-foreground/10">
         <div className="container-page py-5 text-xs text-primary-foreground/50">
-          © {new Date().getFullYear()} {BRAND.company}. Prices and fees shown are estimates until confirmed by the
-          developer and Dubai Land Department.
+          © {new Date().getFullYear()} {BRAND.company}. {t("estimatesNote")}
         </div>
       </div>
     </footer>

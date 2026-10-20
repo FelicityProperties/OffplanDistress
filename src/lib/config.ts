@@ -7,14 +7,24 @@ export const BRAND = {
     "Buy Dubai off-plan below launch price. Owners who need out list their units; we verify the paperwork, match buyers and handle the developer NOC and DLD transfer.",
   company: "Felicity Properties LLC",
   location: "Dubai, United Arab Emirates",
-  // Shown in the footer and on deal pages only when filled in.
-  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "",
+  // Shown in the footer and contact page; phone/WhatsApp/ORN only when filled in.
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "mouhannad@felicitypro.com",
   phone: process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "",
   /** Digits only, e.g. 9715XXXXXXXX */
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP ?? "",
   /** RERA office registration number */
   orn: process.env.NEXT_PUBLIC_RERA_ORN ?? "",
 };
+
+/**
+ * Owner accounts. These emails can't be registered through the public sign-up form (the repo is public,
+ * so anyone could otherwise claim them). The build creates the login from ADMIN_PASSWORD instead — see
+ * scripts/migrate.mjs. Extra admins can be promoted from /admin/users.
+ */
+export const OWNER_EMAILS = (process.env.ADMIN_EMAILS || "mouhannad@felicitypro.com")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
 
 export const FEES = {
   /** Brokerage commission on the sale value, charged only when the transfer completes. */

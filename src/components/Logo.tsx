@@ -25,10 +25,9 @@ export function Logo({ variant = "full", tone = "dark", className }: Props) {
     <span className={cn("inline-flex items-center gap-2.5", className)} dir="ltr">
       <LogoMark tone={tone} />
       <span
-        className={cn(
-          "font-display text-xl tracking-[-0.03em]",
-          tone === "dark" ? "text-foreground" : "text-primary-foreground",
-        )}
+        // The wordmark is always Latin Fraunces, even on Arabic pages.
+        style={{ fontFamily: 'var(--font-fraunces), "Fraunces", Georgia, serif' }}
+        className={cn("text-xl tracking-[-0.03em]", tone === "dark" ? "text-foreground" : "text-primary-foreground")}
       >
         <span className="font-semibold">Offplan</span>
         <span className="font-normal opacity-80">Distress</span>

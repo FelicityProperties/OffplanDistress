@@ -40,6 +40,8 @@ try {
   await migrate(db, { migrationsFolder: path.join(root, "drizzle") });
   console.log("[migrate] Database schema is up to date.");
 
+  await ensureOwners(pool);
+
   if (process.env.SEED_SAMPLE_DATA !== "false") {
     await seedSamples(pool);
   }
@@ -48,6 +50,46 @@ try {
   process.exitCode = 1;
 } finally {
   await pool.end();
+}
+
+// Owner logins come from env, never from public sign-up: ADMIN_PASSWORD (set in Vercel) is the source of
+// truth, so whoever controls the Vercel project controls the admin account — even if someone registered
+// the email first.
+async function ensureOwners(pool) {
+  const emails = (process.env.ADMIN_EMAILS || "mouhannad@felicitypro.com")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const password = process.env.ADMIN_PASSWORD ?? "";
+  if (password.length < 10) {
+    console.warn(
+      `[migrate] ADMIN_PASSWORD is not set (or shorter than 10 characters) — the owner login for ${emails.join(", ")} ` +
+        "won't work until you add it in Vercel → Settings → Environment Variables and redeploy.",
+    );
+    return;
+  }
+  const { default: bcrypt } = await import("bcryptjs");
+  for (const email of emails) {
+    const { rows } = await pool.query("select id, password_hash from users where lower(email) = $1", [email]);
+    if (rows.length === 0) {
+      await pool.query(
+        `insert into users (email, full_name, password_hash, role, intent, kyc_status)
+         values ($1, $2, $3, 'admin', 'both', 'verified')`,
+        [email, "Admin", await bcrypt.hash(password, 10)],
+      );
+      console.log(`[migrate] Created owner login for ${email}.`);
+      continue;
+    }
+    const { id, password_hash: hash } = rows[0];
+    const matches = hash ? await bcrypt.compare(password, hash) : false;
+    if (!matches) {
+      await pool.query("update users set password_hash = $2, role = 'admin' where id = $1", [id, await bcrypt.hash(password, 10)]);
+      await pool.query("delete from sessions where user_id = $1", [id]);
+      console.log(`[migrate] Owner password for ${email} set from ADMIN_PASSWORD (other sessions signed out).`);
+    } else {
+      await pool.query("update users set role = 'admin' where id = $1 and role <> 'admin'", [id]);
+    }
+  }
 }
 
 async function seedSamples(pool) {

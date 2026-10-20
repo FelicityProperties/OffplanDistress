@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { inquiries, listings, sessions, users } from "@/db/schema";
-import { getCurrentUser, hashPassword } from "@/lib/auth";
+import { getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
 import { LISTING_STATUS, type ListingStatusKey } from "@/lib/config";
 import type { FormState } from "./auth";
 
@@ -98,6 +98,8 @@ export async function setKycStatus(userId: string, status: "not_started" | "pend
 export async function setUserRole(userId: string, role: "user" | "admin") {
   const me = await assertAdmin();
   if (me.id === userId && role !== "admin") return { error: "You can't remove your own admin access." };
+  const [target] = await db.select({ email: users.email }).from(users).where(eq(users.id, userId));
+  if (target && isOwnerEmail(target.email) && role !== "admin") return { error: "Owner accounts are always admins." };
   await db.update(users).set({ role }).where(eq(users.id, userId));
   refresh();
   return { ok: true };
@@ -106,6 +108,9 @@ export async function setUserRole(userId: string, role: "user" | "admin") {
 /** No email service yet, so admins hand a temporary password to the user directly. */
 export async function resetUserPassword(userId: string) {
   await assertAdmin();
+  const [target] = await db.select({ email: users.email }).from(users).where(eq(users.id, userId));
+  if (!target) return { error: "User not found." };
+  if (isOwnerEmail(target.email)) return { error: "The owner's password is set by ADMIN_PASSWORD in Vercel." };
   const temp = randomBytes(9).toString("base64url");
   await db.update(users).set({ passwordHash: await hashPassword(temp) }).where(eq(users.id, userId));
   await db.delete(sessions).where(eq(sessions.userId, userId));

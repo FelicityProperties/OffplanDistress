@@ -10,7 +10,7 @@ import {
   destroySession,
   findUserByEmail,
   hashPassword,
-  isAdminEmail,
+  isOwnerEmail,
   safeNext,
   verifyPassword,
 } from "@/lib/auth";
@@ -36,6 +36,9 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
   const { fullName, email, phone, password, intent } = parsed.data;
 
+  if (isOwnerEmail(email)) {
+    return { fieldErrors: { email: ["This email is reserved. If it's yours, log in instead."] } };
+  }
   if (await findUserByEmail(email)) {
     return { fieldErrors: { email: ["An account with this email already exists — sign in instead."] } };
   }
@@ -48,7 +51,6 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
       phone: phone || null,
       passwordHash: await hashPassword(password),
       intent,
-      role: isAdminEmail(email) ? "admin" : "user",
     })
     .returning({ id: users.id });
 
@@ -70,12 +72,13 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
   if (!user?.passwordHash || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
     return { error: "Email or password is incorrect." };
   }
-  if (isAdminEmail(user.email) && user.role !== "admin") {
+  const owner = isOwnerEmail(user.email);
+  if (owner && user.role !== "admin") {
     await db.update(users).set({ role: "admin" }).where(eq(users.id, user.id));
   }
 
   await createSession(user.id);
-  redirect(safeNext(formData.get("next"), user.role === "admin" || isAdminEmail(user.email) ? "/admin" : "/dashboard"));
+  redirect(safeNext(formData.get("next"), user.role === "admin" || owner ? "/admin" : "/dashboard"));
 }
 
 export async function logout() {

@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
+import { OWNER_EMAILS } from "@/lib/config";
 
 const COOKIE = "od_session";
 const SESSION_DAYS = 30;
@@ -25,15 +26,9 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-function adminEmails() {
-  return (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-export function isAdminEmail(email: string) {
-  return adminEmails().includes(email.trim().toLowerCase());
+/** Owner emails are always admins, and their login is managed by ADMIN_PASSWORD (see scripts/migrate.mjs). */
+export function isOwnerEmail(email: string) {
+  return OWNER_EMAILS.includes(email.trim().toLowerCase());
 }
 
 export async function hashPassword(password: string) {

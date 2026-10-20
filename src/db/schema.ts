@@ -86,6 +86,7 @@ export const users = pgTable(
     role: userRole("role").notNull().default("user"),
     intent: userIntent("intent").notNull().default("both"),
     kycStatus: kycStatus("kyc_status").notNull().default("not_started"),
+    locale: text("locale").notNull().default("en"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("users_email_idx").on(sql`lower(${t.email})`)],
@@ -234,11 +235,48 @@ export const savedSearches = pgTable(
     name: text("name").notNull(),
     // URL query string for /deals, e.g. "community=Business+Bay&maxCash=500000"
     query: text("query").notNull(),
+    alerts: boolean("alerts").notNull().default(true),
+    // listings published after this are "new" for the next alert run
+    lastAlertedAt: timestamp("last_alerted_at", { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("saved_searches_user_idx").on(t.userId)],
 );
 
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // machine-readable event, e.g. "offer.received" — see src/lib/notify.ts
+    type: text("type").notNull(),
+    title: text("title").notNull(),
+    body: text("body"),
+    href: text("href"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("notifications_user_idx").on(t.userId, t.createdAt)],
+);
+
+export const passwordResets = pgTable(
+  "password_resets",
+  {
+    // sha256 of the emailed token
+    id: text("id").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("password_resets_user_idx").on(t.userId)],
+);
+
 export type User = typeof users.$inferSelect;
 export type Listing = typeof listings.$inferSelect;
 export type Offer = typeof offers.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;

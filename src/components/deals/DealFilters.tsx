@@ -222,7 +222,7 @@ export function DealsToolbar() {
               Filters
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="overflow-y-auto p-6">
+          <SheetContent side="start" className="overflow-y-auto p-6">
             <SheetTitle>Filters</SheetTitle>
             <div className="mt-6">
               <FilterPanel />

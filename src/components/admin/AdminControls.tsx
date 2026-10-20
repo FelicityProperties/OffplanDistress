@@ -227,7 +227,8 @@ export function ResetPasswordButton({ userId, name }: { userId: string; name: st
           if (!confirm(`Reset ${name}'s password? They'll be signed out everywhere.`)) return;
           start(async () => {
             const res = await resetUserPassword(userId);
-            setTemp(res.password);
+            if ("error" in res && res.error) toast.error(res.error);
+            else if ("password" in res && res.password) setTemp(res.password);
           });
         }}
       >
