@@ -48,7 +48,9 @@ export function OfferDialog({
       setOpen(false);
       toast.success(t("offer.sent"), { description: t("offer.sentDescription") });
     }
-  }, [state, t]);
+    // Only on a new result — not when the language (and so `t`) changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   if (disabledReason) {
     return (

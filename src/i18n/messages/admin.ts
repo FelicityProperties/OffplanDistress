@@ -140,7 +140,7 @@ export default defineMessages({
     "meta.title": "الإدارة",
 
     "nav.title": "العمليات",
-    "nav.queue": "قائمة التحقق",
+    "nav.queue": "قائمة انتظار التحقق",
     "nav.pipeline": "مسار الصفقات",
     "nav.offers": "العروض",
     "nav.inquiries": "الاستفسارات",
@@ -160,11 +160,11 @@ export default defineMessages({
     "col.role": "الدور",
     "col.joined": "تاريخ الانضمام",
 
-    "queue.title": "قائمة التحقق",
+    "queue.title": "قائمة انتظار التحقق",
     "queue.sub": "تحقّق من اتفاقية البيع والشراء وشهادة أوقود وكشف الحساب مع المطوّر، ثم وافق على الإعلان.",
     "queue.kpi.awaiting": "بانتظار التحقق",
     "queue.kpi.live": "الإعلانات المنشورة",
-    "queue.kpi.inTransfer": "قيد عدم الممانعة / نقل الملكية",
+    "queue.kpi.inTransfer": "قيد إصدار شهادة عدم الممانعة / نقل الملكية",
     "queue.kpi.pipelineFees": "رسوم قيد الإنجاز: {amount}",
     "queue.kpi.feesEarned": "إجمالي الرسوم المحصّلة",
     "queue.empty": "لا توجد إعلانات بانتظار التحقق.",
@@ -179,7 +179,7 @@ export default defineMessages({
     "pipeline.title": "مسار الصفقات",
     "pipeline.sub": "جميع الإعلانات حسب المرحلة. افتح أي إعلان لنقله إلى المرحلة التالية.",
     "pipeline.counts": "العروض: {offers} · المتابعون: {watchers}",
-    "pipeline.empty": "لا يوجد",
+    "pipeline.empty": "لا توجد إعلانات",
 
     "listing.back": "مسار الصفقات",
     "listing.listed": "أُدرج في {date}",
@@ -196,7 +196,7 @@ export default defineMessages({
     "listing.discountVsLaunch": "الخصم مقارنة بسعر الإطلاق",
     "listing.nextInstalment": "القسط التالي",
     "listing.instalmentOn": "{amount} في {date}",
-    "listing.motivation": "وضع البائع",
+    "listing.motivation": "مدى استعجال البائع",
     "listing.seller": "البائع",
     "listing.sellerKyc": "التحقق من الهوية: {status}",
     "listing.engagement": "مشترون يتابعون: {watchers} · المشاهدات: {views}",
@@ -222,7 +222,7 @@ export default defineMessages({
     "inquiry.info": "طلب معلومات",
     "inquiry.viewing": "طلب معاينة",
     "inquiry.contact": "نموذج التواصل",
-    "inquiry.markHandled": "تعليم كمُعالَج",
+    "inquiry.markHandled": "تحديد كمُعالَج",
     "inquiry.reopen": "إعادة فتح",
 
     "users.title": "المستخدمون",
@@ -259,9 +259,9 @@ export default defineMessages({
     "role.admin": "مسؤول",
     "role.updated": "تم تحديث الدور",
 
-    "samples.remove": "إزالة الإعلانات النموذجية ({count})",
-    "samples.confirm": "هل تريد حذف جميع الإعلانات النموذجية ({count})؟ لا يمكن التراجع عن هذا الإجراء.",
-    "samples.removed": "تمت إزالة الإعلانات النموذجية",
+    "samples.remove": "إزالة الإعلانات التوضيحية ({count})",
+    "samples.confirm": "هل تريد حذف جميع الإعلانات التوضيحية ({count})؟ لا يمكن التراجع عن هذا الإجراء.",
+    "samples.removed": "تمت إزالة الإعلانات التوضيحية",
 
     "reset.title": "إعادة تعيين كلمة المرور",
     "reset.button": "إعادة تعيين",

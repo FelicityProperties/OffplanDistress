@@ -35,6 +35,10 @@ export default defineMessages({
     "plan.milestone": "Milestone",
     "plan.due": "Due",
     "plan.amount": "Amount",
+    "plan.sample.milestone": "Construction milestone {n}",
+    "plan.sample.onHandover": "On handover",
+    "sample.description":
+      "Sample listing for illustration. {unit} in {project} by {developer}, {community}, with {paid} of the purchase price already paid to the developer. A buyer can step into the remaining payment plan below today's launch price.",
 
     "cost.title": "True cost to you",
     "cost.asking": "Asking price (seller equity)",
@@ -77,7 +81,7 @@ export default defineMessages({
     "meta.title": "{unit} في {project}",
     "meta.titleDiscount": "{unit} في {project} — أقل بـ {pct}% من سعر الإطلاق",
     "meta.description":
-      "{developer}، {community}. نسبة المدفوع {paid}، والتسليم {handover}. تولَّ خطة الدفع مقابل {upfront} تدفعها مقدّماً.",
+      "{developer}، {community}. نسبة المدفوع {paid}، والتسليم {handover}. تولَّ خطة الدفع مقابل دفعة مقدّمة قدرها {upfront}.",
 
     back: "العودة إلى الصفقات",
     "banner.underOffer": "قبل البائع عرضاً على هذه الوحدة. لا يزال بإمكانك حفظها أو إرسال عرض احتياطي.",
@@ -104,6 +108,10 @@ export default defineMessages({
     "plan.milestone": "المرحلة",
     "plan.due": "تاريخ الاستحقاق",
     "plan.amount": "المبلغ",
+    "plan.sample.milestone": "دفعة أثناء الإنشاء {n}",
+    "plan.sample.onHandover": "عند التسليم",
+    "sample.description":
+      "إعلان توضيحي فقط. وحدة ({unit}) في {project} من تطوير {developer}، {community}، وقد سُدِّد {paid} من سعر الشراء للمطوّر. يمكن للمشتري تولّي ما تبقّى من خطة الدفع بأقل من سعر الإطلاق الحالي.",
 
     "cost.title": "التكلفة الفعلية عليك",
     "cost.asking": "السعر المطلوب (حصة البائع)",
@@ -111,14 +119,14 @@ export default defineMessages({
     "cost.fee": "رسوم {brand} ({rate})",
     "cost.vat": "ضريبة القيمة المضافة على الرسوم ({rate})",
     "cost.dld": "رسوم نقل الملكية لدى دائرة الأراضي والأملاك ({rate})",
-    "cost.dldAdmin": "رسوم التسجيل ومكتب أمين التسجيل (تقديرية)",
+    "cost.dldAdmin": "رسوم التسجيل لدى دائرة الأراضي والأملاك ومكتب أمين التسجيل (تقديرية)",
     "cost.noc": "شهادة عدم الممانعة / الرسوم الإدارية للمطوّر (تقديرية)",
     "cost.total": "الإجمالي شاملاً جميع الرسوم",
     "cost.launchAllIn": "الشراء جديداً من المطوّر اليوم (شاملاً {rate} لدائرة الأراضي والأملاك)",
     "cost.saving": "صافي التوفير لك",
     "cost.disclaimer": "رسوم دائرة الأراضي والأملاك والمطوّر تقديرية، وتُؤكَّد عند إصدار شهادة عدم الممانعة.",
 
-    "side.payNow": "ادفع للبائع الآن",
+    "side.payNow": "تدفع للبائع الآن",
     "side.thenPlan": "ثم {amount} إلى {developer} وفق خطة الدفع",
     "side.nextInstalment": "القسط التالي {date}",
     "side.feeNote":
@@ -127,7 +135,7 @@ export default defineMessages({
     similar: "صفقات مشابهة",
 
     "offer.ownListing": "هذا إعلانك",
-    "offer.sampleListing": "إعلان نموذجي",
+    "offer.sampleListing": "إعلان توضيحي",
     "offer.signIn": "سجّل الدخول لتقديم عرض",
     "offer.cta": "قدّم عرضاً",
     "offer.title": "قدّم عرضاً",

@@ -1,4 +1,5 @@
 import "server-only";
+import { translator } from "@/i18n/translator";
 import { BRAND } from "./config";
 
 /** Absolute base URL for links in emails. */
@@ -21,6 +22,7 @@ function escape(s: string) {
 
 function render({ heading, body, cta, dir = "ltr" }: Email) {
   const href = cta ? (cta.href.startsWith("http") ? cta.href : `${siteUrl()}${cta.href}`) : null;
+  const location = translator("common", dir === "rtl" ? "ar" : "en")("location");
   const html = `<!doctype html><html dir="${dir}"><body style="margin:0;background:#faf8f3;font-family:Inter,Segoe UI,Arial,sans-serif;color:#141c33">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
 <table role="presentation" width="100%" style="max-width:560px;background:#ffffff;border:1px solid #ebe6dc;border-radius:14px" cellpadding="0" cellspacing="0">
@@ -30,7 +32,7 @@ function render({ heading, body, cta, dir = "ltr" }: Email) {
 ${body ? `<p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#4a5068;white-space:pre-line">${escape(body)}</p>` : ""}
 ${href && cta ? `<a href="${escape(href)}" style="display:inline-block;background:#141c33;color:#faf8f3;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px">${escape(cta.label)}</a>` : ""}
 </td></tr>
-<tr><td style="padding:18px 28px;border-top:1px solid #ebe6dc;font-size:12px;color:#8a8fa3">${escape(BRAND.company)} · ${escape(BRAND.location)}</td></tr>
+<tr><td style="padding:18px 28px;border-top:1px solid #ebe6dc;font-size:12px;color:#8a8fa3">${escape(BRAND.company)} · ${escape(location)}</td></tr>
 </table></td></tr></table></body></html>`;
   const text = [heading, body, href ? `${cta!.label}: ${href}` : null].filter(Boolean).join("\n\n");
   return { html, text };

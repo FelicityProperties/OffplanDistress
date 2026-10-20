@@ -17,7 +17,13 @@ export async function uploadListingFile(listingId: string, file: File, kind: key
   const body = new FormData();
   body.append("file", file);
   body.append("kind", kind);
-  const res = await fetch(`/api/listings/${listingId}/files`, { method: "POST", body });
+  let res: Response;
+  try {
+    res = await fetch(`/api/listings/${listingId}/files`, { method: "POST", body });
+  } catch {
+    // Network failure: the browser's TypeError message is English-only.
+    throw new Error(t("uploader.failed"));
+  }
   if (!res.ok) {
     const data = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(data.error ?? t("uploader.failedStatus", { status: res.status }));

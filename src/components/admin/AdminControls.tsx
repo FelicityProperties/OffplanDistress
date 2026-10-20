@@ -96,7 +96,9 @@ export function AdminListingForm(p: EditProps) {
   const [state, action] = useActionState(adminUpdateListing, {});
   useEffect(() => {
     if (state.ok) toast.success(t("form.saved"));
-  }, [state, t]);
+    // Only on a new save result — not when the language (and so `t`) changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
   const fe = state.fieldErrors ?? {};
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">

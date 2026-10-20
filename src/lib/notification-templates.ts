@@ -23,7 +23,7 @@ export const TEMPLATES = {
   },
   "listing.rejected": {
     en: { title: "Your listing needs attention: {project}", body: "{reason}", cta: "Open listing" },
-    ar: { title: "إعلانك بحاجة إلى مراجعة: {project}", body: "{reason}", cta: "فتح الإعلان" },
+    ar: { title: "إعلانك بحاجة إلى إجراء منك: {project}", body: "{reason}", cta: "فتح الإعلان" },
   },
   "offer.received": {
     en: { title: "New offer on {project}: {amount}", body: "A {financing} buyer offered {amount} for your equity (asking {asking}).", cta: "Review offer" },
@@ -59,7 +59,7 @@ export const TEMPLATES = {
   },
   "deal.agreed.admin": {
     en: { title: "Deal agreed on {project} at {amount}", body: "Seller {seller}, buyer {buyer}. Start the developer NOC and move the listing to “NOC in progress”.", cta: "Open listing" },
-    ar: { title: "تم الاتفاق على صفقة {project} بمبلغ {amount}", body: "البائع {seller}، المشتري {buyer}. ابدأ إجراءات شهادة عدم الممانعة وانقل الإعلان إلى «قيد إصدار عدم الممانعة».", cta: "فتح الإعلان" },
+    ar: { title: "تم الاتفاق على صفقة {project} بمبلغ {amount}", body: "البائع {seller}، المشتري {buyer}. ابدأ إجراءات شهادة عدم الممانعة وانقل الإعلان إلى «قيد إصدار شهادة عدم الممانعة».", cta: "فتح الإعلان" },
   },
   "deal.noc_in_progress": {
     en: { title: "NOC in progress for {project}", body: "We've applied to the developer for the NOC on {ref}. Next we'll book the DLD transfer at a trustee office and confirm the date with you.", cta: "View progress" },
@@ -83,7 +83,7 @@ export const TEMPLATES = {
   },
   "watch.price_drop": {
     en: { title: "Price drop on {project}", body: "The asking price fell from {from} to {to}.", cta: "View deal" },
-    ar: { title: "انخفاض السعر على {project}", body: "انخفض السعر المطلوب من {from} إلى {to}.", cta: "عرض الصفقة" },
+    ar: { title: "انخفاض سعر {project}", body: "انخفض السعر المطلوب من {from} إلى {to}.", cta: "عرض الصفقة" },
   },
   "search.matches": {
     en: { title: "New deals for “{name}”: {count}", body: "{list}", cta: "See matches" },
@@ -91,7 +91,7 @@ export const TEMPLATES = {
   },
   "password.reset": {
     en: { title: "Reset your password", body: "Someone asked to reset the password for this account. The link works for 1 hour. If it wasn't you, ignore this email.", cta: "Choose a new password" },
-    ar: { title: "إعادة تعيين كلمة المرور", body: "طلب أحدهم إعادة تعيين كلمة المرور لهذا الحساب. الرابط صالح لمدة ساعة واحدة. إن لم تكن أنت، تجاهل هذه الرسالة.", cta: "اختيار كلمة مرور جديدة" },
+    ar: { title: "إعادة تعيين كلمة المرور", body: "طلب أحدهم إعادة تعيين كلمة المرور لهذا الحساب. الرابط صالح لمدة ساعة واحدة. إن لم تطلب ذلك، فتجاهل هذه الرسالة.", cta: "اختيار كلمة مرور جديدة" },
   },
 } satisfies Record<string, Template>;
 

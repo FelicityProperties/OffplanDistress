@@ -60,6 +60,8 @@ export default defineMessages({
     "arrears.none": "No, fully up to date",
     "arrears.one": "Yes, one instalment",
     "arrears.more": "Yes, more than one",
+    "arrears.note.one": "Seller reports one missed instalment.",
+    "arrears.note.more": "Seller reports more than one missed instalment.",
 
     "plan.title": "Remaining instalments (optional)",
     "plan.add": "Add",
@@ -214,6 +216,8 @@ export default defineMessages({
     "arrears.none": "لا، جميع الأقساط مسدّدة",
     "arrears.one": "نعم، قسط واحد",
     "arrears.more": "نعم، أكثر من قسط",
+    "arrears.note.one": "يُفيد البائع بتأخّر سداد قسط واحد.",
+    "arrears.note.more": "يُفيد البائع بتأخّر سداد أكثر من قسط.",
 
     "plan.title": "الأقساط المتبقية (اختياري)",
     "plan.add": "إضافة",
@@ -230,7 +234,7 @@ export default defineMessages({
     "field.asking.hint": "المبلغ الذي يدفعه لك المشتري الآن",
     "field.phone": "رقم الجوال / واتساب",
     "field.phone.hint": "ليتمكن فريقنا من التواصل معك بشأن العروض",
-    "field.motivation": "ما مدى سرعة حاجتك إلى البيع؟",
+    "field.motivation": "ما مدى استعجالك في البيع؟",
     "field.description": "هل هناك ما يجب أن يعرفه المشترون؟",
     "field.description.placeholder": "تصميم مُحسَّن، وحدة زاوية، سبب البيع…",
 

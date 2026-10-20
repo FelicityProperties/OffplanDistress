@@ -89,6 +89,23 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const developer = developerName(tc, l.developer);
   const discountPct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
   const plan = l.paymentPlan ?? [];
+  // Sample listings are seeded with English copy; show Arabic visitors a translated version.
+  const arSample = l.isSample && locale === "ar";
+  const description = arSample
+    ? t("sample.description", {
+        unit: tc(`unit.${l.unitType}`),
+        project: l.projectName,
+        developer,
+        community,
+        paid: formatPct(a.paidPct),
+      })
+    : l.description;
+  const milestoneLabel = (label: string) => {
+    if (!arSample) return label;
+    if (label === "On handover") return t("plan.sample.onHandover");
+    const n = /^Construction milestone (\d+)$/.exec(label)?.[1];
+    return n ? t("plan.sample.milestone", { n }) : label;
+  };
   const loginHref = `/login?next=${encodeURIComponent(`/deals/${refCode(l.refNo)}`)}`;
 
   const cost: [string, number][] = [
@@ -163,7 +180,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
 
           <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
             {[
-              [t("facts.view"), l.view || "—"],
+              [t("facts.view"), (!arSample && l.view) || "—"],
               [tc("handover"), formatQuarter(l.handoverDate, locale)],
               [t("facts.originalPrice"), formatAED(l.originalPrice, locale)],
               [t("facts.launchPrice"), l.launchPrice ? formatAED(l.launchPrice, locale) : t("facts.beingAssessed")],
@@ -175,7 +192,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
             ))}
           </div>
 
-          {l.description && <p className="mt-8 whitespace-pre-line leading-relaxed text-muted-foreground">{l.description}</p>}
+          {description && <p className="mt-8 whitespace-pre-line leading-relaxed text-muted-foreground">{description}</p>}
 
           <section className="mt-10">
             <h2 className="text-2xl font-semibold">{t("plan.title")}</h2>
@@ -216,7 +233,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   <TableBody>
                     {plan.map((s, i) => (
                       <TableRow key={`${s.label}-${i}`}>
-                        <TableCell className="font-medium">{s.label}</TableCell>
+                        <TableCell className="font-medium">{milestoneLabel(s.label)}</TableCell>
                         <TableCell className="text-muted-foreground">{formatDate(s.dueDate, locale)}</TableCell>
                         <TableCell className="text-end tabular">{formatAED(s.amount, locale)}</TableCell>
                       </TableRow>

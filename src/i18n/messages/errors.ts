@@ -72,7 +72,7 @@ export default defineMessages({
     "form.checkFields": "راجِع الحقول المحددة.",
 
     "field.invalid": "تحقق من هذا الحقل.",
-    "field.tooLong": "النص طويل جداً — الحد الأقصى {max} حرف.",
+    "field.tooLong": "النص طويل جداً — الحد الأقصى لعدد الأحرف: {max}.",
     "field.tooMany": "العدد كبير جداً — الحد الأقصى {max}.",
     "field.number": "أدخل رقماً.",
     "field.notNegative": "لا يمكن أن تكون القيمة سالبة.",

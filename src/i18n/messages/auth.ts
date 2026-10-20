@@ -46,7 +46,7 @@ export default defineMessages({
     "field.email": "البريد الإلكتروني",
     "field.password": "كلمة المرور",
     "field.fullName": "الاسم الكامل",
-    "field.phone": "رقم الهاتف المتحرك / واتساب (اختياري)",
+    "field.phone": "رقم الجوال / واتساب (اختياري)",
     "field.passwordHint": "8 أحرف على الأقل",
 
     "login.title": "مرحباً بعودتك",
@@ -57,7 +57,7 @@ export default defineMessages({
     "login.createAccount": "أنشئ حساباً",
 
     "signup.title": "أنشئ حسابك",
-    "signup.sub": "لا يستغرق الأمر أكثر من دقيقة، ومجاني للمشترين والبائعين.",
+    "signup.sub": "لا يستغرق التسجيل أكثر من دقيقة، وهو مجاني للمشترين والبائعين.",
     "signup.roleGroup": "أرغب في",
     "signup.role.buy": "أرغب في الشراء",
     "signup.role.sell": "أرغب في البيع",

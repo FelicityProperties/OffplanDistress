@@ -1,11 +1,17 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { files, listings } from "@/db/schema";
+import { getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
+
+async function notFound() {
+  const t = await getT("common");
+  return new Response(t("notFoundTitle"), { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+}
 
 export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]">) {
   const { id } = await ctx.params;
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return new Response("Not found", { status: 404 });
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return notFound();
 
   const [row] = await db
     .select({ file: files, sellerId: listings.sellerId })
@@ -13,7 +19,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]"
     .leftJoin(listings, eq(listings.id, files.listingId))
     .where(eq(files.id, id))
     .limit(1);
-  if (!row) return new Response("Not found", { status: 404 });
+  if (!row) return notFound();
 
   const { file } = row;
   const isPublic = file.kind === "photo";
@@ -21,7 +27,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]"
     // SPA, Oqood, statements and IDs: only the owner and our team.
     const user = await getCurrentUser();
     const allowed = user && (user.role === "admin" || user.id === file.uploaderId || user.id === row.sellerId);
-    if (!allowed) return new Response("Not found", { status: 404 });
+    if (!allowed) return notFound();
   }
 
   return new Response(new Uint8Array(file.data), {

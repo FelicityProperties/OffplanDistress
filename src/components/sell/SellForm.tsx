@@ -162,9 +162,8 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
       if (k === "arrears") continue;
       fd.set(k, numeric.has(k) && v !== "" ? String(Math.round(num(v))) : v);
     }
-    // Read by our transactions team, so it stays in English whatever the seller's language.
     const arrearsNote =
-      s.arrears === "one" ? "Seller reports one missed instalment." : s.arrears === "more" ? "Seller reports more than one missed instalment." : "";
+      s.arrears === "one" ? t("arrears.note.one") : s.arrears === "more" ? t("arrears.note.more") : "";
     fd.set("description", [s.description.trim(), arrearsNote].filter(Boolean).join("\n\n"));
     fd.set(
       "paymentPlan",
