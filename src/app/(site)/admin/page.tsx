@@ -40,7 +40,7 @@ export default async function AdminQueue() {
       </div>
 
       <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
-        <Table>
+        <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow>
               <TableHead>{t("col.listing")}</TableHead>

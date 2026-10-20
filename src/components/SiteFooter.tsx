@@ -15,15 +15,15 @@ export async function SiteFooter() {
           <Logo tone="light" />
           <p className="mt-4 max-w-sm text-sm text-primary-foreground/70">{t("footerBlurb")}</p>
           {(BRAND.email || BRAND.phone) && (
-            <p className="mt-4 text-sm text-primary-foreground/80" dir="ltr">
+            <p className="mt-4 text-sm text-primary-foreground/80">
               {BRAND.email && (
-                <a href={`mailto:${BRAND.email}`} className="hover:text-gold">
+                <a href={`mailto:${BRAND.email}`} dir="ltr" className="hover:text-gold">
                   {BRAND.email}
                 </a>
               )}
               {BRAND.email && BRAND.phone && " · "}
               {BRAND.phone && (
-                <a href={`tel:${BRAND.phone.replace(/\s/g, "")}`} className="hover:text-gold">
+                <a href={`tel:${BRAND.phone.replace(/\s/g, "")}`} dir="ltr" className="hover:text-gold">
                   {BRAND.phone}
                 </a>
               )}

@@ -44,7 +44,7 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
             <EmptyState title={t("offers.receivedEmptyTitle")} sub={t("offers.receivedEmptySub")} />
           ) : (
             <div className="overflow-x-auto rounded-xl border bg-card">
-              <Table>
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("offers.colUnit")}</TableHead>
@@ -100,7 +100,7 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
             </EmptyState>
           ) : (
             <div className="overflow-x-auto rounded-xl border bg-card">
-              <Table>
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("offers.colUnit")}</TableHead>

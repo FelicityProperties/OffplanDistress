@@ -28,7 +28,7 @@ export default async function PipelinePage() {
               <div className="space-y-2">
                 {items.slice(0, 50).map((l) => (
                   <Link key={l.id} href={`/admin/listings/${l.id}`} className="block rounded-lg border bg-card p-3 text-sm shadow-card hover:border-gold">
-                    <p className="line-clamp-1 font-medium">{l.projectName}</p>
+                    <p dir="auto" className="line-clamp-1 font-medium">{l.projectName}</p>
                     <p className="text-xs text-muted-foreground tabular">
                       <bdi>{refCode(l.refNo)}</bdi> · {formatAEDCompact(l.askingPrice, locale)} · {tc(`unit.${l.unitType}`)}
                     </p>

@@ -40,8 +40,8 @@ export type ShellItem = { href: string; label: string; icon: keyof typeof ICONS;
 export function AppShell({ items, title, children }: { items: ShellItem[]; title: string; children: React.ReactNode }) {
   const pathname = usePathname();
   return (
-    <div className="container-page grid gap-8 py-8 lg:grid-cols-[230px_1fr]">
-      <aside>
+    <div className="container-page grid grid-cols-[minmax(0,1fr)] gap-8 py-8 lg:grid-cols-[230px_minmax(0,1fr)]">
+      <aside className="min-w-0">
         <p className="mb-3 px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{title}</p>
         <nav className="flex gap-1 overflow-x-auto pb-2 lg:flex-col lg:pb-0">
           {items.map((it) => {

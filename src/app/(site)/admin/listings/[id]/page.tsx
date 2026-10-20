@@ -92,7 +92,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3 border-b py-1.5">
                 <dt className="text-muted-foreground">{k}</dt>
-                <dd className="text-end font-medium tabular">{v}</dd>
+                <dd className="shrink-0 whitespace-nowrap text-end font-medium tabular">{v}</dd>
               </div>
             ))}
           </dl>

@@ -245,7 +245,7 @@ export default defineMessages({
     "form.verified": "تم التحقق من اتفاقية البيع والشراء وسجل الدفعات",
     "form.nocEligible": "يستوفي حدّ إعادة البيع لدى المطوّر (شهادة عدم الممانعة)",
     "form.images": "روابط الصور (رابط في كل سطر)",
-    "form.imagesHint": "روابط https:// أو صور مرفوعة (/api/files/…)",
+    "form.imagesHint": "روابط \u2066https://\u2069 أو صور مرفوعة (\u2066/api/files/…\u2069)",
     "form.notes": "ملاحظات داخلية",
     "form.notesPlaceholder": "تظهر للمسؤولين فقط",
     "form.save": "حفظ الإعلان",

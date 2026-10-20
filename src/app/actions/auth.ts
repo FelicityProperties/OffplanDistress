@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { users } from "@/db/schema";
@@ -106,6 +107,9 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
     return { error: t("login.invalid") };
   }
   await clear(emailKey);
+  // Emails follow the language the user last used on the site.
+  const locale = await getLocale();
+  if (user.locale !== locale) await db.update(users).set({ locale }).where(eq(users.id, user.id));
 
   // Admin rights come from the database only — owners get theirs from scripts/migrate.mjs.
   await createSession(user.id);

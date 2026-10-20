@@ -47,7 +47,7 @@ export default async function InquiriesPage() {
                     </Link>
                   </p>
                 )}
-                {q.message && <p className="max-w-2xl whitespace-pre-line text-sm text-muted-foreground">{q.message}</p>}
+                {q.message && <p dir="auto" className="max-w-2xl whitespace-pre-line text-sm text-muted-foreground">{q.message}</p>}
               </div>
               <HandledToggle id={q.id} handled={q.handled} />
             </div>

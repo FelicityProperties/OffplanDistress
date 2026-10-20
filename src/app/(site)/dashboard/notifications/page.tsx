@@ -80,7 +80,7 @@ export default async function NotificationsPage() {
                     />
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                        <span dir="auto" className={cn("text-sm", read ? "font-medium" : "font-semibold")}>
+                        <span dir="auto" className={cn("min-w-0 flex-1 text-sm", read ? "font-medium" : "font-semibold")}>
                           {n.title}
                         </span>
                         <time

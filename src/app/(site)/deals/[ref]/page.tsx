@@ -187,12 +187,16 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
             ].map(([k, v]) => (
               <div key={k} className="bg-card p-4">
                 <p className="text-xs text-muted-foreground">{k}</p>
-                <p className="mt-1 text-sm font-semibold tabular">{v}</p>
+                <p dir="auto" className="mt-1 text-sm font-semibold tabular">{v}</p>
               </div>
             ))}
           </div>
 
-          {description && <p className="mt-8 whitespace-pre-line leading-relaxed text-muted-foreground">{description}</p>}
+          {description && (
+            <p dir="auto" className="mt-8 whitespace-pre-line leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          )}
 
           <section className="mt-10">
             <h2 className="text-2xl font-semibold">{t("plan.title")}</h2>
@@ -233,9 +237,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   <TableBody>
                     {plan.map((s, i) => (
                       <TableRow key={`${s.label}-${i}`}>
-                        <TableCell className="font-medium">{milestoneLabel(s.label)}</TableCell>
+                        <TableCell dir="auto" className="font-medium">{milestoneLabel(s.label)}</TableCell>
                         <TableCell className="text-muted-foreground">{formatDate(s.dueDate, locale)}</TableCell>
-                        <TableCell className="text-end tabular">{formatAED(s.amount, locale)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-end tabular">{formatAED(s.amount, locale)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -251,17 +255,17 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 {cost.map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-4">
                     <dt className="text-muted-foreground">{k}</dt>
-                    <dd className="tabular">{formatAED(v, locale)}</dd>
+                    <dd className="shrink-0 whitespace-nowrap tabular">{formatAED(v, locale)}</dd>
                   </div>
                 ))}
                 <div className="flex justify-between border-t pt-2.5 font-semibold">
                   <dt>{t("cost.total")}</dt>
-                  <dd className="tabular">{formatAED(a.totalCost, locale)}</dd>
+                  <dd className="shrink-0 whitespace-nowrap tabular">{formatAED(a.totalCost, locale)}</dd>
                 </div>
                 {a.launchAllIn != null && (
                   <div className="flex justify-between gap-4 text-muted-foreground">
                     <dt>{t("cost.launchAllIn", { rate: formatPct(FEES.dldRate) })}</dt>
-                    <dd className="tabular">{formatAED(a.launchAllIn, locale)}</dd>
+                    <dd className="shrink-0 whitespace-nowrap tabular">{formatAED(a.launchAllIn, locale)}</dd>
                   </div>
                 )}
               </dl>
