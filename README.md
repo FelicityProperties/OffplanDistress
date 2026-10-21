@@ -53,7 +53,9 @@ In-app notifications always work. Emails go out through [Resend](https://resend.
 
 ## Deploying on Vercel
 
-1. Neon is connected under Storage → it sets `DATABASE_URL` / `DATABASE_URL_UNPOOLED`.
+1. Neon is connected under Storage → Connect Project (tick Production; Preview too if you want working previews).
+   It sets `DATABASE_URL` / `DATABASE_URL_UNPOOLED`; a custom variable prefix works too, since the app and the build
+   find any `postgres://` connection string. The build log's `[migrate] Using …` line shows which one was used.
 2. Settings → Environment Variables:
    - `ADMIN_PASSWORD` — **required**: the password for the owner login (`mouhannad@felicitypro.com`, or the
      emails in `ADMIN_EMAILS`). The repo is public, so owner emails can't be registered through the sign-up form;
