@@ -1,14 +1,7 @@
 import "server-only";
 import { translator } from "@/i18n/translator";
 import { BRAND } from "./config";
-
-/** Absolute base URL for links in emails. */
-export function siteUrl() {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
-}
+import { siteUrl } from "./site-url";
 
 export function emailEnabled() {
   return Boolean(process.env.RESEND_API_KEY);
@@ -38,37 +31,110 @@ ${href && cta ? `<a href="${escape(href)}" style="display:inline-block;backgroun
   return { html, text };
 }
 
+// Resend accepts about 2 requests a second per account, and notifications fan out (a daily alert run, a price
+// drop with many watchers) with every after() callback starting at once. So sends in this instance share one
+// queue: whatever is waiting goes out in a single batch request (up to 100 emails), requests are spaced out,
+// and a 429 is retried after the delay Resend asks for. A 1,000-recipient alert run takes ~10 requests.
+const BATCH_MAX = 100;
+const REQUEST_GAP_MS = 600;
+const MAX_ATTEMPTS = 3;
+const REQUEST_TIMEOUT_MS = 10_000;
+
+type Payload = { from: string; to: string[]; reply_to?: string; subject: string; html: string; text: string };
+type Pending = { payload: Payload; resolve: (result: { sent: boolean }) => void };
+
+const pending: Pending[] = [];
+let draining = false;
+let lastRequestAt = 0;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Sends a transactional email through Resend when RESEND_API_KEY is set; otherwise logs and returns.
  * Never throws — a failed email must not break the action that triggered it.
  */
-export async function sendEmail(email: Email): Promise<{ sent: boolean }> {
+export function sendEmail(email: Email): Promise<{ sent: boolean }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.info(`[email] RESEND_API_KEY not set — skipped "${email.subject}" to ${email.to}`);
-    return { sent: false };
+    return Promise.resolve({ sent: false });
   }
-  const { html, text } = render(email);
+  let payload: Payload;
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: process.env.EMAIL_FROM || `${BRAND.name} <onboarding@resend.dev>`,
-        to: [email.to],
-        reply_to: BRAND.email || undefined,
-        subject: email.subject,
-        html,
-        text,
-      }),
-    });
-    if (!res.ok) {
-      console.error(`[email] Resend ${res.status}: ${await res.text().catch(() => "")}`);
-      return { sent: false };
-    }
-    return { sent: true };
+    const { html, text } = render(email);
+    payload = {
+      from: process.env.EMAIL_FROM || `${BRAND.name} <onboarding@resend.dev>`,
+      to: [email.to],
+      reply_to: BRAND.email || undefined,
+      subject: email.subject,
+      html,
+      text,
+    };
   } catch (err) {
-    console.error("[email] send failed", err);
-    return { sent: false };
+    console.error("[email] could not render", err);
+    return Promise.resolve({ sent: false });
+  }
+  return new Promise((resolve) => {
+    pending.push({ payload, resolve });
+    if (!draining) {
+      draining = true;
+      // Next macrotask, so the other emails queued by this burst join the first batch.
+      setTimeout(() => void drain(key), 0);
+    }
+  });
+}
+
+async function drain(key: string) {
+  try {
+    while (pending.length) {
+      const wait = lastRequestAt + REQUEST_GAP_MS - Date.now();
+      if (wait > 0) await sleep(wait);
+      const batch = pending.splice(0, BATCH_MAX);
+      lastRequestAt = Date.now();
+      const sent = await post(batch.map((p) => p.payload), key);
+      batch.forEach((p, i) => p.resolve({ sent: sent[i] }));
+    }
+  } finally {
+    draining = false;
+  }
+}
+
+/** One Resend request for the batch; returns, per email, whether Resend accepted it. */
+async function post(payloads: Payload[], key: string): Promise<boolean[]> {
+  const single = payloads.length === 1;
+  try {
+    for (let attempt = 1; ; attempt++) {
+      const res = await fetch(`https://api.resend.com/emails${single ? "" : "/batch"}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+          // One bad address must not sink the other 99 emails in the batch.
+          ...(single ? {} : { "x-batch-validation": "permissive" }),
+        },
+        body: JSON.stringify(single ? payloads[0] : payloads),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+      const body = (await res.json().catch(() => null)) as {
+        name?: string;
+        errors?: { index: number; message: string }[];
+      } | null;
+      if (res.ok) {
+        const failed = new Set((body?.errors ?? []).map((e) => e.index));
+        for (const e of body?.errors ?? []) console.error(`[email] Resend rejected ${payloads[e.index]?.to[0]}: ${e.message}`);
+        return payloads.map((_, i) => !failed.has(i));
+      }
+      // Rate limits clear in seconds; an exhausted daily/monthly quota doesn't, so don't hold the queue for it.
+      if (res.status === 429 && attempt < MAX_ATTEMPTS && !/quota/i.test(body?.name ?? "")) {
+        await sleep(Math.min(Number(res.headers.get("retry-after")) || 1, 10) * 1000);
+        lastRequestAt = Date.now();
+        continue;
+      }
+      console.error(`[email] Resend ${res.status} for ${payloads.length} email(s): ${JSON.stringify(body)}`);
+      return payloads.map(() => false);
+    }
+  } catch (err) {
+    console.error(`[email] send of ${payloads.length} email(s) failed`, err);
+    return payloads.map(() => false);
   }
 }

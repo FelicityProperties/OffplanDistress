@@ -82,30 +82,37 @@ function list(v: string | string[] | undefined) {
   return (Array.isArray(v) ? v : v.split(",")).map((s) => s.trim()).filter(Boolean);
 }
 
-function num(v: string | string[] | undefined) {
+/** A number from the query string clamped to [min, max]; hand-edited links can hold anything. */
+function num(v: string | string[] | undefined, min: number, max: number) {
   const s = Array.isArray(v) ? v[0] : v;
   if (s == null || s === "") return undefined;
   const n = Number(s);
-  return Number.isFinite(n) ? n : undefined;
+  return Number.isFinite(n) ? Math.min(Math.max(n, min), max) : undefined;
 }
+
+const MAX_AED = 2_147_483_647; // prices are int4 columns
 
 export function parseFilters(params: RawParams): DealFilters {
   const sort = (Array.isArray(params.sort) ? params.sort[0] : params.sort) as DealFilters["sort"];
   const q = Array.isArray(params.q) ? params.q[0] : params.q;
+  // Whole numbers where the column is an integer (Postgres rejects "1.5" for int4); the bounds are integers.
+  const minCash = num(params.minCash, 0, MAX_AED);
+  const maxCash = num(params.maxCash, 0, MAX_AED);
+  const handoverBy = num(params.handoverBy, 1900, 2200);
   return {
     q: q?.trim() || undefined,
     community: list(params.community).filter((c) => COMMUNITIES.includes(c)),
     developer: list(params.developer).filter((d) => DEVELOPERS.includes(d)),
     type: list(params.type).filter((t): t is UnitTypeKey => t in UNIT_TYPES),
     motivation: list(params.motivation).filter((m) => ["urgent", "motivated", "flexible"].includes(m)),
-    minCash: num(params.minCash),
-    maxCash: num(params.maxCash),
-    minPaid: num(params.minPaid),
-    handoverBy: num(params.handoverBy),
-    minDiscount: num(params.minDiscount),
+    minCash: minCash == null ? undefined : Math.ceil(minCash), // price >= 1.5 ⇔ price >= 2
+    maxCash: maxCash == null ? undefined : Math.floor(maxCash),
+    minPaid: num(params.minPaid, 0, 100),
+    handoverBy: handoverBy == null ? undefined : Math.floor(handoverBy),
+    minDiscount: num(params.minDiscount, 0, 100),
     verified: params.verified === "1" ? true : undefined,
     sort: ["discount", "cash", "handover", "newest"].includes(sort) ? sort : "discount",
-    page: Math.max(1, Math.floor(num(params.page) ?? 1)),
+    page: Math.floor(num(params.page, 1, 10_000) ?? 1),
   };
 }
 

@@ -64,7 +64,8 @@ export function parseRefCode(code: string): number | null {
   const m = /^OD-(\d+)$/i.exec(code.trim());
   if (!m) return null;
   const n = Number(m[1]) - 1000;
-  return n > 0 ? n : null;
+  // ref_no is an int4 serial: anything bigger can't exist (and would make Postgres throw)
+  return n > 0 && n <= 2_147_483_647 ? n : null;
 }
 
 export function timeAgo(value: Date | string, locale: Locale = "en") {

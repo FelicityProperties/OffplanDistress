@@ -5,6 +5,7 @@ import { I18nProvider } from "@/i18n/client";
 import { dirOf } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { BRAND } from "@/lib/config";
+import { siteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
@@ -30,12 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const ar = locale === "ar";
   const tagline = ar ? "منصة دبي للوحدات على الخارطة المتعثرة" : BRAND.tagline;
   return {
-    metadataBase: new URL(
-      process.env.NEXT_PUBLIC_SITE_URL ??
-        (process.env.VERCEL_PROJECT_PRODUCTION_URL
-          ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-          : "http://localhost:3000"),
-    ),
+    metadataBase: new URL(siteUrl()),
     title: { default: `${BRAND.name} — ${tagline}`, template: `%s · ${BRAND.name}` },
     description: ar
       ? "اشترِ وحدات دبي على الخارطة بأقل من سعر الإطلاق. يعرض الملاك الذين يرغبون في الخروج وحداتهم، ونتحقق نحن من المستندات ونطابق المشترين ونتولى شهادة عدم الممانعة ونقل الملكية."

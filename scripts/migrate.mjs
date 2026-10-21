@@ -21,13 +21,24 @@ for (const file of [".env.local", ".env"]) {
   } catch {}
 }
 
+// `||`, not `??`: a variable added in Vercel with an empty value must not hide the next one.
 const url =
-  process.env.DATABASE_URL_UNPOOLED ??
-  process.env.POSTGRES_URL_NON_POOLING ??
-  process.env.DATABASE_URL ??
+  process.env.DATABASE_URL_UNPOOLED ||
+  process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.DATABASE_URL ||
   process.env.POSTGRES_URL;
 
 if (!url) {
+  if (process.env.VERCEL_ENV === "production") {
+    // Going live without a database would publish a site whose every page errors; fail the build so the
+    // previous deployment stays live instead.
+    console.error(
+      "[migrate] No DATABASE_URL in the Vercel Production environment. " +
+        "Connect the Neon database to Production under Storage → Connect Project, then redeploy.",
+    );
+    process.exit(1);
+  }
+  // Previews may deliberately have no database (Neon connected to Production only).
   console.warn("[migrate] No DATABASE_URL set — skipping migrations.");
   process.exit(0);
 }
@@ -37,10 +48,25 @@ const pool = new pg.Pool({ connectionString: url, ssl: !local, max: 1 });
 
 try {
   const db = drizzle(pool);
-  await migrate(db, { migrationsFolder: path.join(root, "drizzle") });
+  const migrationsFolder = path.join(root, "drizzle");
+  try {
+    await migrate(db, { migrationsFolder });
+  } catch (err) {
+    // A preview and a production build can start together against the same database; the loser of
+    // that race sees "already exists". Pending migrations run in one transaction, so retrying is safe.
+    console.warn(`[migrate] Migration failed (${err.message}); retrying once in 5s.`);
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await migrate(db, { migrationsFolder });
+  }
   console.log("[migrate] Database schema is up to date.");
 
-  await ensureOwners(pool);
+  if (process.env.VERCEL_ENV === "preview") {
+    // Preview builds may share the production database, possibly with a different (or no) ADMIN_PASSWORD:
+    // only production builds manage the owner login.
+    console.log("[migrate] Preview build — owner login left unchanged.");
+  } else {
+    await ensureOwners(pool);
+  }
 
   if (process.env.SEED_SAMPLE_DATA !== "false") {
     await seedSamples(pool);
