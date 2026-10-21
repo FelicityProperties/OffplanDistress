@@ -7,7 +7,7 @@ import path from "node:path";
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { databaseVariableNames, findDatabaseUrl } from "../src/db/database-url.mjs";
+import { describeDatabaseVariables, findDatabaseUrl } from "../src/db/database-url.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -26,14 +26,18 @@ const found = findDatabaseUrl(process.env, { unpooled: true });
 const url = found?.url;
 
 if (!url) {
-  const names = databaseVariableNames(process.env);
-  const present = names.length ? `Database-related variables present (none hold a postgres:// URL): ${names.join(", ")}.` : "No database-related variables are set.";
+  const vars = describeDatabaseVariables(process.env);
+  const present = vars.length
+    ? `Database-related variables found, but none holds a postgresql:// connection string: ${vars.join("; ")}.`
+    : "No database-related variables are set.";
   if (process.env.VERCEL_ENV === "production") {
     // Going live without a database would publish a site whose every page errors; fail the build so the
     // previous deployment stays live instead.
     console.error(
       `[migrate] No database connection string in the Vercel Production environment. ${present} ` +
-        "Fix: Vercel → Storage → your Neon database → Connect Project → this project, tick Production, then redeploy.",
+        "Fix: in Vercel → Settings → Environment Variables, set DATABASE_URL to the connection string from Neon's " +
+        "Connect dialog (it starts with postgresql://) for Production, or connect the database under Storage → " +
+        "Connect Project. Then redeploy.",
     );
     process.exit(1);
   }
