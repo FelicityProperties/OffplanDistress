@@ -1,14 +1,7 @@
 import "server-only";
 import { translator } from "@/i18n/translator";
 import { BRAND } from "./config";
-
-/** Absolute base URL for links in emails. */
-export function siteUrl() {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
-}
+import { siteUrl } from "./site-url";
 
 export function emailEnabled() {
   return Boolean(process.env.RESEND_API_KEY);
@@ -38,35 +31,55 @@ ${href && cta ? `<a href="${escape(href)}" style="display:inline-block;backgroun
   return { html, text };
 }
 
+// Resend accepts about 2 requests a second per account, and notifications fan out (a daily alert run, a price
+// drop with many watchers) with every after() callback starting at once. Sends in this instance therefore go
+// out one at a time, and a 429 is retried after the delay Resend asks for.
+const SEND_GAP_MS = 600;
+const MAX_ATTEMPTS = 3;
+let queue: Promise<unknown> = Promise.resolve();
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Sends a transactional email through Resend when RESEND_API_KEY is set; otherwise logs and returns.
  * Never throws — a failed email must not break the action that triggered it.
  */
-export async function sendEmail(email: Email): Promise<{ sent: boolean }> {
+export function sendEmail(email: Email): Promise<{ sent: boolean }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.info(`[email] RESEND_API_KEY not set — skipped "${email.subject}" to ${email.to}`);
-    return { sent: false };
+    return Promise.resolve({ sent: false });
   }
-  const { html, text } = render(email);
+  const result = queue.then(() => deliver(email, key));
+  queue = result.then(() => sleep(SEND_GAP_MS));
+  return result;
+}
+
+async function deliver(email: Email, key: string): Promise<{ sent: boolean }> {
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: process.env.EMAIL_FROM || `${BRAND.name} <onboarding@resend.dev>`,
-        to: [email.to],
-        reply_to: BRAND.email || undefined,
-        subject: email.subject,
-        html,
-        text,
-      }),
+    const { html, text } = render(email);
+    const body = JSON.stringify({
+      from: process.env.EMAIL_FROM || `${BRAND.name} <onboarding@resend.dev>`,
+      to: [email.to],
+      reply_to: BRAND.email || undefined,
+      subject: email.subject,
+      html,
+      text,
     });
-    if (!res.ok) {
+    for (let attempt = 1; ; attempt++) {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body,
+      });
+      if (res.ok) return { sent: true };
+      if (res.status === 429 && attempt < MAX_ATTEMPTS) {
+        await sleep(Math.min(Number(res.headers.get("retry-after")) || 1, 10) * 1000);
+        continue;
+      }
       console.error(`[email] Resend ${res.status}: ${await res.text().catch(() => "")}`);
       return { sent: false };
     }
-    return { sent: true };
   } catch (err) {
     console.error("[email] send failed", err);
     return { sent: false };
