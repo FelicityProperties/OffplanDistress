@@ -29,14 +29,16 @@ const url =
   process.env.POSTGRES_URL;
 
 if (!url) {
-  if (process.env.VERCEL) {
-    // Deploying without a database would publish a site whose every page errors; fail the build instead.
+  if (process.env.VERCEL_ENV === "production") {
+    // Going live without a database would publish a site whose every page errors; fail the build so the
+    // previous deployment stays live instead.
     console.error(
-      `[migrate] No DATABASE_URL in this Vercel environment (${process.env.VERCEL_ENV}). ` +
-        "Connect the Neon database to it under Storage → Connect Project, then redeploy.",
+      "[migrate] No DATABASE_URL in the Vercel Production environment. " +
+        "Connect the Neon database to Production under Storage → Connect Project, then redeploy.",
     );
     process.exit(1);
   }
+  // Previews may deliberately have no database (Neon connected to Production only).
   console.warn("[migrate] No DATABASE_URL set — skipping migrations.");
   process.exit(0);
 }

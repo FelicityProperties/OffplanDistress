@@ -64,9 +64,10 @@ In-app notifications always work. Emails go out through [Resend](https://resend.
      defaults to the Vercel production URL) for links in emails, and the
      `NEXT_PUBLIC_CONTACT_*` / `NEXT_PUBLIC_RERA_ORN` values shown on the site.
 3. Deploy. `vercel.json` pins the Next.js framework preset, so it doesn't matter what Vercel detected when the
-   project was created. `npm run build` first runs `scripts/migrate.mjs`: it applies database migrations (the
-   build fails if Vercel has no database URL for that environment), sets up the owner login, and — on an empty database — adds 16 listings marked **Sample** so the marketplace isn't empty on day
-   one. Remove them from `/admin` with one click once real listings arrive, or set `SEED_SAMPLE_DATA=false`
+   project was created. `npm run build` first runs `scripts/migrate.mjs`: it applies database migrations (a
+   production build fails if Vercel has no database URL for Production, so a broken deploy never goes live),
+   sets up the owner login, and — on an empty database — adds 16 listings marked **Sample** so the marketplace
+   isn't empty on day one. Remove them from `/admin` with one click once real listings arrive, or set `SEED_SAMPLE_DATA=false`
    before the first deploy.
 4. Log in at `/login` with the owner email and `ADMIN_PASSWORD` — you land in `/admin`.
 
