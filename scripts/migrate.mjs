@@ -7,6 +7,7 @@ import path from "node:path";
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { databaseVariableNames, findDatabaseUrl } from "../src/db/database-url.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -21,27 +22,26 @@ for (const file of [".env.local", ".env"]) {
   } catch {}
 }
 
-// `||`, not `??`: a variable added in Vercel with an empty value must not hide the next one.
-const url =
-  process.env.DATABASE_URL_UNPOOLED ||
-  process.env.POSTGRES_URL_NON_POOLING ||
-  process.env.DATABASE_URL ||
-  process.env.POSTGRES_URL;
+const found = findDatabaseUrl(process.env, { unpooled: true });
+const url = found?.url;
 
 if (!url) {
+  const names = databaseVariableNames(process.env);
+  const present = names.length ? `Database-related variables present (none hold a postgres:// URL): ${names.join(", ")}.` : "No database-related variables are set.";
   if (process.env.VERCEL_ENV === "production") {
     // Going live without a database would publish a site whose every page errors; fail the build so the
     // previous deployment stays live instead.
     console.error(
-      "[migrate] No DATABASE_URL in the Vercel Production environment. " +
-        "Connect the Neon database to Production under Storage → Connect Project, then redeploy.",
+      `[migrate] No database connection string in the Vercel Production environment. ${present} ` +
+        "Fix: Vercel → Storage → your Neon database → Connect Project → this project, tick Production, then redeploy.",
     );
     process.exit(1);
   }
   // Previews may deliberately have no database (Neon connected to Production only).
-  console.warn("[migrate] No DATABASE_URL set — skipping migrations.");
+  console.warn(`[migrate] No database connection string — skipping migrations. ${present}`);
   process.exit(0);
 }
+console.log(`[migrate] Using ${found.name}.`);
 
 const local = /localhost|127\.0\.0\.1/.test(url);
 const pool = new pg.Pool({ connectionString: url, ssl: !local, max: 1 });
