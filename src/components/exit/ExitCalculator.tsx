@@ -3,7 +3,7 @@
 import { Fragment, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import * as SliderPrimitive from "@radix-ui/react-slider";
-import { ArrowRight, CirclePause, Handshake, Info, MessageCircle, Scale, TriangleAlert, Wallet } from "lucide-react";
+import { ArrowDown, ArrowRight, CirclePause, Handshake, Info, MessageCircle, Scale, TriangleAlert, Wallet } from "lucide-react";
 import { StatusPill } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -251,6 +251,8 @@ export function ExitCalculator() {
   /** Translated text with its numbers isolated (percentages, ranges) — for display, not attributes. */
   const tx = (...args: Parameters<typeof t>) => ltr(t(...args));
   const locale = useLocale();
+  const plural = useMemo(() => new Intl.PluralRules(locale === "ar" ? "ar" : "en"), [locale]);
+  const monthsText = (n: number) => t(`count.months.${plural.select(n)}`, { n });
   const ids = useId();
   const [price, setPrice] = useState<number | null>(DEFAULTS.price);
   const [paid, setPaid] = useState<number | null>(DEFAULTS.paid);
@@ -490,17 +492,24 @@ export function ExitCalculator() {
               max={MONTHS_MAX}
               step={1}
               onValue={(v) => setMonths(v > 0 ? v : null)}
-              valueText={months ? `${months} ${t("in.months.unit")}` : t("in.placeholder.optional")}
+              valueText={months ? monthsText(months) : t("in.placeholder.optional")}
             />
             <p id={id("months-hint")} className="mt-1.5 text-xs text-muted-foreground">
               {t("in.months.hint")}
             </p>
           </div>
         </div>
+        {/* Phones: the results are below this long form */}
+        <a
+          href="#exit-results"
+          className="mt-7 flex items-center justify-center gap-1.5 rounded-xl bg-secondary py-3 text-sm font-semibold transition-colors hover:bg-accent lg:hidden"
+        >
+          {t("calc.seeResults")} <ArrowDown className="h-4 w-4" aria-hidden />
+        </a>
       </div>
 
       {/* Results */}
-      <div className="min-w-0">
+      <div id="exit-results" className="min-w-0">
         <h2 className="sr-only">{t("out.title")}</h2>
         {!ready ? (
           <p className="rounded-3xl border border-dashed border-border bg-card/60 p-8 text-center text-muted-foreground">{t("out.empty")}</p>
@@ -548,7 +557,7 @@ export function ExitCalculator() {
               <dl className="mt-4 divide-y divide-border/70 border-t border-border/70">
                 <Row label={t("opt1.remaining")} value={money(a.remaining)} />
                 {a.perMonth != null && a.months != null && (
-                  <Row label={rich(t("opt1.perMonth"), { months: <bdi dir="ltr">{a.months}</bdi> })} value={money(a.perMonth)} note={t("opt1.perMonth.note")} />
+                  <Row label={rich(t("opt1.perMonth"), { months: <bdi>{monthsText(a.months)}</bdi> })} value={money(a.perMonth)} note={t("opt1.perMonth.note")} />
                 )}
                 <Row
                   label={t("opt1.value")}

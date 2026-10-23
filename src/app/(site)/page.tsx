@@ -3,6 +3,8 @@ import {
   ArrowRight,
   BadgeCheck,
   CalendarClock,
+  Calculator,
+  ChartNoAxesColumn,
   CheckCircle2,
   FileSignature,
   Info,
@@ -233,6 +235,18 @@ export default async function Home() {
           <div className="mt-14 grid gap-6">
             <StepsFlow title={t("how.sellers")} steps={SELLER_STEPS} tone="ink" />
             <StepsFlow title={t("how.buyers")} steps={BUYER_STEPS} tone="gold" />
+          </div>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <Button asChild variant="outline" className="rounded-full bg-card">
+              <Link href="/exit-calculator">
+                <Calculator aria-hidden /> {t("how.exitLink")}
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="rounded-full">
+              <Link href="/market">
+                <ChartNoAxesColumn aria-hidden /> {t("how.indexLink")} <ArrowRight className="rtl:-scale-x-100" aria-hidden />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

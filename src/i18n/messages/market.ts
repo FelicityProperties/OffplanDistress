@@ -12,9 +12,9 @@ export default defineMessages({
     "hero.live": "Live",
     "hero.title": "Dubai Distress Index",
     "hero.summary":
-      "{count} distressed off-plan units are on the market right now, priced at a median {pct} below today's launch price.",
+      "{count} distressed off-plan units are on the market right now. Where today's launch price is recorded, they are priced at a median {pct} below it.",
     "hero.summaryPremium":
-      "{count} distressed off-plan units are on the market right now, priced at a median {pct} above today's launch price.",
+      "{count} distressed off-plan units are on the market right now. Where today's launch price is recorded, they are priced at a median {pct} above it.",
     "hero.summaryValue": "{count} distressed off-plan units are on the market right now, with a combined sale value of {value}.",
     "hero.summaryPending": "Live statistics on distressed off-plan supply and demand in Dubai, computed only from real listings.",
     "hero.asOf": "As of {date}, Dubai time",
@@ -84,7 +84,7 @@ export default defineMessages({
 
     "monthly.eyebrow": "New supply",
     "monthly.title": "New listings, last six months",
-    "monthly.sub": "Real listings approved and published each month (Dubai time), whatever their status today.",
+    "monthly.sub": "Real listings by the month they were first approved and published (Dubai time), whatever their status today.",
     "monthly.col.month": "Month",
     "monthly.col.count": "New listings",
     "monthly.toDate": "to date",
@@ -150,7 +150,7 @@ export default defineMessages({
       "We lead with medians so that one unusual listing cannot move the index. A median, average or share is shown only when at least {min} units qualify, and the full index is published once {live} real listings are on the market.",
     "method.demand.title": "Demand",
     "method.demand.body":
-      "Offers are counted when they are made. Buyers watching are distinct accounts with at least one unit on the market on their watchlist. Saved searches count only when their alerts are on.",
+      "Offers are counted when they are made. Buyers watching are distinct accounts with at least one unit on the market on their watchlist. Saved searches count only when their alerts are on. Our team's admin accounts are left out.",
     "method.transfer.title": "Days to transfer",
     "method.transfer.body":
       "Approximate: the time from publication to the last update of a transferred listing, which is normally the transfer itself.",
@@ -172,9 +172,10 @@ export default defineMessages({
     "hero.eyebrow": "تقرير السوق",
     "hero.live": "مباشر",
     "hero.title": "مؤشر الوحدات المتعثرة في دبي",
-    "hero.summary": "يضم السوق الآن {count} من الوحدات على الخارطة المتعثرة، بخصم وسيط قدره {pct} عن سعر الإطلاق الحالي.",
+    "hero.summary":
+      "يضم السوق الآن {count} من الوحدات على الخارطة المتعثرة، وحيثما سُجّل سعر الإطلاق الحالي تُعرض بخصم وسيط قدره {pct} عنه.",
     "hero.summaryPremium":
-      "يضم السوق الآن {count} من الوحدات على الخارطة المتعثرة، بسعر وسيط يزيد بنسبة {pct} على سعر الإطلاق الحالي.",
+      "يضم السوق الآن {count} من الوحدات على الخارطة المتعثرة، وحيثما سُجّل سعر الإطلاق الحالي تُعرض بسعر وسيط يزيد عليه بنسبة {pct}.",
     "hero.summaryValue": "يضم السوق الآن {count} من الوحدات على الخارطة المتعثرة، بقيمة بيع إجمالية قدرها {value}.",
     "hero.summaryPending": "إحصاءات مباشرة عن عرض الوحدات على الخارطة المتعثرة والطلب عليها في دبي، محسوبة من الإعلانات الحقيقية فقط.",
     "hero.asOf": "حتى {date} بتوقيت دبي",
@@ -213,7 +214,7 @@ export default defineMessages({
     "communities.col.discountSr": "القيمة الوسيطة مقارنةً بسعر الإطلاق الحالي",
     "communities.col.paid": "المسدَّد",
     "communities.col.paidSr": "النسبة الوسيطة المسدَّدة للمطوّر من السعر",
-    "communities.note": "يظهر الوسيط عندما تتوفر {min} وحدات مؤهّلة على الأقل في المنطقة. وتفتح أسماء المناطق الصفقات المطابقة.",
+    "communities.note": "يظهر الوسيط عندما تتوفر {min} وحدات مؤهّلة على الأقل في المنطقة. انقر اسم المنطقة لعرض صفقاتها.",
 
     "cash.eyebrow": "حجم الصفقة",
     "cash.title": "المبلغ المطلوب مقدّماً للدخول",
@@ -228,7 +229,7 @@ export default defineMessages({
     "cash.band.1mTo2m": "من مليون إلى مليوني درهم",
     "cash.band.gt2m": "أكثر من مليوني درهم",
     "cash.medianUpfront": "المبلغ المقدّم الوسيط: {value}",
-    "cash.note": "تفتح كل فئة السوق مصفّاةً حسب تلك الميزانية.",
+    "cash.note": "انقر أي فئة لعرض الصفقات ضمن تلك الميزانية.",
 
     "seller.eyebrow": "ملف البائعين",
     "seller.title": "من يبيع، وبأي سرعة",
@@ -242,7 +243,7 @@ export default defineMessages({
 
     "monthly.eyebrow": "العرض الجديد",
     "monthly.title": "الإعلانات الجديدة خلال الأشهر الستة الأخيرة",
-    "monthly.sub": "الإعلانات الحقيقية التي اعتُمدت ونُشرت في كل شهر (بتوقيت دبي)، بصرف النظر عن حالتها اليوم.",
+    "monthly.sub": "الإعلانات الحقيقية حسب الشهر الذي اعتُمدت ونُشرت فيه لأول مرة (بتوقيت دبي)، بصرف النظر عن حالتها اليوم.",
     "monthly.col.month": "الشهر",
     "monthly.col.count": "الإعلانات الجديدة",
     "monthly.toDate": "حتى الآن",
@@ -255,7 +256,7 @@ export default defineMessages({
     "developers.col.units": "الوحدات",
     "developers.col.share": "النسبة",
     "developers.count": "عدد المطوّرين: {n}",
-    "developers.note": "تفتح أسماء المطوّرين صفقاتهم.",
+    "developers.note": "انقر اسم المطوّر لعرض صفقاته.",
 
     "demand.eyebrow": "الطلب",
     "demand.title": "طلب المشترين والصفقات المكتملة",
@@ -307,7 +308,7 @@ export default defineMessages({
       "نعتمد القيم الوسيطة أساساً حتى لا يحرّك إعلانٌ واحد غير معتاد المؤشر. ولا يظهر الوسيط أو المتوسط أو النسبة إلا عند توفر {min} وحدات مؤهّلة على الأقل، ويُنشر المؤشر كاملاً عندما تتوفر {live} إعلانات حقيقية في السوق.",
     "method.demand.title": "الطلب",
     "method.demand.body":
-      "تُحتسب العروض عند تقديمها. والمشترون المتابعون هم الحسابات المختلفة التي تضم قائمة متابعتها وحدة معروضة واحدة على الأقل. ولا تُحتسب عمليات البحث المحفوظة إلا إذا كانت تنبيهاتها مفعّلة.",
+      "تُحتسب العروض عند تقديمها. والمشترون المتابعون هم الحسابات المختلفة التي تضم قائمة متابعتها وحدة معروضة واحدة على الأقل. ولا تُحتسب عمليات البحث المحفوظة إلا إذا كانت تنبيهاتها مفعّلة. ولا تدخل في ذلك حسابات الإدارة الخاصة بفريقنا.",
     "method.transfer.title": "المدة حتى نقل الملكية",
     "method.transfer.body": "تقريبية: المدة من نشر الإعلان حتى آخر تحديث عليه بعد نقل ملكيته، وهو عادةً نقل الملكية نفسه.",
     "method.frequency.title": "وتيرة التحديث",

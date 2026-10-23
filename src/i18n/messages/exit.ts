@@ -23,13 +23,14 @@ export default defineMessages({
     "calc.title": "Your numbers",
     "calc.sub": "Use the figures in your SPA and your latest statement of account.",
     "calc.optional": "Optional",
+    "calc.seeResults": "See your three options",
     "in.price": "Purchase price",
     "in.price.hint": "The unit price in your SPA.",
     "in.paid": "Paid so far",
     "in.paid.hint": "{pct} of the price",
-    "in.paid.over": "This can't be more than the purchase price, so we've capped it.",
+    "in.paid.over": "This can't be more than the purchase price, so we've used the purchase price instead.",
     "in.progress": "Construction progress",
-    "in.progress.hint": "Your developer's latest update. The law uses the completion percentage determined by RERA.",
+    "in.progress.hint": "Your developer's latest update. The law uses the official completion percentage, calculated under RERA's rules.",
     "in.notStarted": "Construction hasn't started",
     "in.market": "Today's price for a similar unit",
     "in.market.hint":
@@ -38,6 +39,13 @@ export default defineMessages({
     "in.months": "Months until handover",
     "in.months.hint": "Used to show the average monthly amount you'd still need.",
     "in.months.unit": "months",
+    // Picked with Intl.PluralRules (Arabic needs one / two / few / many forms)
+    "count.months.zero": "{n} months",
+    "count.months.one": "{n} month",
+    "count.months.two": "{n} months",
+    "count.months.few": "{n} months",
+    "count.months.many": "{n} months",
+    "count.months.other": "{n} months",
     "in.placeholder.optional": "Optional",
 
     "out.title": "Your three ways out",
@@ -52,7 +60,7 @@ export default defineMessages({
       "Sold close to full value, you'd keep up to {high} more than the refund you could expect if you stop paying. At a deep discount it may not.",
     "verdict.law.title": "On these numbers, a quick sale doesn't beat the legal refund",
     "verdict.law.body":
-      "Read your SPA and take legal advice before you stop paying: the result depends on the developer's choice and the completion percentage RERA determines. We can still tell you what your unit would fetch.",
+      "Read your SPA and take legal advice before you stop paying: the result depends on the developer's choice and the official completion percentage. We can still tell you what your unit could fetch.",
     "verdict.none.title": "On these numbers, neither exit gets your money back",
     "verdict.none.body":
       "At today's price your equity is wiped out, and if you stop paying the developer may keep everything you've paid. Compare keeping the unit to handover, and talk to us before you decide.",
@@ -62,7 +70,7 @@ export default defineMessages({
     "opt1.title": "Keep paying to handover",
     "opt1.desc": "You keep the unit and fund every remaining instalment.",
     "opt1.remaining": "Still to pay the developer",
-    "opt1.perMonth": "Average per month over {months} months",
+    "opt1.perMonth": "Average per month over {months}",
     "opt1.perMonth.note": "A simple average — your plan may put more on handover.",
     "opt1.value": "Value at today's price",
     "opt1.gain": "Paper gain or loss on your price",
@@ -75,7 +83,7 @@ export default defineMessages({
     "opt2.lose": "You could lose",
     "opt2.refund": "Refund due to you",
     "opt2.refund.note": "Within one year of termination, or 60 days after the unit is resold — whichever comes first.",
-    "opt2.refund.escrow": "Paid back through the project's escrow account.",
+    "opt2.refund.escrow": "In this case the law requires the developer to refund everything you've paid.",
     "opt2.notice": "First the developer must notify DLD, and DLD must give you 30 days to pay what's due.",
     "opt2.spa": "Shown against what you've paid. Check your SPA for any further claim.",
 
@@ -88,7 +96,7 @@ export default defineMessages({
     "tier.from60to80.rule": "Cancel the contract and keep up to 40% of the price.",
     "tier.under60.rule": "Cancel the contract and keep up to 25% of the price.",
     "tier.notStarted.rule":
-      "Refund everything you've paid — where works haven't started for reasons beyond the developer's control, or RERA cancelled the project.",
+      "The developer must refund everything you've paid, where works haven't started for reasons beyond its control or RERA has cancelled the project.",
 
     "opt3.title": "Sell your contract through {brand}",
     "opt3.desc": "A buyer pays you for your equity and takes over the remaining instalments.",
@@ -123,7 +131,7 @@ export default defineMessages({
       "You keep the unit and any gain or loss at handover, but you must fund every remaining instalment, including any handover payment in your plan.",
     "paths.stop.title": "Stop paying",
     "paths.stop.body":
-      "Missing instalments doesn't end the contract. The developer goes through DLD and, once the 30-day notice runs out, may keep the contract and claim the balance or cancel it and keep part of the price.",
+      "Missing instalments doesn't end the contract. The developer goes through DLD and, once the 30-day notice runs out, may — depending on construction progress — keep the contract and claim the balance, or cancel it and keep part of the price.",
     "paths.sell.title": "Sell the contract",
     "paths.sell.body":
       "An assignment: a buyer pays you for what you've paid in and takes over the remaining instalments, with the developer's NOC and a DLD transfer. You choose the price and the timing.",
@@ -133,7 +141,7 @@ export default defineMessages({
     "law.sub":
       "Off-plan defaults in Dubai follow a set procedure through the Dubai Land Department (DLD). What the developer may keep depends on how far construction has progressed.",
     "law.citation": "Law No. (13) of 2008 Regulating the Interim Real Property Register in the Emirate of Dubai — Article 11, as replaced by Law No. (19) of 2020.",
-    "law.reviewed": "Reviewed October 2026",
+    "law.reviewed": "Last updated October 2026",
     "law.step": "Step {n}",
     "law.step1.title": "The developer notifies DLD",
     "law.step1.body": "On DLD's prescribed form, setting out the obligations you haven't met.",
@@ -141,13 +149,13 @@ export default defineMessages({
     "law.step2.body": "DLD notifies you and gives you 30 days to pay what's due. It may also try to settle the matter between you.",
     "law.step3.title": "DLD confirms, the developer acts",
     "law.step3.body":
-      "If you don't pay, DLD issues a document confirming the developer followed the procedure. The developer can then act without a court ruling, according to construction progress.",
-    "law.tiers.title": "What the developer may do, by construction progress",
+      "If you don't pay, DLD issues a document confirming the developer followed the procedure and stating the completion percentage. The developer can then act without a court ruling, according to that percentage.",
+    "law.tiers.title": "What the developer may or must do, by construction progress",
     "law.col.progress": "Construction progress",
-    "law.col.options": "The developer may",
+    "law.col.options": "What the law allows or requires",
     "law.refund": "Anything above the developer's share must be refunded within one year of termination, or within 60 days of the unit's resale, whichever is earlier.",
     "law.base": "The 25% and 40% limits are percentages of the unit price in your SPA — not of the amount you've paid.",
-    "law.maximum": "These are maximums. Your SPA may agree less, and completion is the percentage determined by RERA.",
+    "law.maximum": "These are maximums. Your SPA may agree less, and completion is the official percentage, calculated under RERA's rules.",
     "law.before2020": "Before the 2020 amendment, a developer could keep up to 30% of the amounts paid when works hadn't started. That is no longer the rule.",
     "law.source": "Read the law on the Dubai Legislation Portal",
 
@@ -189,13 +197,14 @@ export default defineMessages({
     "calc.title": "أرقامك",
     "calc.sub": "استخدم الأرقام الواردة في اتفاقية البيع والشراء وآخر كشف حساب لديك.",
     "calc.optional": "اختياري",
+    "calc.seeResults": "اعرض خياراتك الثلاثة",
     "in.price": "سعر الشراء",
     "in.price.hint": "سعر الوحدة في اتفاقية البيع والشراء.",
     "in.paid": "المبلغ المدفوع حتى الآن",
     "in.paid.hint": "{pct} من السعر",
     "in.paid.over": "لا يمكن أن يتجاوز هذا المبلغ سعر الشراء، لذا اعتمدنا سعر الشراء حداً أقصى.",
     "in.progress": "نسبة إنجاز البناء",
-    "in.progress.hint": "وفق آخر تحديث من المطوّر. يعتمد القانون نسبة الإنجاز التي تحددها مؤسسة التنظيم العقاري (ريرا).",
+    "in.progress.hint": "وفق آخر تحديث من المطوّر. يعتمد القانون نسبة الإنجاز الرسمية المحتسبة وفق معايير مؤسسة التنظيم العقاري (ريرا).",
     "in.notStarted": "لم تبدأ أعمال البناء بعد",
     "in.market": "السعر الحالي لوحدة مماثلة",
     "in.market.hint":
@@ -203,7 +212,13 @@ export default defineMessages({
     "in.market.clear": "مسح",
     "in.months": "الأشهر المتبقية حتى التسليم",
     "in.months.hint": "نستخدمه لعرض متوسط المبلغ الشهري الذي ستحتاجه.",
-    "in.months.unit": "شهراً",
+    "in.months.unit": "شهر",
+    "count.months.zero": "{n} شهر",
+    "count.months.one": "شهر واحد",
+    "count.months.two": "شهران",
+    "count.months.few": "{n} أشهر",
+    "count.months.many": "{n} شهراً",
+    "count.months.other": "{n} شهر",
     "in.placeholder.optional": "اختياري",
 
     "out.title": "طرق الخروج الثلاث",
@@ -211,24 +226,24 @@ export default defineMessages({
     "out.option": "الخيار {n}",
 
     "verdict.sell.title": "البيع يبدو أفضل من التوقف عن السداد",
-    "verdict.sell.body": "البيع ضمن النطاق أدناه يترك لك ما بين {low} و{high} أكثر من المبلغ الذي يمكن أن يُرد إليك إن توقفت عن السداد.",
-    "verdict.sell.bodySingle": "البيع بالتقدير أدناه يترك لك {high} أكثر من المبلغ الذي يمكن أن يُرد إليك إن توقفت عن السداد.",
+    "verdict.sell.body": "البيع ضمن النطاق أدناه يُبقي لك ما بين {low} و{high} زيادةً على المبلغ الذي قد يُرد إليك إن توقفت عن السداد.",
+    "verdict.sell.bodySingle": "البيع بالتقدير أدناه يُبقي لك {high} زيادةً على المبلغ الذي قد يُرد إليك إن توقفت عن السداد.",
     "verdict.maybe.title": "قد يتفوق البيع على التوقف عن السداد — إن كان السعر مناسباً",
     "verdict.maybe.body":
-      "إن بعت بسعر قريب من القيمة الكاملة، يبقى لك ما يصل إلى {high} أكثر من المبلغ الذي يمكن أن يُرد إليك إن توقفت عن السداد. أما مع خصم كبير فقد لا يكون الأمر كذلك.",
+      "إن بعت بسعر قريب من القيمة الكاملة، يبقى لك ما يصل إلى {high} زيادةً على المبلغ الذي قد يُرد إليك إن توقفت عن السداد. أما مع خصم كبير فقد لا يكون الأمر كذلك.",
     "verdict.law.title": "وفق هذه الأرقام، لا يتفوق البيع السريع على ما يُرد إليك بموجب القانون",
     "verdict.law.body":
-      "راجع اتفاقية البيع والشراء واستشر محامياً قبل أن تتوقف عن السداد، فالنتيجة تتوقف على قرار المطوّر ونسبة الإنجاز التي تحددها ريرا. ويسعدنا مع ذلك أن نخبرك بالسعر الذي قد تحققه وحدتك.",
+      "راجع اتفاقية البيع والشراء واستشر محامياً قبل أن تتوقف عن السداد، فالنتيجة تتوقف على قرار المطوّر ونسبة الإنجاز الرسمية. ويسعدنا مع ذلك أن نخبرك بالسعر الذي قد تحققه وحدتك.",
     "verdict.none.title": "وفق هذه الأرقام، لا يعيد إليك أيّ من الخيارين أموالك",
     "verdict.none.body":
       "بسعر اليوم تتلاشى قيمة حصتك، وإن توقفت عن السداد فقد يحتفظ المطوّر بكل ما دفعته. قارن ذلك بمواصلة السداد حتى التسليم، وتحدّث معنا قبل أن تقرر.",
     "verdict.over80":
-      "إذا تجاوزت نسبة الإنجاز 80% فيحق للمطوّر أيضاً الإبقاء على العقد ومطالبتك بمبلغ {amount} المتبقي، فالتوقف عن السداد لا يُسقط الدين.",
+      "إذا تجاوزت نسبة الإنجاز 80% فيحق للمطوّر أيضاً الإبقاء على العقد ومطالبتك بالمبلغ المتبقي البالغ {amount}، فالتوقف عن السداد لا يُسقط الدين.",
 
     "opt1.title": "مواصلة السداد حتى التسليم",
     "opt1.desc": "تحتفظ بالوحدة وتسدّد جميع الأقساط المتبقية.",
     "opt1.remaining": "المتبقي للمطوّر",
-    "opt1.perMonth": "المتوسط الشهري على مدى {months} شهراً",
+    "opt1.perMonth": "المتوسط الشهري على مدى {months}",
     "opt1.perMonth.note": "متوسط بسيط، وقد تحمّل خطتك دفعة أكبر عند التسليم.",
     "opt1.value": "القيمة بسعر اليوم",
     "opt1.gain": "الربح أو الخسارة الدفترية مقارنة بسعرك",
@@ -241,7 +256,7 @@ export default defineMessages({
     "opt2.lose": "ما قد تخسره",
     "opt2.refund": "المبلغ المستحق ردّه إليك",
     "opt2.refund.note": "خلال سنة من فسخ العقد، أو خلال 60 يوماً من إعادة بيع الوحدة، أيهما أسبق.",
-    "opt2.refund.escrow": "يُرد عبر حساب الضمان الخاص بالمشروع.",
+    "opt2.refund.escrow": "في هذه الحالة يُلزم القانون المطوّر بردّ كامل ما دفعته.",
     "opt2.notice": "على المطوّر أولاً إخطار دائرة الأراضي والأملاك، وعلى الدائرة أن تمنحك مهلة 30 يوماً لسداد المستحق.",
     "opt2.spa": "محسوبة مقارنة بما دفعته. راجع اتفاقية البيع والشراء لمعرفة أي مطالبات أخرى.",
 
@@ -254,7 +269,7 @@ export default defineMessages({
     "tier.from60to80.rule": "فسخ العقد والاحتفاظ بما لا يزيد على 40% من السعر.",
     "tier.under60.rule": "فسخ العقد والاحتفاظ بما لا يزيد على 25% من السعر.",
     "tier.notStarted.rule":
-      "ردّ كامل ما دفعته — إذا لم تبدأ الأعمال لأسباب خارجة عن إرادة المطوّر، أو ألغت ريرا المشروع.",
+      "على المطوّر ردّ كامل ما دفعته، إذا لم تبدأ الأعمال لأسباب خارجة عن إرادته أو ألغت ريرا المشروع.",
 
     "opt3.title": "بيع عقدك عبر {brand}",
     "opt3.desc": "يدفع لك المشتري قيمة حصتك ويتولى سداد الأقساط المتبقية.",
@@ -268,7 +283,7 @@ export default defineMessages({
     "opt3.noc": "رسوم شهادة عدم الممانعة من المطوّر (تقديرية)",
     "opt3.noc.note": "يحددها كل مطوّر وتُؤكَّد عند إصدار الشهادة. وهي في صفقاتنا ضمن تكاليف الإتمام التي يتحملها المشتري.",
     "opt3.net": "ما قد تحصل عليه",
-    "opt3.takeover": "ويتولى المشتري أيضاً سداد مبلغ {amount} المتبقي للمطوّر.",
+    "opt3.takeover": "ويتولى المشتري أيضاً سداد المبلغ المتبقي للمطوّر البالغ {amount}.",
     "opt3.noMarket": "افترضنا أن السعر الحالي يساوي سعر شرائك. أضف السعر الحالي للحصول على تقدير أدق.",
     "opt3.underwater": "بسعر اليوم يمحو انخفاض السعر ما دفعته، لذا قد لا يدفع المشتري شيئاً يُذكر مقابل العقد.",
     "opt3.nocWarning":
@@ -290,7 +305,7 @@ export default defineMessages({
       "تحتفظ بالوحدة وبأي ربح أو خسارة عند التسليم، لكن عليك سداد جميع الأقساط المتبقية، بما فيها أي دفعة عند التسليم في خطتك.",
     "paths.stop.title": "التوقف عن السداد",
     "paths.stop.body":
-      "التأخر عن الأقساط لا يُنهي العقد. يلجأ المطوّر إلى دائرة الأراضي والأملاك، وبعد انقضاء مهلة الثلاثين يوماً يجوز له الإبقاء على العقد والمطالبة بالمتبقي، أو فسخه والاحتفاظ بجزء من السعر.",
+      "التأخر عن الأقساط لا يُنهي العقد. يلجأ المطوّر إلى دائرة الأراضي والأملاك، وبعد انقضاء مهلة الثلاثين يوماً يجوز له، بحسب نسبة إنجاز البناء، الإبقاء على العقد والمطالبة بالمتبقي، أو فسخه والاحتفاظ بجزء من السعر.",
     "paths.sell.title": "بيع العقد",
     "paths.sell.body":
       "التنازل: يدفع لك المشتري ما سددته ويتولى الأقساط المتبقية، بموجب شهادة عدم ممانعة من المطوّر ونقل لدى دائرة الأراضي والأملاك. أنت من يحدد السعر والتوقيت.",
@@ -300,7 +315,7 @@ export default defineMessages({
     "law.sub":
       "يخضع التخلف عن سداد أقساط الوحدات على الخارطة في دبي لإجراءات محددة عبر دائرة الأراضي والأملاك، ويتوقف ما يحق للمطوّر الاحتفاظ به على نسبة إنجاز البناء.",
     "law.citation": "القانون رقم (13) لسنة 2008 بشأن تنظيم السجل العقاري المبدئي في إمارة دبي — المادة (11)، كما استُبدلت بموجب القانون رقم (19) لسنة 2020.",
-    "law.reviewed": "رُوجعت في أكتوبر 2026",
+    "law.reviewed": "آخر تحديث: أكتوبر 2026",
     "law.step": "الخطوة {n}",
     "law.step1.title": "يُخطر المطوّر دائرة الأراضي والأملاك",
     "law.step1.body": "على النموذج المعتمد لدى الدائرة، مع بيان الالتزامات التي لم تفِ بها.",
@@ -308,13 +323,13 @@ export default defineMessages({
     "law.step2.body": "تُخطرك الدائرة وتمنحك 30 يوماً لسداد المستحق، وقد تسعى أيضاً إلى تسوية الأمر بينكما.",
     "law.step3.title": "تؤكد الدائرة، فيتصرف المطوّر",
     "law.step3.body":
-      "إن لم تسدّد، تُصدر الدائرة وثيقة تؤكد التزام المطوّر بالإجراءات، فيحق له عندئذ التصرف دون حكم قضائي، وفق نسبة إنجاز البناء.",
-    "law.tiers.title": "ما يجوز للمطوّر فعله بحسب نسبة الإنجاز",
+      "إن لم تسدّد، تُصدر الدائرة وثيقة تؤكد التزام المطوّر بالإجراءات وتبيّن نسبة الإنجاز، فيحق له عندئذ التصرف دون حكم قضائي، وفق تلك النسبة.",
+    "law.tiers.title": "ما يجوز للمطوّر فعله أو يلزمه، بحسب نسبة الإنجاز",
     "law.col.progress": "نسبة إنجاز البناء",
-    "law.col.options": "يجوز للمطوّر",
+    "law.col.options": "ما يجيزه القانون أو يُلزم به",
     "law.refund": "يجب ردّ ما يزيد على حصة المطوّر خلال سنة من فسخ العقد، أو خلال 60 يوماً من إعادة بيع الوحدة، أيهما أسبق.",
     "law.base": "حدّا 25% و40% نسبتان من سعر الوحدة في اتفاقية البيع والشراء، وليسا من المبلغ الذي دفعته.",
-    "law.maximum": "هذه حدود قصوى، وقد تنص اتفاقيتك على أقل منها. ونسبة الإنجاز هي النسبة التي تحددها ريرا.",
+    "law.maximum": "هذه حدود قصوى، وقد تنص اتفاقيتك على أقل منها. ونسبة الإنجاز المعتمدة هي النسبة الرسمية المحتسبة وفق معايير ريرا.",
     "law.before2020": "قبل تعديل عام 2020 كان يحق للمطوّر الاحتفاظ بما يصل إلى 30% من المبالغ المدفوعة إذا لم تبدأ الأعمال، ولم تعد هذه هي القاعدة.",
     "law.source": "اقرأ القانون على بوابة دبي التشريعية",
 

@@ -1,12 +1,13 @@
 import "server-only";
-import { and, eq, inArray, isNotNull, notInArray, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { listings, offers, savedSearches, watchlist } from "@/db/schema";
+import { listings, offers, savedSearches, users, watchlist } from "@/db/schema";
 import { PUBLIC_STATUSES } from "./config";
-import { saleValueSql } from "./listings";
+import { discountSql, paidPctSql, saleValueSql } from "./listings";
 
 // The Dubai Distress Index (/market): live statistics computed only from real listings and real activity.
-// Sample listings (is_sample = true) are excluded from every figure, including the demand figures.
+// Sample listings (is_sample = true) are excluded from every figure, including the demand figures, and demand
+// counts only ordinary accounts (role 'user'): our own team's admin accounts are not buyers.
 
 /** A median, average or share is published only when it rests on at least this many listings. */
 export const MIN_SAMPLE = 3;
@@ -14,14 +15,17 @@ export const MIN_SAMPLE = 3;
 export const MIN_LIVE = 5;
 export const DUBAI_TZ = "Asia/Dubai";
 
-// Same definitions as src/lib/listings.ts, so the index agrees with the deal cards and the /deals filters:
+// The definitions from src/lib/listings.ts, so the index agrees with the deal cards and the /deals filters:
 // discount = 1 − sale value ÷ today's launch price (only when a launch price is set), sale value = asking + remaining plan,
 // paid = amount paid to the developer ÷ original purchase price.
-const discount = sql<number | null>`case when ${listings.launchPrice} > 0 then 1 - (${saleValueSql})::float / ${listings.launchPrice} end`;
-const paidPct = sql<number>`case when ${listings.originalPrice} > 0 then ${listings.amountPaid}::float / ${listings.originalPrice} else 0 end`;
+const discount = discountSql;
+const paidPct = paidPctSql;
 
 /** Real listings a buyer can see on the marketplace right now. */
 const onMarket = and(inArray(listings.status, PUBLIC_STATUSES), eq(listings.isSample, false))!;
+
+/** Demand comes from ordinary accounts only; admin (staff) accounts are left out. Use with a join on `users`. */
+const buyerAccount = eq(users.role, "user");
 
 const count = sql<number>`count(*)::int`;
 const median = (x: SQL | typeof listings.askingPrice) => sql<number | null>`percentile_cont(0.5) within group (order by ${x})`;
@@ -127,8 +131,10 @@ export async function getDistressIndex() {
         .where(onMarket)
         .groupBy(listings.developer)
         .orderBy(sql`count(*) desc`, listings.developer),
-      // Listings that reached the market in each of the last six Dubai calendar months, whatever their status now
-      // (only those never approved — still under review, or rejected — are left out).
+      // Listings that reached the market in each of the last six Dubai calendar months, whatever their status now.
+      // published_at is set only when our team first puts a listing live (src/app/actions/admin.ts) and is never
+      // cleared, so it alone marks "approved and published"; a listing later paused, withdrawn or sent back to
+      // review still counts in the month it first went live.
       db
         .select({ month: monthKey, count })
         .from(listings)
@@ -136,12 +142,11 @@ export async function getDistressIndex() {
           and(
             eq(listings.isSample, false),
             isNotNull(listings.publishedAt),
-            notInArray(listings.status, ["pending_review", "rejected"]),
             sql`${listings.publishedAt} >= (date_trunc('month', now() at time zone 'Asia/Dubai') - interval '${sql.raw(String(MONTHS - 1))} months') at time zone 'Asia/Dubai'`,
           ),
         )
         .groupBy(sql`1`),
-      // Listings on the market by upfront-cash band, with the offers they have received.
+      // Listings on the market by upfront-cash band, with the offers they have received (from buyer accounts).
       db
         .select({
           band: bandOf,
@@ -149,20 +154,29 @@ export async function getDistressIndex() {
           offers: sql<number>`count(${offers.id})::int`,
         })
         .from(listings)
-        .leftJoin(offers, eq(offers.listingId, listings.id))
+        .leftJoin(
+          offers,
+          and(eq(offers.listingId, listings.id), inArray(offers.buyerId, db.select({ id: users.id }).from(users).where(buyerAccount))),
+        )
         .where(onMarket)
         .groupBy(sql`1`),
       db
         .select({ offers: count, buyers: sql<number>`count(distinct ${offers.buyerId})::int` })
         .from(offers)
         .innerJoin(listings, eq(offers.listingId, listings.id))
-        .where(and(eq(listings.isSample, false), sql`${offers.createdAt} >= now() - interval '30 days'`)),
+        .innerJoin(users, eq(offers.buyerId, users.id))
+        .where(and(eq(listings.isSample, false), buyerAccount, sql`${offers.createdAt} >= now() - interval '30 days'`)),
       db
         .select({ buyers: sql<number>`count(distinct ${watchlist.userId})::int` })
         .from(watchlist)
         .innerJoin(listings, eq(watchlist.listingId, listings.id))
-        .where(onMarket),
-      db.select({ n: count }).from(savedSearches).where(eq(savedSearches.alerts, true)),
+        .innerJoin(users, eq(watchlist.userId, users.id))
+        .where(and(onMarket, buyerAccount)),
+      db
+        .select({ n: count })
+        .from(savedSearches)
+        .innerJoin(users, eq(savedSearches.userId, users.id))
+        .where(and(eq(savedSearches.alerts, true), buyerAccount)),
       // Days from going public to transfer. updated_at is the last change to a transferred listing, normally the
       // transfer itself, so this is an approximation.
       db

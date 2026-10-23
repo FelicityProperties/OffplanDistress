@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, gte, ilike, inArray, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { listings, offers, watchlist } from "@/db/schema";
+import { listings, offers, users, watchlist } from "@/db/schema";
 import { COMMUNITIES, DEVELOPERS, PUBLIC_STATUSES, UNIT_TYPES, type UnitTypeKey } from "./config";
 
 const remaining = sql<number>`(${listings.originalPrice} - ${listings.amountPaid})`;
@@ -217,13 +217,17 @@ export async function featuredDeals(limit = 6) {
   return rows as ListingCard[];
 }
 
-/** Home-page figures. Real listings only: sample listings are illustrations, not market data. */
+/**
+ * Home-page figures, defined like the Distress Index (/market): real listings only (samples are illustrations,
+ * not market data), "on the market" = every status a buyer can see, and staff accounts don't count as buyers.
+ */
 export async function marketStats() {
+  const onMarket = inArray(listings.status, PUBLIC_STATUSES);
   const [row] = await db
     .select({
-      live: sql<number>`count(*) filter (where ${listings.status} = 'live')::int`,
-      value: sql<number>`coalesce(sum(${saleValue}) filter (where ${listings.status} = 'live'), 0)::bigint`,
-      avgDiscount: sql<number | null>`avg(${discount}) filter (where ${listings.status} = 'live')`,
+      live: sql<number>`count(*) filter (where ${onMarket})::int`,
+      value: sql<number>`coalesce(sum(${saleValue}) filter (where ${onMarket}), 0)::bigint`,
+      avgDiscount: sql<number | null>`avg(${discount}) filter (where ${onMarket})`,
       transferred: sql<number>`count(*) filter (where ${listings.status} = 'transferred')::int`,
     })
     .from(listings)
@@ -231,7 +235,8 @@ export async function marketStats() {
   const [{ buyers }] = await db
     .select({ buyers: sql<number>`count(distinct ${watchlist.userId})::int` })
     .from(watchlist)
-    .innerJoin(listings, and(eq(listings.id, watchlist.listingId), eq(listings.isSample, false)));
+    .innerJoin(listings, and(eq(listings.id, watchlist.listingId), eq(listings.isSample, false), inArray(listings.status, PUBLIC_STATUSES)))
+    .innerJoin(users, and(eq(users.id, watchlist.userId), eq(users.role, "user")));
   return {
     live: row.live,
     value: Number(row.value),
@@ -276,4 +281,11 @@ export async function watchedIds(userId: string | undefined) {
   return new Set(rows.map((r) => r.id));
 }
 
-export { watchers as watchersSql, offerCount as offerCountSql, saleValue as saleValueSql, remaining as remainingSql };
+export {
+  watchers as watchersSql,
+  offerCount as offerCountSql,
+  saleValue as saleValueSql,
+  remaining as remainingSql,
+  discount as discountSql,
+  paidPct as paidPctSql,
+};

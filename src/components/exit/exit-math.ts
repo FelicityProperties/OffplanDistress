@@ -18,9 +18,12 @@ import { platformFee } from "@/lib/deal-math";
  *       any excess is refunded within one year of termination or within 60 days of the unit's resale,
  *       whichever is earlier.
  *   (b) Where the developer has not commenced works for reasons beyond its control (without negligence), or
- *       RERA cancels the project, the developer must refund all amounts paid (through the escrow account,
- *       Law No. (8) of 2007). Before the 2020 law the "not started" case allowed up to 30% of amounts paid
- *       to be retained; that is no longer the rule.
+ *       RERA cancels the project, the developer must refund all amounts paid (WAM / Dubai Media Office,
+ *       15 Dec 2020; Al Tamimi). For a RERA-cancelled project the refund runs through the escrow account under
+ *       Law No. (8) of 2007; the page does not claim that route for the "not started" case. Before the 2020 law
+ *       the "not started" case allowed up to 30% of the payments made by the purchaser to be retained (Law No.
+ *       (9) of 2009 text on dlp.dubai.gov.ae); that is no longer the rule.
+ *   The completion percentage is the one stated in DLD's official document, calculated under RERA's rules.
  *
  * Sources (checked October 2026):
  *   https://dlp.dubai.gov.ae/Legislation%20Reference/2020/Law%20No.%20(19)%20of%202020%20Amending%20Law%20No.%20(13)%20of%202008%20Regulating%20the%20Interim%20Real%20Property%20Register%20in%20the%20Emirate%20of%20Dubai.html
@@ -30,6 +33,12 @@ import { platformFee } from "@/lib/deal-math";
  *   https://www.tamimi.com/law-update-articles/dubai-amends-interim-registration-law/  (2020 change: full refund if works not commenced)
  *   https://www.tamimi.com/law-update-articles/developers-dubai-can-terminate-without-court-order/
  *   https://afridi-angell.com/termination-of-off-plan-real-estate-sale-agreements-in-dubai/  (DLD notice, 30 days, compliance document)
+ *   https://www.wam.ae/en/article/hszrbgis-mohammed-bin-rashid-issues-new-legislations  (2020: full refund if not started / RERA-cancelled)
+ *   https://mediaoffice.ae/en/news/2020/december/15-12/mohammed-bin-rashid-issues-new-legislations
+ *   https://dlp.dubai.gov.ae/Legislation%20Reference/2009/Law%20No.%20(9)%20of%202009.html  (pre-2020: up to 30% of payments made)
+ *   https://bsalaw.com/insight/explained-dubais-new-off-plan-property-purchase-law/  (2017: 40% termination option above 80%)
+ * Re-checked October 2026 through search results only: every host above is unreachable from the build environment,
+ * so the full consolidated text of Article 11 has not been read here. Have it confirmed before relying on it.
  *
  * The statute speaks of "exceeds 80%" and "between 60% and 80%": exactly 80% and exactly 60% fall in the middle
  * tier here. Every percentage is a maximum ("up to"); the SPA may agree less.

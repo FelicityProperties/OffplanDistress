@@ -33,7 +33,7 @@ export default defineMessages({
     "licence.broker": "Registered broker (BRN)",
     "faq.contact": "Talk to our team",
 
-    "stats.live": "Live units",
+    "stats.live": "Units on the market",
     "stats.value": "Inventory value",
     "stats.discount": "Avg. discount vs launch",
     "stats.fee": "Our fee",
@@ -55,6 +55,8 @@ export default defineMessages({
     "how.title": "Verify → List → Match → Transfer",
     "how.sellers": "For sellers",
     "how.buyers": "For buyers",
+    "how.exitLink": "Behind on payments? Compare your options",
+    "how.indexLink": "See the Distress Index",
 
     "step.seller.verify.title": "Verify",
     "step.seller.verify.desc": "Upload your SPA, Oqood and statement of account. We confirm them with the developer.",
@@ -145,7 +147,7 @@ export default defineMessages({
     "licence.broker": "الوسيط المسجّل (رقم الوسيط)",
     "faq.contact": "تحدّث مع فريقنا",
 
-    "stats.live": "وحدات منشورة",
+    "stats.live": "وحدات في السوق",
     "stats.value": "قيمة الوحدات المعروضة",
     "stats.discount": "متوسط الخصم عن سعر الإطلاق",
     "stats.fee": "رسومنا",
@@ -167,6 +169,8 @@ export default defineMessages({
     "how.title": "التوثيق ← النشر ← المطابقة ← نقل الملكية",
     "how.sellers": "للبائعين",
     "how.buyers": "للمشترين",
+    "how.exitLink": "متأخر في الدفعات؟ قارن خياراتك",
+    "how.indexLink": "اطّلع على مؤشر الوحدات المتعثرة",
 
     "step.seller.verify.title": "التوثيق",
     "step.seller.verify.desc": "ارفع اتفاقية البيع والشراء وشهادة أوقود وكشف الحساب، ونتحقق منها لدى المطوّر.",

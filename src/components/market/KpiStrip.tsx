@@ -2,6 +2,7 @@ import { Building2, Coins, Percent, TrendingDown } from "lucide-react";
 import { getLocale, getT } from "@/i18n/server";
 import { formatAEDCompact, formatNumber, formatPct } from "@/lib/format";
 import { MIN_SAMPLE, type DistressIndex } from "@/lib/market";
+import { signedPct } from "./shared";
 
 /** The four headline numbers, overlapping the bottom of the hero. */
 export async function KpiStrip({ index }: { index: DistressIndex }) {
@@ -32,10 +33,7 @@ export async function KpiStrip({ index }: { index: DistressIndex }) {
       hint:
         s.avgDiscount == null
           ? insufficient
-          : t("kpi.discountHint", {
-              avg: s.avgDiscount < 0 ? `−${formatPct(-s.avgDiscount, 1)}` : formatPct(s.avgDiscount, 1),
-              n: formatNumber(s.withLaunch),
-            }),
+          : t("kpi.discountHint", { avg: signedPct(s.avgDiscount, 1), n: formatNumber(s.withLaunch) }),
       accent: true,
     },
     {

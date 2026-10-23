@@ -21,10 +21,14 @@ export function share(n: number, total: number) {
   return total > 0 ? n / total : null;
 }
 
-/** Signed percentage with a typographic minus ("−3.2%"), for discount columns where negative = above launch. */
+/**
+ * Signed percentage with a typographic minus ("−3.2%"), for discount figures where negative = above launch.
+ * A negative value is wrapped in a left-to-right isolate (LRI … PDI): in Arabic text the bidi algorithm would
+ * otherwise put the minus sign on the far side of the digits ("3.2%−").
+ */
 export function signedPct(v: number | null, digits = 1) {
   if (v == null) return "—";
-  return v < 0 ? `−${formatPct(-v, digits)}` : formatPct(v, digits);
+  return v < 0 ? `⁦−${formatPct(-v, digits)}⁩` : formatPct(v, digits);
 }
 
 /** "23 Oct 2026, 17:54" in Dubai time. */

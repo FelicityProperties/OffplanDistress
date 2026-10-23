@@ -19,7 +19,8 @@ export async function DemandPanel({ index }: { index: DistressIndex }) {
     {
       icon: MessagesSquare,
       label: t("demand.perListing"),
-      value: d.offersPerListing == null ? null : formatDecimal(d.offersPerListing, 1),
+      // two decimals: a ratio such as 19 offers ÷ 20 units should read 0.95, not round up to "1.0"
+      value: d.offersPerListing == null ? null : formatDecimal(d.offersPerListing, 2),
       hint: d.offersPerListing == null ? insufficient : t("demand.perListingHint"),
     },
     { icon: KeyRound, label: t("demand.transferred"), value: formatNumber(c.transferred), hint: t("demand.transferredHint") },

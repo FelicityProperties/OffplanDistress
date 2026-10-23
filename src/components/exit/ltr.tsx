@@ -16,7 +16,8 @@ export function ltr(text: string): React.ReactNode {
     <span>
       {parts.map((p, i) =>
         i % 2 ? (
-          <bdi key={i} dir="ltr" className="tabular">
+          // nowrap: a range like "30–40%" or "85–100%" must not break after the dash on a phone.
+          <bdi key={i} dir="ltr" className="whitespace-nowrap tabular">
             {p}
           </bdi>
         ) : (

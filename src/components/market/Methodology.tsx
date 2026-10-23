@@ -59,7 +59,7 @@ export async function Methodology() {
             <p className="mt-4 text-xs text-muted-foreground">
               {t("hero.publishedBy", { company: locale === "ar" ? BRAND.companyAr : BRAND.company })}
               <span aria-hidden> · </span>
-              <span className="tabular">{tc("reraOrn", { orn: BRAND.orn })}</span>
+              <span className="whitespace-nowrap tabular">{tc("reraOrn", { orn: BRAND.orn })}</span>
             </p>
           </div>
         </aside>

@@ -84,7 +84,7 @@ async function HeadlineCard({ index }: { index: DistressIndex }) {
     <p className="mt-6 border-t border-primary-foreground/10 pt-4 text-xs text-primary-foreground/60">
       {t("hero.publishedBy", { company: locale === "ar" ? BRAND.companyAr : BRAND.company })}
       <span aria-hidden> · </span>
-      <span className="tabular">{tc("reraOrn", { orn: BRAND.orn })}</span>
+      <span className="whitespace-nowrap tabular">{tc("reraOrn", { orn: BRAND.orn })}</span>
     </p>
   );
 
