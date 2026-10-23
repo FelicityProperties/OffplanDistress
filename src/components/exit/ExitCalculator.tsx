@@ -399,17 +399,18 @@ export function ExitCalculator() {
                   <input
                     id={id("progress")}
                     type="number"
-                    inputMode="numeric"
+                    inputMode="decimal"
                     min={0}
                     max={100}
-                    step={1}
+                    step={0.1}
                     dir="ltr"
                     disabled={notStarted}
                     value={progress}
                     aria-describedby={id("progress-hint")}
                     onChange={(e) => {
-                      const v = Number(latinDigits(e.target.value));
-                      setProgress(Number.isFinite(v) ? Math.min(Math.max(Math.round(v), 0), 100) : 0);
+                      // Keep one decimal: an official 80.4% is above 80% and 59.6% is below 60% (different tiers).
+                      const v = Number(latinDigits(e.target.value).replace(/[٫,]/g, "."));
+                      setProgress(Number.isFinite(v) ? Math.min(Math.max(Math.round(v * 10) / 10, 0), 100) : 0);
                     }}
                     className="h-full w-full min-w-0 bg-transparent text-sm font-semibold tabular outline-none disabled:opacity-40 rtl:text-end [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
@@ -425,6 +426,12 @@ export function ExitCalculator() {
                 {t("in.notStarted")}
               </label>
             </div>
+            {!notStarted && progress === 0 && (
+              <p className="mt-2 flex items-start gap-1.5 text-xs font-medium leading-relaxed text-warning">
+                <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+                {tx("in.progress.zeroHint")}
+              </p>
+            )}
             <p id={id("progress-hint")} className="mt-2 text-xs leading-relaxed text-muted-foreground">
               {tx("in.progress.hint")}
             </p>
@@ -594,20 +601,41 @@ export function ExitCalculator() {
             >
               <dl className="mt-3 divide-y divide-border/70">
                 {a.tier !== "notStarted" && (
-                  <Row label={rich(t("opt2.max"), { pct: pctLabel(a.rate) })} value={money(a.maxRetention)} />
+                  <Row
+                    label={rich(t(a.tier === "over80" ? "opt2.max.over80" : "opt2.max"), { pct: pctLabel(a.rate) })}
+                    value={money(a.maxRetention)}
+                  />
                 )}
                 <Row
                   label={t("opt2.lose")}
                   value={<span className={cn(a.atRisk > 0 && "text-destructive")}>{money(a.atRisk)}</span>}
-                  note={a.tier !== "notStarted" ? t("opt2.spa") : undefined}
+                  note={
+                    a.tier === "notStarted"
+                      ? undefined
+                      : a.paid < a.maxRetention
+                        ? rich(t("opt2.shortfall"), { amount: money(a.maxRetention - a.paid) })
+                        : t("opt2.spa")
+                  }
                 />
                 <Row
-                  label={t("opt2.refund")}
+                  label={t(a.tier === "notStarted" ? "opt2.refund" : "opt2.refund.ifCancelled")}
                   value={money(a.refund)}
                   strong
                   note={a.tier === "notStarted" ? t("opt2.refund.escrow") : a.refund > 0 ? tx("opt2.refund.note") : undefined}
                 />
               </dl>
+              {a.tier === "over80" && a.remaining > 0 && (
+                <p className="mt-3 flex items-start gap-2 rounded-xl border border-destructive/25 bg-destructive/5 px-3.5 py-2.5 text-xs font-medium leading-relaxed">
+                  <TriangleAlert className="mt-px h-4 w-4 shrink-0 text-destructive" aria-hidden />
+                  <span>{rich(t("verdict.over80"), { amount: money(a.remaining) })}</span>
+                </p>
+              )}
+              {!notStarted && (progress === 60 || progress === 80) && (
+                <p className="mt-3 flex items-start gap-2 rounded-xl bg-secondary px-3.5 py-2.5 text-xs leading-relaxed">
+                  <Scale className="mt-px h-4 w-4 shrink-0" aria-hidden />
+                  {tx("opt2.boundary")}
+                </p>
+              )}
               <p className="mt-3 flex items-start gap-2 rounded-xl bg-gold-soft/70 px-3.5 py-2.5 text-xs font-medium leading-relaxed text-gold-foreground">
                 <Info className="mt-px h-4 w-4 shrink-0" aria-hidden />
                 {tx("opt2.notice")}

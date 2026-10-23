@@ -4,49 +4,55 @@ import { platformFee } from "@/lib/deal-math";
 /*
  * What Dubai law lets a developer do when an off-plan buyer stops paying.
  *
- * Law No. (13) of 2008 Regulating the Interim Real Property Register in the Emirate of Dubai, Article 11,
- * amended by Law No. (9) of 2009 and Law No. (19) of 2017, and replaced in full by Law No. (19) of 2020:
- *   (a) The developer notifies the Dubai Land Department (DLD) of the buyer's breach on the prescribed form.
- *       DLD serves a 30-day notice on the buyer to perform (and may try to settle the matter). Once DLD
- *       confirms the developer followed the procedure, the developer may act without a court ruling or
- *       arbitration award, according to the completion percentage as determined by RERA:
- *       - completion exceeds 80%: keep the agreement, retain the amounts paid and claim the balance; OR ask DLD
- *         to sell the unit at public auction to recover the amounts owed; OR terminate unilaterally and retain
- *         up to 40% of the unit value stated in the off-plan sale agreement;
- *       - completion between 60% and 80%: terminate and retain up to 40% of the unit value;
- *       - works started, completion below 60%: terminate and retain up to 25% of the unit value;
- *       any excess is refunded within one year of termination or within 60 days of the unit's resale,
- *       whichever is earlier.
- *   (b) Where the developer has not commenced works for reasons beyond its control (without negligence), or
- *       RERA cancels the project, the developer must refund all amounts paid (WAM / Dubai Media Office,
- *       15 Dec 2020; Al Tamimi). For a RERA-cancelled project the refund runs through the escrow account under
- *       Law No. (8) of 2007; the page does not claim that route for the "not started" case. Before the 2020 law
- *       the "not started" case allowed up to 30% of the payments made by the purchaser to be retained (Law No.
- *       (9) of 2009 text on dlp.dubai.gov.ae); that is no longer the rule.
- *   The completion percentage is the one stated in DLD's official document, calculated under RERA's rules.
+ * Article 11 of Law No. (13) of 2008 Regulating the Interim Real Property Register in the Emirate of Dubai was
+ * replaced by Law No. (9) of 2009, again by Law No. (19) of 2017, and most recently by Law No. (19) of 2020
+ * (issued 24 Nov 2020; Official Gazette No. 495, 13 Dec 2020; in force on publication). The 2020 text is in force;
+ * no later amendment found (October 2026). It is public order: it applies whatever the SPA says.
+ *   (a) The developer notifies the Dubai Land Department (DLD) of the buyer's breach on DLD's form. DLD serves a
+ *       written notice giving the buyer 30 days to meet their contractual obligations and, where possible, tries an
+ *       amicable settlement (recorded in a signed contract annex). If the buyer neither performs nor settles, DLD
+ *       issues an official document confirming the procedure was followed and stating the completion percentage of
+ *       the PROJECT, calculated under RERA's standards. The developer may then act without going to court or
+ *       arbitration (the buyer may still go to either), according to that percentage:
+ *       - exceeds 80%: keep the SPA, keep all amounts paid and claim the balance; OR ask DLD to sell the unit at
+ *         public auction to recover what is owed, sale costs borne by the buyer; OR terminate and retain up to 40%
+ *         of the unit value stated in the SPA (this third option is in every source that addresses it, but its
+ *         exact sentence was only seen in search extracts);
+ *       - between 60% and up to 80%: terminate and retain up to 40% of the unit value;
+ *       - works commenced, less than 60%: terminate and retain up to 25% of the unit value;
+ *       after terminating and retaining a share, the developer refunds the rest within one year of termination or
+ *       within 60 days of reselling the unit, whichever is earlier. The caps are on the unit value, not on the
+ *       amounts paid; whether the developer may claim a shortfall when less than the cap was paid is unsettled.
+ *   (b) Where the developer has not commenced works for reasons beyond its control, without negligence or omission
+ *       on its part, or RERA cancels the project by a final reasoned decision, the developer must refund all
+ *       amounts paid, under the procedures of Law No. (8) of 2007 (escrow); the timing in (a) does not apply.
+ *       Under Law No. (19) of 2017 (and Law No. (9) of 2009) the not-started case let the developer keep up to 30%
+ *       of the AMOUNTS PAID; Law No. (19) of 2020 removed that.
  *
- * Sources (checked October 2026):
+ * Boundaries (an inference, no ruling found): the 2020 text says "exceeds 80%" (تزيد على), "between 60% and up to
+ * 80%" (تتراوح بين ... ولغاية) and "less than 60%" (تقل عن), so exactly 60% and exactly 80% fall in the middle tier.
+ * The page says so when the input sits on a boundary. Every percentage is a ceiling ("up to" / "ما لا يزيد على").
+ *
+ * Sources (October 2026). Every host below was unreachable from the build environment, so the wording comes from
+ * search-engine extracts of these pages; have the Arabic Gazette text of Article 11 read before relying on it.
  *   https://dlp.dubai.gov.ae/Legislation%20Reference/2020/Law%20No.%20(19)%20of%202020%20Amending%20Law%20No.%20(13)%20of%202008%20Regulating%20the%20Interim%20Real%20Property%20Register%20in%20the%20Emirate%20of%20Dubai.html
  *   https://dlp.dubai.gov.ae/Legislation%20Reference/2020/Law%20No.%20(19)%20of%202020%20Amending%20Law%20No.%20(13)%20of%202008%20Regulating%20the%20Interim%20Real%20Property%20Register%20in%20the%20Emirate%20of%20Dubai.pdf
- *   https://dlp.dubai.gov.ae/Legislation%20Reference/2018/Explanatory%20Notes%20on%20Article%20(11)%20of%20Law%20No.%20(19)%20of%202017.html
- *   https://dlp.dubai.gov.ae/Legislation%20Reference/2017/Law%20No.%20(19)%20of%202017%20Amending%20Law%20No.%20(13)%20of%202008%20Regulating%20the%20Interim%20Real%20Property%20Register%20in%20the%20Emirate%20of%20Dubai.pdf
+ *   (Arabic, authoritative) https://dlp.dubai.gov.ae/Legislation%20Ar%20Reference/2020/ — Law No. (19) of 2020, linked from the page
  *   https://www.tamimi.com/law-update-articles/dubai-amends-interim-registration-law/  (2020 change: full refund if works not commenced)
+ *   https://mediaoffice.ae/en/news/2020/December/15-12/Mohammed-bin-Rashid-issues-new-legislations  (Dubai Media Office, 15 Dec 2020)
+ *   https://www.wam.ae/en/details/1395302895460  (WAM, Dec 2020)
+ *   https://afridi-angell.com/wp-content/uploads/2026/09/inBrief-Termination-of-Off-Plan-Real-Estate-Sale-Agreements-in-Dubai.pdf  (Sep 2026: DLD notice, 30 days, no court needed)
+ *   https://www.argaam.com/ar/article/articledetail/id/1225046  (Arabic text of the 2020 article, reproduced)
+ *   Superseded 2017 text, for the history only:
+ *   https://dlp.dubai.gov.ae/Legislation%20Reference/2017/Law%20No.%20(19)%20of%202017%20Amending%20Law%20No.%20(13)%20of%202008%20Regulating%20the%20Interim%20Real%20Property%20Register%20in%20the%20Emirate%20of%20Dubai.pdf  (old 30% of payments rule)
+ *   https://dlp.dubai.gov.ae/Legislation%20Reference/2018/Explanatory%20Notes%20on%20Article%20(11)%20of%20Law%20No.%20(19)%20of%202017.html
  *   https://www.tamimi.com/law-update-articles/developers-dubai-can-terminate-without-court-order/
- *   https://afridi-angell.com/termination-of-off-plan-real-estate-sale-agreements-in-dubai/  (DLD notice, 30 days, compliance document)
- *   https://www.wam.ae/en/article/hszrbgis-mohammed-bin-rashid-issues-new-legislations  (2020: full refund if not started / RERA-cancelled)
- *   https://mediaoffice.ae/en/news/2020/december/15-12/mohammed-bin-rashid-issues-new-legislations
- *   https://dlp.dubai.gov.ae/Legislation%20Reference/2009/Law%20No.%20(9)%20of%202009.html  (pre-2020: up to 30% of payments made)
- *   https://bsalaw.com/insight/explained-dubais-new-off-plan-property-purchase-law/  (2017: 40% termination option above 80%)
- * Re-checked October 2026 through search results only: every host above is unreachable from the build environment,
- * so the full consolidated text of Article 11 has not been read here. Have it confirmed before relying on it.
- *
- * The statute speaks of "exceeds 80%" and "between 60% and 80%": exactly 80% and exactly 60% fall in the middle
- * tier here. Every percentage is a maximum ("up to"); the SPA may agree less.
+ *   https://bsalaw.com/insight/explained-dubais-new-off-plan-property-purchase-law/
  */
 
 export type Tier = "notStarted" | "under60" | "from60to80" | "over80";
 
-/** Maximum share of the unit's contract value the developer may retain on termination, per tier. */
+/** Maximum share of the unit's contract value the developer may retain if it terminates, per tier (a ceiling). */
 export const RETENTION: Record<Tier, number> = {
   notStarted: 0,
   under60: 0.25,

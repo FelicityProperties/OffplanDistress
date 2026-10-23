@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDown, ArrowRight, BellRing, ChevronDown, CirclePause, ExternalLink, FileText, Gavel, Handshake, Hourglass, Lock, Scale, Wallet, Zap } from "lucide-react";
 import { CtaBand } from "@/components/CtaBand";
+import { JsonLd } from "@/components/JsonLd";
 import { SectionHeading } from "@/components/badges";
 import { ExitCalculator } from "@/components/exit/ExitCalculator";
 import { quickSalePct, RETENTION, TIERS, type Tier } from "@/components/exit/exit-math";
 import { ltr } from "@/components/exit/ltr";
 import { Button } from "@/components/ui/button";
-import { getT } from "@/i18n/server";
+import { getLocale, getT } from "@/i18n/server";
 import { BRAND, FEES } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,9 @@ import { cn } from "@/lib/utils";
 // src/components/exit/exit-math.ts.
 const LAW_URL =
   "https://dlp.dubai.gov.ae/Legislation%20Reference/2020/Law%20No.%20(19)%20of%202020%20Amending%20Law%20No.%20(13)%20of%202008%20Regulating%20the%20Interim%20Real%20Property%20Register%20in%20the%20Emirate%20of%20Dubai.html";
+// The Arabic text (Official Gazette No. 495) is the authoritative one.
+const LAW_URL_AR =
+  "https://dlp.dubai.gov.ae/Legislation%20Ar%20Reference/2020/%D9%82%D8%A7%D9%86%D9%88%D9%86%20%D8%B1%D9%82%D9%85%20(19)%20%D9%84%D8%B3%D9%86%D8%A9%202020%20%D8%A8%D8%AA%D8%B9%D8%AF%D9%8A%D9%84%20%D8%A8%D8%B9%D8%B6%20%D8%A3%D8%AD%D9%83%D8%A7%D9%85%20%D8%A7%D9%84%D9%82%D8%A7%D9%86%D9%88%D9%86%20%D8%B1%D9%82%D9%85%20(13)%20%D9%84%D8%B3%D9%86%D8%A9%202008%20%D8%A8%D8%B4%D8%A3%D9%86%20%D8%AA%D9%86%D8%B8%D9%8A%D9%85%20%D8%A7%D9%84%D8%B3%D8%AC%D9%84%20%D8%A7%D9%84%D8%B9%D9%82%D8%A7%D8%B1%D9%8A%20%D8%A7%D9%84%D9%85%D8%A8%D8%AF%D8%A6%D9%8A%20%D9%81%D9%8A%20%D8%A5%D9%85%D8%A7%D8%B1%D8%A9%20%D8%AF%D8%A8%D9%8A.html";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("exit");
@@ -31,7 +35,7 @@ const TIER_DOT: Record<Tier, string> = {
 };
 
 export default async function ExitCalculatorPage() {
-  const t = await getT("exit");
+  const [t, locale] = await Promise.all([getT("exit"), getLocale()]);
 
   const paths = [
     { id: "keep", icon: Wallet },
@@ -59,7 +63,7 @@ export default async function ExitCalculatorPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd).replace(/</g, "\\u003c") }} />
+      <JsonLd data={faqLd} />
 
       {/* Hero */}
       <section className="relative isolate overflow-hidden border-b border-border/60">
@@ -192,6 +196,7 @@ export default async function ExitCalculatorPage() {
                     {RETENTION[tier] > 0 && (
                       <span className="me-2 inline-flex rounded-full bg-gold-soft px-2 py-0.5 text-xs font-semibold text-gold-foreground tabular">
                         <bdi dir="ltr">≤ {Math.round(RETENTION[tier] * 100)}%</bdi>
+                        {tier === "over80" && <>&nbsp;{t("law.badge.ifCancelled")}</>}
                       </span>
                     )}
                     {ltr(t(`tier.${tier}.rule`))}
@@ -211,7 +216,7 @@ export default async function ExitCalculatorPage() {
           </ul>
 
           <a
-            href={LAW_URL}
+            href={locale === "ar" ? LAW_URL_AR : LAW_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6 inline-flex items-center gap-2 rounded-md text-sm font-medium text-foreground underline underline-offset-4 hover:text-gold-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
