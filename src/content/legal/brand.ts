@@ -18,8 +18,7 @@ export const BUYER_PAYS = FEES.payer === "buyer";
 /** Keeps a Latin run (company name, email, licence number) intact inside Arabic text. */
 export const iso = (s: string) => `\u2068${s}\u2069`;
 
-const DEFAULT_ADDRESS = "Dubai, United Arab Emirates";
-const addressAr = BRAND.address.trim() === DEFAULT_ADDRESS ? "دبي، الإمارات العربية المتحدة" : iso(BRAND.address.trim());
+const addressAr = BRAND.addressAr.trim();
 
 export const OP = {
   site: BRAND.name,
@@ -29,19 +28,19 @@ export const OP = {
   /** "Felicity Properties LLC, a real-estate brokerage in Dubai, United Arab Emirates, … (RERA ORN …)" */
   identityEn: [
     `${BRAND.company}, a real-estate brokerage based in ${BRAND.location}`,
-    BRAND.licence && `holding commercial licence No. ${BRAND.licence}`,
+    BRAND.licence && `holding commercial licence No. ${BRAND.licence} issued by the ${BRAND.licenceAuthority}`,
     BRAND.orn && `registered with the Real Estate Regulatory Agency (RERA) of the Dubai Land Department under Office Registration Number (ORN) ${BRAND.orn}`,
   ]
     .filter(Boolean)
     .join(", "),
   identityAr: [
-    `شركة ${iso(BRAND.company)}، وهي شركة وساطة عقارية مقرها دبي، الإمارات العربية المتحدة`,
-    BRAND.licence && `حاصلة على الرخصة التجارية رقم ${iso(BRAND.licence)}`,
+    `${BRAND.companyAr}، وهي شركة وساطة عقارية مقرها دبي، الإمارات العربية المتحدة`,
+    BRAND.licence && `حاصلة على الرخصة التجارية رقم ${iso(BRAND.licence)} الصادرة عن ${BRAND.licenceAuthorityAr}`,
     BRAND.orn && `ومسجلة لدى مؤسسة التنظيم العقاري (ريرا) التابعة لدائرة الأراضي والأملاك في دبي برقم تسجيل المكتب ${iso(BRAND.orn)}`,
   ]
     .filter(Boolean)
     .join("، "),
-  companyAr: `شركة ${iso(BRAND.company)}`,
+  companyAr: BRAND.companyAr,
   emailAr: BRAND.email ? iso(BRAND.email) : "العنوان المبيّن في صفحة التواصل",
 };
 

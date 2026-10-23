@@ -1,7 +1,7 @@
 import { getT } from "@/i18n/server";
 import { BRAND } from "@/lib/config";
 
-/** Floating WhatsApp shortcut, shown only when NEXT_PUBLIC_WHATSAPP is set. */
+/** Floating WhatsApp shortcut to the office number (BRAND.whatsapp; NEXT_PUBLIC_WHATSAPP overrides it). */
 export async function WhatsAppButton() {
   if (!BRAND.whatsapp) return null;
   const t = await getT("marketing");

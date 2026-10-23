@@ -57,6 +57,17 @@ export default defineMessages({
     "side.thenPlan": "then {amount} to {developer} per plan",
     "side.nextInstalment": "Next instalment {date}",
     "side.feeNote": "2% + VAT, charged only on successful transfer. We handle the NOC, assignment and DLD paperwork.",
+    "side.usd": "≈ {amount} at the fixed AED–USD peg",
+    "side.whatsapp": "WhatsApp us",
+    "side.call": "Call",
+    "side.waMessage": "Hello OffplanDistress, I'm interested in {ref} ({project}). {url}",
+    "listedBy.title": "Listed by",
+    "listedBy.office": "{company} · RERA ORN {orn}",
+    "listedBy.broker": "Broker: {name} · BRN {brn}",
+    "listedBy.permit": "DLD advertising permit No. {permit}",
+    "listedBy.sample": "Sample listing — not a property advert, so no DLD permit applies.",
+    "listedBy.report": "Report this listing",
+    "listedBy.reportSubject": "Report listing {ref}",
 
     similar: "Similar deals",
 
@@ -133,6 +144,17 @@ export default defineMessages({
     "side.nextInstalment": "القسط التالي {date}",
     "side.feeNote":
       "2% + ضريبة القيمة المضافة، تُستحق فقط عند إتمام نقل الملكية. نتولى إجراءات شهادة عدم الممانعة والتنازل ودائرة الأراضي والأملاك.",
+    "side.usd": "≈ {amount} وفق سعر الصرف الثابت بين الدرهم والدولار",
+    "side.whatsapp": "راسلنا عبر واتساب",
+    "side.call": "اتصل بنا",
+    "side.waMessage": "مرحباً، أنا مهتم بالصفقة {ref} ({project}). {url}",
+    "listedBy.title": "الجهة المعلِنة",
+    "listedBy.office": "{company} · رقم تسجيل المكتب لدى ريرا {orn}",
+    "listedBy.broker": "الوسيط: {name} · رقم الوسيط {brn}",
+    "listedBy.permit": "رقم تصريح الإعلان من دائرة الأراضي والأملاك {permit}",
+    "listedBy.sample": "إعلان توضيحي وليس إعلاناً عن عقار معروض، لذا لا يلزمه تصريح من دائرة الأراضي والأملاك.",
+    "listedBy.report": "الإبلاغ عن هذا الإعلان",
+    "listedBy.reportSubject": "بلاغ عن الإعلان {ref}",
 
     similar: "صفقات مشابهة",
 

@@ -27,6 +27,10 @@ export default defineMessages({
     "trust.stat.label": "paid to us until the DLD transfer completes",
     "trust.stat.body": "Listing is free. Our 2% + VAT is settled at the trustee office, at the same moment the seller is paid.",
     "faq.more": "Still have questions?",
+    "licence.company": "Licensed brokerage",
+    "licence.orn": "RERA office registration (ORN)",
+    "licence.tradeLicence": "Dubai trade licence",
+    "licence.broker": "Registered broker (BRN)",
     "faq.contact": "Talk to our team",
 
     "stats.live": "Live units",
@@ -130,6 +134,10 @@ export default defineMessages({
     "trust.stat.label": "تدفعها لنا قبل إتمام نقل الملكية لدى دائرة الأراضي والأملاك",
     "trust.stat.body": "الإعلان مجاني. وتُسدَّد رسومنا البالغة 2% + ضريبة القيمة المضافة في مكتب أمين التسجيل في اللحظة نفسها التي يتسلّم فيها البائع مستحقاته.",
     "faq.more": "لا تزال لديك أسئلة؟",
+    "licence.company": "شركة وساطة مرخّصة",
+    "licence.orn": "رقم تسجيل المكتب لدى ريرا",
+    "licence.tradeLicence": "الرخصة التجارية في دبي",
+    "licence.broker": "الوسيط المسجّل (رقم الوسيط)",
     "faq.contact": "تحدّث مع فريقنا",
 
     "stats.live": "وحدات منشورة",

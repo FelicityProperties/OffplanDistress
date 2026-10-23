@@ -5,8 +5,10 @@ import dashboard from "./dashboard";
 import deal from "./deal";
 import deals from "./deals";
 import errors from "./errors";
+import exit from "./exit";
 import home from "./home";
 import legal from "./legal";
+import market from "./market";
 import marketing from "./marketing";
 import notifications from "./notifications";
 import password from "./password";
@@ -22,8 +24,10 @@ export const messages = {
   deal,
   deals,
   errors,
+  exit,
   home,
   legal,
+  market,
   marketing,
   notifications,
   password,

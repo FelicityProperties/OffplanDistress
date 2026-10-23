@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { Landmark, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { InquiryFields } from "@/components/InquiryForm";
-import { getT } from "@/i18n/server";
+import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND } from "@/lib/config";
 
@@ -19,7 +19,8 @@ const tileClass =
 const linkClass = "hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export default async function ContactPage() {
-  const [user, t, tc] = await Promise.all([getCurrentUser(), getT("marketing"), getT("common")]);
+  const [user, t, locale] = await Promise.all([getCurrentUser(), getT("marketing"), getLocale()]);
+  const ar = locale === "ar";
 
   // Phone and WhatsApp only appear once they're configured (see BRAND in src/lib/config.ts).
   const tiles: Tile[] = [];
@@ -44,9 +45,29 @@ export default async function ContactPage() {
       href: `https://wa.me/${BRAND.whatsapp}`,
     });
   }
-  if (BRAND.location) {
-    tiles.push({ key: "location", icon: MapPin, label: t("contact.tile.location"), value: tc("location") });
-  }
+  tiles.push({
+    key: "office",
+    icon: MapPin,
+    label: t("contact.tile.office"),
+    value: (
+      <>
+        {ar ? BRAND.addressAr : BRAND.address}
+        <span className="mt-1 block text-sm font-normal text-gold-foreground underline decoration-gold/50 underline-offset-4">
+          {t("contact.tile.directions")}
+        </span>
+      </>
+    ),
+    href: BRAND.mapsUrl,
+  });
+  const licence: [string, ReactNode][] = [
+    [t("contact.licence.company"), ar ? BRAND.companyAr : BRAND.company],
+    [
+      t("contact.licence.tradeLicence"),
+      t("contact.licence.tradeLicenceValue", { n: BRAND.licence, authority: ar ? BRAND.licenceAuthorityAr : BRAND.licenceAuthority }),
+    ],
+    [t("contact.licence.orn"), BRAND.orn],
+    [t("contact.licence.broker"), `${ar ? BRAND.broker.nameAr : BRAND.broker.name} · ${BRAND.broker.brn}`],
+  ];
 
   return (
     <>
@@ -82,7 +103,11 @@ export default async function ContactPage() {
               return (
                 <li key={key}>
                   {href ? (
-                    <a href={href} className={`${tileClass} ${linkClass}`}>
+                    <a
+                      href={href}
+                      className={`${tileClass} ${linkClass}`}
+                      {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    >
                       {body}
                     </a>
                   ) : (
@@ -92,6 +117,26 @@ export default async function ContactPage() {
               );
             })}
           </ul>
+
+          <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-card sm:p-8">
+            <h2 className="flex items-center gap-2.5 text-xl font-semibold">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink-gradient text-gold">
+                <Landmark className="h-4.5 w-4.5" aria-hidden />
+              </span>
+              {t("contact.licence.title")}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t("contact.licence.body")}</p>
+            <dl className="mt-5 grid gap-x-6 gap-y-4 sm:grid-cols-2">
+              {licence.map(([k, v]) => (
+                <div key={k} className="min-w-0">
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{k}</dt>
+                  <dd className="mt-1 font-medium tabular">
+                    <bdi>{v}</bdi>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
 
           <div className="rounded-3xl border border-border/70 bg-secondary/60 p-6 sm:p-8">
             <h2 className="text-2xl font-semibold">{t("contact.next.title")}</h2>

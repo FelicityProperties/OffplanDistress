@@ -12,6 +12,7 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Area | Pages |
 | --- | --- |
 | Marketing | Home, How it works, Fees (with calculator), Contact |
+| Market tools | Distress Index (`/market`: live stats on real listings — discounts, cash needed, developers, communities), seller exit calculator (`/exit-calculator`: keep paying vs stop paying vs sell here) |
 | Legal | Terms of Use, Privacy Policy, Cookie Policy (`/terms`, `/privacy`, `/cookies`) |
 | Marketplace | Browse deals (filters, sort, search, saved searches), deal page (payment plan, true-cost breakdown, offer, watchlist, viewing request) |
 | Sellers | 5-step "Sell my unit" form with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline) |
@@ -35,6 +36,15 @@ points: a required "I agree to the Terms of Use and Privacy Policy" box at sign-
 of the sell form (enforced in `createListing`), and a short notice under the offer button that offers aren't
 binding until Form F / MOU is signed; the contact form links to the Privacy Policy. **The texts are templates
 for a Dubai real-estate brokerage — have them reviewed by a UAE-qualified lawyer before relying on them.**
+
+### Advertising compliance (RERA / DLD)
+
+Every deal page shows who is advertising it — Felicity Properties L.L.C, RERA ORN 33951, broker Muhannad Al Nwilati
+Al Masri, BRN 59244 — and the listing's DLD (Trakheesi) advertising permit number. A real listing can't go live
+without that permit: enter it in the admin listing editor ("DLD advertising permit No."), then approve. Sample
+listings carry no permit and say so; they are also `noindex` and left out of `sitemap.xml`, so search engines
+only see real adverts. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each
+real deal page adds a `RealEstateListing` with its price.
 
 ### Notifications
 
@@ -75,9 +85,10 @@ In-app notifications always work. Emails go out through [Resend](https://resend.
      it alone). To change the owner password, change the variable and redeploy production.
    - `CRON_SECRET` — **required for alerts**: any long random string. The daily alert job refuses to run without it.
    - Optional: `RESEND_API_KEY` + `EMAIL_FROM` for email, `NEXT_PUBLIC_SITE_URL` (e.g. `https://offplandistress.com`;
-     defaults to the Vercel production URL) for links in emails, and the
-     `NEXT_PUBLIC_CONTACT_*` / `NEXT_PUBLIC_RERA_ORN` values shown on the site, plus `NEXT_PUBLIC_TRADE_LICENCE`
-     (licence number) and `NEXT_PUBLIC_ADDRESS` (defaults to "Dubai, United Arab Emirates") for the legal pages.
+     defaults to the Vercel production URL) for links in emails.
+   - Company details (trade licence 1145910, RERA ORN 33951, broker BRN 59244, phone/WhatsApp +971 56 352 0611,
+     office address in Bay Square) are built in (`BRAND` in `src/lib/config.ts`). Each can be overridden with its
+     `NEXT_PUBLIC_*` variable (see `.env.example`); an empty variable keeps the built-in value.
 3. Deploy. `vercel.json` pins the Next.js framework preset, so it doesn't matter what Vercel detected when the
    project was created. `npm run build` first runs `scripts/migrate.mjs`: it applies database migrations (a
    production build fails if Vercel has no database URL for Production, so a broken deploy never goes live),

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BadgeCheck, FileCheck2, FileSignature, Handshake, Wallet } from "lucide-react";
+import { BadgeCheck, Calculator, FileCheck2, FileSignature, Handshake, Wallet } from "lucide-react";
 import { SellForm } from "@/components/sell/SellForm";
 import { Button } from "@/components/ui/button";
 import { getT } from "@/i18n/server";
@@ -47,6 +47,13 @@ export default async function SellPage() {
               </li>
             ))}
           </ul>
+          <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            <Calculator className="h-4 w-4 text-gold-foreground" aria-hidden />
+            {t("page.calculatorHint")}
+            <Link href="/exit-calculator" className="font-semibold text-foreground underline decoration-gold/60 underline-offset-4 hover:decoration-gold">
+              {t("page.calculatorLink")}
+            </Link>
+          </p>
         </div>
       </section>
 

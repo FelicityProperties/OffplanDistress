@@ -76,7 +76,7 @@ export const termsOfUse: LegalContent = {
             BUYER_PAYS
               ? "Listing is free: we charge Sellers no listing fee, retainer or commission."
               : "Listing carries no upfront charge; our fee is set out in section 7."
-          } We may ask you to sign RERA Form A (the Seller–broker agreement); like the other RERA forms, it is signed outside the Platform as part of the transaction.`,
+          } Before a Listing goes live you sign RERA Form A (the Seller–broker agreement) with us and we obtain a DLD advertising permit (Trakheesi) for it, as RERA requires for every property advertisement; like the other RERA forms, Form A is signed outside the Platform.`,
           "We may edit a Listing for clarity, request further documents, or decline, pause or remove a Listing, for example if its information cannot be verified. Tell us promptly if anything changes, including if you sell the Unit elsewhere.",
           "Photographs you upload with a Listing are published with it, and anyone who has a photograph’s web address can view it even while the Listing is under review. Other documents you upload are visible on the Platform only to you and our authorised staff.",
           "Accepting an Offer lets us request the NOC and prepare the documents; the sale becomes binding only when you and the Buyer sign RERA Form F (the MOU).",
@@ -303,7 +303,7 @@ export const termsOfUse: LegalContent = {
             BUYER_PAYS
               ? "الإدراج مجاني؛ فلا نتقاضى من البائعين رسوم إدراج أو دفعات مقدّمة أو عمولة."
               : "لا يترتب على الإدراج أي رسوم مقدّمة، وتُبيَّن أتعابنا في البند 7."
-          } وقد نطلب منك توقيع النموذج (A) الصادر عن مؤسسة التنظيم العقاري (اتفاقية البائع والوسيط)، ويُوقَّع، شأنه شأن سائر نماذج المؤسسة، خارج المنصة في إطار إجراءات المعاملة.`,
+          } وقبل نشر الإعلان توقّع معنا النموذج (A) الصادر عن مؤسسة التنظيم العقاري (اتفاقية البائع والوسيط)، ونستخرج له تصريح إعلان من دائرة الأراضي والأملاك (تراخيصي) كما تشترط المؤسسة لكل إعلان عقاري، ويُوقَّع النموذج (A)، شأنه شأن سائر نماذج المؤسسة، خارج المنصة.`,
           "يجوز لنا تحرير الإعلان لأغراض الوضوح، أو طلب مستندات إضافية، أو رفض الإعلان أو إيقافه أو حذفه، كأن يتعذّر التحقق من بياناته. وعليك إبلاغنا دون تأخير بأي تغيير، بما في ذلك بيع الوحدة عن طريق جهة أخرى.",
           "تُنشر الصور التي ترفعها مع الإعلان مع ذلك الإعلان، ويمكن لكل من لديه رابط الصورة مشاهدتها حتى أثناء مراجعة الإعلان. أما المستندات الأخرى التي ترفعها، فلا يطّلع عليها على المنصة سواك والموظفون المخوَّلون لدينا.",
           "يتيح لنا قبولك عرضاً طلب شهادة عدم الممانعة وإعداد المستندات، ولا يصبح البيع ملزماً إلا بتوقيعك أنت والمشتري على النموذج (F) الصادر عن مؤسسة التنظيم العقاري (مذكرة التفاهم).",

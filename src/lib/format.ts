@@ -1,4 +1,5 @@
 import { intlLocale, type Locale } from "@/i18n/config";
+import { AED_PER_USD } from "./config";
 
 // Digits stay Latin in both languages (UAE convention); Arabic swaps "AED" for "درهم" and localises words.
 
@@ -11,6 +12,13 @@ export function formatNumber(value: number) {
 export function formatAED(value: number | null | undefined, locale: Locale = "en") {
   if (value == null) return "—";
   return locale === "ar" ? `${numberFmt.format(value)} درهم` : `AED ${numberFmt.format(value)}`;
+}
+
+/** US-dollar equivalent of a dirham amount at the fixed peg (AED_PER_USD), for overseas buyers. */
+export function formatUSDFromAED(aed: number | null | undefined, locale: Locale = "en") {
+  if (aed == null) return "—";
+  const usd = Math.round(aed / AED_PER_USD);
+  return locale === "ar" ? `${numberFmt.format(usd)} دولار أمريكي` : `USD ${numberFmt.format(usd)}`;
 }
 
 export function formatAEDCompact(value: number | null | undefined, locale: Locale = "en") {

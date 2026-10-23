@@ -233,6 +233,8 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
       verified: listings.verified,
       sellerId: listings.sellerId,
       pausedByAdmin: listings.pausedByAdmin,
+      isSample: listings.isSample,
+      dldPermit: listings.dldPermit,
     })
     .from(listings)
     .where(eq(listings.id, listingId))
@@ -242,7 +244,10 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
   let next: (typeof listings.$inferSelect)["status"] | null = null;
   if (action === "pause" && l.status === "live") next = "paused";
   // A pause by our team (e.g. during a document dispute) can only be lifted by our team.
-  if (action === "resume" && l.status === "paused" && !l.pausedByAdmin) next = l.verified ? "live" : "pending_review";
+  // Straight back to live only if it still has its DLD advertising permit (samples need none); otherwise review again.
+  if (action === "resume" && l.status === "paused" && !l.pausedByAdmin) {
+    next = l.verified && (l.isSample || l.dldPermit) ? "live" : "pending_review";
+  }
   if (action === "withdraw" && !["transferred", "noc_in_progress", "withdrawn"].includes(l.status)) next = "withdrawn";
   if (!next) return { error: t("listing.changeUnavailable") };
 

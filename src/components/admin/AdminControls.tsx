@@ -36,8 +36,9 @@ export function ReviewButtons({ listingId }: { listingId: string }) {
         disabled={pending}
         onClick={() =>
           start(async () => {
-            await approveListing(listingId);
-            toast.success(t("review.approved"));
+            const res = await approveListing(listingId);
+            if ("error" in res && res.error) toast.error(res.error);
+            else toast.success(t("review.approved"));
           })
         }
       >
@@ -87,6 +88,7 @@ type EditProps = {
   launchPrice: number | null;
   askingPrice: number;
   adminNotes: string | null;
+  dldPermit: string | null;
   images: string[];
 };
 
@@ -122,6 +124,9 @@ export function AdminListingForm(p: EditProps) {
         hint={t("form.launchPriceHint")}
       >
         <Input id="launchPrice" name="launchPrice" type="number" min={0} defaultValue={p.launchPrice ?? ""} />
+      </Field>
+      <Field label={t("form.dldPermit")} htmlFor="dldPermit" error={fe.dldPermit} hint={t("form.dldPermitHint")}>
+        <Input id="dldPermit" name="dldPermit" dir="ltr" maxLength={40} defaultValue={p.dldPermit ?? ""} />
       </Field>
       <div className="flex flex-col justify-center gap-3 pt-5">
         <label className="flex items-center gap-2 text-sm">

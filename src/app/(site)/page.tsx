@@ -21,6 +21,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
+import { BRAND } from "@/lib/config";
 import { BUYER_STEPS, FAQS, HERO_IMAGE, SELLER_STEPS } from "@/lib/content";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, refCode } from "@/lib/format";
@@ -269,6 +270,24 @@ export default async function Home() {
               </div>
             ))}
           </div>
+          {/* The licence details behind "RERA-licensed", spelled out */}
+          <dl className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-primary-foreground/10 bg-primary-foreground/10 text-sm sm:grid-cols-2 lg:grid-cols-4">
+            {(
+              [
+                [t("licence.company"), locale === "ar" ? BRAND.companyAr : BRAND.company],
+                [t("licence.orn"), BRAND.orn],
+                [t("licence.tradeLicence"), BRAND.licence],
+                [t("licence.broker"), `${locale === "ar" ? BRAND.broker.nameAr : BRAND.broker.name} · ${BRAND.broker.brn}`],
+              ] as const
+            ).map(([k, v]) => (
+              <div key={k} className="bg-ink/80 px-5 py-4">
+                <dt className="text-xs uppercase tracking-wider text-primary-foreground/55">{k}</dt>
+                <dd className="mt-1 font-semibold text-primary-foreground tabular">
+                  <bdi>{v}</bdi>
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 
