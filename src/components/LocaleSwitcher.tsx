@@ -7,11 +7,13 @@ import { useLocale, useT } from "@/i18n/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function LocaleSwitcher({ className, full }: { className?: string; full?: boolean }) {
+/** `compact` hides the label below xl (icon only), so the desktop header fits on one line at 1024–1279px. */
+export function LocaleSwitcher({ className, full, compact }: { className?: string; full?: boolean; compact?: boolean }) {
   const locale = useLocale();
   const t = useT("common");
   const [pending, start] = useTransition();
   const next = locale === "ar" ? "en" : "ar";
+  const label = next === "ar" ? t("switchToArabic") : t("switchToEnglish");
   return (
     <Button
       type="button"
@@ -21,10 +23,11 @@ export function LocaleSwitcher({ className, full }: { className?: string; full?:
       onClick={() => start(() => setLocale(next))}
       className={cn("gap-1.5", className)}
       aria-label={t("language")}
+      title={compact ? label : undefined}
       lang={next}
     >
       <Languages />
-      {next === "ar" ? t("switchToArabic") : t("switchToEnglish")}
+      {compact ? <span className="hidden xl:inline">{label}</span> : label}
     </Button>
   );
 }

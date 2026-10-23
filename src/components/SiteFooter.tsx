@@ -1,19 +1,27 @@
 import Link from "next/link";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { getT } from "@/i18n/server";
+import { getLocale, getT } from "@/i18n/server";
 import { BRAND } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
 export async function SiteFooter() {
-  const t = await getT("common");
-  const legal = BRAND.orn ? ` · ${t("reraOrn", { orn: BRAND.orn })}` : "";
+  const [t, locale] = await Promise.all([getT("common"), getLocale()]);
+  const ar = locale === "ar";
+  // RERA: the office's licence details belong on every page of a broker's site.
+  const legal = [
+    BRAND.orn && t("reraOrn", { orn: BRAND.orn }),
+    BRAND.licence && t("tradeLicence", { n: BRAND.licence }),
+    BRAND.broker.brn && t("brokerBrn", { n: BRAND.broker.brn }),
+  ].filter(Boolean);
   const columns = [
     {
       title: t("marketplace"),
       links: [
         { href: "/deals", label: t("browseDeals") },
         { href: "/sell", label: t("sellMyUnit") },
+        { href: "/market", label: t("marketIndex") },
+        { href: "/exit-calculator", label: t("exitCalculator") },
         { href: "/dashboard", label: t("myAccount") },
       ],
     },
@@ -68,9 +76,16 @@ export async function SiteFooter() {
                 </a>
               </li>
             )}
-            <li className="inline-flex items-center gap-2.5 text-primary-foreground/60">
-              <MapPin className="h-4 w-4 text-gold" />
-              {t("location")}
+            <li>
+              <a
+                href={BRAND.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-start gap-2.5 text-primary-foreground/70 transition-colors hover:text-gold"
+              >
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                <span className="max-w-xs">{ar ? BRAND.addressAr : BRAND.address}</span>
+              </a>
             </li>
           </ul>
         </div>
@@ -97,8 +112,13 @@ export async function SiteFooter() {
           )}
         >
           <p>
-            © {new Date().getFullYear()} {BRAND.company}
-            {legal}
+            © {new Date().getFullYear()} <bdi>{ar ? BRAND.companyAr : BRAND.company}</bdi>
+            {legal.map((item) => (
+              <span key={item as string} className="tabular">
+                {" · "}
+                {item}
+              </span>
+            ))}
           </p>
           <p className="max-w-xl lg:text-end">{t("estimatesNote")}</p>
         </div>

@@ -64,6 +64,7 @@ export async function SiteHeader() {
     { href: "/sell", label: t("sellMyUnit") },
     { href: "/how-it-works", label: t("howItWorks") },
     { href: "/fees", label: t("fees") },
+    { href: "/market", label: t("marketIndex") },
   ];
 
   return (
@@ -75,11 +76,11 @@ export async function SiteHeader() {
         <NavLinks
           items={nav}
           className="hidden items-center gap-0.5 rounded-full border border-border/70 bg-card/70 p-1 shadow-sm lg:flex"
-          linkClassName="whitespace-nowrap rounded-full px-3 py-1.5 xl:px-4"
+          linkClassName="whitespace-nowrap rounded-full px-2.5 py-1.5 xl:px-4"
           activeClassName="bg-ink text-primary-foreground hover:bg-ink hover:text-primary-foreground"
         />
         <div className="hidden items-center gap-2 lg:flex">
-          <LocaleSwitcher />
+          <LocaleSwitcher compact />
           {user ? (
             <>
               {user.role === "admin" && (
@@ -108,7 +109,7 @@ export async function SiteHeader() {
               <Button asChild variant="ghost" className="rounded-full">
                 <Link href="/login">{t("logIn")}</Link>
               </Button>
-              <Button asChild className="rounded-full px-5">
+              <Button asChild className="rounded-full px-4 xl:px-5">
                 <Link href="/signup">{t("getStarted")}</Link>
               </Button>
             </>

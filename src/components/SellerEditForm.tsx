@@ -26,7 +26,7 @@ export function SellerEditForm(p: Props) {
   const tc = useT("common");
   const [state, action] = useActionState(updateMyListing, {});
   useEffect(() => {
-    if (state.ok) toast.success(t("edit.saved"));
+    if (state.ok) toast.success(t(state.review ? "edit.savedReview" : "edit.saved"));
     // Only on a new save result — not when the language (and so `t`) changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);

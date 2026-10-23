@@ -18,7 +18,13 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 
-export type FormState = { error?: string; fieldErrors?: Record<string, string[] | undefined>; ok?: boolean };
+export type FormState = {
+  error?: string;
+  fieldErrors?: Record<string, string[] | undefined>;
+  ok?: boolean;
+  /** Saved, but the change sends the listing back to our team for review. */
+  review?: boolean;
+};
 
 type T = TFn<"errors">;
 

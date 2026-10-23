@@ -63,7 +63,9 @@ const listingNoticeColumns = {
   isSample: listings.isSample,
   status: listings.status,
   verified: listings.verified,
+  dldPermit: listings.dldPermit,
   askingPrice: listings.askingPrice,
+  publicPrice: listings.publicPrice,
   publishedAt: listings.publishedAt,
 };
 
@@ -85,15 +87,27 @@ async function hasVerificationDocs(listingId: string) {
 export async function approveListing(listingId: string) {
   await assertAdmin();
   const [before] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, listingId)).limit(1);
+  if (!before) return { error: (await getT("errors"))("listing.notFound") };
+  // RERA: no property advert without a DLD (Trakheesi) permit. Sample listings aren't adverts.
+  if (!before.isSample && !before.dldPermit) return { error: (await getT("errors"))("listing.permitRequired") };
   const now = new Date();
-  const verified = before?.verified || (await hasVerificationDocs(listingId));
+  const verified = before.verified || (await hasVerificationDocs(listingId));
   await db
     .update(listings)
-    .set({ status: "live", verified, publishedAt: before?.publishedAt ?? now, rejectionReason: null, updatedAt: now })
+    .set({
+      status: "live",
+      verified,
+      publicPrice: before.askingPrice,
+      publishedAt: before.publishedAt ?? now,
+      rejectionReason: null,
+      updatedAt: now,
+    })
     .where(eq(listings.id, listingId));
-  if (before && before.status !== "live") {
+  if (before.status !== "live") {
     await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });
   }
+  // A seller's price cut waits for re-approval; watchers hear about it once it is public again.
+  if (!before.isSample && before.publicPrice != null) await notifyPriceDrop(before, before.publicPrice, before.askingPrice);
   refresh();
   return { ok: true };
 }
@@ -127,6 +141,7 @@ const adminEditSchema = (t: T) =>
     launchPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
     askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative(),
     adminNotes: z.string().trim().max(4000).optional(),
+    dldPermit: z.string().trim().max(40).optional(),
     images: z.array(z.string().max(500)).max(20),
   });
 
@@ -142,6 +157,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       launchPrice: formData.get("launchPrice") || undefined,
       askingPrice: formData.get("askingPrice"),
       adminNotes: formData.get("adminNotes") || undefined,
+      dldPermit: formData.get("dldPermit") || undefined,
       images: String(formData.get("images") ?? "")
         .split(/\s+/)
         .map((s) => s.trim())
@@ -154,6 +170,9 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
 
   const [current] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, v.listingId)).limit(1);
   if (!current) return { error: t("listing.notFound") };
+  if (!current.isSample && PUBLIC_STATUSES.includes(v.status) && !v.dldPermit) {
+    return { error: t("form.checkFields"), fieldErrors: { dldPermit: [t("listing.permitRequired")] } };
+  }
   const now = new Date();
   await db
     .update(listings)
@@ -165,6 +184,8 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       launchPrice: v.launchPrice ?? null,
       askingPrice: v.askingPrice,
       adminNotes: v.adminNotes ?? null,
+      dldPermit: v.dldPermit || null,
+      publicPrice: PUBLIC_STATUSES.includes(v.status) ? v.askingPrice : current.publicPrice,
       images: v.images.filter((u) => /^https:\/\//.test(u) || u.startsWith("/api/files/")),
       publishedAt: current.publishedAt ?? (v.status === "live" ? now : null),
       updatedAt: now,
@@ -180,7 +201,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (statusChanged && v.status === "transferred") await notifyDealStep(current, "deal.transferred");
   // Watchers only hear about drops on deals they can open (and never on sample listings).
   if (!current.isSample && PUBLIC_STATUSES.includes(v.status)) {
-    await notifyPriceDrop(current, current.askingPrice, v.askingPrice);
+    await notifyPriceDrop(current, current.publicPrice ?? current.askingPrice, v.askingPrice);
   }
 
   refresh();

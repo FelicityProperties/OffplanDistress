@@ -57,7 +57,7 @@ export default defineMessages({
     "manage.metaTitle": "Manage listing",
     "manage.viewPublic": "View public page",
     "manage.reviewNote":
-      "Our transactions team is checking your SPA, Oqood and payment history against the developer's records. This usually takes 1–2 working days once your documents are uploaded.",
+      "Our transactions team is checking your SPA, Oqood and payment history against the developer's records, usually within 1–2 working days once your documents are uploaded. We'll then send you RERA Form A to sign so we can get the DLD advertising permit; your listing goes live once the permit is issued.",
     "manage.purchasePrice": "Purchase price",
     "manage.paidToDeveloper": "Paid to developer",
     "manage.paidValue": "{amount} ({pct})",
@@ -123,10 +123,12 @@ export default defineMessages({
     "edit.description": "Description",
     "edit.save": "Save changes",
     "edit.saved": "Listing updated",
+    "edit.savedReview": "Saved. A new price or description goes back to our team for review (and the DLD permit) before it is public again.",
 
     "listingAction.confirmWithdraw": "Withdraw this listing? Buyers will no longer see it.",
     "listingAction.paused": "Listing paused",
     "listingAction.resumed": "Listing resumed",
+    "listingAction.resumedReview": "Sent to our team: it goes live again once the documents and DLD permit are in place",
     "listingAction.withdrawn": "Listing withdrawn",
 
     "offerAction.accepted": "Offer accepted — our team will start the NOC",
@@ -195,7 +197,7 @@ export default defineMessages({
     "manage.metaTitle": "إدارة الإعلان",
     "manage.viewPublic": "عرض صفحة الإعلان",
     "manage.reviewNote":
-      "يراجع فريق المعاملات لدينا اتفاقية البيع والشراء وشهادة أوقود وسجل الدفعات ويطابقها مع سجلات المطوّر. تستغرق المراجعة عادةً من يوم إلى يومي عمل بعد رفع مستنداتك.",
+      "يراجع فريق المعاملات لدينا اتفاقية البيع والشراء وشهادة أوقود وسجل الدفعات ويطابقها مع سجلات المطوّر، عادةً خلال يوم أو يومي عمل بعد رفع مستنداتك. ثم نرسل إليك النموذج (A) لتوقيعه حتى نستخرج تصريح الإعلان من دائرة الأراضي والأملاك، ويُنشر إعلانك فور صدور التصريح.",
     "manage.purchasePrice": "سعر الشراء",
     "manage.paidToDeveloper": "المبلغ المدفوع للمطوّر",
     "manage.paidValue": "{amount} ({pct})",
@@ -261,10 +263,12 @@ export default defineMessages({
     "edit.description": "الوصف",
     "edit.save": "حفظ التغييرات",
     "edit.saved": "تم تحديث الإعلان",
+    "edit.savedReview": "تم الحفظ. يعود السعر أو الوصف الجديد إلى فريقنا للمراجعة (ولتصريح دائرة الأراضي والأملاك) قبل أن يُنشر مجدداً.",
 
     "listingAction.confirmWithdraw": "هل تريد سحب هذا الإعلان؟ لن يتمكن المشترون من رؤيته بعد الآن.",
     "listingAction.paused": "تم إيقاف الإعلان مؤقتاً",
     "listingAction.resumed": "تم استئناف نشر الإعلان",
+    "listingAction.resumedReview": "أُرسل إلى فريقنا: يُنشر مجدداً متى اكتملت المستندات وتصريح دائرة الأراضي والأملاك",
     "listingAction.withdrawn": "تم سحب الإعلان",
 
     "offerAction.accepted": "تم قبول العرض — سيبدأ فريقنا إجراءات شهادة عدم الممانعة",

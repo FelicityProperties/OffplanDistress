@@ -1,24 +1,46 @@
 // Single place for brand and commercial terms. Change here, it changes everywhere.
 
+// An address override, ignoring the placeholder the old .env.example shipped ("Dubai, United Arab Emirates"), which
+// would otherwise hide the office address everywhere if it was copied into Vercel.
+const addressOverride = (process.env.NEXT_PUBLIC_ADDRESS ?? "").trim().replace(/^Dubai, United Arab Emirates$/i, "");
+
 export const BRAND = {
   name: "OffplanDistress",
   tagline: "Dubai's marketplace for distressed off-plan units",
   description:
     "Buy Dubai off-plan below launch price. Owners who need out list their units; we verify the paperwork, match buyers and handle the developer NOC and DLD transfer.",
-  company: "Felicity Properties LLC",
+  // Licensed operator. Values come from the trade licence, the RERA office registration and the broker card;
+  // each can be overridden with the NEXT_PUBLIC_* variable next to it (an empty variable keeps the default).
+  company: "Felicity Properties L.L.C",
+  companyAr: "فيليسيتي للعقارات ش.ذ.م.م",
   location: "Dubai, United Arab Emirates",
-  // Shown in the footer and contact page; phone/WhatsApp/ORN only when filled in.
-  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "mouhannad@felicitypro.com",
-  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "",
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "mouhannad@felicitypro.com",
+  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "+971 56 352 0611",
   /** Digits only, e.g. 9715XXXXXXXX */
-  whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP ?? "").replace(/\D/g, ""),
-  /** RERA office registration number */
-  orn: process.env.NEXT_PUBLIC_RERA_ORN ?? "",
-  /** Commercial (trade) licence number; the legal pages mention it only when filled in. */
-  licence: process.env.NEXT_PUBLIC_TRADE_LICENCE ?? "",
-  /** Registered office address shown on the legal pages (omitted when set to an empty string). */
-  address: process.env.NEXT_PUBLIC_ADDRESS ?? "Dubai, United Arab Emirates",
+  whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP || "971563520611").replace(/\D/g, ""),
+  /** RERA office registration number (ORN) */
+  orn: process.env.NEXT_PUBLIC_RERA_ORN || "33951",
+  /** Commercial licence number, issued by the Dubai Department of Economy and Tourism */
+  licence: process.env.NEXT_PUBLIC_TRADE_LICENCE || "1145910",
+  licenceAuthority: "Dubai Department of Economy and Tourism",
+  licenceAuthorityAr: "دائرة الاقتصاد والسياحة في دبي",
+  address: addressOverride || "Office 705, Building 12, Bay Square, Marasi Drive, Business Bay, Dubai, UAE",
+  // A custom English address without an Arabic one is still shown on Arabic pages (better than the old office).
+  addressAr:
+    process.env.NEXT_PUBLIC_ADDRESS_AR ||
+    addressOverride ||
+    "مكتب 705، المبنى 12، باي سكوير، شارع مراسي، الخليج التجاري، دبي، الإمارات العربية المتحدة",
+  mapsUrl: "https://www.google.com/maps/search/?api=1&query=Bay%20Square%20Building%2012%2C%20Marasi%20Drive%2C%20Business%20Bay%2C%20Dubai",
+  /** The registered broker on every listing (RERA requires the BRN on property adverts). */
+  broker: {
+    name: process.env.NEXT_PUBLIC_BROKER_NAME || "Muhannad Al Nwilati Al Masri",
+    nameAr: process.env.NEXT_PUBLIC_BROKER_NAME_AR || process.env.NEXT_PUBLIC_BROKER_NAME || "مهند النويلاتي المصري",
+    brn: process.env.NEXT_PUBLIC_BROKER_BRN || "59244",
+  },
 };
+
+/** UAE dirham is pegged to the US dollar (Central Bank of the UAE): 1 USD = 3.6725 AED. */
+export const AED_PER_USD = 3.6725;
 
 /**
  * Owner accounts. These emails can't be registered through the public sign-up form (the repo is public,

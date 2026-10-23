@@ -11,22 +11,27 @@ import {
   CalendarClock,
   Eye,
   FileCheck2,
+  Flag,
   Info,
   Landmark,
   MapPin,
   Maximize2,
+  MessageCircle,
   Mountain,
+  Phone,
   ShieldCheck,
   Sparkles,
   Tag,
   TrendingDown,
 } from "lucide-react";
 import { DealCard } from "@/components/DealCard";
+import { JsonLd } from "@/components/JsonLd";
 import { WatchButton } from "@/components/WatchButton";
 import { MotivationBadge, SampleBadge, StatusPill } from "@/components/badges";
 import { Gallery } from "@/components/deals/Gallery";
 import { OfferDialog } from "@/components/deals/OfferDialog";
 import { InquiryDialog } from "@/components/InquiryForm";
+import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { db } from "@/db";
 import { listings } from "@/db/schema";
@@ -35,7 +40,9 @@ import type { TFn, TKey } from "@/i18n/translator";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND, FEES, PUBLIC_STATUSES } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
-import { formatAED, formatDate, formatPct, formatQuarter, parseRefCode, refCode } from "@/lib/format";
+import { formatAED, formatDate, formatPct, formatQuarter, formatUSDFromAED, parseRefCode, refCode } from "@/lib/format";
+import { siteUrl } from "@/lib/site-url";
+import { cn } from "@/lib/utils";
 import { getListingByRef, similarDeals, watchedIds } from "@/lib/listings";
 
 async function load(ref: string) {
@@ -78,6 +85,8 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
     description,
     // The share image is the generated card in ./opengraph-image.tsx (price, discount, saving).
     openGraph: { title, description },
+    // Sample listings are illustrations, not real adverts: keep them out of search results.
+    ...(l.isSample ? { robots: { index: false } } : {}),
   };
 }
 
@@ -148,8 +157,27 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     [t("facts.launchPrice"), l.launchPrice ? formatAED(l.launchPrice, locale) : t("facts.beingAssessed"), Sparkles],
   ];
 
+  // Structured data for search engines — real listings only (samples aren't for sale).
+  // Only an available real advert gets listing markup. The price is the whole unit (equity + remaining plan),
+  // not the equity payment, so search results never show the unit for less than it costs.
+  const listingJsonLd =
+    !l.isSample && l.status === "live"
+      ? {
+          "@context": "https://schema.org",
+          "@type": "RealEstateListing",
+          name: `${l.projectName} — ${tc(`unit.${l.unitType}`)}, ${community}`,
+          url: `${siteUrl()}/deals/${refCode(l.refNo)}`,
+          datePosted: (l.publishedAt ?? l.createdAt).toISOString(),
+          image: l.images.filter((u) => u.startsWith("http")).slice(0, 4),
+          description: l.description || undefined,
+          offers: { "@type": "Offer", price: a.saleValue, priceCurrency: "AED", availability: "https://schema.org/InStock" },
+          provider: { "@id": `${siteUrl()}/#organization` },
+        }
+      : null;
+
   return (
     <div className="relative isolate">
+      {listingJsonLd && <JsonLd data={listingJsonLd} />}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-gradient-to-b from-gold-soft/60 via-background to-background" />
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-grid-light opacity-40 mask-fade-b" />
 
@@ -290,6 +318,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   <p className="mt-2 font-display text-4xl font-semibold leading-none tabular sm:text-[2.6rem]">
                     {formatAED(l.askingPrice, locale)}
                   </p>
+                  <p className="mt-1.5 text-xs text-primary-foreground/60 tabular">
+                    {t("side.usd", { amount: formatUSDFromAED(l.askingPrice, locale) })}
+                  </p>
                   <p className="mt-3 text-sm text-primary-foreground/75">
                     {t("side.thenPlan", { amount: formatAED(a.remaining, locale), developer })}
                   </p>
@@ -312,17 +343,68 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     disabledReason={isOwner ? t("offer.ownListing") : l.isSample ? t("offer.sampleListing") : undefined}
                   />
                   <WatchButton listingId={l.id} watching={watched.has(l.id)} variant="full" className="h-12" />
-                  <InquiryDialog
-                    listingId={l.id}
-                    project={l.projectName}
-                    defaults={user ? { name: user.fullName, email: user.email, phone: user.phone } : undefined}
-                    triggerClassName="h-12 text-muted-foreground hover:text-foreground"
-                  />
+                  {/* A sample is an illustration, so nothing on it invites a viewing or an enquiry. */}
+                  {!l.isSample && (
+                    <InquiryDialog
+                      listingId={l.id}
+                      project={l.projectName}
+                      defaults={user ? { name: user.fullName, email: user.email, phone: user.phone } : undefined}
+                      triggerClassName="h-12 text-muted-foreground hover:text-foreground"
+                    />
+                  )}
+                  {!l.isSample && (BRAND.whatsapp || BRAND.phone) && (
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {BRAND.whatsapp && (
+                        <a
+                          href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(
+                            t("side.waMessage", { ref: refCode(l.refNo), project: l.projectName, url: `${siteUrl()}/deals/${refCode(l.refNo)}` }),
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={buttonVariants({ variant: "outline", className: "h-11 rounded-xl" })}
+                        >
+                          <MessageCircle className="text-[#1DA851]" aria-hidden /> {t("side.whatsapp")}
+                        </a>
+                      )}
+                      {BRAND.phone && (
+                        <a
+                          href={`tel:${BRAND.phone.replace(/\s/g, "")}`}
+                          className={buttonVariants({ variant: "outline", className: cn("h-11 rounded-xl", !BRAND.whatsapp && "col-span-2") })}
+                        >
+                          <Phone aria-hidden /> {t("side.call")}
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <p className="mt-5 flex items-start gap-2.5 border-t border-border/70 pt-4 text-xs leading-relaxed text-muted-foreground">
                   <FileCheck2 className="h-4 w-4 shrink-0 text-gold" aria-hidden />
                   {t("side.feeNote")}
                 </p>
+                {/* RERA advertising rules: office ORN, broker BRN and the DLD permit on every listing */}
+                <div className="mt-4 rounded-2xl bg-muted/60 p-4 text-xs leading-relaxed text-muted-foreground">
+                  <p className="flex items-center gap-1.5 font-semibold uppercase tracking-wider text-foreground/70">
+                    <Landmark className="h-3.5 w-3.5 text-gold-foreground" aria-hidden />
+                    {t(l.isSample ? "listedBy.titleSample" : "listedBy.title")}
+                  </p>
+                  <p className="mt-1.5">
+                    <bdi>{t("listedBy.office", { company: locale === "ar" ? BRAND.companyAr : BRAND.company, orn: BRAND.orn })}</bdi>
+                  </p>
+                  {!l.isSample && (
+                    <p>{t("listedBy.broker", { name: locale === "ar" ? BRAND.broker.nameAr : BRAND.broker.name, brn: BRAND.broker.brn })}</p>
+                  )}
+                  <p className="tabular">
+                    {l.isSample ? t("listedBy.sample") : l.dldPermit ? t("listedBy.permit", { permit: l.dldPermit }) : null}
+                  </p>
+                  {BRAND.email && !l.isSample && (
+                    <a
+                      href={`mailto:${BRAND.email}?subject=${encodeURIComponent(t("listedBy.reportSubject", { ref: refCode(l.refNo) }))}`}
+                      className="mt-2 inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:text-foreground hover:underline"
+                    >
+                      <Flag className="h-3.5 w-3.5" aria-hidden /> {t("listedBy.report")}
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </aside>

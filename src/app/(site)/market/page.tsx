@@ -1,0 +1,54 @@
+import type { Metadata } from "next";
+import { CtaBand } from "@/components/CtaBand";
+import { JsonLd } from "@/components/JsonLd";
+import { DistressReport } from "@/components/market/DistressReport";
+import { IndexPending } from "@/components/market/IndexPending";
+import { MarketHero } from "@/components/market/MarketHero";
+import { Methodology } from "@/components/market/Methodology";
+import { getLocale, getT } from "@/i18n/server";
+import { getDistressIndex } from "@/lib/market";
+import { siteUrl } from "@/lib/site-url";
+
+// Rendered per request (the (site) layout is force-dynamic): every visit recomputes the index from the database,
+// so there is no revalidate window to configure here.
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("market");
+  return {
+    title: t("meta.title"),
+    description: t("meta.description"),
+    alternates: { canonical: "/market" },
+    openGraph: { title: t("meta.title"), description: t("meta.description"), url: "/market" },
+  };
+}
+
+export default async function MarketPage() {
+  const [index, t, locale] = await Promise.all([getDistressIndex(), getT("market"), getLocale()]);
+
+  // schema.org Dataset: describes the page for search engines; it carries no figures of its own.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: t("meta.title"),
+    description: t("meta.description"),
+    url: `${siteUrl()}/market`,
+    inLanguage: locale,
+    isAccessibleForFree: true,
+    dateModified: index.asOf.toISOString(),
+    spatialCoverage: { "@type": "Place", name: "Dubai, United Arab Emirates" },
+    // the same organisation node the root layout emits (src/components/JsonLd.tsx), linked by its @id
+    // The organization node is declared once, site-wide (src/components/JsonLd.tsx); refer to it by @id only.
+    creator: { "@id": `${siteUrl()}/#organization` },
+  };
+
+  return (
+    <>
+      <JsonLd data={jsonLd} />
+      <MarketHero index={index} />
+      {index.ready ? <DistressReport index={index} /> : <IndexPending index={index} />}
+      {!index.ready && <div className="h-20 sm:h-24" aria-hidden />}
+      <Methodology />
+      <CtaBand />
+    </>
+  );
+}

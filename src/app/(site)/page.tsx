@@ -3,6 +3,8 @@ import {
   ArrowRight,
   BadgeCheck,
   CalendarClock,
+  Calculator,
+  ChartNoAxesColumn,
   CheckCircle2,
   FileSignature,
   Info,
@@ -21,10 +23,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
+import { BRAND, FEES } from "@/lib/config";
 import { BUYER_STEPS, FAQS, HERO_IMAGE, SELLER_STEPS } from "@/lib/content";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, refCode } from "@/lib/format";
 import { featuredDeals, marketStats, watchedIds, type ListingCard } from "@/lib/listings";
+import { MIN_LIVE, MIN_SAMPLE } from "@/lib/market";
 import type { Locale } from "@/i18n/config";
 
 const TRUST = [
@@ -111,12 +115,25 @@ export default async function Home() {
     getLocale(),
   ]);
 
-  const strip: [string, string][] = [
-    [t("stats.live"), stats.live.toLocaleString("en-AE")],
-    [t("stats.value"), stats.value ? formatAEDCompact(stats.value, locale) : "—"],
-    [t("stats.discount"), stats.avgDiscount != null ? `${(stats.avgDiscount * 100).toFixed(1)}%` : "—"],
-    [t("stats.fee"), t("stats.feeValue")],
-  ];
+  // Live figures on the same terms as the Distress Index (enough real listings, averages from at least MIN_SAMPLE
+  // units); until then the strip shows facts about the service instead of numbers from a handful of units.
+  const liveData = stats.live >= MIN_LIVE;
+  const strip: [string, string][] = liveData
+    ? [
+        [t("stats.live"), stats.live.toLocaleString("en-AE")],
+        [t("stats.value"), stats.value ? formatAEDCompact(stats.value, locale) : "—"],
+        [
+          t("stats.discount"),
+          stats.avgDiscount != null && stats.withLaunch >= MIN_SAMPLE ? `${(stats.avgDiscount * 100).toFixed(1)}%` : "—",
+        ],
+        [t("stats.fee"), t("stats.feeValue")],
+      ]
+    : [
+        [t("stats.fee"), t("stats.feeValue")],
+        ...(FEES.payer === "buyer" ? [[t("stats.sellerFee"), t("stats.sellerFeeValue")] as [string, string]] : []),
+        [t("stats.verification"), t("stats.verificationValue")],
+        ...(BRAND.orn ? [[t("stats.orn"), BRAND.orn] as [string, string]] : []),
+      ];
 
   return (
     <>
@@ -171,7 +188,7 @@ export default async function Home() {
             <div key={label} className="bg-card px-5 py-5 sm:px-6">
               <p className="text-xl font-semibold tabular sm:text-3xl">{value}</p>
               <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="h-1.5 w-1.5 motion-safe:animate-pulse rounded-full bg-success" aria-hidden />
+                {liveData && <span className="h-1.5 w-1.5 motion-safe:animate-pulse rounded-full bg-success" aria-hidden />}
                 {label}
               </p>
             </div>
@@ -223,6 +240,18 @@ export default async function Home() {
             <StepsFlow title={t("how.sellers")} steps={SELLER_STEPS} tone="ink" />
             <StepsFlow title={t("how.buyers")} steps={BUYER_STEPS} tone="gold" />
           </div>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <Button asChild variant="outline" className="rounded-full bg-card">
+              <Link href="/exit-calculator">
+                <Calculator aria-hidden /> {t("how.exitLink")}
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="rounded-full">
+              <Link href="/market">
+                <ChartNoAxesColumn aria-hidden /> {t("how.indexLink")} <ArrowRight className="rtl:-scale-x-100" aria-hidden />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -269,6 +298,24 @@ export default async function Home() {
               </div>
             ))}
           </div>
+          {/* The licence details behind "RERA-licensed", spelled out */}
+          <dl className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-primary-foreground/10 bg-primary-foreground/10 text-sm sm:grid-cols-2 lg:grid-cols-4">
+            {(
+              [
+                [t("licence.company"), locale === "ar" ? BRAND.companyAr : BRAND.company],
+                [t("licence.orn"), BRAND.orn],
+                [t("licence.tradeLicence"), BRAND.licence],
+                [t("licence.broker"), `${locale === "ar" ? BRAND.broker.nameAr : BRAND.broker.name} · ${BRAND.broker.brn}`],
+              ] as const
+            ).map(([k, v]) => (
+              <div key={k} className="bg-ink/80 px-5 py-4">
+                <dt className="text-xs uppercase tracking-wider text-primary-foreground/55">{k}</dt>
+                <dd className="mt-1 font-semibold text-primary-foreground tabular">
+                  <bdi>{v}</bdi>
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 

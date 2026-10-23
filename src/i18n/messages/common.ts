@@ -80,6 +80,10 @@ export default defineMessages({
     sampleNotice:
       "This is a sample listing, added so the marketplace isn't empty on day one. The project is real, but this unit, its prices and its payment plan are illustrative and not for sale. Offers are disabled.",
     legal: "Legal",
+    marketIndex: "Distress Index",
+    exitCalculator: "Exit calculator",
+    tradeLicence: "Trade licence {n}",
+    brokerBrn: "Broker BRN {n}",
     terms: "Terms of Use",
     privacy: "Privacy Policy",
     cookies: "Cookie Policy",
@@ -231,6 +235,10 @@ export default defineMessages({
     sampleNotice:
       "هذا إعلان توضيحي أُضيف كي لا تبدو المنصة فارغة في يومها الأول. المشروع حقيقي، لكن هذه الوحدة وأسعارها وخطة الدفع الخاصة بها توضيحية وليست معروضة للبيع. تقديم العروض عليها معطّل.",
     legal: "الشؤون القانونية",
+    marketIndex: "مؤشر الوحدات المتعثرة",
+    exitCalculator: "حاسبة الخروج",
+    tradeLicence: "الرخصة التجارية {n}",
+    brokerBrn: "رقم الوسيط {n}",
     terms: "شروط الاستخدام",
     privacy: "سياسة الخصوصية",
     cookies: "سياسة ملفات تعريف الارتباط",

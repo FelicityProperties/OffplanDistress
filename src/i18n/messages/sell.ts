@@ -95,6 +95,8 @@ export default defineMessages({
     "review.developer": "Developer",
     "review.purchasePrice": "Purchase price",
     "review.paid": "Paid so far",
+    "page.calculatorHint": "Not sure yet? Compare keeping the unit, stopping payments and selling.",
+    "page.calculatorLink": "Open the exit calculator",
     "review.asking": "Your asking price",
     "review.docs": "Documents attached",
     "review.docsCount": "{n} of {total}",
@@ -126,7 +128,7 @@ export default defineMessages({
 
     "done.title": "Submitted for verification",
     "done.body":
-      "Our transactions team will check your SPA and payment history with the developer, usually within 1–2 working days. You'll see the status update in your dashboard.",
+      "Our transactions team will check your SPA and payment history with the developer, usually within 1–2 working days, then send you RERA Form A (our listing agreement) to sign so we can get the DLD advertising permit. You'll see the status update in your dashboard.",
     "done.failed": "Some files didn't upload ({files}). You can add them from your listing page.",
     "done.viewListing": "View my listing",
     "done.allListings": "All my listings",
@@ -142,7 +144,7 @@ export default defineMessages({
 
     "next.title": "What happens next",
     "next.1": "We verify your SPA & payments (1–2 working days)",
-    "next.2": "Your listing goes live with a verified badge",
+    "next.2": "You sign RERA Form A, we get the DLD advertising permit and your listing goes live",
     "next.3": "You review offers in your dashboard",
     "next.4": "We secure the developer NOC & book the DLD transfer",
     "next.5": "You're paid at the trustee office on transfer day",
@@ -256,6 +258,8 @@ export default defineMessages({
     "review.developer": "المطوّر",
     "review.purchasePrice": "سعر الشراء",
     "review.paid": "المدفوع حتى الآن",
+    "page.calculatorHint": "لم تحسم قرارك بعد؟ قارن بين الاحتفاظ بالوحدة والتوقف عن السداد والبيع.",
+    "page.calculatorLink": "افتح حاسبة الخروج",
     "review.asking": "السعر المطلوب",
     "review.docs": "المستندات المرفقة",
     "review.docsCount": "{n} من {total}",
@@ -286,7 +290,7 @@ export default defineMessages({
 
     "done.title": "تم الإرسال للتحقق",
     "done.body":
-      "سيتحقق فريق المعاملات لدينا من اتفاقية البيع والشراء وسجل دفعاتك لدى المطوّر، عادةً خلال يوم أو يومي عمل. وستظهر لك حالة الإعلان محدَّثة في لوحة التحكم.",
+      "سيتحقق فريق المعاملات لدينا من اتفاقية البيع والشراء وسجل دفعاتك لدى المطوّر، عادةً خلال يوم أو يومي عمل، ثم نرسل إليك النموذج (A) الصادر عن مؤسسة التنظيم العقاري (اتفاقية الوساطة) لتوقيعه حتى نستخرج تصريح الإعلان من دائرة الأراضي والأملاك. وستظهر لك حالة الإعلان محدَّثة في لوحة التحكم.",
     "done.failed": "تعذّر رفع بعض الملفات (⁨{files}⁩). يمكنك إضافتها من صفحة إعلانك.",
     "done.viewListing": "عرض إعلاني",
     "done.allListings": "جميع إعلاناتي",
@@ -302,7 +306,7 @@ export default defineMessages({
 
     "next.title": "الخطوات التالية",
     "next.1": "نتحقق من اتفاقية البيع والشراء ومن دفعاتك (خلال يوم أو يومي عمل)",
-    "next.2": "يُنشر إعلانك مع شارة التوثيق",
+    "next.2": "توقّع النموذج (A)، ونستخرج تصريح الإعلان من دائرة الأراضي والأملاك، ثم يُنشر إعلانك",
     "next.3": "تراجع العروض من لوحة التحكم",
     "next.4": "نستخرج شهادة عدم الممانعة من المطوّر ونحجز موعد نقل الملكية لدى دائرة الأراضي والأملاك",
     "next.5": "تتسلّم مستحقاتك في مكتب أمين التسجيل يوم نقل الملكية",

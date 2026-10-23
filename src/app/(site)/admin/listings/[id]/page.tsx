@@ -192,6 +192,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           launchPrice={l.launchPrice}
           askingPrice={l.askingPrice}
           adminNotes={l.adminNotes}
+          dldPermit={l.dldPermit}
           images={l.images}
         />
       </section>

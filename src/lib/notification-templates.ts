@@ -17,6 +17,18 @@ export const TEMPLATES = {
     en: { title: "New listing to verify: {project}", body: "{seller} submitted {ref}. Check the SPA, Oqood and statement of account.", cta: "Review listing" },
     ar: { title: "إعلان جديد بانتظار التحقق: {project}", body: "قدّم {seller} الإعلان {ref}. راجِع اتفاقية البيع والشراء وشهادة أوقود وكشف الحساب.", cta: "مراجعة الإعلان" },
   },
+  "listing.changed": {
+    en: {
+      title: "Listing changed, approve it again: {project}",
+      body: "{seller} changed the asking price or description of {ref}. It is off the market until you update the DLD permit if needed and approve it again.",
+      cta: "Review listing",
+    },
+    ar: {
+      title: "تعديل على إعلان بانتظار إعادة الموافقة: {project}",
+      body: "عدّل {seller} السعر المطلوب أو الوصف في الإعلان {ref}. الإعلان خارج السوق حتى تحدّث تصريح دائرة الأراضي والأملاك عند الحاجة وتوافق عليه مجدداً.",
+      cta: "مراجعة الإعلان",
+    },
+  },
   "listing.approved": {
     en: { title: "Your listing is live: {project}", body: "We verified your documents. Buyers can now see {ref} and make offers.", cta: "View listing" },
     ar: { title: "إعلانك منشور الآن: {project}", body: "تحققنا من مستنداتك. يمكن للمشترين الآن مشاهدة {ref} وتقديم العروض.", cta: "عرض الإعلان" },
