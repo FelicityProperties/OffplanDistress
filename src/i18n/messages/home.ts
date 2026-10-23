@@ -38,6 +38,11 @@ export default defineMessages({
     "stats.discount": "Avg. discount vs launch",
     "stats.fee": "Our fee",
     "stats.feeValue": "2% + VAT",
+    "stats.sellerFee": "To list your unit",
+    "stats.sellerFeeValue": "Free",
+    "stats.verification": "SPA & payment check",
+    "stats.verificationValue": "1–2 days",
+    "stats.orn": "RERA-licensed broker · ORN",
 
     "featured.eyebrow": "Featured",
     "featured.title": "Deepest discounts right now",
@@ -145,6 +150,11 @@ export default defineMessages({
     "stats.discount": "متوسط الخصم عن سعر الإطلاق",
     "stats.fee": "رسومنا",
     "stats.feeValue": "2% + ضريبة القيمة المضافة",
+    "stats.sellerFee": "عرض وحدتك",
+    "stats.sellerFeeValue": "مجاناً",
+    "stats.verification": "التحقق من العقد والدفعات",
+    "stats.verificationValue": "1–2 يوم عمل",
+    "stats.orn": "وسيط مرخّص من ريرا · رقم المكتب",
 
     "featured.eyebrow": "صفقات مميزة",
     "featured.title": "أكبر الخصومات حالياً",

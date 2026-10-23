@@ -217,6 +217,7 @@ export async function featuredDeals(limit = 6) {
   return rows as ListingCard[];
 }
 
+/** Home-page figures. Real listings only: sample listings are illustrations, not market data. */
 export async function marketStats() {
   const [row] = await db
     .select({
@@ -225,10 +226,12 @@ export async function marketStats() {
       avgDiscount: sql<number | null>`avg(${discount}) filter (where ${listings.status} = 'live')`,
       transferred: sql<number>`count(*) filter (where ${listings.status} = 'transferred')::int`,
     })
-    .from(listings);
+    .from(listings)
+    .where(eq(listings.isSample, false));
   const [{ buyers }] = await db
     .select({ buyers: sql<number>`count(distinct ${watchlist.userId})::int` })
-    .from(watchlist);
+    .from(watchlist)
+    .innerJoin(listings, and(eq(listings.id, watchlist.listingId), eq(listings.isSample, false)));
   return {
     live: row.live,
     value: Number(row.value),

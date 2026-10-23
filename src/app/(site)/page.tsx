@@ -21,7 +21,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
-import { BRAND } from "@/lib/config";
+import { BRAND, FEES } from "@/lib/config";
 import { BUYER_STEPS, FAQS, HERO_IMAGE, SELLER_STEPS } from "@/lib/content";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, refCode } from "@/lib/format";
@@ -112,12 +112,22 @@ export default async function Home() {
     getLocale(),
   ]);
 
-  const strip: [string, string][] = [
-    [t("stats.live"), stats.live.toLocaleString("en-AE")],
-    [t("stats.value"), stats.value ? formatAEDCompact(stats.value, locale) : "—"],
-    [t("stats.discount"), stats.avgDiscount != null ? `${(stats.avgDiscount * 100).toFixed(1)}%` : "—"],
-    [t("stats.fee"), t("stats.feeValue")],
-  ];
+  // Live figures once real listings are on the market; until then (sample listings only) the strip shows
+  // facts about the service instead of numbers computed from illustrations.
+  const liveData = stats.live > 0;
+  const strip: [string, string][] = liveData
+    ? [
+        [t("stats.live"), stats.live.toLocaleString("en-AE")],
+        [t("stats.value"), stats.value ? formatAEDCompact(stats.value, locale) : "—"],
+        [t("stats.discount"), stats.avgDiscount != null ? `${(stats.avgDiscount * 100).toFixed(1)}%` : "—"],
+        [t("stats.fee"), t("stats.feeValue")],
+      ]
+    : [
+        [t("stats.fee"), t("stats.feeValue")],
+        ...(FEES.payer === "buyer" ? [[t("stats.sellerFee"), t("stats.sellerFeeValue")] as [string, string]] : []),
+        [t("stats.verification"), t("stats.verificationValue")],
+        ...(BRAND.orn ? [[t("stats.orn"), BRAND.orn] as [string, string]] : []),
+      ];
 
   return (
     <>
@@ -172,7 +182,7 @@ export default async function Home() {
             <div key={label} className="bg-card px-5 py-5 sm:px-6">
               <p className="text-xl font-semibold tabular sm:text-3xl">{value}</p>
               <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="h-1.5 w-1.5 motion-safe:animate-pulse rounded-full bg-success" aria-hidden />
+                {liveData && <span className="h-1.5 w-1.5 motion-safe:animate-pulse rounded-full bg-success" aria-hidden />}
                 {label}
               </p>
             </div>
