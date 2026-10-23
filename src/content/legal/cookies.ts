@@ -31,7 +31,7 @@ export const cookiePolicy: LegalContent = {
         id: "no-tracking",
         heading: "No analytics, advertising or third-party cookies",
         paragraphs: [
-          "We do not use analytics, advertising, tracking or social-media cookies, and no third party sets cookies through our pages. Marketing photographs on the Platform are loaded from Unsplash; loading them does not set cookies on our pages.",
+          "We do not use analytics, advertising, tracking or social-media cookies, and no third party sets cookies through our pages. Some photographs on the Platform are loaded directly from Unsplash’s servers; loading them does not set cookies on our pages, although Unsplash receives your IP address and browser details, as our Privacy Policy explains.",
           "Both of our cookies are needed to provide the service you ask for. If we ever introduce cookies that are not strictly necessary, we will update this Policy and ask for your consent before setting them.",
         ],
       },
@@ -85,7 +85,7 @@ export const cookiePolicy: LegalContent = {
         id: "no-tracking",
         heading: "لا ملفات للتحليلات أو الإعلانات أو لأطراف أخرى",
         paragraphs: [
-          `لا نستخدم ملفات تعريف ارتباط للتحليلات أو الإعلانات أو التتبع أو وسائل التواصل الاجتماعي، ولا يضع أي طرف آخر ملفات تعريف ارتباط عبر صفحاتنا. وتُحمَّل صور التسويق على المنصة من موقع ${iso("Unsplash")}، ولا يؤدي تحميلها إلى وضع أي ملفات تعريف ارتباط على صفحاتنا.`,
+          `لا نستخدم ملفات تعريف ارتباط للتحليلات أو الإعلانات أو التتبع أو وسائل التواصل الاجتماعي، ولا يضع أي طرف آخر ملفات تعريف ارتباط عبر صفحاتنا. وتُحمَّل بعض الصور على المنصة مباشرةً من خوادم ${iso("Unsplash")}، ولا يؤدي تحميلها إلى وضع أي ملفات تعريف ارتباط على صفحاتنا، وإن كانت ${iso("Unsplash")} تتلقى عنوان IP الخاص بك وبيانات متصفحك على النحو المبيّن في سياسة الخصوصية.`,
           "كلا الملفين لازم لتقديم الخدمة التي تطلبها. وإذا استخدمنا مستقبلاً أي ملفات تعريف ارتباط غير ضرورية، فسنحدّث هذه السياسة ونطلب موافقتك قبل وضعها.",
         ],
       },

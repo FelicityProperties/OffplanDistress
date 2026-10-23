@@ -8,7 +8,7 @@ export const privacyPolicy: LegalContent = {
   en: {
     title: "Privacy Policy",
     updated: LEGAL_UPDATED,
-    summary: `${OP.company} is the controller of the personal data processed on ${OP.site}. We collect what we need to run your account, verify listings, broker transactions and meet our anti-money-laundering duties under UAE law. We never sell your data or use it for advertising, Sellers never see Buyers’ identities, and we share data with Developers, the DLD, trustee offices and banks only when a transaction requires it. You can exercise your rights under the UAE Personal Data Protection Law by writing to ${OP.email}.`,
+    summary: `${OP.company} is the controller of the personal data processed on ${OP.site}. We collect what we need to run your account, verify listings, broker transactions and meet our anti-money-laundering duties under UAE law. We never sell your data or use it for advertising, Sellers do not see Buyers’ identities until the MOU (RERA Form F) is prepared, and we share data with the other party, Developers, the DLD, trustee offices and banks only when a transaction requires it. You can exercise your rights under the UAE Personal Data Protection Law by writing to ${OP.email}.`,
     sections: [
       {
         id: "who-we-are",
@@ -24,12 +24,13 @@ export const privacyPolicy: LegalContent = {
         paragraphs: ["We collect the following categories of personal data:"],
         bullets: [
           "Account data: your full name, email address, mobile number (if you give one), whether you want to buy, sell or both, your preferred language, a hashed form of your password, your identity-verification (KYC) status and the date and time you accepted our Terms of Use and this Policy.",
-          "Listing data: details of your Unit (developer, project, community, type, size, floor and view), the purchase price, the amount paid, the payment plan, any arrears, the asking price, how quickly you need to sell and the description you write.",
-          "Documents: files you upload, such as the SPA, Oqood certificate, statement of account, passport or Emirates ID and photographs of the Unit. These are stored in our database.",
+          "Listing data: details of your Unit (developer, project, community, type, size, floor and view), the purchase price, the amount paid, the payment plan, the asking price, how quickly you need to sell, whether any instalments have been missed (this is noted in the public Listing description) and the description you write.",
+          "Documents: files you upload, such as the SPA, Oqood certificate, statement of account, passport or Emirates ID and any other supporting document. These are stored in our database and, on the Platform, are visible only to you and our authorised staff.",
+          "Listing photographs: photographs of the Unit that you upload with a Listing. These are published with the Listing and anyone can view them; even while the Listing is under review, anyone who has a photograph’s web address can view it.",
           "Transaction data: Offers and counter-offers, financing preferences, messages for the other party, the status of each deal and the information needed for the NOC and the Transfer.",
           "Activity and preferences: your watchlist, saved searches and alert settings, and the in-app notifications and emails we send you.",
           "Enquiries: the name, email address, telephone number and message you send through our contact or viewing-request forms.",
-          "Technical data: server logs and rate-limit records containing your IP address, the pages requested and the date and time, and the two cookies described in our Cookie Policy.",
+          "Technical data: server logs containing your IP address, the pages requested and the date and time; rate-limit records containing your IP address and, for sign-in attempts, the email address entered; and the two cookies described in our Cookie Policy.",
         ],
       },
       {
@@ -54,7 +55,7 @@ export const privacyPolicy: LegalContent = {
           "verify your identity, check the source of funds, screen against sanctions lists, keep records and report suspicious activity (necessary to comply with our legal obligations, including under Federal Decree-Law No. (20) of 2018);",
           "keep the Platform and your account secure, prevent fraud and abuse, for example by limiting repeated sign-in attempts, and fix faults (necessary to perform our agreement with you and to meet our duty under the PDPL to protect personal data);",
           "answer your enquiries and viewing requests (steps you ask us to take);",
-          "send saved-search alerts (at your request; you can turn them off at any time); and",
+          "send saved-search alerts and price-drop emails for deals on your watchlist (at your request; you can turn off the alerts for each saved search at any time, and stop price-drop emails for a deal by removing it from your watchlist); and",
           "establish, exercise or defend legal claims and respond to lawful requests from courts, the DLD, RERA and other authorities.",
         ],
       },
@@ -63,10 +64,11 @@ export const privacyPolicy: LegalContent = {
         heading: "Who we share it with",
         paragraphs: ["We do not sell personal data. We share it only as follows:"],
         bullets: [
-          "Other Users: Sellers see the amount and terms of Offers but never a Buyer’s identity or contact details. Listings show details of the Unit, not the Seller’s contact details.",
+          "Other Users: until the MOU (RERA Form F) is prepared, a Seller sees the amount and terms of an Offer, any message the Buyer wrote, whether the Buyer will pay in cash or with a mortgage and whether the Buyer has completed our identity check, but not the Buyer’s name or contact details. Listings, which anyone can view, show details of the Unit and the photographs uploaded with it, but never the Seller’s name or contact details.",
           `Our team: authorised staff of ${OP.company} can see both parties’ contact details and documents in order to verify Listings and manage transactions.`,
-          "Parties to your transaction: when a deal proceeds, we share what is needed with the Developer (to obtain the NOC and record the assignment), with the DLD and the trustee office (to register the Transfer) and with any bank the Buyer chooses for financing or payment.",
+          "Parties to your transaction: when the MOU is prepared, we disclose each party’s identity details to the other as needed to sign RERA Form F and complete the Transfer. When a deal proceeds, we also share what is needed with the Developer (to obtain the NOC and record the assignment), with the DLD and the trustee office (to register the Transfer) and with any bank the Buyer chooses for financing or payment.",
           "Service providers: Vercel hosts the Platform, Neon provides our database and Resend sends our transactional emails. They process personal data on our instructions in order to provide their services to us.",
+          "Image hosting: some photographs on the Platform, namely the background images of the home page and of the sign-in, sign-up and password-reset pages and some photographs on sample listings, are loaded by your browser directly from the servers of Unsplash. Unsplash therefore receives your IP address and browser details when your browser fetches them, and handles that information under its own privacy policy.",
           "Authorities: courts, regulators, law-enforcement bodies and the competent anti-money-laundering authorities, where the law requires or permits it.",
           "Advisers and successors: our professional advisers, who owe us a duty of confidentiality, and any buyer of all or part of our business, which would be bound by this Policy.",
         ],
@@ -75,7 +77,7 @@ export const privacyPolicy: LegalContent = {
         id: "international-transfers",
         heading: "International transfers",
         paragraphs: [
-          "Some of our service providers store or process data outside the UAE. In particular, the servers of our database provider, Neon, may be located outside the UAE, and our hosting and email providers operate internationally.",
+          "Some of our service providers store or process data outside the UAE. In particular, the servers of our database provider, Neon, may be located outside the UAE, our hosting and email providers operate internationally, and Unsplash, which serves some photographs directly to your browser, operates outside the UAE.",
           "When personal data is transferred outside the UAE, we transfer it only as the PDPL permits: to a country with an adequate level of data protection, or subject to appropriate safeguards, such as contractual commitments requiring the recipient to protect the data to a standard consistent with the PDPL, or otherwise on a ground the PDPL allows.",
         ],
       },
@@ -84,10 +86,10 @@ export const privacyPolicy: LegalContent = {
         heading: "How long we keep it",
         paragraphs: ["We keep personal data only for as long as we need it for the purposes described above or as the law requires:"],
         bullets: [
-          "Account data: while your account is active. When you close your account, we delete or anonymise it within a reasonable time, except where we must keep it for the reasons below.",
+          "Account data: while your account is open. You can ask us to close your account at any time; when we close it, we delete or anonymise your account data within a reasonable time, except where we must keep it for the reasons below.",
           "Transaction and AML records: Listings, Offers, documents and records relating to a transaction, and the identity and source-of-funds information collected for anti-money-laundering purposes, for at least five years, as the law requires.",
           "Server logs: up to 30 days.",
-          "Rate-limit records containing IP addresses: 24 hours.",
+          "Rate-limit records: deleted automatically once they are more than 24 hours old. The clean-up runs whenever a new attempt is recorded and at least once a day.",
           "Enquiries: as long as needed to respond and follow up, and afterwards only as part of the transaction records described above where relevant.",
         ],
       },
@@ -125,7 +127,7 @@ export const privacyPolicy: LegalContent = {
           "encryption in transit (TLS/HTTPS) on every page and between our servers and our database;",
           "passwords stored only as salted bcrypt hashes, never in readable form;",
           "httpOnly session cookies that scripts on the page cannot read, with only a hashed copy of each session token kept on our side;",
-          "access to documents and contact details limited to the account holder and authorised staff; and",
+          "on the Platform, access to uploaded documents and contact details limited to the account holder and authorised staff (Listing photographs, which are published with the Listing, are the exception); and",
           "limits on repeated sign-in and sign-up attempts.",
         ],
       },
@@ -147,8 +149,8 @@ export const privacyPolicy: LegalContent = {
         id: "emails",
         heading: "Emails you receive",
         paragraphs: [
-          "We send transactional emails about your account, password resets, your Listings and Offers, counter-offers and the progress of your deals, in the language you last used on the Platform. They are part of the service and continue while your account is open, and the same messages appear as notifications in your dashboard.",
-          "When you save a search, alerts are switched on by default: we email you when new matching deals are published, at most once a day. You can turn alerts off, or delete the saved search, at any time from the saved-searches page of your dashboard.",
+          "We send emails about your account and its security, including password resets; about your Listings and Offers, counter-offers and the progress of your deals; and, when the price of a deal on your watchlist drops, a price-drop email. We write in the language you last used on the Platform. Account, security and deal emails are part of the service and continue while your account is open. To stop price-drop emails for a deal, remove it from your watchlist. Most of these messages also appear as notifications in your dashboard; password-reset emails do not.",
+          "When you save a search, alerts are switched on by default: we email you when new matching deals are published, at most once a day. You can turn off the alerts for each saved search, or delete the saved search, at any time from the saved-searches page of your dashboard.",
         ],
       },
       {
@@ -170,7 +172,7 @@ export const privacyPolicy: LegalContent = {
   ar: {
     title: "سياسة الخصوصية",
     updated: LEGAL_UPDATED,
-    summary: `${OP.companyAr} هي المتحكم في البيانات الشخصية التي تُعالَج على منصة ${iso(OP.site)}. نجمع ما نحتاج إليه لإدارة حسابك والتحقق من الإعلانات وإتمام المعاملات بصفتنا وسيطاً، وللوفاء بالتزاماتنا في مكافحة غسل الأموال بموجب القانون الإماراتي. لا نبيع بياناتك ولا نستخدمها لأغراض إعلانية، ولا يطّلع البائعون على هوية المشترين، ولا نشارك البيانات مع المطوّرين أو دائرة الأراضي والأملاك أو مكاتب أمناء التسجيل أو البنوك إلا بالقدر الذي تتطلبه المعاملة. ويمكنك ممارسة حقوقك بموجب قانون حماية البيانات الشخصية الإماراتي بمراسلتنا على ${OP.emailAr}.`,
+    summary: `${OP.companyAr} هي المتحكم في البيانات الشخصية التي تُعالَج على منصة ${iso(OP.site)}. نجمع ما نحتاج إليه لإدارة حسابك والتحقق من الإعلانات وإتمام المعاملات بصفتنا وسيطاً، وللوفاء بالتزاماتنا في مكافحة غسل الأموال بموجب القانون الإماراتي. لا نبيع بياناتك ولا نستخدمها لأغراض إعلانية، ولا يطّلع البائعون على هوية المشترين حتى إعداد مذكرة التفاهم (النموذج (F) الصادر عن مؤسسة التنظيم العقاري)، ولا نشارك البيانات مع الطرف الآخر في المعاملة أو المطوّرين أو دائرة الأراضي والأملاك أو مكاتب أمناء التسجيل أو البنوك إلا بالقدر الذي تتطلبه المعاملة. ويمكنك ممارسة حقوقك بموجب قانون حماية البيانات الشخصية الإماراتي بمراسلتنا على ${OP.emailAr}.`,
     sections: [
       {
         id: "who-we-are",
@@ -186,12 +188,13 @@ export const privacyPolicy: LegalContent = {
         paragraphs: ["نجمع الفئات الآتية من البيانات الشخصية:"],
         bullets: [
           "بيانات الحساب: اسمك الكامل، وعنوان بريدك الإلكتروني، ورقم هاتفك المتحرك (إن قدّمته)، ورغبتك في الشراء أو البيع أو كليهما، ولغتك المفضّلة، وقيمة التجزئة المشفّرة لكلمة المرور (لا كلمة المرور نفسها)، وحالة التحقق من هويتك، وتاريخ موافقتك على شروط الاستخدام وهذه السياسة ووقتها.",
-          "بيانات الإعلان: تفاصيل وحدتك (المطوّر والمشروع والمنطقة والنوع والمساحة والطابق والإطلالة)، وسعر الشراء، والمبلغ المدفوع، وخطة الدفع، وأي متأخرات، والسعر المطلوب، ومدى استعجالك في البيع، والوصف الذي تكتبه.",
-          "المستندات: الملفات التي ترفعها، مثل اتفاقية البيع والشراء وشهادة أوقود وكشف الحساب وجواز السفر أو بطاقة الهوية الإماراتية وصور الوحدة، وتُحفظ في قاعدة بياناتنا.",
+          "بيانات الإعلان: تفاصيل وحدتك (المطوّر والمشروع والمنطقة والنوع والمساحة والطابق والإطلالة)، وسعر الشراء، والمبلغ المدفوع، وخطة الدفع، والسعر المطلوب، ومدى استعجالك في البيع، وما إذا كان قد فات سداد أي قسط (ويُذكر ذلك في الوصف المنشور للإعلان)، والوصف الذي تكتبه.",
+          "المستندات: الملفات التي ترفعها، مثل اتفاقية البيع والشراء وشهادة أوقود وكشف الحساب وجواز السفر أو بطاقة الهوية الإماراتية وأي مستند مؤيِّد آخر، وتُحفظ في قاعدة بياناتنا، ولا يطّلع عليها على المنصة سواك والموظفون المخوَّلون لدينا.",
+          "صور الإعلان: صور الوحدة التي ترفعها مع الإعلان، وتُنشر معه ويمكن لأي شخص مشاهدتها، بل يمكن لكل من لديه رابط الصورة مشاهدتها حتى أثناء مراجعة الإعلان.",
           "بيانات المعاملات: العروض والعروض المقابلة، وطريقة التمويل المفضّلة، والرسائل الموجّهة إلى الطرف الآخر، وحالة كل صفقة، والمعلومات اللازمة لشهادة عدم الممانعة ونقل الملكية.",
           "النشاط والتفضيلات: قائمة المتابعة، وعمليات البحث المحفوظة وإعدادات التنبيه، والإشعارات داخل المنصة والرسائل الإلكترونية التي نرسلها إليك.",
           "الاستفسارات: الاسم وعنوان البريد الإلكتروني ورقم الهاتف والرسالة التي ترسلها عبر نموذج التواصل أو نموذج طلب المعاينة.",
-          "البيانات التقنية: سجلات الخادم وسجلات الحدّ من المحاولات المتكررة التي تتضمن عنوان IP الخاص بك والصفحات المطلوبة وتاريخ الطلب ووقته، وملفّا تعريف الارتباط المبيّنان في سياسة ملفات تعريف الارتباط.",
+          "البيانات التقنية: سجلات الخادم التي تتضمن عنوان IP الخاص بك والصفحات المطلوبة وتاريخ الطلب ووقته؛ وسجلات الحدّ من المحاولات المتكررة التي تتضمن عنوان IP الخاص بك، وكذلك عنوان البريد الإلكتروني المُدخَل في محاولات تسجيل الدخول؛ وملفّا تعريف الارتباط المبيّنان في سياسة ملفات تعريف الارتباط.",
         ],
       },
       {
@@ -216,7 +219,7 @@ export const privacyPolicy: LegalContent = {
           "التحقق من هويتك ومن مصدر الأموال، وفحص قوائم العقوبات، والاحتفاظ بالسجلات، والإبلاغ عن الأنشطة المشبوهة (وهي معالجة ضرورية للوفاء بالتزاماتنا القانونية، بما فيها الالتزامات المقررة بموجب المرسوم بقانون اتحادي رقم (20) لسنة 2018)؛",
           "حماية المنصة وحسابك، ومنع الاحتيال وإساءة الاستخدام، كالحدّ من محاولات تسجيل الدخول المتكررة، وإصلاح الأعطال (وهي معالجة ضرورية لتنفيذ اتفاقنا معك وللوفاء بواجبنا في حماية البيانات الشخصية بموجب القانون)؛",
           "الرد على استفساراتك وطلبات المعاينة (بناءً على طلبك)؛",
-          "إرسال تنبيهات عمليات البحث المحفوظة (بناءً على طلبك، ويمكنك إيقافها في أي وقت)؛",
+          "إرسال تنبيهات عمليات البحث المحفوظة ورسائل انخفاض أسعار الصفقات المدرجة في قائمة متابعتك (بناءً على طلبك، ويمكنك في أي وقت إيقاف التنبيهات لكل عملية بحث محفوظة على حدة، وإيقاف رسائل انخفاض السعر لصفقة ما بإزالتها من قائمة المتابعة)؛",
           "إثبات الحقوق القانونية أو ممارستها أو الدفاع عنها، والاستجابة للطلبات المشروعة من المحاكم ودائرة الأراضي والأملاك ومؤسسة التنظيم العقاري وغيرها من الجهات.",
         ],
       },
@@ -225,10 +228,11 @@ export const privacyPolicy: LegalContent = {
         heading: "الجهات التي نشارك البيانات معها",
         paragraphs: ["لا نبيع البيانات الشخصية، ولا نشاركها إلا على النحو الآتي:"],
         bullets: [
-          "المستخدمون الآخرون: يطّلع البائعون على مبلغ العرض وشروطه، دون هوية المشتري أو بيانات التواصل معه بأي حال. وتعرض الإعلانات تفاصيل الوحدة دون بيانات التواصل مع البائع.",
+          "المستخدمون الآخرون: حتى إعداد مذكرة التفاهم (النموذج (F) الصادر عن مؤسسة التنظيم العقاري)، يطّلع البائع على مبلغ العرض وشروطه، وعلى أي رسالة كتبها المشتري، وعلى ما إذا كان المشتري سيدفع نقداً أم بتمويل عقاري، وما إذا كان قد أتمّ إجراءات التحقق من الهوية لدينا، دون اسم المشتري أو بيانات التواصل معه. أما الإعلانات، التي يمكن لأي شخص الاطلاع عليها، فتعرض تفاصيل الوحدة والصور المرفوعة معها، ولا تعرض بأي حال اسم البائع أو بيانات التواصل معه.",
           `فريقنا: يطّلع الموظفون المخوَّلون لدى ${OP.companyAr} على بيانات التواصل مع الطرفين وعلى المستندات، للتحقق من الإعلانات وإدارة المعاملات.`,
-          "أطراف معاملتك: عند المضي في الصفقة، نشارك القدر اللازم من البيانات مع المطوّر (للحصول على شهادة عدم الممانعة وتسجيل التنازل)، ومع دائرة الأراضي والأملاك ومكتب أمين التسجيل (لتسجيل نقل الملكية)، ومع أي بنك يختاره المشتري للتمويل أو للدفع.",
+          "أطراف معاملتك: عند إعداد مذكرة التفاهم، نُفصح لكل طرف عن بيانات هوية الطرف الآخر بالقدر اللازم لتوقيع النموذج (F) وإتمام نقل الملكية. وعند المضي في الصفقة، نشارك كذلك القدر اللازم من البيانات مع المطوّر (للحصول على شهادة عدم الممانعة وتسجيل التنازل)، ومع دائرة الأراضي والأملاك ومكتب أمين التسجيل (لتسجيل نقل الملكية)، ومع أي بنك يختاره المشتري للتمويل أو للدفع.",
           `مزوّدو الخدمات: تستضيف شركة ${iso("Vercel")} المنصة، وتوفّر شركة ${iso("Neon")} قاعدة بياناتنا، وترسل شركة ${iso("Resend")} رسائلنا الإلكترونية الخدمية. ويعالج هؤلاء البيانات الشخصية وفق تعليماتنا لتقديم خدماتهم لنا.`,
+          `استضافة الصور: يُحمّل متصفحك بعض الصور المعروضة على المنصة مباشرةً من خوادم ${iso("Unsplash")}، وهي صور الخلفية في الصفحة الرئيسية وفي صفحات تسجيل الدخول وإنشاء الحساب وإعادة تعيين كلمة المرور، وبعض صور الإعلانات التوضيحية. ولذلك تتلقى ${iso("Unsplash")} عنوان IP الخاص بك وبيانات متصفحك عند تحميل هذه الصور، وتتعامل مع هذه المعلومات وفق سياسة الخصوصية الخاصة بها.`,
           "الجهات الرسمية: المحاكم والجهات التنظيمية وجهات إنفاذ القانون والسلطات المختصة بمكافحة غسل الأموال، متى أوجب القانون ذلك أو أجازه.",
           "المستشارون والخلفاء: مستشارونا المهنيون الملتزمون بواجب السرية، وأي جهة تستحوذ على أعمالنا كلياً أو جزئياً وتلتزم بهذه السياسة.",
         ],
@@ -237,7 +241,7 @@ export const privacyPolicy: LegalContent = {
         id: "international-transfers",
         heading: "نقل البيانات إلى خارج الدولة",
         paragraphs: [
-          `يخزّن بعض مزوّدي خدماتنا البيانات أو يعالجونها خارج دولة الإمارات العربية المتحدة؛ فقد تقع خوادم مزوّد قاعدة البيانات ${iso("Neon")} خارج الدولة، ويعمل مزوّدا الاستضافة والبريد الإلكتروني على نطاق دولي.`,
+          `يخزّن بعض مزوّدي خدماتنا البيانات أو يعالجونها خارج دولة الإمارات العربية المتحدة؛ فقد تقع خوادم مزوّد قاعدة البيانات ${iso("Neon")} خارج الدولة، ويعمل مزوّدا الاستضافة والبريد الإلكتروني على نطاق دولي، كما تعمل ${iso("Unsplash")}، التي تقدّم بعض الصور مباشرةً إلى متصفحك، من خارج الدولة.`,
           "وعند نقل البيانات الشخصية إلى خارج الدولة، لا ننقلها إلا وفق ما يجيزه قانون حماية البيانات الشخصية: إلى دولة توفّر مستوى ملائماً من الحماية، أو مع ضمانات مناسبة، كالتزامات تعاقدية تُلزم الجهة المستلمة بحماية البيانات وفق معايير تتسق مع القانون، أو استناداً إلى أي أساس آخر يجيزه القانون.",
         ],
       },
@@ -246,10 +250,10 @@ export const privacyPolicy: LegalContent = {
         heading: "مدة الاحتفاظ بالبيانات",
         paragraphs: ["لا نحتفظ بالبيانات الشخصية إلا للمدة اللازمة لتحقيق الأغراض المبيّنة أعلاه أو التي يقتضيها القانون:"],
         bullets: [
-          "بيانات الحساب: طوال مدة نشاط حسابك. وعند إغلاقه، نحذفها أو نجعلها مجهولة الهوية خلال مدة معقولة، ما لم يلزمنا الاحتفاظ بها للأسباب المبيّنة أدناه.",
+          "بيانات الحساب: طوال مدة بقاء حسابك قائماً. ويمكنك أن تطلب منا إغلاق حسابك في أي وقت، وعند إغلاقه نحذف بيانات حسابك أو نجعلها مجهولة الهوية خلال مدة معقولة، ما لم يلزمنا الاحتفاظ بها للأسباب المبيّنة أدناه.",
           "سجلات المعاملات ومكافحة غسل الأموال: الإعلانات والعروض والمستندات والسجلات المتعلقة بأي معاملة، وبيانات الهوية ومصدر الأموال التي نجمعها لأغراض مكافحة غسل الأموال، لمدة لا تقل عن خمس سنوات وفقاً لما يقتضيه القانون.",
           "سجلات الخادم: مدة أقصاها 30 يوماً.",
-          "سجلات الحدّ من المحاولات المتكررة التي تتضمن عناوين IP: مدة 24 ساعة.",
+          "سجلات الحدّ من المحاولات المتكررة: تُحذف تلقائياً متى تجاوز عمرها 24 ساعة، وتجري عملية الحذف عند تسجيل كل محاولة جديدة ومرة واحدة يومياً على الأقل.",
           "الاستفسارات: المدة اللازمة للرد عليها ومتابعتها، ثم ضمن سجلات المعاملات المبيّنة أعلاه عند الاقتضاء.",
         ],
       },
@@ -287,7 +291,7 @@ export const privacyPolicy: LegalContent = {
           `تشفير البيانات أثناء نقلها باستخدام بروتوكول ${iso("TLS/HTTPS")} في جميع الصفحات وبين خوادمنا وقاعدة بياناتنا؛`,
           `تخزين كلمات المرور في صورة قيم تجزئة مملّحة باستخدام خوارزمية ${iso("bcrypt")} فقط، وعدم حفظها بصيغة مقروءة مطلقاً؛`,
           `استخدام ملفات تعريف ارتباط للجلسات من نوع ${iso("httpOnly")} لا يمكن للنصوص البرمجية في الصفحة قراءتها، مع الاحتفاظ لدينا بنسخة مجزّأة فقط من رمز كل جلسة؛`,
-          "قصر الاطلاع على المستندات وبيانات التواصل على صاحب الحساب والموظفين المخوَّلين؛",
+          "قصر الاطلاع على المنصة على المستندات المرفوعة وبيانات التواصل على صاحب الحساب والموظفين المخوَّلين (باستثناء صور الإعلانات التي تُنشر مع الإعلان)؛",
           "الحدّ من محاولات تسجيل الدخول وإنشاء الحسابات المتكررة.",
         ],
       },
@@ -309,8 +313,8 @@ export const privacyPolicy: LegalContent = {
         id: "emails",
         heading: "الرسائل الإلكترونية التي تصلك",
         paragraphs: [
-          "نرسل رسائل إلكترونية خدمية تتعلق بحسابك وإعادة تعيين كلمة المرور وإعلاناتك وعروضك والعروض المقابلة وسير صفقاتك، باللغة التي استخدمتها آخر مرة على المنصة. وتُعدّ هذه الرسائل جزءاً من الخدمة وتستمر ما دام حسابك قائماً، وتظهر الرسائل ذاتها في صورة إشعارات في لوحة التحكم.",
-          "عند حفظ عملية بحث، تكون التنبيهات مفعّلة تلقائياً، فنراسلك عند نشر صفقات جديدة مطابقة، بمعدل لا يتجاوز مرة واحدة يومياً. ويمكنك إيقاف التنبيهات أو حذف عملية البحث المحفوظة في أي وقت من صفحة عمليات البحث المحفوظة في لوحة التحكم.",
+          "نرسل إليك رسائل إلكترونية تتعلق بحسابك وأمانه، بما فيها رسائل إعادة تعيين كلمة المرور، وبإعلاناتك وعروضك والعروض المقابلة وسير صفقاتك، ورسالة عند انخفاض سعر أي صفقة مدرجة في قائمة متابعتك، وذلك باللغة التي استخدمتها آخر مرة على المنصة. وتُعدّ رسائل الحساب والأمان والصفقات جزءاً من الخدمة وتستمر ما دام حسابك قائماً. ولإيقاف رسائل انخفاض السعر لصفقة ما، أزِلها من قائمة المتابعة. وتظهر معظم هذه الرسائل أيضاً في صورة إشعارات في لوحة التحكم، باستثناء رسائل إعادة تعيين كلمة المرور.",
+          "عند حفظ عملية بحث، تكون التنبيهات مفعّلة تلقائياً، فنراسلك عند نشر صفقات جديدة مطابقة، بمعدل لا يتجاوز مرة واحدة يومياً. ويمكنك في أي وقت إيقاف التنبيهات لكل عملية بحث محفوظة على حدة، أو حذف عملية البحث المحفوظة، من صفحة عمليات البحث المحفوظة في لوحة التحكم.",
         ],
       },
       {

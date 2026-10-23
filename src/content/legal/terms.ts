@@ -8,10 +8,10 @@ export const termsOfUse: LegalContent = {
   en: {
     title: "Terms of Use",
     updated: LEGAL_UPDATED,
-    summary: `${OP.site} is operated by ${OP.company}, a Dubai real-estate brokerage. We verify listings, match buyers with owners of off-plan units, negotiate between them and handle the developer NOC and the DLD transfer, but we are never a party to the sale. ${
+    summary: `${OP.site} is operated by ${OP.company}, a Dubai real-estate brokerage. We review listings, match buyers with owners of off-plan units, negotiate between them and handle the developer NOC and the DLD transfer, but we are never a party to the sale. ${
       BUYER_PAYS
-        ? `Listing is free; the buyer pays our fee of ${RATES.commission} of the sale value plus ${RATES.vat} VAT, and only when the transfer completes.`
-        : `The seller pays our fee of ${RATES.commission} of the sale value plus ${RATES.vat} VAT, and only when the transfer completes.`
+        ? `Listing is free; the buyer pays our fee of ${RATES.commission} of the sale value plus ${RATES.vat} VAT when the transfer completes; subject to section 8, nothing is payable if it does not.`
+        : `The seller pays our fee of ${RATES.commission} of the sale value plus ${RATES.vat} VAT when the transfer completes; subject to section 8, nothing is payable if it does not.`
     } Offers are not binding until RERA Form F (the MOU) is signed.`,
     sections: [
       {
@@ -55,11 +55,12 @@ export const termsOfUse: LegalContent = {
         paragraphs: [
           "The Platform connects owners of off-plan Units who can no longer keep up with a Developer payment plan with Buyers who pay the Seller for the Equity and take over the Remaining Instalments.",
           "We act only as a broker and are never a party to the sale or assignment of a Unit. Any contract of sale is made directly between Buyer and Seller, who each remain responsible for performing it.",
-          "Only the Developer decides whether to issue an NOC, and it may require a minimum percentage of the price to be paid or arrears and fees to be settled; the DLD registers Transfers under its own rules. We check documents and Developer eligibility before a Listing goes live, but we cannot guarantee that an NOC will be issued, when it will be issued, or that a Transfer will complete.",
+          "Only the Developer decides whether to issue an NOC, and it may require a minimum percentage of the price to be paid or overdue instalments and fees to be settled; the DLD registers Transfers under its own rules. We review each Listing, and any documents provided for it, and check Developer eligibility before the Listing goes live (section 9 explains when a Listing is marked Verified), but we cannot guarantee that an NOC will be issued, when it will be issued, or that a Transfer will complete.",
+          "The Platform also shows sample listings, which we add to illustrate how the marketplace works. Each is labelled “Sample”, and the unit, prices and payment plan it shows are illustrative and not for sale. A sample listing is not an offer to sell and cannot receive Offers.",
           "As broker, we:",
         ],
         bullets: [
-          "review the Seller’s documents (SPA, Oqood, statement of account and identity documents) and check the Listing against them;",
+          "review the documents the Seller provides (such as the SPA, Oqood, statement of account and identity documents) and check the Listing against them;",
           "check, as far as the Developer’s published requirements allow, whether the Unit can be resold or assigned;",
           "publish approved Listings and match them with Buyers;",
           "present Offers and counter-offers and negotiate between the parties;",
@@ -77,12 +78,13 @@ export const termsOfUse: LegalContent = {
               : "Listing carries no upfront charge; our fee is set out in section 7."
           } We may ask you to sign RERA Form A (the Seller–broker agreement); like the other RERA forms, it is signed outside the Platform as part of the transaction.`,
           "We may edit a Listing for clarity, request further documents, or decline, pause or remove a Listing, for example if its information cannot be verified. Tell us promptly if anything changes, including if you sell the Unit elsewhere.",
+          "Photographs you upload with a Listing are published with it, and anyone who has a photograph’s web address can view it even while the Listing is under review. Other documents you upload are visible on the Platform only to you and our authorised staff.",
           "Accepting an Offer lets us request the NOC and prepare the documents; the sale becomes binding only when you and the Buyer sign RERA Form F (the MOU).",
           "By submitting a Listing, you confirm that:",
         ],
         bullets: [
           "you are the registered purchaser under the SPA or are legally authorised to sell the Unit (for example, under a valid power of attorney), and any co-owners agree to the sale;",
-          "the information in the Listing, including prices, the amount paid, the payment plan, arrears and the handover date, is true and complete;",
+          "the information in the Listing, including prices, the amount paid, the payment plan, the handover date and whether any instalments have been missed, is true and complete;",
           "every document you upload is genuine, unaltered and relates to the Unit; and",
           "you have told us in writing of any dispute, mortgage, attachment or restriction that could prevent or delay the sale.",
         ],
@@ -101,7 +103,7 @@ export const termsOfUse: LegalContent = {
         id: "fees",
         heading: "Fees and third-party costs",
         paragraphs: [
-          `Our fee is ${RATES.commission} of the Sale Value plus VAT at ${RATES.vat} on the fee, paid by the ${BUYER_PAYS ? "Buyer" : "Seller"} only when the Transfer completes at the DLD. If the Transfer does not complete, no fee is payable. ${
+          `Our fee is ${RATES.commission} of the Sale Value plus VAT at ${RATES.vat} on the fee, paid by the ${BUYER_PAYS ? "Buyer" : "Seller"} when the Transfer completes at the DLD. Subject to section 8, if the Transfer does not complete, no fee is payable. ${
             BUYER_PAYS
               ? "The Platform is free for Sellers, and we charge no retainers or listing fees."
               : "Making Offers is free for Buyers, and we charge no retainers or listing fees."
@@ -114,7 +116,7 @@ export const termsOfUse: LegalContent = {
         id: "non-circumvention",
         heading: "Anonymity and non-circumvention",
         paragraphs: [
-          "Buyers remain anonymous to Sellers: a Seller sees the amount and terms of an Offer, not the Buyer’s identity or contact details, and all negotiation goes through our team, which sees both parties’ details in order to manage the transaction.",
+          "Until the MOU (RERA Form F) is prepared, Buyers remain anonymous to Sellers: a Seller sees the amount and terms of an Offer, any message the Buyer wrote, whether the Buyer will pay in cash or with a mortgage and whether the Buyer has completed our identity check, but not the Buyer’s name or contact details. Listings never show the Seller’s name or contact details. All negotiation goes through our team, which sees both parties’ details in order to manage the transaction. When the MOU is prepared, we disclose each party’s identity details to the other as needed to sign RERA Form F and complete the Transfer.",
           "For 12 months after we first introduce you to a Unit, a Buyer or a Seller, you must not, directly or indirectly, deal with the other party over that Unit in a way that bypasses us or our fee. If you do, the fee under section 7 becomes payable to us, without prejudice to our other rights.",
         ],
       },
@@ -122,8 +124,8 @@ export const termsOfUse: LegalContent = {
         id: "verified",
         heading: "What “Verified” means",
         paragraphs: [
-          "“Verified” means that our team has reviewed the Seller’s documents, typically the SPA or Oqood and a recent statement of account, found them consistent with the Listing, and received the Seller’s confirmation of ownership or authority to sell.",
-          "It is a document check, not a guarantee. It does not mean that we have inspected or valued the Unit, confirmed construction progress or the handover date, ruled out every encumbrance, or that the Developer will issue an NOC. The records of the Developer and the DLD at Transfer are definitive.",
+          "“Verified” means that our team has reviewed the Seller’s SPA or Oqood and a statement of account against the Listing and found them consistent with it. When we approve a Listing, we mark it Verified only if the Seller has uploaded those documents and our team has reviewed them in this way; our team may also mark a Listing Verified after reviewing documents provided to it other than by upload to the Platform. A Listing approved without that review is published without the Verified mark, and sample listings (section 4) are never marked Verified. By submitting a Listing, the Seller also confirms that they own the Unit or are authorised to sell it (section 5).",
+          "It is a document check made at the time of our review, not a guarantee. It does not mean that we have inspected or valued the Unit, confirmed construction progress or the handover date, ruled out every encumbrance, or that the Developer will issue an NOC. The records of the Developer and the DLD at Transfer are definitive.",
         ],
       },
       {
@@ -146,7 +148,7 @@ export const termsOfUse: LegalContent = {
         heading: "Intellectual property and your content",
         paragraphs: [
           "The Platform, its design, software, text, logos and compilation of Listings belong to us or our licensors. We grant you a limited, personal, revocable and non-transferable licence to use it for its intended purpose; you may not copy or reproduce it except as the law allows.",
-          "You keep ownership of what you upload and grant us a non-exclusive, royalty-free licence to store, copy, adapt and display it to operate the Platform, market your Listing and complete your transaction, and to share it as our Privacy Policy describes. Some marketing photographs are supplied by third parties under their own licences.",
+          "You keep ownership of what you upload and grant us a non-exclusive, royalty-free licence to store, copy, adapt and display it to operate the Platform, market your Listing and complete your transaction, and to share it as our Privacy Policy describes. Some photographs on the Platform, including those on sample listings, are supplied by third parties under their own licences.",
         ],
       },
       {
@@ -195,7 +197,7 @@ export const termsOfUse: LegalContent = {
         id: "communications",
         heading: "Notices and communications",
         paragraphs: [
-          `We contact you by email, through dashboard notifications and, about your Listings, Offers and transactions, by phone or message. These service messages continue while your account is open; saved-search alerts can be turned off in your dashboard. You can send notices to us at ${OP.email}, and we generally write to you in the language you last used on the Platform.`,
+          `We contact you by email, through dashboard notifications and, about your Listings, Offers and transactions, by phone or message. These service messages continue while your account is open. You can turn off the alerts for each saved search in your dashboard, and stop price-drop emails for a deal by removing it from your watchlist. You can send notices to us at ${OP.email}, and we generally write to you in the language you last used on the Platform.`,
         ],
       },
       {
@@ -233,10 +235,10 @@ export const termsOfUse: LegalContent = {
   ar: {
     title: "شروط الاستخدام",
     updated: LEGAL_UPDATED,
-    summary: `تدير منصة ${iso(OP.site)} ${OP.companyAr}، وهي شركة وساطة عقارية في دبي. نتحقق من الإعلانات، ونربط المشترين بمالكي الوحدات على الخارطة، ونتولى التفاوض بين الطرفين ومتابعة شهادة عدم الممانعة من المطوّر ونقل الملكية لدى دائرة الأراضي والأملاك، دون أن نكون طرفاً في البيع بأي حال. ${
+    summary: `تدير منصة ${iso(OP.site)} ${OP.companyAr}، وهي شركة وساطة عقارية في دبي. نراجع الإعلانات، ونربط المشترين بمالكي الوحدات على الخارطة، ونتولى التفاوض بين الطرفين ومتابعة شهادة عدم الممانعة من المطوّر ونقل الملكية لدى دائرة الأراضي والأملاك، دون أن نكون طرفاً في البيع بأي حال. ${
       BUYER_PAYS
-        ? `الإدراج مجاني، ويدفع المشتري أتعابنا البالغة ${RATES.commission} من قيمة البيع مضافاً إليها ضريبة القيمة المضافة بنسبة ${RATES.vat}، ولا تُستحق إلا عند إتمام نقل الملكية.`
-        : `يدفع البائع أتعابنا البالغة ${RATES.commission} من قيمة البيع مضافاً إليها ضريبة القيمة المضافة بنسبة ${RATES.vat}، ولا تُستحق إلا عند إتمام نقل الملكية.`
+        ? `الإدراج مجاني، ويدفع المشتري أتعابنا البالغة ${RATES.commission} من قيمة البيع مضافاً إليها ضريبة القيمة المضافة بنسبة ${RATES.vat} عند إتمام نقل الملكية، ومع مراعاة البند 8، لا تُستحق أي أتعاب إذا لم يكتمل.`
+        : `يدفع البائع أتعابنا البالغة ${RATES.commission} من قيمة البيع مضافاً إليها ضريبة القيمة المضافة بنسبة ${RATES.vat} عند إتمام نقل الملكية، ومع مراعاة البند 8، لا تُستحق أي أتعاب إذا لم يكتمل.`
     } ولا تكون العروض ملزمة إلا بعد توقيع النموذج (F) الصادر عن مؤسسة التنظيم العقاري (مذكرة التفاهم).`,
     sections: [
       {
@@ -280,11 +282,12 @@ export const termsOfUse: LegalContent = {
         paragraphs: [
           "تربط المنصة مالكي الوحدات على الخارطة الذين لم يعودوا قادرين على الاستمرار في خطة الدفع لدى المطوّر بمشترين يدفعون للبائع مقابل الحصة المدفوعة ويتحمّلون الأقساط المتبقية.",
           "نعمل بصفتنا وسيطاً فحسب، ولا نكون بأي حال طرفاً في بيع الوحدة أو التنازل عنها. ويُبرم أي عقد بيع مباشرةً بين المشتري والبائع، ويظل كلٌّ منهما مسؤولاً عن تنفيذه.",
-          "يعود قرار إصدار شهادة عدم الممانعة إلى المطوّر وحده، وقد يشترط سداد نسبة دنيا من الثمن أو تسوية المتأخرات والرسوم، وتسجّل الدائرة نقل الملكية وفق أنظمتها. ومع أننا نتحقق من المستندات ومن أهلية الوحدة لدى المطوّر قبل نشر الإعلان، فلا يمكننا ضمان إصدار الشهادة أو موعد إصدارها أو إتمام نقل الملكية.",
+          "يعود قرار إصدار شهادة عدم الممانعة إلى المطوّر وحده، وقد يشترط سداد نسبة دنيا من الثمن أو سداد الأقساط المتأخرة وتسوية الرسوم، وتسجّل الدائرة نقل الملكية وفق أنظمتها. ومع أننا نراجع كل إعلان وما يُقدَّم بشأنه من مستندات، ونتحقق من أهلية الوحدة لدى المطوّر قبل نشر الإعلان (ويبيّن البند 9 متى يُمنح الإعلان علامة «موثّق»)، فلا يمكننا ضمان إصدار الشهادة أو موعد إصدارها أو إتمام نقل الملكية.",
+          "وتعرض المنصة كذلك إعلانات توضيحية نضيفها لبيان طريقة عمل السوق، ويحمل كلٌّ منها علامة «توضيحي»، والوحدة والأسعار وخطة الدفع المبيّنة فيه توضيحية وغير معروضة للبيع. ولا يُعدّ الإعلان التوضيحي عرضاً للبيع، ولا يجوز تقديم عروض عليه.",
           "وبصفتنا الوسيط، فإننا:",
         ],
         bullets: [
-          "نراجع مستندات البائع (اتفاقية البيع والشراء وأوقود وكشف الحساب ووثائق الهوية) ونطابق الإعلان معها؛",
+          "نراجع المستندات التي يقدّمها البائع (مثل اتفاقية البيع والشراء وأوقود وكشف الحساب ووثائق الهوية) ونطابق الإعلان معها؛",
           "نتحقق، في حدود المتطلبات المعلنة للمطوّر، من إمكانية إعادة بيع الوحدة أو التنازل عنها؛",
           "ننشر الإعلانات المعتمدة ونربطها بالمشترين؛",
           "نعرض العروض والعروض المقابلة ونتفاوض بين الطرفين؛",
@@ -302,12 +305,13 @@ export const termsOfUse: LegalContent = {
               : "لا يترتب على الإدراج أي رسوم مقدّمة، وتُبيَّن أتعابنا في البند 7."
           } وقد نطلب منك توقيع النموذج (A) الصادر عن مؤسسة التنظيم العقاري (اتفاقية البائع والوسيط)، ويُوقَّع، شأنه شأن سائر نماذج المؤسسة، خارج المنصة في إطار إجراءات المعاملة.`,
           "يجوز لنا تحرير الإعلان لأغراض الوضوح، أو طلب مستندات إضافية، أو رفض الإعلان أو إيقافه أو حذفه، كأن يتعذّر التحقق من بياناته. وعليك إبلاغنا دون تأخير بأي تغيير، بما في ذلك بيع الوحدة عن طريق جهة أخرى.",
+          "تُنشر الصور التي ترفعها مع الإعلان مع ذلك الإعلان، ويمكن لكل من لديه رابط الصورة مشاهدتها حتى أثناء مراجعة الإعلان. أما المستندات الأخرى التي ترفعها، فلا يطّلع عليها على المنصة سواك والموظفون المخوَّلون لدينا.",
           "يتيح لنا قبولك عرضاً طلب شهادة عدم الممانعة وإعداد المستندات، ولا يصبح البيع ملزماً إلا بتوقيعك أنت والمشتري على النموذج (F) الصادر عن مؤسسة التنظيم العقاري (مذكرة التفاهم).",
           "وبتقديمك الإعلان، فإنك تُقرّ بما يلي:",
         ],
         bullets: [
           "أنك المشتري المسجّل بموجب اتفاقية البيع والشراء أو مخوَّل قانوناً ببيع الوحدة (بموجب وكالة سارية مثلاً)، وأن أي شركاء في ملكيتها موافقون على البيع؛",
-          "أن بيانات الإعلان، بما فيها الأسعار والمبلغ المدفوع وخطة الدفع والمتأخرات وموعد التسليم، صحيحة وكاملة؛",
+          "أن بيانات الإعلان، بما فيها الأسعار والمبلغ المدفوع وخطة الدفع وموعد التسليم وما إذا كان قد فات سداد أي قسط، صحيحة وكاملة؛",
           "أن كل مستند ترفعه أصلي وغير معدَّل ويخص الوحدة؛",
           "أنك أبلغتنا كتابياً بأي نزاع أو رهن أو حجز أو قيد قد يمنع البيع أو يؤخره.",
         ],
@@ -326,7 +330,7 @@ export const termsOfUse: LegalContent = {
         id: "fees",
         heading: "الأتعاب وتكاليف الأطراف الأخرى",
         paragraphs: [
-          `تبلغ أتعابنا ${RATES.commission} من قيمة البيع مضافاً إليها ضريبة القيمة المضافة بنسبة ${RATES.vat} على الأتعاب، ويدفعها ${BUYER_PAYS ? "المشتري" : "البائع"} فقط عند إتمام نقل الملكية لدى الدائرة، ولا تُستحق أي أتعاب إذا لم يكتمل. ${
+          `تبلغ أتعابنا ${RATES.commission} من قيمة البيع مضافاً إليها ضريبة القيمة المضافة بنسبة ${RATES.vat} على الأتعاب، ويدفعها ${BUYER_PAYS ? "المشتري" : "البائع"} عند إتمام نقل الملكية لدى الدائرة. ومع مراعاة البند 8، لا تُستحق أي أتعاب إذا لم يكتمل نقل الملكية. ${
             BUYER_PAYS
               ? "والمنصة مجانية للبائعين، ولا نتقاضى دفعات مقدّمة أو رسوم إدراج."
               : "وتقديم العروض مجاني للمشترين، ولا نتقاضى دفعات مقدّمة أو رسوم إدراج."
@@ -339,7 +343,7 @@ export const termsOfUse: LegalContent = {
         id: "non-circumvention",
         heading: "إخفاء الهوية وعدم التحايل",
         paragraphs: [
-          "تبقى هوية المشتري غير معلنة للبائع؛ إذ يطّلع البائع على مبلغ العرض وشروطه دون هوية المشتري أو بيانات التواصل معه، وتجري جميع المفاوضات عن طريق فريقنا الذي يطّلع على بيانات الطرفين لإدارة المعاملة.",
+          "حتى إعداد مذكرة التفاهم (النموذج (F) الصادر عن مؤسسة التنظيم العقاري)، تبقى هوية المشتري غير معلنة للبائع؛ إذ يطّلع البائع على مبلغ العرض وشروطه، وعلى أي رسالة كتبها المشتري، وعلى ما إذا كان المشتري سيدفع نقداً أم بتمويل عقاري، وما إذا كان قد أتمّ إجراءات التحقق من الهوية لدينا، دون اسم المشتري أو بيانات التواصل معه. ولا تعرض الإعلانات بأي حال اسم البائع أو بيانات التواصل معه. وتجري جميع المفاوضات عن طريق فريقنا الذي يطّلع على بيانات الطرفين لإدارة المعاملة. وعند إعداد مذكرة التفاهم، نُفصح لكل طرف عن بيانات هوية الطرف الآخر بالقدر اللازم لتوقيع النموذج (F) وإتمام نقل الملكية.",
           "تتعهد، لمدة 12 شهراً من تاريخ تعريفنا إياك لأول مرة بوحدة أو بمشترٍ أو ببائع، بألا تتعامل مع الطرف الآخر بشأن تلك الوحدة، مباشرةً أو بصورة غير مباشرة، بطريقة تتجاوزنا أو تتجاوز أتعابنا. وفي حال الإخلال بذلك، تُستحق لنا الأتعاب المقررة في البند 7، دون الإخلال بحقوقنا الأخرى.",
         ],
       },
@@ -347,8 +351,8 @@ export const termsOfUse: LegalContent = {
         id: "verified",
         heading: "معنى علامة «موثّق»",
         paragraphs: [
-          "تعني علامة «موثّق» أن فريقنا راجع مستندات البائع، وهي عادةً اتفاقية البيع والشراء أو أوقود وكشف حساب حديث، ووجدها متوافقة مع الإعلان، وتلقّى إقرار البائع بملكيته للوحدة أو بتفويضه ببيعها.",
-          "التوثيق فحصٌ للمستندات وليس ضماناً؛ فهو لا يعني أننا عاينّا الوحدة أو قيّمناها، أو تحققنا من مراحل الإنشاء أو موعد التسليم، أو استبعدنا كل القيود، أو أن المطوّر سيصدر شهادة عدم الممانعة. ويُعتدّ بسجلات المطوّر والدائرة وقت نقل الملكية.",
+          "تعني علامة «موثّق» أن فريقنا راجع ما قدّمه البائع من اتفاقية البيع والشراء أو أوقود ومن كشف الحساب، وطابقه مع الإعلان ووجده متوافقاً معه. وعند اعتماد الإعلان، لا نمنحه علامة «موثّق» إلا إذا رفع البائع هذه المستندات وراجعها فريقنا على هذا النحو، ويجوز لفريقنا كذلك منح الإعلان هذه العلامة بعد مراجعة مستندات قُدِّمت إليه بغير طريق رفعها على المنصة. ويُنشر الإعلان المعتمد دون هذه المراجعة بلا علامة «موثّق»، ولا تُمنح الإعلانات التوضيحية (البند 4) هذه العلامة بأي حال. ويُقرّ البائع، بتقديمه الإعلان، بملكيته للوحدة أو بتفويضه ببيعها (البند 5).",
+          "التوثيق فحصٌ للمستندات يُجرى وقت مراجعتنا، وليس ضماناً؛ فهو لا يعني أننا عاينّا الوحدة أو قيّمناها، أو تحققنا من مراحل الإنشاء أو موعد التسليم، أو استبعدنا كل القيود، أو أن المطوّر سيصدر شهادة عدم الممانعة. ويُعتدّ بسجلات المطوّر والدائرة وقت نقل الملكية.",
         ],
       },
       {
@@ -371,7 +375,7 @@ export const termsOfUse: LegalContent = {
         heading: "الملكية الفكرية ومحتواك",
         paragraphs: [
           "المنصة وتصميمها وبرمجياتها ونصوصها وشعاراتها وتجميع الإعلانات فيها مملوكة لنا أو للجهات المرخِّصة لنا. ونمنحك ترخيصاً محدوداً وشخصياً وقابلاً للإلغاء وغير قابل للتحويل لاستخدامها للغرض المخصصة له، ولا يجوز لك نسخها أو إعادة إنتاجها إلا في الحدود التي يجيزها القانون.",
-          "تحتفظ بملكية ما ترفعه، وتمنحنا ترخيصاً غير حصري ودون مقابل لتخزينه ونسخه وتكييفه وعرضه لتشغيل المنصة وتسويق إعلانك وإتمام معاملتك، ولمشاركته وفق سياسة الخصوصية. وبعض صور التسويق مقدَّمة من أطراف أخرى بموجب تراخيصها الخاصة.",
+          "تحتفظ بملكية ما ترفعه، وتمنحنا ترخيصاً غير حصري ودون مقابل لتخزينه ونسخه وتكييفه وعرضه لتشغيل المنصة وتسويق إعلانك وإتمام معاملتك، ولمشاركته وفق سياسة الخصوصية. وبعض الصور المعروضة على المنصة، ومنها صور الإعلانات التوضيحية، مقدَّمة من أطراف أخرى بموجب تراخيصها الخاصة.",
         ],
       },
       {
@@ -420,7 +424,7 @@ export const termsOfUse: LegalContent = {
         id: "communications",
         heading: "الإشعارات والمراسلات",
         paragraphs: [
-          `نتواصل معك عبر البريد الإلكتروني وإشعارات لوحة التحكم، وعبر الهاتف أو الرسائل بشأن إعلاناتك وعروضك ومعاملاتك. وتستمر هذه الرسائل الخدمية ما دام حسابك قائماً، ويمكنك إيقاف تنبيهات عمليات البحث المحفوظة من لوحة التحكم. ويمكنك توجيه الإشعارات إلينا على ${OP.emailAr}، ونراسلك عادةً باللغة التي استخدمتها آخر مرة على المنصة.`,
+          `نتواصل معك عبر البريد الإلكتروني وإشعارات لوحة التحكم، وعبر الهاتف أو الرسائل بشأن إعلاناتك وعروضك ومعاملاتك. وتستمر هذه الرسائل الخدمية ما دام حسابك قائماً. ويمكنك إيقاف التنبيهات لكل عملية بحث محفوظة على حدة من لوحة التحكم، وإيقاف رسائل انخفاض السعر لصفقة ما بإزالتها من قائمة المتابعة. ويمكنك توجيه الإشعارات إلينا على ${OP.emailAr}، ونراسلك عادةً باللغة التي استخدمتها آخر مرة على المنصة.`,
         ],
       },
       {
