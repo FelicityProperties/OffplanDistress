@@ -67,25 +67,30 @@ export async function SiteHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-md">
-      <div className="container-page flex h-16 items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/75 backdrop-blur-xl backdrop-saturate-150">
+      <div className="container-page flex h-[4.25rem] items-center justify-between gap-4">
         <Link href="/" aria-label={BRAND.name}>
           <Logo />
         </Link>
-        <NavLinks items={nav} className="hidden items-center gap-1 lg:flex" />
+        <NavLinks
+          items={nav}
+          className="hidden items-center gap-0.5 rounded-full border border-border/70 bg-card/70 p-1 shadow-sm lg:flex"
+          linkClassName="rounded-full px-4 py-1.5"
+          activeClassName="bg-ink text-primary-foreground hover:bg-ink hover:text-primary-foreground"
+        />
         <div className="hidden items-center gap-2 lg:flex">
           <LocaleSwitcher />
           {user ? (
             <>
               {user.role === "admin" && (
-                <Button asChild variant="ghost">
+                <Button asChild variant="ghost" className="rounded-full">
                   <Link href="/admin">
                     <ShieldCheck /> {t("admin")}
                   </Link>
                 </Button>
               )}
               {bell && <NotificationBell unread={bell.unread} items={bell.items} />}
-              <Button asChild>
+              <Button asChild className="rounded-full">
                 <Link href="/dashboard">
                   <LayoutDashboard /> {firstName ? t("accountOf", { name: firstName }) : t("myAccount")}
                 </Link>
@@ -98,10 +103,10 @@ export async function SiteHeader() {
             </>
           ) : (
             <>
-              <Button asChild variant="ghost">
+              <Button asChild variant="ghost" className="rounded-full">
                 <Link href="/login">{t("logIn")}</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="rounded-full px-5">
                 <Link href="/signup">{t("getStarted")}</Link>
               </Button>
             </>

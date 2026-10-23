@@ -8,10 +8,12 @@ export function NavLinks({
   items,
   className,
   linkClassName,
+  activeClassName = "bg-accent text-foreground",
 }: {
   items: { href: string; label: string }[];
   className?: string;
   linkClassName?: string;
+  activeClassName?: string;
 }) {
   const pathname = usePathname();
   return (
@@ -22,10 +24,11 @@ export function NavLinks({
           <Link
             key={n.href}
             href={n.href}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-              active && "bg-accent text-foreground",
               linkClassName,
+              active && activeClassName,
             )}
           >
             {n.label}

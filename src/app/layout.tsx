@@ -36,7 +36,8 @@ export async function generateMetadata(): Promise<Metadata> {
     description: ar
       ? "اشترِ وحدات دبي على الخارطة بأقل من سعر الإطلاق. يعرض الملاك الذين يرغبون في الخروج وحداتهم، ونتحقق نحن من المستندات ونطابق المشترين ونتولى شهادة عدم الممانعة ونقل الملكية."
       : BRAND.description,
-    openGraph: { siteName: BRAND.name, type: "website", images: ["/logo.svg"], locale: ar ? "ar_AE" : "en_AE" },
+    openGraph: { siteName: BRAND.name, type: "website", locale: ar ? "ar_AE" : "en_AE" },
+    twitter: { card: "summary_large_image" },
   };
 }
 
