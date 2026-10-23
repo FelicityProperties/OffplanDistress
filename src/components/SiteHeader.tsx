@@ -75,7 +75,7 @@ export async function SiteHeader() {
         <NavLinks
           items={nav}
           className="hidden items-center gap-0.5 rounded-full border border-border/70 bg-card/70 p-1 shadow-sm lg:flex"
-          linkClassName="rounded-full px-4 py-1.5"
+          linkClassName="whitespace-nowrap rounded-full px-3 py-1.5 xl:px-4"
           activeClassName="bg-ink text-primary-foreground hover:bg-ink hover:text-primary-foreground"
         />
         <div className="hidden items-center gap-2 lg:flex">
@@ -83,16 +83,18 @@ export async function SiteHeader() {
           {user ? (
             <>
               {user.role === "admin" && (
-                <Button asChild variant="ghost" className="rounded-full">
-                  <Link href="/admin">
-                    <ShieldCheck /> {t("admin")}
+                <Button asChild variant="ghost" className="rounded-full max-xl:px-2.5">
+                  {/* icon-only below xl so the bar fits on one line at 1024–1279px */}
+                  <Link href="/admin" aria-label={t("admin")} title={t("admin")}>
+                    <ShieldCheck /> <span className="hidden xl:inline">{t("admin")}</span>
                   </Link>
                 </Button>
               )}
               {bell && <NotificationBell unread={bell.unread} items={bell.items} />}
-              <Button asChild className="rounded-full">
-                <Link href="/dashboard">
-                  <LayoutDashboard /> {firstName ? t("accountOf", { name: firstName }) : t("myAccount")}
+              <Button asChild className="rounded-full max-xl:px-3">
+                <Link href="/dashboard" aria-label={t("myAccount")}>
+                  <LayoutDashboard />
+                  <span className="hidden xl:inline">{firstName ? t("accountOf", { name: firstName }) : t("myAccount")}</span>
                 </Link>
               </Button>
               <form action={logout}>

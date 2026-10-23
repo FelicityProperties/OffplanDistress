@@ -154,7 +154,7 @@ async function seedSamples(pool) {
            handover_date, next_instalment_date, next_instalment_amount, payment_plan, motivation,
            description, images, is_sample, views, published_at, created_at
          ) values (
-           $1, 'live', true, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+           $1, 'live', false, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
            $14, $15, $16, $17, $18, $19, $20, true, $21, now() - ($22 || ' days')::interval, now() - ($22 || ' days')::interval
          )`,
         [

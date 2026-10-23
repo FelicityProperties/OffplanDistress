@@ -3,6 +3,7 @@ import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { getT } from "@/i18n/server";
 import { BRAND } from "@/lib/config";
+import { cn } from "@/lib/utils";
 
 export async function SiteFooter() {
   const t = await getT("common");
@@ -75,7 +76,7 @@ export async function SiteFooter() {
         </div>
         {columns.map((col) => (
           <div key={col.title}>
-            <h4 className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground/50">{col.title}</h4>
+            <h2 className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground/60">{col.title}</h2>
             <ul className="mt-4 space-y-2.5 text-sm text-primary-foreground/80">
               {col.links.map((l) => (
                 <li key={l.href}>
@@ -89,7 +90,12 @@ export async function SiteFooter() {
         ))}
       </div>
       <div className="border-t border-primary-foreground/10">
-        <div className="container-page flex flex-col gap-3 py-6 text-xs text-primary-foreground/50 lg:flex-row lg:items-center lg:justify-between">
+        <div
+          className={cn(
+            "container-page flex flex-col gap-3 py-6 text-xs text-primary-foreground/60 lg:flex-row lg:items-center lg:justify-between",
+            BRAND.whatsapp && "pb-24 sm:pb-6", // clear of the floating WhatsApp button
+          )}
+        >
           <p>
             © {new Date().getFullYear()} {BRAND.company}
             {legal}

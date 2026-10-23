@@ -11,7 +11,7 @@ export const BRAND = {
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "mouhannad@felicitypro.com",
   phone: process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "",
   /** Digits only, e.g. 9715XXXXXXXX */
-  whatsapp: process.env.NEXT_PUBLIC_WHATSAPP ?? "",
+  whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP ?? "").replace(/\D/g, ""),
   /** RERA office registration number */
   orn: process.env.NEXT_PUBLIC_RERA_ORN ?? "",
   /** Commercial (trade) licence number; the legal pages mention it only when filled in. */

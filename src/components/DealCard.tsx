@@ -40,10 +40,12 @@ export async function DealCard({
     <article
       className={cn(
         "group relative flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-card card-lift",
+        // The title link stretches over the card, so its focus ring is drawn on the card (overflow would clip it).
+        "has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-ring has-[a:focus-visible]:ring-offset-2 has-[a:focus-visible]:ring-offset-background",
         list && "sm:flex-row",
       )}
     >
-      <Link href={href} className={cn("block", list && "sm:w-72 sm:shrink-0")} tabIndex={-1} aria-hidden>
+      <div className={cn(list && "sm:w-72 sm:shrink-0")}>
         <div className={cn("relative aspect-[4/3] overflow-hidden bg-muted", list && "sm:aspect-auto sm:h-full")}>
           <DealImage
             src={deal.images[0]}
@@ -69,18 +71,18 @@ export async function DealCard({
             )}
           </div>
         </div>
-      </Link>
+      </div>
       <WatchButton
         listingId={deal.id}
         watching={watching}
         // In list view the photo is an 18rem start column: keep the heart on its top-end corner, not over the text.
-        className={cn("absolute end-3 top-3", list && "sm:end-auto sm:start-[15.25rem]")}
+        className={cn("absolute end-3 top-3 z-10", list && "sm:end-auto sm:start-[15.25rem]")}
       />
-      <Link href={href} className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="font-semibold uppercase tracking-[0.14em]">{developer}</span>
           <div className="flex items-center gap-1.5">
-            {deal.verified && (
+            {deal.verified && !deal.isSample && (
               <span className="inline-flex items-center gap-1 font-medium text-success">
                 <BadgeCheck className="h-3.5 w-3.5" />
                 {tc("verified")}
@@ -89,7 +91,12 @@ export async function DealCard({
             <MotivationBadge m={deal.motivation} />
           </div>
         </div>
-        <h3 className="mt-2 line-clamp-1 text-lg font-semibold leading-snug">{deal.projectName}</h3>
+        <h3 className="mt-2 line-clamp-1 text-lg font-semibold leading-snug">
+          {/* One link per card, stretched over it: screen readers hear every chip above as plain text. */}
+          <Link href={href} className="after:absolute after:inset-0 focus-visible:outline-none">
+            {deal.projectName}
+          </Link>
+        </h3>
         <p className="text-sm text-muted-foreground">{community}</p>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
@@ -121,7 +128,7 @@ export async function DealCard({
             {tc("saveVsNew", { amount: formatAEDCompact(saving, locale) })}
           </p>
         )}
-      </Link>
+      </div>
     </article>
   );
 }

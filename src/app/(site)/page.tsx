@@ -51,7 +51,7 @@ async function HeroDeal({ deal, locale }: { deal: ListingCard; locale: Locale })
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent" />
         <div className="absolute start-3 top-3 flex gap-1.5">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-ink/70 px-2.5 py-1 text-[11px] font-semibold text-primary-foreground backdrop-blur">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" aria-hidden />
+            <span className="h-1.5 w-1.5 motion-safe:animate-pulse rounded-full bg-success" aria-hidden />
             {t("preview.eyebrow")}
           </span>
           {pct != null && (
@@ -171,7 +171,7 @@ export default async function Home() {
             <div key={label} className="bg-card px-5 py-5 sm:px-6">
               <p className="text-xl font-semibold tabular sm:text-3xl">{value}</p>
               <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" aria-hidden />
+                <span className="h-1.5 w-1.5 motion-safe:animate-pulse rounded-full bg-success" aria-hidden />
                 {label}
               </p>
             </div>

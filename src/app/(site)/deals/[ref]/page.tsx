@@ -184,7 +184,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   {tc("vsLaunch", { pct: discountPct })}
                 </span>
               )}
-              {l.verified && (
+              {l.verified && !l.isSample && (
                 <span className="glass-dark inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium text-primary-foreground">
                   <BadgeCheck className="h-4 w-4 text-success" aria-hidden />
                   {tc("verified")}
@@ -237,7 +237,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
               ) : null}
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              {l.verified && (
+              {l.verified && !l.isSample && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-semibold text-success">
                   <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
                   {t("badge.verified")}

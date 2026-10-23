@@ -83,7 +83,7 @@
   --gold: oklch(0.78 0.12 78);
   --gold-foreground: oklch(0.22 0.05 262);
   --gold-soft: oklch(0.95 0.04 82);
-  --success: oklch(0.6 0.15 160);
+  --success: oklch(0.5 0.14 160); /* ≥ 4.5:1 for small text on card, cream and success-soft */
   --success-foreground: oklch(0.99 0 0);
   --success-soft: oklch(0.95 0.045 160);
   --warning: oklch(0.65 0.17 45);
@@ -166,6 +166,16 @@ html[dir="rtl"] * {
   * {
     border-color: var(--color-border);
   }
+  html {
+    /* keep focused / anchored elements clear of the sticky header */
+    scroll-padding-top: 5.5rem;
+  }
+  @media (min-width: 1024px) {
+    /* /deals: the search toolbar sticks under the header too */
+    html:has([data-sticky-toolbar]) {
+      scroll-padding-top: 10rem;
+    }
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -202,14 +212,12 @@ html[dir="rtl"] * {
   border: 1px solid oklch(1 0 0 / 0.65);
   box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.7), var(--shadow-card-v);
   backdrop-filter: blur(18px) saturate(1.4);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
 }
 @utility glass-dark {
   background-color: oklch(0.2 0.05 262 / 0.55);
   border: 1px solid oklch(1 0 0 / 0.12);
   box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.1), 0 24px 48px -24px oklch(0 0 0 / 0.6);
   backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
 }
 /* Backgrounds: fine grid / dot textures and a gold glow (place in an absolutely positioned, aria-hidden div). */
 @utility bg-grid-light {

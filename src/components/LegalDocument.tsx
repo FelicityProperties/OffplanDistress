@@ -77,7 +77,7 @@ function TocLinks({ sections, className }: { sections: LegalContent["en"]["secti
             href={`#${s.id}`}
             className="flex gap-3 rounded-lg px-2.5 py-1.5 leading-snug text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="shrink-0 pt-px text-xs font-semibold tabular text-gold">{pad(i + 1)}</span>
+            <span className="shrink-0 pt-px text-xs font-semibold tabular text-gold-foreground/70">{pad(i + 1)}</span>
             <span>{s.heading}</span>
           </a>
         </li>
@@ -175,7 +175,7 @@ export async function LegalDocument({ doc, current }: { doc: LegalContent; curre
             {d.sections.map((s, i) => (
               <section key={s.id} aria-labelledby={s.id} className="border-b border-border/70 py-9 last:border-b-0">
                 <h2 id={s.id} className="flex scroll-mt-24 items-baseline gap-3 text-2xl font-semibold leading-snug">
-                  <span className="font-sans text-sm font-semibold tabular text-gold">{pad(i + 1)}</span>
+                  <span className="font-sans text-sm font-semibold tabular text-gold-foreground/70">{pad(i + 1)}</span>
                   <span>{s.heading}</span>
                 </h2>
                 {s.paragraphs?.map((p, j) => (
@@ -207,7 +207,7 @@ export async function LegalDocument({ doc, current }: { doc: LegalContent; curre
               <Button asChild variant="gold" className="mt-5 max-w-full">
                 <a href={`mailto:${BRAND.email}`} aria-label={t("closing.email", { email: BRAND.email })}>
                   <Mail aria-hidden />
-                  <span dir="ltr" className="truncate">
+                  <span dir="ltr" className="min-w-0 break-all">
                     {BRAND.email}
                   </span>
                 </a>

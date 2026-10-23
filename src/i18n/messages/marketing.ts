@@ -107,9 +107,9 @@ export default defineMessages({
     "how.bento.oqood.title": "Oqood in the buyer's name",
     "how.bento.oqood.desc":
       "DLD updates the Oqood to the buyer, who then takes over the remaining payment plan with the developer.",
-    "how.bento.private.title": "Anonymity until the NOC",
+    "how.bento.private.title": "Anonymity until the MOU",
     "how.bento.private.desc":
-      "Listings never show the seller's name or contact details, and buyers stay anonymous until the NOC stage. Our team brokers every negotiation.",
+      "Listings never show the seller's name or contact details, and buyers stay anonymous until the MOU (RERA Form F) is prepared. Our team brokers every negotiation.",
 
     "sell.eyebrow": "List your unit",
 
@@ -249,9 +249,9 @@ export default defineMessages({
     "how.bento.oqood.title": "شهادة أوقود باسم المشتري",
     "how.bento.oqood.desc":
       "تُحدِّث دائرة الأراضي والأملاك شهادة أوقود باسم المشتري، الذي يتولى بعد ذلك المتبقي من خطة الدفع مع المطوّر.",
-    "how.bento.private.title": "سرية الهوية حتى مرحلة شهادة عدم الممانعة",
+    "how.bento.private.title": "سرية الهوية حتى إعداد مذكرة التفاهم",
     "how.bento.private.desc":
-      "لا تعرض الإعلانات اسم البائع ولا بيانات التواصل معه، ويبقى المشترون مجهولي الهوية حتى مرحلة شهادة عدم الممانعة، ويتولى فريقنا إدارة كل مفاوضة.",
+      "لا تعرض الإعلانات اسم البائع ولا بيانات التواصل معه، ويبقى المشترون مجهولي الهوية حتى إعداد مذكرة التفاهم (نموذج ريرا F)، ويتولى فريقنا إدارة كل مفاوضة.",
 
     "sell.eyebrow": "اعرض وحدتك",
 

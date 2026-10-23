@@ -67,7 +67,9 @@ function activeChips(raw: RawParams, f: DealFilters, t: TFn<"deals">, tc: TFn<"c
   };
   const without = (name: string, value?: string) =>
     href((p) => {
-      const rest = value == null ? [] : p.getAll(name).filter((v) => v !== value);
+      // values may arrive comma-joined (community=A,B), as parseFilters accepts both forms
+      const rest =
+        value == null ? [] : p.getAll(name).flatMap((v) => v.split(",")).map((v) => v.trim()).filter((v) => v && v !== value);
       p.delete(name);
       for (const v of rest) p.append(name, v);
     });

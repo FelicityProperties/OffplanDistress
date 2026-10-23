@@ -117,7 +117,7 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
                     ) : null}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {t(`buyer.${o.financing}`)} · {t(o.buyerKyc === "verified" ? "kyc.verifiedTag" : "kyc.pendingTag")} ·{" "}
+                    {t(`buyer.${o.financing}`)} · {t(o.buyerKyc === "verified" ? "kyc.verifiedTag" : o.buyerKyc === "pending" ? "kyc.pendingTag" : "kyc.notStartedTag")} ·{" "}
                     {timeAgo(o.updatedAt, locale)}
                   </p>
                   {o.message && (

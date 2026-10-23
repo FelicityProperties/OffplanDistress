@@ -30,7 +30,8 @@ function normalize(raw) {
     return null;
   }
   const host = url.hostname;
-  if (!host || !(LOCAL.test(host) || /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(host))) return null;
+  // a real host name (Docker-style single labels and bracketed IPv6 included), not "," or "…"
+  if (!host || !(LOCAL.test(host) || /^[a-z0-9_-]+(\.[a-z0-9_-]+)*$/i.test(host) || /^\[[0-9a-f:.]+\]$/i.test(host))) return null;
   if (url.pathname.length < 2) return null; // no database name
   if (!url.username && url.searchParams.has("user")) {
     url.username = encodeURIComponent(url.searchParams.get("user"));

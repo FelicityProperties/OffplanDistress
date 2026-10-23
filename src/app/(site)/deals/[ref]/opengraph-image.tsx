@@ -1,9 +1,8 @@
-import { ImageResponse } from "next/og";
 import { BRAND, PUBLIC_STATUSES, UNIT_TYPES } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, parseRefCode, refCode } from "@/lib/format";
 import { getListingByRef } from "@/lib/listings";
-import { OG, OG_SIZE, OgWordmark, photoDataUrl } from "@/lib/og";
+import { hasArabic, OG, OG_SIZE, OgWordmark, photoDataUrl, renderOg } from "@/lib/og";
 
 export const alt = `Distressed off-plan deal on ${BRAND.name}`;
 export const size = OG_SIZE;
@@ -22,8 +21,10 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
   const saving = a.savingVsLaunch != null && a.savingVsLaunch > 0 ? a.savingVsLaunch : null;
   const photo = await photoDataUrl(l.images[0]);
   const unit = UNIT_TYPES[l.unitType as keyof typeof UNIT_TYPES] ?? l.unitType;
+  // Developer and community names are always Latin; an Arabic project name is described instead.
+  const name = hasArabic(l.projectName) ? `${unit} in ${l.community}` : l.projectName;
 
-  return new ImageResponse(
+  return renderOg(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", background: OG.ink, color: OG.cream }}>
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: 640, padding: 56 }}>
@@ -43,7 +44,7 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
             </div>
             <div style={{ display: "flex", fontSize: 22, letterSpacing: 3, color: OG.muted, textTransform: "uppercase" }}>{l.developer}</div>
             <div style={{ display: "flex", marginTop: 6, fontSize: 52, fontWeight: 700, lineHeight: 1.08, letterSpacing: -1 }}>
-              {l.projectName.length > 42 ? `${l.projectName.slice(0, 40)}…` : l.projectName}
+              {name.length > 42 ? `${name.slice(0, 40)}…` : name}
             </div>
             <div style={{ display: "flex", marginTop: 10, fontSize: 26, color: OG.muted }}>
               {l.community} · {unit} · Handover {formatQuarter(l.handoverDate)}
@@ -75,17 +76,19 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
         </div>
       </div>
     ),
-    size,
+    fallbackCard,
+    3600, // prices change; messaging apps cache previews themselves anyway
+  );
+}
+
+function fallbackCard() {
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: OG.ink }}>
+      <OgWordmark size={56} />
+    </div>
   );
 }
 
 function fallback() {
-  return new ImageResponse(
-    (
-      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: OG.ink }}>
-        <OgWordmark size={56} />
-      </div>
-    ),
-    size,
-  );
+  return renderOg(fallbackCard(), fallbackCard, 600);
 }

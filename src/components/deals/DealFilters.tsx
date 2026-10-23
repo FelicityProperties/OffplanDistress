@@ -288,7 +288,10 @@ export function DealsToolbar({ activeCount = 0 }: { activeCount?: number }) {
   }, [q]);
 
   return (
-    <div className="z-30 mt-6 flex flex-col gap-2 rounded-2xl border border-border/60 bg-card/85 p-2 shadow-card backdrop-blur-xl backdrop-saturate-150 sm:flex-row sm:items-center lg:sticky lg:top-20">
+    <div
+      data-sticky-toolbar
+      className="z-30 mt-6 flex flex-col gap-2 rounded-2xl border border-border/60 bg-card/85 p-2 shadow-card backdrop-blur-xl backdrop-saturate-150 sm:flex-row sm:items-center lg:sticky lg:top-20"
+    >
       <div className="relative flex-1">
         {pending ? (
           <Loader2 className="absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gold" aria-hidden />

@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
-import { Building2, KeyRound, Repeat } from "lucide-react";
+import { Building2, ExternalLink, KeyRound, Repeat } from "lucide-react";
 import { login, signup } from "@/app/actions/auth";
 import { Field, FormMessage, SubmitButton } from "@/components/forms";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,7 @@ const roles = [
 
 export function SignupForm({ next, intent }: { next?: string; intent?: string }) {
   const t = useT("auth");
+  const tl = useT("legal");
   const [state, action] = useActionState(signup, {});
   const [role, setRole] = useState<string>(roles.some((r) => r.v === intent) ? intent! : "buy");
   // Checked in the browser first so a forgotten tick doesn't cost a round trip (and the typed-in fields);
@@ -127,14 +128,19 @@ export function SignupForm({ next, intent }: { next?: string; intent?: string })
           />
           <span>
             {richText(t("signup.acceptTerms"), {
+              // New tab, so reading them doesn't wipe the form being filled in.
               terms: (
-                <Link href="/terms" className={legalLink}>
+                <Link href="/terms" target="_blank" rel="noopener noreferrer" className={legalLink}>
                   {t("signup.acceptTerms.terms")}
+                  <ExternalLink className="ms-0.5 inline size-3 align-baseline rtl:-scale-x-100" aria-hidden />
+                  <span className="sr-only">{tl("newTab")}</span>
                 </Link>
               ),
               privacy: (
-                <Link href="/privacy" className={legalLink}>
+                <Link href="/privacy" target="_blank" rel="noopener noreferrer" className={legalLink}>
                   {t("signup.acceptTerms.privacy")}
+                  <ExternalLink className="ms-0.5 inline size-3 align-baseline rtl:-scale-x-100" aria-hidden />
+                  <span className="sr-only">{tl("newTab")}</span>
                 </Link>
               ),
             })}
