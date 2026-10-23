@@ -2,10 +2,10 @@
 
 import { randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { inquiries, listings, offers, sessions, users } from "@/db/schema";
+import { files, inquiries, listings, offers, sessions, users } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
@@ -62,17 +62,34 @@ const listingNoticeColumns = {
   refNo: listings.refNo,
   isSample: listings.isSample,
   status: listings.status,
+  verified: listings.verified,
   askingPrice: listings.askingPrice,
   publishedAt: listings.publishedAt,
 };
+
+/**
+ * "Verified" (Terms s.9) means we reviewed the SPA or Oqood plus the statement of account, so approving only sets
+ * it when both are on file. Staff who checked documents received another way tick it in the listing editor.
+ */
+async function hasVerificationDocs(listingId: string) {
+  const [row] = await db
+    .select({
+      title: sql<boolean>`coalesce(bool_or(${files.kind} in ('spa', 'oqood')), false)`,
+      soa: sql<boolean>`coalesce(bool_or(${files.kind} = 'soa'), false)`,
+    })
+    .from(files)
+    .where(eq(files.listingId, listingId));
+  return Boolean(row?.title && row?.soa);
+}
 
 export async function approveListing(listingId: string) {
   await assertAdmin();
   const [before] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, listingId)).limit(1);
   const now = new Date();
+  const verified = before?.verified || (await hasVerificationDocs(listingId));
   await db
     .update(listings)
-    .set({ status: "live", verified: true, publishedAt: before?.publishedAt ?? now, rejectionReason: null, updatedAt: now })
+    .set({ status: "live", verified, publishedAt: before?.publishedAt ?? now, rejectionReason: null, updatedAt: now })
     .where(eq(listings.id, listingId));
   if (before && before.status !== "live") {
     await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });

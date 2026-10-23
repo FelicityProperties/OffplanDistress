@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { createInquiry } from "@/app/actions/market";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { richText } from "@/content/legal/rich-text";
 import { useT } from "@/i18n/client";
 
 type Defaults = { name?: string; email?: string; phone?: string | null };
@@ -30,6 +32,7 @@ export function InquiryFields({
 }) {
   const t = useT("marketing");
   const tc = useT("common");
+  const tl = useT("legal");
   const [state, action] = useActionState(createInquiry, {});
   const done = useRef(onDone);
   done.current = onDone;
@@ -86,17 +89,40 @@ export function InquiryFields({
       <SubmitButton className="w-full" pendingText={tc("sending")}>
         {submitLabel ?? t("inquiry.submit")}
       </SubmitButton>
+      {/* Privacy notice for the contact / viewing-request form. */}
+      <p className="text-center text-xs leading-relaxed text-muted-foreground">
+        {richText(tl("inquiry.privacy"), {
+          privacy: (
+            <Link
+              href="/privacy"
+              className="font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {tl("nav.privacy")}
+            </Link>
+          ),
+        })}
+      </p>
     </form>
   );
 }
 
-export function InquiryDialog({ listingId, project, defaults }: { listingId: string; project: string; defaults?: Defaults }) {
+export function InquiryDialog({
+  listingId,
+  project,
+  defaults,
+  triggerClassName,
+}: {
+  listingId: string;
+  project: string;
+  defaults?: Defaults;
+  triggerClassName?: string;
+}) {
   const t = useT("marketing");
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" variant="ghost">
+        <Button size="lg" variant="ghost" className={triggerClassName}>
           <MessageSquare /> {t("inquiry.dialogTrigger")}
         </Button>
       </DialogTrigger>

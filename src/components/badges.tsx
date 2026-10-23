@@ -42,12 +42,35 @@ export function StatusPill({ children, tone = "muted" }: { children: React.React
   );
 }
 
-export function SectionHeading({ eyebrow, title, sub, center }: { eyebrow?: string; title: string; sub?: string; center?: boolean }) {
+export function SectionHeading({
+  eyebrow,
+  title,
+  sub,
+  center,
+  tone = "light",
+}: {
+  eyebrow?: string;
+  title: string;
+  sub?: string;
+  center?: boolean;
+  tone?: "light" | "dark";
+}) {
+  const dark = tone === "dark";
   return (
     <div className={cn("max-w-2xl", center && "mx-auto text-center")}>
-      {eyebrow && <p className="text-sm font-semibold uppercase tracking-widest text-gold">{eyebrow}</p>}
-      <h2 className="mt-2 text-3xl font-semibold sm:text-4xl">{title}</h2>
-      {sub && <p className="mt-3 text-muted-foreground">{sub}</p>}
+      {eyebrow && (
+        <p
+          className={cn(
+            "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+            dark ? "border-primary-foreground/15 bg-primary-foreground/5 text-gold" : "border-gold/30 bg-gold-soft/60 text-gold-foreground",
+          )}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-gold" aria-hidden />
+          {eyebrow}
+        </p>
+      )}
+      <h2 className={cn("mt-4 text-3xl font-semibold leading-tight sm:text-[2.6rem]", dark && "text-primary-foreground")}>{title}</h2>
+      {sub && <p className={cn("mt-3 text-base leading-relaxed", dark ? "text-primary-foreground/70" : "text-muted-foreground")}>{sub}</p>}
     </div>
   );
 }

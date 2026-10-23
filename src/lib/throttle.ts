@@ -23,8 +23,15 @@ export async function hit(key: string, limit: number, windowMs: number): Promise
     .select({ n: sql<number>`count(*)::int` })
     .from(authAttempts)
     .where(and(eq(authAttempts.key, key), gt(authAttempts.createdAt, since)));
-  after(() => db.delete(authAttempts).where(lt(authAttempts.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000))));
+  after(purgeOldAttempts);
   return n <= limit;
+}
+
+const DAY = 24 * 60 * 60 * 1000;
+
+/** Delete attempt records older than a day (also run from the daily cron, in case nobody logs in for a while). */
+export async function purgeOldAttempts() {
+  await db.delete(authAttempts).where(lt(authAttempts.createdAt, new Date(Date.now() - DAY)));
 }
 
 /** Forget attempts for `key`, e.g. after a successful login. */

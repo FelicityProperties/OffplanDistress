@@ -43,9 +43,11 @@ export default async function DashboardOverview() {
 
       {fresh ? (
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border bg-card p-6 shadow-card">
-            <Search className="h-6 w-6 text-gold" />
-            <h2 className="mt-3 font-sans text-lg font-semibold">{t("overview.buyTitle")}</h2>
+          <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-card card-lift">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-gold-soft text-gold-foreground">
+              <Search className="h-5 w-5" />
+            </span>
+            <h2 className="mt-4 font-sans text-lg font-semibold">{t("overview.buyTitle")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{t("overview.buyBody")}</p>
             <Button asChild className="mt-4">
               <Link href="/deals">
@@ -53,9 +55,11 @@ export default async function DashboardOverview() {
               </Link>
             </Button>
           </div>
-          <div className="rounded-xl border bg-card p-6 shadow-card">
-            <Building2 className="h-6 w-6 text-gold" />
-            <h2 className="mt-3 font-sans text-lg font-semibold">{t("overview.sellTitle")}</h2>
+          <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-card card-lift">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-ink-gradient text-primary-foreground">
+              <Building2 className="h-5 w-5" />
+            </span>
+            <h2 className="mt-4 font-sans text-lg font-semibold">{t("overview.sellTitle")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{t("overview.sellBody")}</p>
             <Button asChild variant="outline" className="mt-4">
               <Link href="/sell">

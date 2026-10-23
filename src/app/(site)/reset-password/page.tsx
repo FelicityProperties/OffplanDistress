@@ -51,8 +51,8 @@ export default async function ResetPasswordPage({
         <Button asChild className="w-full" size="lg">
           <Link href="/forgot-password">{t("reset.requestNew")}</Link>
         </Button>
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
+        <p className="mt-8 border-t border-border/70 pt-6 text-center text-sm text-muted-foreground">
+          <Link href="/login" className="rounded-sm font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             {t("backToLogin")}
           </Link>
         </p>

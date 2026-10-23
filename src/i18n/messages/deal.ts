@@ -75,6 +75,8 @@ export default defineMessages({
     "offer.submit": "Submit offer",
     "offer.sent": "Offer sent",
     "offer.sentDescription": "We'll present it to the seller and update you in your dashboard.",
+    "offer.legal": "By sending an offer you agree to our {terms}. Offers aren't binding until Form F / MOU is signed.",
+    "offer.legal.terms": "Terms of Use",
   },
   ar: {
     "meta.unavailable": "الصفقة غير متاحة",
@@ -149,5 +151,7 @@ export default defineMessages({
     "offer.submit": "إرسال العرض",
     "offer.sent": "تم إرسال العرض",
     "offer.sentDescription": "سنعرضه على البائع ونطلعك على المستجدات في لوحة التحكم.",
+    "offer.legal": "بإرسالك العرض، فإنك توافق على {terms}. ولا تكون العروض ملزمة إلا بعد توقيع النموذج (F) / مذكرة التفاهم.",
+    "offer.legal.terms": "شروط الاستخدام",
   },
 });

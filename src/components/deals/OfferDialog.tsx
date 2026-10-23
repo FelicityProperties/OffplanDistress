@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { makeOffer } from "@/app/actions/market";
 import { Field, FormMessage, SubmitButton } from "@/components/forms";
@@ -19,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { richText } from "@/content/legal/rich-text";
 import { useLocale, useT } from "@/i18n/client";
 import { formatAED } from "@/lib/format";
 
@@ -39,6 +41,7 @@ export function OfferDialog({
 }) {
   const t = useT("deal");
   const tc = useT("common");
+  const tl = useT("legal");
   const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [state, action] = useActionState(makeOffer, {});
@@ -114,6 +117,23 @@ export function OfferDialog({
               {t("offer.submit")}
             </SubmitButton>
           </DialogFooter>
+          <p className="text-center text-xs leading-relaxed text-muted-foreground">
+            {richText(t("offer.legal"), {
+              // New tab, so reading the terms doesn't lose the offer being typed.
+              terms: (
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-0.5 font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {t("offer.legal.terms")}
+                  <ExternalLink className="size-3 rtl:-scale-x-100" aria-hidden />
+                  <span className="sr-only">{tl("newTab")}</span>
+                </Link>
+              ),
+            })}
+          </p>
         </form>
       </DialogContent>
     </Dialog>

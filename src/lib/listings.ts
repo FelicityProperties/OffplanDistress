@@ -105,8 +105,8 @@ export function parseFilters(params: RawParams): DealFilters {
     developer: list(params.developer).filter((d) => DEVELOPERS.includes(d)),
     type: list(params.type).filter((t): t is UnitTypeKey => t in UNIT_TYPES),
     motivation: list(params.motivation).filter((m) => ["urgent", "motivated", "flexible"].includes(m)),
-    minCash: minCash == null ? undefined : Math.ceil(minCash), // price >= 1.5 ⇔ price >= 2
-    maxCash: maxCash == null ? undefined : Math.floor(maxCash),
+    minCash: !minCash ? undefined : Math.ceil(minCash), // price >= 1.5 ⇔ price >= 2
+    maxCash: !maxCash ? undefined : Math.floor(maxCash), // 0 would match nothing: treat as "no limit"
     minPaid: num(params.minPaid, 0, 100),
     handoverBy: handoverBy == null ? undefined : Math.floor(handoverBy),
     minDiscount: num(params.minDiscount, 0, 100),
@@ -142,7 +142,8 @@ function dealConditions(f: DealFilters): SQL[] {
   if (f.minPaid != null) where.push(sql`${paidPct} >= ${f.minPaid / 100}`);
   if (f.handoverBy != null) where.push(lte(listings.handoverDate, `${f.handoverBy}-12-31`));
   if (f.minDiscount != null) where.push(sql`${discount} >= ${f.minDiscount / 100}`);
-  if (f.verified) where.push(eq(listings.verified, true));
+  // sample listings are illustrations: never "verified", whatever the column says
+  if (f.verified) where.push(eq(listings.verified, true), eq(listings.isSample, false));
   return where;
 }
 

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Check, FileUp, Loader2, Plus, Trash2, Wallet } from "lucide-react";
+import { AlertTriangle, Check, ExternalLink, FileUp, Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { createListing } from "@/app/actions/listings";
 import { uploadListingFile } from "@/components/DocumentUploader";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { richText } from "@/content/legal/rich-text";
 import { useDir, useLocale, useT } from "@/i18n/client";
 import type { TKey } from "@/i18n/translator";
 import { COMMUNITIES, DEVELOPERS, FILE_KINDS, MAX_UPLOAD_BYTES, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
@@ -77,6 +78,7 @@ function Field({ label, error, hint, children, className }: { label: string; err
 export function SellForm({ needsPhone }: { needsPhone: boolean }) {
   const t = useT("sell");
   const tc = useT("common");
+  const tl = useT("legal");
   const locale = useLocale();
   const dir = useDir();
   const [step, setStep] = useState(0);
@@ -102,6 +104,8 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
   const [plan, setPlan] = useState<Plan[]>([]);
   const [docs, setDocs] = useState<Partial<Record<keyof typeof FILE_KINDS, File>>>({});
   const [photos, setPhotos] = useState<File[]>([]);
+  /** Final step: "I own this unit or am authorised to sell it… and I agree to the Terms of Use". */
+  const [confirmed, setConfirmed] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [done, setDone] = useState<{ id: string; failed: string[] } | null>(null);
@@ -144,12 +148,13 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
       for (const [k, f] of Object.entries(docs)) if (f && f.size > MAX_UPLOAD_BYTES) e[k] = t("error.fileTooLarge");
       for (const f of photos) if (f.size > MAX_UPLOAD_BYTES) e.photos = t("error.photoTooLarge", { name: f.name });
     }
+    if (i === 4 && !confirmed) e.confirmOwnership = t("error.confirmOwnership");
     setErrors(e);
     return Object.keys(e).length === 0;
   }
 
   async function submit() {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < STEPS.length; i++) {
       if (!validate(i)) {
         setStep(i);
         return;
@@ -162,6 +167,7 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
       if (k === "arrears") continue;
       fd.set(k, numeric.has(k) && v !== "" ? String(Math.round(num(v))) : v);
     }
+    fd.set("confirmOwnership", confirmed ? "on" : "");
     const arrearsNote =
       s.arrears === "one" ? t("arrears.note.one") : s.arrears === "more" ? t("arrears.note.more") : "";
     fd.set("description", [s.description.trim(), arrearsNote].filter(Boolean).join("\n\n"));
@@ -462,7 +468,7 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
                     [t("review.unit"), `${s.projectName || "—"} · ${unitLabel(s.unitType)} · ${s.community ? communityLabel(s.community) : "—"}`],
                     [t("review.developer"), s.developer ? developerLabel(s.developer) : "—"],
                     [t("review.purchasePrice"), aed(num(s.originalPrice))],
-                    [t("review.paid"), `${aed(num(s.amountPaid))} (${formatPct(preview.paidPct)})`],
+                    [t("review.paid"), `${aed(num(s.amountPaid))} (\u2066${formatPct(preview.paidPct)}\u2069)`],
                     [t("review.asking"), aed(num(s.askingPrice))],
                     [
                       t("review.docs"),
@@ -475,6 +481,52 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
                     </div>
                   ))}
                 </dl>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="confirmOwnership"
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-xl border p-4 leading-relaxed transition has-[:checked]:border-primary/40 has-[:checked]:bg-accent/60",
+                      errors.confirmOwnership && "border-destructive/50",
+                    )}
+                  >
+                    <input
+                      id="confirmOwnership"
+                      name="confirmOwnership"
+                      type="checkbox"
+                      checked={confirmed}
+                      onChange={(e) => {
+                        setConfirmed(e.target.checked);
+                        setErrors(({ confirmOwnership: _, ...rest }) => rest);
+                      }}
+                      aria-required="true"
+                      aria-invalid={errors.confirmOwnership ? true : undefined}
+                      aria-describedby={errors.confirmOwnership ? "confirmOwnership-error" : undefined}
+                      className="mt-0.5 size-4 shrink-0 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
+                    <span>
+                      {richText(t("confirm.label"), {
+                        // New tab, so following the link doesn't throw away the form.
+                        terms: (
+                          <Link
+                            href="/terms"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-medium underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          >
+                            {t("confirm.terms")}
+                            <ExternalLink className="size-3.5 rtl:-scale-x-100" aria-hidden />
+                            <span className="sr-only">{tl("newTab")}</span>
+                          </Link>
+                        ),
+                      })}
+                    </span>
+                  </label>
+                  {errors.confirmOwnership && (
+                    <p id="confirmOwnership-error" className="text-xs font-medium text-destructive">
+                      {errors.confirmOwnership}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>

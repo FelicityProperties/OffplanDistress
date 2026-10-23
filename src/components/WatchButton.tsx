@@ -47,8 +47,18 @@ export function WatchButton({
 
   if (variant === "full") {
     return (
-      <Button type="button" variant="outline" onClick={onClick} disabled={pending} className={className}>
-        <Heart className={cn(optimistic && "fill-destructive text-destructive")} />
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onClick}
+        disabled={pending}
+        className={cn(
+          "rounded-xl border-border bg-card shadow-none hover:border-foreground/25 hover:bg-muted/60",
+          optimistic && "border-destructive/30 bg-destructive/5 hover:bg-destructive/10",
+          className,
+        )}
+      >
+        <Heart className={cn("transition-transform", optimistic && "scale-110 fill-destructive text-destructive")} />
         {optimistic ? tc("onWatchlist") : tc("addToWatchlist")}
       </Button>
     );
@@ -62,7 +72,7 @@ export function WatchButton({
       aria-label={label}
       title={label}
       className={cn(
-        "grid h-9 w-9 place-items-center rounded-full bg-card/90 shadow-sm backdrop-blur transition hover:scale-110",
+        "grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-card/90 shadow-sm ring-1 ring-ink/5 backdrop-blur transition hover:scale-110 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70",
         className,
       )}
     >

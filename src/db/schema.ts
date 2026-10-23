@@ -87,6 +87,8 @@ export const users = pgTable(
     intent: userIntent("intent").notNull().default("both"),
     kycStatus: kycStatus("kyc_status").notNull().default("not_started"),
     locale: text("locale").notNull().default("en"),
+    /** When the user ticked "I agree to the Terms of Use and Privacy Policy" at sign-up; null for older accounts. */
+    termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("users_email_idx").on(sql`lower(${t.email})`)],

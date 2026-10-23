@@ -9,6 +9,7 @@ import { COMMUNITIES } from "@/lib/config";
 import { formatAEDCompact } from "@/lib/format";
 import { filtersFromQuery, newDealsSince, type ListingCard } from "@/lib/listings";
 import { notify } from "@/lib/notify";
+import { purgeOldAttempts } from "@/lib/throttle";
 
 // Daily saved-search alerts, run by Vercel Cron (see vercel.json): for every saved search with alerts on,
 // tell its owner about deals that went live since the last run, in their language.
@@ -31,6 +32,9 @@ type SearchRow = {
 
 export async function GET(request: Request) {
   if (!authorised(request)) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Daily housekeeping: rate-limit records are kept for 24 hours (Privacy Policy), even on quiet days.
+  await purgeOldAttempts().catch((err) => console.error("[cron] purging old auth attempts failed", err));
 
   // One cut-off for the whole run: each search covers (lastAlertedAt, runAt], so nothing published
   // while the run is in progress is alerted twice or skipped.

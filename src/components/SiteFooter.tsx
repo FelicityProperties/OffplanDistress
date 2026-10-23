@@ -1,80 +1,106 @@
 import Link from "next/link";
+import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { getT } from "@/i18n/server";
 import { BRAND } from "@/lib/config";
+import { cn } from "@/lib/utils";
 
 export async function SiteFooter() {
   const t = await getT("common");
-  const legal = [BRAND.orn && t("reraOrn", { orn: BRAND.orn }), t("operatedBy", { company: BRAND.company }), t("location")]
-    .filter(Boolean)
-    .join(" · ");
+  const legal = BRAND.orn ? ` · ${t("reraOrn", { orn: BRAND.orn })}` : "";
+  const columns = [
+    {
+      title: t("marketplace"),
+      links: [
+        { href: "/deals", label: t("browseDeals") },
+        { href: "/sell", label: t("sellMyUnit") },
+        { href: "/dashboard", label: t("myAccount") },
+      ],
+    },
+    {
+      title: t("company"),
+      links: [
+        { href: "/how-it-works", label: t("howItWorks") },
+        { href: "/fees", label: t("fees") },
+        { href: "/contact", label: t("contactUs") },
+      ],
+    },
+    {
+      title: t("legal"),
+      links: [
+        { href: "/terms", label: t("terms") },
+        { href: "/privacy", label: t("privacy") },
+        { href: "/cookies", label: t("cookies") },
+      ],
+    },
+  ];
+
   return (
-    <footer className="mt-auto bg-ink text-primary-foreground">
-      <div className="container-page grid gap-10 py-14 md:grid-cols-4">
-        <div className="md:col-span-2">
+    <footer className="relative isolate mt-auto overflow-hidden bg-ink text-primary-foreground">
+      <div aria-hidden className="absolute inset-0 -z-10 bg-dots-dark opacity-30 mask-fade-b" />
+      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
+      <div className="container-page grid gap-12 py-16 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+        <div>
           <Logo tone="light" />
-          <p className="mt-4 max-w-sm text-sm text-primary-foreground/70">{t("footerBlurb")}</p>
-          {(BRAND.email || BRAND.phone) && (
-            <p className="mt-4 text-sm text-primary-foreground/80">
-              {BRAND.email && (
-                <a href={`mailto:${BRAND.email}`} dir="ltr" className="hover:text-gold">
-                  {BRAND.email}
+          <p className="mt-5 max-w-sm text-sm leading-relaxed text-primary-foreground/65">{t("footerBlurb")}</p>
+          <ul className="mt-6 space-y-2.5 text-sm text-primary-foreground/80">
+            {BRAND.email && (
+              <li>
+                <a href={`mailto:${BRAND.email}`} className="inline-flex items-center gap-2.5 transition-colors hover:text-gold">
+                  <Mail className="h-4 w-4 text-gold" />
+                  <span dir="ltr">{BRAND.email}</span>
                 </a>
-              )}
-              {BRAND.email && BRAND.phone && " · "}
-              {BRAND.phone && (
-                <a href={`tel:${BRAND.phone.replace(/\s/g, "")}`} dir="ltr" className="hover:text-gold">
-                  {BRAND.phone}
+              </li>
+            )}
+            {BRAND.phone && (
+              <li>
+                <a href={`tel:${BRAND.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-2.5 transition-colors hover:text-gold">
+                  <Phone className="h-4 w-4 text-gold" />
+                  <span dir="ltr">{BRAND.phone}</span>
                 </a>
-              )}
-            </p>
-          )}
-          <p className="mt-6 text-xs text-primary-foreground/50">{legal}</p>
-        </div>
-        <div>
-          <h4 className="font-sans text-sm font-semibold">{t("marketplace")}</h4>
-          <ul className="mt-3 space-y-2 text-sm text-primary-foreground/70">
-            <li>
-              <Link href="/deals" className="hover:text-gold">
-                {t("browseDeals")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/sell" className="hover:text-gold">
-                {t("sellMyUnit")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/dashboard" className="hover:text-gold">
-                {t("myAccount")}
-              </Link>
+              </li>
+            )}
+            {BRAND.whatsapp && (
+              <li>
+                <a href={`https://wa.me/${BRAND.whatsapp}`} className="inline-flex items-center gap-2.5 transition-colors hover:text-gold">
+                  <MessageCircle className="h-4 w-4 text-gold" />
+                  WhatsApp
+                </a>
+              </li>
+            )}
+            <li className="inline-flex items-center gap-2.5 text-primary-foreground/60">
+              <MapPin className="h-4 w-4 text-gold" />
+              {t("location")}
             </li>
           </ul>
         </div>
-        <div>
-          <h4 className="font-sans text-sm font-semibold">{t("company")}</h4>
-          <ul className="mt-3 space-y-2 text-sm text-primary-foreground/70">
-            <li>
-              <Link href="/how-it-works" className="hover:text-gold">
-                {t("howItWorks")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/fees" className="hover:text-gold">
-                {t("fees")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/contact" className="hover:text-gold">
-                {t("contactUs")}
-              </Link>
-            </li>
-          </ul>
-        </div>
+        {columns.map((col) => (
+          <div key={col.title}>
+            <h2 className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground/60">{col.title}</h2>
+            <ul className="mt-4 space-y-2.5 text-sm text-primary-foreground/80">
+              {col.links.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="transition-colors hover:text-gold">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
       <div className="border-t border-primary-foreground/10">
-        <div className="container-page py-5 text-xs text-primary-foreground/50">
-          © {new Date().getFullYear()} {BRAND.company}. {t("estimatesNote")}
+        <div
+          className={cn(
+            "container-page flex flex-col gap-3 py-6 text-xs text-primary-foreground/60 lg:flex-row lg:items-center lg:justify-between",
+            BRAND.whatsapp && "pb-24 sm:pb-6", // clear of the floating WhatsApp button
+          )}
+        >
+          <p>
+            © {new Date().getFullYear()} {BRAND.company}
+            {legal}
+          </p>
+          <p className="max-w-xl lg:text-end">{t("estimatesNote")}</p>
         </div>
       </div>
     </footer>

@@ -89,7 +89,8 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
     .from(listings)
     .where(eq(listings.id, v.listingId))
     .limit(1);
-  if (!l || !PUBLIC_STATUSES.includes(l.status)) return { error: t("offer.closed") };
+  // Sample listings are illustrations and cannot receive offers (Terms s.4), whatever calls this action.
+  if (!l || !PUBLIC_STATUSES.includes(l.status) || l.isSample) return { error: t("offer.closed") };
   if (l.sellerId === user.id) return { error: t("offer.own") };
 
   // One open offer per buyer per listing: a new offer replaces the open one.

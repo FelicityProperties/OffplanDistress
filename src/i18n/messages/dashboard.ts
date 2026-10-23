@@ -11,6 +11,7 @@ export default defineMessages({
     listSep: ", ",
     "kyc.verifiedTag": "KYC verified",
     "kyc.pendingTag": "KYC pending",
+    "kyc.notStartedTag": "ID not checked yet",
     "buyer.cash": "Cash buyer",
     "buyer.mortgage": "Mortgage buyer",
 
@@ -71,7 +72,7 @@ export default defineMessages({
       "Need to change the purchase price, amount paid or unit details? Contact our team so we can re-verify them against your SPA.",
 
     "offers.title": "Offers",
-    "offers.sub": "Buyers stay anonymous to sellers until the NOC stage — our team brokers every negotiation.",
+    "offers.sub": "Buyers stay anonymous to sellers until the MOU (RERA Form F) is prepared — our team brokers every negotiation.",
     "offers.tabReceived": "Received ({count})",
     "offers.tabSent": "Sent ({count})",
     "offers.receivedEmptyTitle": "No offers received yet",
@@ -148,6 +149,7 @@ export default defineMessages({
     listSep: "، ",
     "kyc.verifiedTag": "هوية موثّقة",
     "kyc.pendingTag": "التحقق من الهوية قيد الانتظار",
+    "kyc.notStartedTag": "لم يُتحقَّق من الهوية بعد",
     "buyer.cash": "مشترٍ يدفع نقداً",
     "buyer.mortgage": "مشترٍ بتمويل عقاري",
 
@@ -208,7 +210,7 @@ export default defineMessages({
       "تحتاج إلى تغيير سعر الشراء أو المبلغ المدفوع أو تفاصيل الوحدة؟ تواصل مع فريقنا لنعيد التحقق منها وفق اتفاقية البيع والشراء.",
 
     "offers.title": "العروض",
-    "offers.sub": "تبقى هوية المشترين مخفية عن البائعين حتى مرحلة شهادة عدم الممانعة، ويتولى فريقنا إدارة جميع المفاوضات.",
+    "offers.sub": "تبقى هوية المشترين مخفية عن البائعين حتى إعداد مذكرة التفاهم (نموذج ريرا F)، ويتولى فريقنا إدارة جميع المفاوضات.",
     "offers.tabReceived": "المستلمة ({count})",
     "offers.tabSent": "المُرسلة ({count})",
     "offers.receivedEmptyTitle": "لم تستلم أي عروض بعد",

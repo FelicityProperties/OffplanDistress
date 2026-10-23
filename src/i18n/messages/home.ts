@@ -10,6 +10,25 @@ export default defineMessages({
     "hero.sub":
       "Take over verified payment plans from owners who need out. We handle the developer NOC, the paperwork and the DLD transfer.",
 
+    "hero.point.rera": "RERA-licensed brokerage",
+    "hero.point.spa": "SPA & payment history verified",
+    "hero.point.dld": "NOC & DLD transfer handled for you",
+    "preview.eyebrow": "Live now",
+    "preview.payNow": "Pay seller now",
+    "preview.remaining": "Remaining plan to developer",
+    "preview.saving": "Net saving vs buying new",
+    "preview.handover": "Handover {q}",
+    "preview.cta": "View deal",
+    "preview.verified": "SPA verified",
+
+    "how.sub": "One verified process for both sides — from upload to an Oqood in the buyer's name.",
+    "trust.eyebrow": "Why us",
+    "trust.stat.value": "AED 0",
+    "trust.stat.label": "paid to us until the DLD transfer completes",
+    "trust.stat.body": "Listing is free. Our 2% + VAT is settled at the trustee office, at the same moment the seller is paid.",
+    "faq.more": "Still have questions?",
+    "faq.contact": "Talk to our team",
+
     "stats.live": "Live units",
     "stats.value": "Inventory value",
     "stats.discount": "Avg. discount vs launch",
@@ -93,6 +112,25 @@ export default defineMessages({
     "hero.titleEnd": ".",
     "hero.sub":
       "تولَّ خطط دفع موثّقة من مُلّاك يحتاجون إلى البيع، ونحن نتكفّل بشهادة عدم الممانعة من المطوّر والإجراءات الورقية ونقل الملكية لدى دائرة الأراضي والأملاك.",
+
+    "hero.point.rera": "وساطة عقارية مرخّصة من ريرا",
+    "hero.point.spa": "اتفاقية البيع والشراء وسجل الدفعات موثّقان",
+    "hero.point.dld": "نتولى شهادة عدم الممانعة ونقل الملكية نيابةً عنك",
+    "preview.eyebrow": "معروضة الآن",
+    "preview.payNow": "تدفع للبائع الآن",
+    "preview.remaining": "المتبقي من الخطة للمطوّر",
+    "preview.saving": "صافي التوفير مقارنةً بالشراء الجديد",
+    "preview.handover": "التسليم {q}",
+    "preview.cta": "عرض الصفقة",
+    "preview.verified": "اتفاقية موثّقة",
+
+    "how.sub": "مسار موثّق واحد للطرفين، من رفع المستندات حتى تسجيل شهادة أوقود باسم المشتري.",
+    "trust.eyebrow": "لماذا نحن",
+    "trust.stat.value": "0 درهم",
+    "trust.stat.label": "تدفعها لنا قبل إتمام نقل الملكية لدى دائرة الأراضي والأملاك",
+    "trust.stat.body": "الإعلان مجاني. وتُسدَّد رسومنا البالغة 2% + ضريبة القيمة المضافة في مكتب أمين التسجيل في اللحظة نفسها التي يتسلّم فيها البائع مستحقاته.",
+    "faq.more": "لا تزال لديك أسئلة؟",
+    "faq.contact": "تحدّث مع فريقنا",
 
     "stats.live": "وحدات منشورة",
     "stats.value": "قيمة الوحدات المعروضة",

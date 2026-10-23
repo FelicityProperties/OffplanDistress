@@ -61,6 +61,22 @@ export default defineMessages({
     "summary.query": "“{q}”",
 
     "gallery.showPhoto": "Show photo {n}",
+
+    // Restyled browse + deal pages
+    eyebrow: "Off-plan resale marketplace",
+    "filters.active": "{n} active",
+    "chips.label": "Active filters",
+    "chips.clearAll": "Clear all",
+    "chips.remove": "Remove filter: {label}",
+    "chips.cashFrom": "From {amount} upfront",
+    "chips.cashRange": "{min} – {max} upfront",
+    "chips.minPaid": "{pct}%+ paid",
+    "chips.handoverBy": "Handover by end of {year}",
+    "empty.title": "No matches yet",
+    "empty.clear": "Clear all filters",
+    "pagination.goTo": "Page {page}",
+    "detail.about": "About this unit",
+    "results.showing": "Showing {from}–{to} of {total}",
   },
   ar: {
     "meta.title": "تصفّح فرص الوحدات على الخارطة المتعثرة في دبي",
@@ -120,5 +136,21 @@ export default defineMessages({
     "summary.query": "«{q}»",
 
     "gallery.showPhoto": "عرض الصورة {n}",
+
+    // Restyled browse + deal pages
+    eyebrow: "سوق إعادة بيع الوحدات على الخارطة",
+    "filters.active": "المطبّقة: {n}",
+    "chips.label": "الفلاتر المطبّقة",
+    "chips.clearAll": "مسح الكل",
+    "chips.remove": "إزالة الفلتر: {label}",
+    "chips.cashFrom": "من {amount} مقدّماً",
+    "chips.cashRange": "من {min} إلى {max} مقدّماً",
+    "chips.minPaid": "مدفوع {pct}% فأكثر",
+    "chips.handoverBy": "التسليم بحلول نهاية {year}",
+    "empty.title": "لا توجد نتائج مطابقة حتى الآن",
+    "empty.clear": "مسح جميع الفلاتر",
+    "pagination.goTo": "الصفحة {page}",
+    "detail.about": "نبذة عن الوحدة",
+    "results.showing": "عرض {from}–{to} من أصل {total}",
   },
 });
