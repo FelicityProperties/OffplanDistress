@@ -23,7 +23,9 @@ export function ListingActions({ id, status }: { id: string; status: ListingStat
             action === "pause"
               ? "listingAction.paused"
               : action === "resume"
-                ? "listingAction.resumed"
+                ? "review" in res && res.review
+                  ? "listingAction.resumedReview"
+                  : "listingAction.resumed"
                 : "listingAction.withdrawn",
           ),
         );

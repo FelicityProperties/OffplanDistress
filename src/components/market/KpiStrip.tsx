@@ -10,8 +10,10 @@ export async function KpiStrip({ index }: { index: DistressIndex }) {
   const s = index.supply;
   const insufficient = t("insufficient", { min: MIN_SAMPLE });
 
+  // A premium (units priced above launch) is a short signed figure with its own label, so it fits the tile.
+  const premium = s.medianDiscount != null && s.medianDiscount < 0;
   const discountValue =
-    s.medianDiscount == null ? null : s.medianDiscount >= 0 ? formatPct(s.medianDiscount, 1) : t("premium", { pct: formatPct(-s.medianDiscount, 1) });
+    s.medianDiscount == null ? null : premium ? `\u2066+${formatPct(-s.medianDiscount, 1)}\u2069` : formatPct(s.medianDiscount, 1);
 
   const tiles = [
     {
@@ -28,7 +30,7 @@ export async function KpiStrip({ index }: { index: DistressIndex }) {
     },
     {
       icon: TrendingDown,
-      label: t("kpi.discount"),
+      label: t(premium ? "kpi.premium" : "kpi.discount"),
       value: discountValue,
       hint:
         s.avgDiscount == null
@@ -65,7 +67,7 @@ export async function KpiStrip({ index }: { index: DistressIndex }) {
               <span className="pt-1">{k.label}</span>
             </dt>
             <dd className="pt-4">
-              <span className="block text-xl font-semibold leading-tight tabular sm:whitespace-nowrap sm:text-[1.75rem]">
+              <span className="block break-words text-xl font-semibold leading-tight tabular sm:text-[1.75rem] xl:whitespace-nowrap">
                 {/* without a value the hint below says why */}
                 {k.value ?? (
                   <span aria-hidden className="text-muted-foreground">

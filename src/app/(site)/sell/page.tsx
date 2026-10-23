@@ -47,12 +47,14 @@ export default async function SellPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-            <Calculator className="h-4 w-4 text-gold-foreground" aria-hidden />
-            {t("page.calculatorHint")}
-            <Link href="/exit-calculator" className="font-semibold text-foreground underline decoration-gold/60 underline-offset-4 hover:decoration-gold">
-              {t("page.calculatorLink")}
-            </Link>
+          <p className="mt-5 flex items-start gap-2.5 text-sm text-muted-foreground">
+            <Calculator className="mt-0.5 h-4 w-4 shrink-0 text-gold-foreground" aria-hidden />
+            <span className="min-w-0">
+              {t("page.calculatorHint")}{" "}
+              <Link href="/exit-calculator" className="font-semibold text-foreground underline decoration-gold/60 underline-offset-4 hover:decoration-gold">
+                {t("page.calculatorLink")}
+              </Link>
+            </span>
           </p>
         </div>
       </section>

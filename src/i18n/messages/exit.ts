@@ -18,7 +18,7 @@ export default defineMessages({
     "hero.ctaLaw": "What the law says",
     "hero.point.law": "Based on Article 11 of Dubai Law No. (13) of 2008, as replaced in 2020",
     "hero.point.live": "Results update as you type",
-    "hero.point.private": "Nothing you enter is saved or sent",
+    "hero.point.private": "Nothing you enter is saved or sent, unless you choose to send it to us on WhatsApp",
 
     "calc.title": "Your numbers",
     "calc.sub": "Use the figures in your SPA and your latest statement of account.",
@@ -35,7 +35,7 @@ export default defineMessages({
     "in.notStarted": "Works haven't started, or RERA has cancelled the project",
     "in.market": "Today's price for a similar unit",
     "in.market.hint":
-      "What a comparable unit costs today, from the developer's price list or resale asking prices. Left blank, we assume it equals your purchase price.",
+      "What a comparable unit resells for today: resale asking prices are a better guide than the developer's launch price list. Left blank, we assume it equals your purchase price.",
     "in.market.clear": "Clear",
     "in.months": "Months until handover",
     "in.months.hint": "Used to show the average monthly amount you'd still need.",
@@ -67,6 +67,8 @@ export default defineMessages({
       "At today's price your equity is wiped out, and if you stop paying the developer may keep everything you've paid. Compare keeping the unit to handover, and talk to us before you decide.",
     "verdict.over80":
       "Above 80% complete the developer doesn't have to cancel. It may keep the contract, keep everything you've paid and claim the {amount} still owed, or ask DLD to sell the unit at public auction to recover what you owe, with the sale costs charged to you. The refund shown applies only if it chooses to cancel.",
+    "verdict.over80Short": "Above 80% complete the developer doesn't have to cancel: see Option 2 before you stop paying.",
+    "verdict.nocCaveat": "Check your developer's resale rules first: many only issue a resale NOC once 30–40% of the price is paid, and you've paid {pct}.",
 
     "opt1.title": "Keep paying to handover",
     "opt1.desc": "You keep the unit and fund every remaining instalment.",
@@ -108,7 +110,7 @@ export default defineMessages({
     "opt3.position": "Value of your position",
     "opt3.position.formula": "Paid so far + (today's price − your price)",
     "opt3.range": "Quick-sale range",
-    "opt3.range.note": "Our assumption: a fast sale at {low}–{high}% of the position's value. Not a valuation.",
+    "opt3.range.note": "Our assumption: to buy fast, a buyer wants {low}–{high}% off today's price for the whole unit, and that comes out of your equity. Not a valuation.",
     "opt3.fee": "Our fee to you",
     "opt3.fee.buyer": "The buyer pays our 2% + VAT",
     "opt3.fee.seller": "2% + VAT of the sale value, on completion",
@@ -175,7 +177,7 @@ export default defineMessages({
       "Usually, yes, through an assignment (a resale before handover). The buyer pays you for what you've paid in and takes over the remaining instalments. The developer has to issue a NOC, and many only do so once 30–40% of the price is paid.",
     "faq.q3": "How do you estimate what my position is worth?",
     "faq.a3":
-      "We take what you've paid and add or subtract the difference between today's price for a similar unit and your purchase price. A quick sale usually needs a sharper price, so we show {low}–{high}% of that figure. It's an estimate, not a valuation — we check real comparables when you list.",
+      "We take what you've paid and add or subtract the difference between today's price for a similar unit and your purchase price. A quick sale usually needs a sharper price: buyers want {low}–{high}% off the whole unit, and that discount comes out of your equity, so we show that range. It's an estimate, not a valuation — we check real comparables when you list.",
     "faq.q4": "What does it cost me to sell through {brand}?",
     "faq.a4.buyer":
       "Nothing. Listing is free and the buyer pays our 2% + VAT, only when the transfer completes. The developer's NOC fee and DLD's transfer fee are part of the buyer's closing costs.",
@@ -198,7 +200,7 @@ export default defineMessages({
     "hero.ctaLaw": "ماذا يقول القانون",
     "hero.point.law": "مبنية على المادة 11 من القانون رقم (13) لسنة 2008 في دبي، بصيغتها المستبدلة عام 2020",
     "hero.point.live": "تتحدّث النتائج فور إدخال الأرقام",
-    "hero.point.private": "لا نحفظ ما تُدخله ولا نرسله",
+    "hero.point.private": "لا نحفظ ما تُدخله ولا نرسله، إلا إذا اخترت إرساله إلينا عبر واتساب",
 
     "calc.title": "أرقامك",
     "calc.sub": "استخدم الأرقام الواردة في اتفاقية البيع والشراء وآخر كشف حساب لديك.",
@@ -215,7 +217,7 @@ export default defineMessages({
     "in.notStarted": "لم تبدأ الأعمال، أو ألغت ريرا المشروع",
     "in.market": "السعر الحالي لوحدة مماثلة",
     "in.market.hint":
-      "سعر وحدة مماثلة اليوم، من قائمة أسعار المطوّر أو أسعار إعادة البيع المعروضة. إن تركته فارغاً نفترض أنه يساوي سعر شرائك.",
+      "سعر إعادة بيع وحدة مماثلة اليوم؛ فأسعار إعادة البيع المعروضة أدق من قائمة أسعار الإطلاق لدى المطوّر. إن تركته فارغاً نفترض أنه يساوي سعر شرائك.",
     "in.market.clear": "مسح",
     "in.months": "الأشهر المتبقية حتى التسليم",
     "in.months.hint": "نستخدمه لعرض متوسط المبلغ الشهري الذي ستحتاجه.",
@@ -246,11 +248,13 @@ export default defineMessages({
       "بسعر اليوم تتلاشى قيمة حصتك، وإن توقفت عن السداد فقد يحتفظ المطوّر بكل ما دفعته. قارن ذلك بمواصلة السداد حتى التسليم، وتحدّث معنا قبل أن تقرر.",
     "verdict.over80":
       "إذا تجاوزت نسبة الإنجاز 80% فلا يُلزم المطوّر بفسخ العقد: يجوز له الإبقاء على العقد والاحتفاظ بكل ما دفعته ومطالبتك بالمبلغ المتبقي البالغ {amount}، أو أن يطلب من دائرة الأراضي والأملاك بيع الوحدة بالمزاد العلني لاستيفاء المستحق له على أن تتحمّل أنت تكاليف البيع. ولا ينطبق المبلغ المعروض للردّ إلا إذا اختار فسخ العقد.",
+    "verdict.over80Short": "إذا تجاوزت نسبة الإنجاز 80% فلا يُلزم المطوّر بفسخ العقد: اطّلع على الخيار 2 قبل أن تتوقف عن السداد.",
+    "verdict.nocCaveat": "تحقق أولاً من شروط إعادة البيع لدى مطوّرك: كثير من المطوّرين لا يصدرون شهادة عدم ممانعة لإعادة البيع إلا بعد سداد 30–40% من السعر، وقد سددت {pct}.",
 
     "opt1.title": "مواصلة السداد حتى التسليم",
     "opt1.desc": "تحتفظ بالوحدة وتسدّد جميع الأقساط المتبقية.",
     "opt1.remaining": "المتبقي للمطوّر",
-    "opt1.perMonth": "المتوسط الشهري على مدى {months}",
+    "opt1.perMonth": "المتوسط الشهري (المدة: {months})",
     "opt1.perMonth.note": "متوسط بسيط، وقد تحمّل خطتك دفعة أكبر عند التسليم.",
     "opt1.value": "القيمة بسعر اليوم",
     "opt1.gain": "الربح أو الخسارة الدفترية مقارنة بسعرك",
@@ -287,7 +291,7 @@ export default defineMessages({
     "opt3.position": "قيمة حصتك",
     "opt3.position.formula": "المدفوع حتى الآن + (السعر الحالي − سعرك)",
     "opt3.range": "نطاق البيع السريع",
-    "opt3.range.note": "افتراض منّا: بيع سريع بنسبة {low}–{high}% من قيمة الحصة. وليس تقييماً.",
+    "opt3.range.note": "افتراض منّا: لكي يشتري بسرعة، يطلب المشتري خصماً بنسبة {low}–{high}% من السعر الحالي للوحدة كاملةً، ويُقتطع ذلك من حصتك. وليس تقييماً.",
     "opt3.fee": "رسومنا عليك",
     "opt3.fee.buyer": "يدفع المشتري رسومنا البالغة 2% + الضريبة",
     "opt3.fee.seller": "2% + الضريبة من قيمة البيع، عند الإتمام",
@@ -355,7 +359,7 @@ export default defineMessages({
       "نعم في الغالب، عن طريق التنازل (إعادة البيع قبل التسليم). يدفع لك المشتري ما سددته ويتولى الأقساط المتبقية. ويجب أن يصدر المطوّر شهادة عدم ممانعة، وكثير من المطوّرين لا يصدرونها إلا بعد سداد 30–40% من السعر.",
     "faq.q3": "كيف تقدّرون قيمة حصتي؟",
     "faq.a3":
-      "نبدأ بما دفعته، ثم نضيف أو نطرح الفرق بين السعر الحالي لوحدة مماثلة وسعر شرائك. ولأن البيع السريع يتطلب عادةً سعراً أكثر تنافسية، نعرض {low}–{high}% من هذا الرقم. إنه تقدير وليس تقييماً، ونتحقق من الصفقات المماثلة الفعلية عند عرض وحدتك.",
+      "نبدأ بما دفعته، ثم نضيف أو نطرح الفرق بين السعر الحالي لوحدة مماثلة وسعر شرائك. ولأن البيع السريع يتطلب عادةً سعراً أكثر تنافسية، إذ يطلب المشترون خصماً بنسبة {low}–{high}% من سعر الوحدة كاملةً يُقتطع من حصتك، نعرض هذا النطاق. إنه تقدير وليس تقييماً، ونتحقق من الصفقات المماثلة الفعلية عند عرض وحدتك.",
     "faq.q4": "كم يكلفني البيع عبر {brand}؟",
     "faq.a4.buyer":
       "لا شيء. الإعلان مجاني، ويدفع المشتري رسومنا البالغة 2% + ضريبة القيمة المضافة عند إتمام نقل الملكية فقط. أما رسوم شهادة عدم الممانعة لدى المطوّر ورسوم النقل لدى دائرة الأراضي والأملاك فهي ضمن تكاليف الإتمام التي يتحملها المشتري.",

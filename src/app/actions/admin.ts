@@ -65,6 +65,7 @@ const listingNoticeColumns = {
   verified: listings.verified,
   dldPermit: listings.dldPermit,
   askingPrice: listings.askingPrice,
+  publicPrice: listings.publicPrice,
   publishedAt: listings.publishedAt,
 };
 
@@ -93,11 +94,20 @@ export async function approveListing(listingId: string) {
   const verified = before.verified || (await hasVerificationDocs(listingId));
   await db
     .update(listings)
-    .set({ status: "live", verified, publishedAt: before.publishedAt ?? now, rejectionReason: null, updatedAt: now })
+    .set({
+      status: "live",
+      verified,
+      publicPrice: before.askingPrice,
+      publishedAt: before.publishedAt ?? now,
+      rejectionReason: null,
+      updatedAt: now,
+    })
     .where(eq(listings.id, listingId));
   if (before.status !== "live") {
     await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });
   }
+  // A seller's price cut waits for re-approval; watchers hear about it once it is public again.
+  if (!before.isSample && before.publicPrice != null) await notifyPriceDrop(before, before.publicPrice, before.askingPrice);
   refresh();
   return { ok: true };
 }
@@ -175,6 +185,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       askingPrice: v.askingPrice,
       adminNotes: v.adminNotes ?? null,
       dldPermit: v.dldPermit || null,
+      publicPrice: PUBLIC_STATUSES.includes(v.status) ? v.askingPrice : current.publicPrice,
       images: v.images.filter((u) => /^https:\/\//.test(u) || u.startsWith("/api/files/")),
       publishedAt: current.publishedAt ?? (v.status === "live" ? now : null),
       updatedAt: now,
@@ -190,7 +201,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (statusChanged && v.status === "transferred") await notifyDealStep(current, "deal.transferred");
   // Watchers only hear about drops on deals they can open (and never on sample listings).
   if (!current.isSample && PUBLIC_STATUSES.includes(v.status)) {
-    await notifyPriceDrop(current, current.askingPrice, v.askingPrice);
+    await notifyPriceDrop(current, current.publicPrice ?? current.askingPrice, v.askingPrice);
   }
 
   refresh();

@@ -45,6 +45,7 @@ export default defineMessages({
     "listing.permitRequired": "Add the DLD advertising permit number (Trakheesi) before publishing — RERA requires it on every property advert.",
     "listing.transferred": "This unit has already been transferred.",
     "listing.changeUnavailable": "That change isn't available for this listing right now.",
+    "listing.lockedUnderOffer": "This unit has an accepted offer, so its price and description are fixed. Contact us if something needs to change.",
     "listing.tooManyPending": "You already have 10 listings waiting for review. We'll verify those first.",
 
     "admin.ownAccess": "You can't remove your own admin access.",
@@ -107,6 +108,7 @@ export default defineMessages({
     "listing.permitRequired": "أضف رقم تصريح الإعلان من دائرة الأراضي والأملاك (تراخيصي) قبل النشر، إذ تشترطه مؤسسة التنظيم العقاري على كل إعلان عقاري.",
     "listing.transferred": "تم نقل ملكية هذه الوحدة بالفعل.",
     "listing.changeUnavailable": "هذا التغيير غير متاح لهذا الإعلان حالياً.",
+    "listing.lockedUnderOffer": "على هذه الوحدة عرض مقبول، لذا لا يمكن تعديل سعرها أو وصفها. تواصل معنا إن احتاج أمر ما إلى تعديل.",
     "listing.tooManyPending": "لديك بالفعل 10 إعلانات بانتظار المراجعة. سنتحقق منها أولاً.",
 
     "admin.ownAccess": "لا يمكنك إزالة صلاحيات الإدارة من حسابك.",

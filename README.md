@@ -42,8 +42,12 @@ for a Dubai real-estate brokerage — have them reviewed by a UAE-qualified lawy
 Every deal page shows who is advertising it — Felicity Properties L.L.C, RERA ORN 33951, broker Muhannad Al Nwilati
 Al Masri, BRN 59244 — and the listing's DLD (Trakheesi) advertising permit number. A real listing can't go live
 without that permit: enter it in the admin listing editor ("DLD advertising permit No."), then approve. Sample
-listings carry no permit and say so; they are also `noindex` and left out of `sitemap.xml`, so search engines
-only see real adverts. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each
+listings carry no permit and say so, invite no viewings or calls, and are `noindex` and left out of
+`sitemap.xml`, so search engines only see real adverts. On deploy, migration 0005 pauses (as "paused by our
+team") any real listing that was already live without a permit; enter its permit in the admin editor and set it
+live again. A seller who changes the asking price or description of a live listing sends it back to review, so
+the advert never shows a price or text the permit and our team haven't seen; with an accepted offer those two
+fields are fixed. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each
 real deal page adds a `RealEstateListing` with its price.
 
 ### Notifications
@@ -57,7 +61,8 @@ real deal page adds a `RealEstateListing` with its price.
 | Counter accepted / declined, offer withdrawn | Seller |
 | Deal agreed | Admins — start the NOC |
 | Viewing request / contact form | Admins |
-| Price drop on a watched deal | Watchers |
+| Seller changes price or description of a live listing | Admins — update the permit and approve again |
+| Price drop on a watched deal (once the new price is approved) | Watchers |
 | New deals matching a saved search (daily, 09:00 Dubai) | Search owner |
 
 In-app notifications always work. Emails go out through [Resend](https://resend.com) once `RESEND_API_KEY` and

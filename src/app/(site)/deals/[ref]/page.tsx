@@ -158,8 +158,10 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   ];
 
   // Structured data for search engines — real listings only (samples aren't for sale).
+  // Only an available real advert gets listing markup. The price is the whole unit (equity + remaining plan),
+  // not the equity payment, so search results never show the unit for less than it costs.
   const listingJsonLd =
-    !l.isSample && PUBLIC_STATUSES.includes(l.status)
+    !l.isSample && l.status === "live"
       ? {
           "@context": "https://schema.org",
           "@type": "RealEstateListing",
@@ -168,7 +170,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           datePosted: (l.publishedAt ?? l.createdAt).toISOString(),
           image: l.images.filter((u) => u.startsWith("http")).slice(0, 4),
           description: l.description || undefined,
-          offers: { "@type": "Offer", price: l.askingPrice, priceCurrency: "AED", availability: "https://schema.org/InStock" },
+          offers: { "@type": "Offer", price: a.saleValue, priceCurrency: "AED", availability: "https://schema.org/InStock" },
           provider: { "@id": `${siteUrl()}/#organization` },
         }
       : null;
@@ -341,13 +343,16 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     disabledReason={isOwner ? t("offer.ownListing") : l.isSample ? t("offer.sampleListing") : undefined}
                   />
                   <WatchButton listingId={l.id} watching={watched.has(l.id)} variant="full" className="h-12" />
-                  <InquiryDialog
-                    listingId={l.id}
-                    project={l.projectName}
-                    defaults={user ? { name: user.fullName, email: user.email, phone: user.phone } : undefined}
-                    triggerClassName="h-12 text-muted-foreground hover:text-foreground"
-                  />
-                  {(BRAND.whatsapp || BRAND.phone) && (
+                  {/* A sample is an illustration, so nothing on it invites a viewing or an enquiry. */}
+                  {!l.isSample && (
+                    <InquiryDialog
+                      listingId={l.id}
+                      project={l.projectName}
+                      defaults={user ? { name: user.fullName, email: user.email, phone: user.phone } : undefined}
+                      triggerClassName="h-12 text-muted-foreground hover:text-foreground"
+                    />
+                  )}
+                  {!l.isSample && (BRAND.whatsapp || BRAND.phone) && (
                     <div className="grid grid-cols-2 gap-2.5">
                       {BRAND.whatsapp && (
                         <a
@@ -380,16 +385,18 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 <div className="mt-4 rounded-2xl bg-muted/60 p-4 text-xs leading-relaxed text-muted-foreground">
                   <p className="flex items-center gap-1.5 font-semibold uppercase tracking-wider text-foreground/70">
                     <Landmark className="h-3.5 w-3.5 text-gold-foreground" aria-hidden />
-                    {t("listedBy.title")}
+                    {t(l.isSample ? "listedBy.titleSample" : "listedBy.title")}
                   </p>
                   <p className="mt-1.5">
                     <bdi>{t("listedBy.office", { company: locale === "ar" ? BRAND.companyAr : BRAND.company, orn: BRAND.orn })}</bdi>
                   </p>
-                  <p>{t("listedBy.broker", { name: locale === "ar" ? BRAND.broker.nameAr : BRAND.broker.name, brn: BRAND.broker.brn })}</p>
+                  {!l.isSample && (
+                    <p>{t("listedBy.broker", { name: locale === "ar" ? BRAND.broker.nameAr : BRAND.broker.name, brn: BRAND.broker.brn })}</p>
+                  )}
                   <p className="tabular">
                     {l.isSample ? t("listedBy.sample") : l.dldPermit ? t("listedBy.permit", { permit: l.dldPermit }) : null}
                   </p>
-                  {BRAND.email && (
+                  {BRAND.email && !l.isSample && (
                     <a
                       href={`mailto:${BRAND.email}?subject=${encodeURIComponent(t("listedBy.reportSubject", { ref: refCode(l.refNo) }))}`}
                       className="mt-2 inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:text-foreground hover:underline"

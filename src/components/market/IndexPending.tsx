@@ -3,16 +3,18 @@ import { ArrowRight, BellRing, Eye, HandCoins, KeyRound, Search, Tag } from "luc
 import { Button } from "@/components/ui/button";
 import { getT } from "@/i18n/server";
 import { formatNumber } from "@/lib/format";
-import { MIN_LIVE, type DistressIndex } from "@/lib/market";
+import { MIN_LIVE, MIN_SAMPLE, type DistressIndex } from "@/lib/market";
 
 /** Shown instead of the report while fewer than MIN_LIVE real listings are on the market: the counts that exist + next steps. */
 export async function IndexPending({ index }: { index: DistressIndex }) {
   const [t, tc] = await Promise.all([getT("market"), getT("common")]);
   // The live count and its progress towards MIN_LIVE are on the hero card; these are the other counts that exist today.
+  // With one or two real listings, watchers and offers would be those listings' private figures, so they wait.
+  const perListing = index.live >= MIN_SAMPLE;
   const counts = [
-    { icon: Eye, label: t("demand.watching"), value: index.demand.buyersWatching },
+    { icon: Eye, label: t("demand.watching"), value: perListing ? index.demand.buyersWatching : null },
     { icon: BellRing, label: t("demand.alerts"), value: index.demand.alertSearches },
-    { icon: HandCoins, label: t("demand.offers30d"), value: index.demand.offers30d },
+    { icon: HandCoins, label: t("demand.offers30d"), value: perListing ? index.demand.offers30d : null },
     { icon: KeyRound, label: t("demand.transferred"), value: index.completed.transferred },
   ];
 
@@ -35,7 +37,7 @@ export async function IndexPending({ index }: { index: DistressIndex }) {
                   <c.icon className="mt-px h-4 w-4 shrink-0" aria-hidden />
                   {c.label}
                 </dt>
-                <dd className="mt-2 text-2xl font-semibold tabular sm:text-3xl">{formatNumber(c.value)}</dd>
+                <dd className="mt-2 text-2xl font-semibold tabular sm:text-3xl">{c.value == null ? "—" : formatNumber(c.value)}</dd>
               </div>
             ))}
           </dl>

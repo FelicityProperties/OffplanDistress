@@ -6,7 +6,6 @@ import { IndexPending } from "@/components/market/IndexPending";
 import { MarketHero } from "@/components/market/MarketHero";
 import { Methodology } from "@/components/market/Methodology";
 import { getLocale, getT } from "@/i18n/server";
-import { BRAND } from "@/lib/config";
 import { getDistressIndex } from "@/lib/market";
 import { siteUrl } from "@/lib/site-url";
 
@@ -38,7 +37,8 @@ export default async function MarketPage() {
     dateModified: index.asOf.toISOString(),
     spatialCoverage: { "@type": "Place", name: "Dubai, United Arab Emirates" },
     // the same organisation node the root layout emits (src/components/JsonLd.tsx), linked by its @id
-    creator: { "@type": "Organization", "@id": `${siteUrl()}/#organization`, name: BRAND.company, url: siteUrl() },
+    // The organization node is declared once, site-wide (src/components/JsonLd.tsx); refer to it by @id only.
+    creator: { "@id": `${siteUrl()}/#organization` },
   };
 
   return (

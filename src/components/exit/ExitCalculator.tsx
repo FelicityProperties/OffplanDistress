@@ -58,6 +58,7 @@ function NumberInput({
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const digitsBeforeCaret = useRef<number | null>(null);
+  const lastKey = useRef<string | null>(null);
   const text = value == null ? "" : formatNumber(value);
 
   useLayoutEffect(() => {
@@ -88,17 +89,77 @@ function NumberInput({
         value={text}
         placeholder={placeholder}
         aria-describedby={describedBy}
+        onKeyDown={(e) => {
+          lastKey.current = e.key;
+        }}
         onChange={(e) => {
-          const raw = latinDigits(e.target.value);
-          const caret = e.target.selectionStart ?? raw.length;
-          digitsBeforeCaret.current = raw.slice(0, caret).replace(/\D/g, "").length;
-          const digits = raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, MAX_DIGITS);
+          // Whole dirhams: a statement's "540,000.00" (or "٥٤٠٬٠٠٠٫٠٠") keeps 540,000, not 54,000,000.
+          // A dot followed by three digits is read as a thousands separator ("540.000").
+          const raw = latinDigits(e.target.value).replace(/[.٫]\d{0,2}$/, "");
+          const caret = Math.min(e.target.selectionStart ?? raw.length, raw.length);
+          let before = raw.slice(0, caret).replace(/\D/g, "").length;
+          let digits = raw.replace(/\D/g, "");
+          // Backspace / Delete on a thousands comma removes the digit next to it, as people expect.
+          if (digits === text.replace(/\D/g, "") && raw.length < text.length) {
+            if (lastKey.current === "Backspace" && before > 0) {
+              digits = digits.slice(0, before - 1) + digits.slice(before);
+              before -= 1;
+            } else if (lastKey.current === "Delete") {
+              digits = digits.slice(0, before) + digits.slice(before + 1);
+            }
+          }
+          digitsBeforeCaret.current = before;
+          digits = digits.replace(/^0+(?=\d)/, "").slice(0, MAX_DIGITS);
           onValue(digits ? Number(digits) : null);
         }}
         className="h-full min-w-0 flex-1 bg-transparent text-base font-semibold tabular outline-none placeholder:font-normal placeholder:text-muted-foreground/70 rtl:text-end"
       />
       {!unitFirst && unitEl}
     </div>
+  );
+}
+
+/**
+ * The official completion percentage, as typed: Arabic-Indic digits, "." / "," / "٫" as the decimal mark, up to two
+ * decimals (59.96% is below 60% and 80.04% is above 80%: different tiers). While focused the field keeps what you
+ * typed (an empty box or "80." stays as is); the number only changes when the text parses.
+ */
+function PercentInput({
+  id,
+  value,
+  onValue,
+  disabled,
+  describedBy,
+}: {
+  id: string;
+  value: number;
+  onValue: (v: number) => void;
+  disabled?: boolean;
+  describedBy?: string;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <input
+      id={id}
+      type="text"
+      inputMode="decimal"
+      autoComplete="off"
+      dir="ltr"
+      disabled={disabled}
+      value={draft ?? String(value)}
+      aria-describedby={describedBy}
+      onChange={(e) => {
+        const s = latinDigits(e.target.value).replace(/[٫,]/g, ".").replace(/[^\d.]/g, "");
+        const m = /^(\d{0,3})(\.\d{0,2})?/.exec(s);
+        const clean = m ? m[1] + (m[2] ?? "") : "";
+        setDraft(clean);
+        if (!/\d/.test(clean)) return;
+        const v = Number(clean.endsWith(".") ? clean.slice(0, -1) : clean);
+        if (Number.isFinite(v)) onValue(Math.min(Math.max(v, 0), 100));
+      }}
+      onBlur={() => setDraft(null)}
+      className="h-full w-full min-w-0 bg-transparent text-sm font-semibold tabular outline-none disabled:opacity-40 rtl:text-end"
+    />
   );
 }
 
@@ -356,7 +417,7 @@ export function ExitCalculator() {
               label={t("in.paid")}
               value={paid ?? 0}
               min={0}
-              max={priceForRanges}
+              max={Math.max(a.price, 1)}
               step={paidStep}
               onValue={setPaid}
               valueText={formatAED(paid ?? 0, locale)}
@@ -396,23 +457,12 @@ export function ExitCalculator() {
               </div>
               <div className="mt-3 w-20 shrink-0">
                 <div className="flex h-9 items-center gap-1 rounded-lg border border-input bg-background px-2 shadow-sm focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">
-                  <input
+                  <PercentInput
                     id={id("progress")}
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    max={100}
-                    step={0.1}
-                    dir="ltr"
-                    disabled={notStarted}
                     value={progress}
-                    aria-describedby={id("progress-hint")}
-                    onChange={(e) => {
-                      // Keep one decimal: an official 80.4% is above 80% and 59.6% is below 60% (different tiers).
-                      const v = Number(latinDigits(e.target.value).replace(/[٫,]/g, "."));
-                      setProgress(Number.isFinite(v) ? Math.min(Math.max(Math.round(v * 10) / 10, 0), 100) : 0);
-                    }}
-                    className="h-full w-full min-w-0 bg-transparent text-sm font-semibold tabular outline-none disabled:opacity-40 rtl:text-end [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    onValue={setProgress}
+                    disabled={notStarted}
+                    describedBy={id("progress-hint")}
                   />
                   <span aria-hidden className="text-xs text-muted-foreground">
                     %
@@ -550,10 +600,13 @@ export function ExitCalculator() {
                         ? rich(t("verdict.maybe.body"), { high: money(a.edgeHigh) })
                         : t(`verdict.${a.verdict}.body`)}
                   </p>
-                  {a.tier === "over80" && a.remaining > 0 && (
+                  {(a.verdict === "sell" || a.verdict === "maybe") && a.belowNocThreshold && (
                     <p className="mt-2 text-sm font-medium leading-relaxed text-foreground">
-                      {rich(t("verdict.over80"), { amount: money(a.remaining) })}
+                      {rich(t("verdict.nocCaveat"), { pct: pctLabel(a.paidPct) })}
                     </p>
+                  )}
+                  {a.tier === "over80" && a.remaining > 0 && (
+                    <p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{tx("verdict.over80Short")}</p>
                   )}
                 </div>
               </div>

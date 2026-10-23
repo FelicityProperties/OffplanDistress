@@ -28,6 +28,7 @@ import { BUYER_STEPS, FAQS, HERO_IMAGE, SELLER_STEPS } from "@/lib/content";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, refCode } from "@/lib/format";
 import { featuredDeals, marketStats, watchedIds, type ListingCard } from "@/lib/listings";
+import { MIN_LIVE, MIN_SAMPLE } from "@/lib/market";
 import type { Locale } from "@/i18n/config";
 
 const TRUST = [
@@ -114,14 +115,17 @@ export default async function Home() {
     getLocale(),
   ]);
 
-  // Live figures once real listings are on the market; until then (sample listings only) the strip shows
-  // facts about the service instead of numbers computed from illustrations.
-  const liveData = stats.live > 0;
+  // Live figures on the same terms as the Distress Index (enough real listings, averages from at least MIN_SAMPLE
+  // units); until then the strip shows facts about the service instead of numbers from a handful of units.
+  const liveData = stats.live >= MIN_LIVE;
   const strip: [string, string][] = liveData
     ? [
         [t("stats.live"), stats.live.toLocaleString("en-AE")],
         [t("stats.value"), stats.value ? formatAEDCompact(stats.value, locale) : "—"],
-        [t("stats.discount"), stats.avgDiscount != null ? `${(stats.avgDiscount * 100).toFixed(1)}%` : "—"],
+        [
+          t("stats.discount"),
+          stats.avgDiscount != null && stats.withLaunch >= MIN_SAMPLE ? `${(stats.avgDiscount * 100).toFixed(1)}%` : "—",
+        ],
         [t("stats.fee"), t("stats.feeValue")],
       ]
     : [

@@ -63,13 +63,17 @@ export const RETENTION: Record<Tier, number> = {
 export const TIERS: Tier[] = ["over80", "from60to80", "under60", "notStarted"];
 
 /**
- * A quick sale usually has to be priced at or a little under what the position is worth. This range is our
- * assumption for illustration, not market data or a valuation.
+ * To buy quickly, a buyer wants a discount on the whole unit (the equity plus the plan they take over) against
+ * today's price for a similar unit, and that discount comes out of the seller's equity. This range is our assumption
+ * for illustration, not market data or a valuation.
  */
-export const QUICK_SALE = { low: 0.85, high: 1 } as const;
+export const QUICK_SALE_DISCOUNT = { min: 0.05, max: 0.15 } as const;
 
-/** The assumption as whole percentages, for copy: { low: 85, high: 100 }. */
-export const quickSalePct = { low: Math.round(QUICK_SALE.low * 100), high: Math.round(QUICK_SALE.high * 100) };
+/** The assumption as whole percentages, for copy: { low: 5, high: 15 }. */
+export const quickSalePct = { low: Math.round(QUICK_SALE_DISCOUNT.min * 100), high: Math.round(QUICK_SALE_DISCOUNT.max * 100) };
+
+/** Many developers only issue a resale NOC once this share of the price is paid (30–40%, the higher end). */
+export const NOC_THRESHOLD = 0.4;
 
 export function tierFor(progress: number, notStarted: boolean): Tier {
   if (notStarted) return "notStarted";
@@ -110,11 +114,12 @@ export function analyzeExit(i: ExitInputs) {
   const atRisk = Math.min(maxRetention, paid);
   const refund = paid - atRisk;
 
-  // 3 · Sell the contract: the buyer pays for the equity (paid in, adjusted for today's price) and takes over
-  // the remaining instalments.
+  // 3 · Sell the contract: the buyer pays for the equity and takes over the remaining instalments. At full value
+  // the equity is what you've paid, adjusted for today's price; a quick sale knocks QUICK_SALE_DISCOUNT off the
+  // whole unit, and all of it comes out of the equity.
   const position = Math.max(paid + market - price, 0);
-  const saleLow = Math.round(position * QUICK_SALE.low);
-  const saleHigh = position;
+  const saleLow = Math.max(Math.round(market * (1 - QUICK_SALE_DISCOUNT.max)) - remaining, 0);
+  const saleHigh = Math.max(Math.round(market * (1 - QUICK_SALE_DISCOUNT.min)) - remaining, 0);
   const sellerFee = (sale: number) => (FEES.payer === "seller" && sale > 0 ? platformFee(sale + remaining).total : 0);
   const feeLow = sellerFee(saleLow);
   const feeHigh = sellerFee(saleHigh);
@@ -154,6 +159,8 @@ export function analyzeExit(i: ExitInputs) {
     edgeLow,
     edgeHigh,
     verdict,
+    /** Below most developers' resale threshold: a sale may need more paid first. */
+    belowNocThreshold: paidPct < NOC_THRESHOLD,
   };
 }
 

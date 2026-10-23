@@ -8,9 +8,9 @@ import { listings, users } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { getCurrentUser } from "@/lib/auth";
-import { COMMUNITIES, DEVELOPERS, PUBLIC_STATUSES, UNIT_TYPES } from "@/lib/config";
+import { COMMUNITIES, DEVELOPERS, UNIT_TYPES } from "@/lib/config";
 import { refCode } from "@/lib/format";
-import { notifyAdmins, notifyPriceDrop } from "@/lib/notify";
+import { notifyAdmins } from "@/lib/notify";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
@@ -183,6 +183,7 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
       projectName: listings.projectName,
       refNo: listings.refNo,
       isSample: listings.isSample,
+      description: listings.description,
     })
     .from(listings)
     .where(eq(listings.id, id))
@@ -202,24 +203,38 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
   );
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
 
+  // The advertised price and text are what the DLD permit and our review cover (RERA). Changing them on a real
+  // listing takes it back to review; with an accepted offer they are fixed. Price-drop alerts go out on re-approval.
+  const description = parsed.data.description ?? null;
+  const advertChanged = parsed.data.askingPrice !== existing.askingPrice || (description ?? "") !== (existing.description ?? "");
+  if (!existing.isSample && advertChanged && (existing.status === "under_offer" || existing.status === "noc_in_progress")) {
+    return { error: t("listing.lockedUnderOffer") };
+  }
+  const backToReview = !existing.isSample && advertChanged && (existing.status === "live" || existing.status === "paused");
+
   await db
     .update(listings)
     .set({
       askingPrice: parsed.data.askingPrice,
       motivation: parsed.data.motivation,
-      description: parsed.data.description ?? null,
+      description,
       nextInstalmentDate: parsed.data.nextInstalmentDate,
       nextInstalmentAmount: parsed.data.nextInstalmentAmount ?? null,
+      ...(backToReview ? { status: "pending_review" as const, pausedByAdmin: false } : {}),
       updatedAt: new Date(),
     })
     .where(and(eq(listings.id, id), eq(listings.sellerId, user.id)));
 
-  // Watchers only hear about drops on deals they can actually open (and never on sample listings).
-  if (!existing.isSample && PUBLIC_STATUSES.includes(existing.status)) {
-    await notifyPriceDrop({ id, projectName: existing.projectName, refNo: existing.refNo, sellerId: existing.sellerId }, existing.askingPrice, parsed.data.askingPrice);
+  if (backToReview) {
+    await notifyAdmins(
+      "listing.changed",
+      { project: existing.projectName, seller: user.fullName, ref: refCode(existing.refNo) },
+      `/admin/listings/${id}`,
+      { except: [user.id] },
+    );
   }
   refresh();
-  return { ok: true };
+  return { ok: true, review: backToReview };
 }
 
 /** Seller-side status changes: pause, resume, withdraw. Everything else is done by our team. */
@@ -235,6 +250,8 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
       pausedByAdmin: listings.pausedByAdmin,
       isSample: listings.isSample,
       dldPermit: listings.dldPermit,
+      projectName: listings.projectName,
+      refNo: listings.refNo,
     })
     .from(listings)
     .where(eq(listings.id, listingId))
@@ -255,6 +272,16 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
     .update(listings)
     .set({ status: next, pausedByAdmin: false, updatedAt: new Date() })
     .where(eq(listings.id, listingId));
+  // A resume that can't go straight back live goes to our team (documents or the DLD permit are missing).
+  const review = action === "resume" && next === "pending_review";
+  if (review) {
+    await notifyAdmins(
+      "listing.submitted",
+      { project: l.projectName, seller: user.fullName, ref: refCode(l.refNo) },
+      `/admin/listings/${listingId}`,
+      { except: [user.id] },
+    );
+  }
   refresh();
-  return { ok: true };
+  return { ok: true, review };
 }

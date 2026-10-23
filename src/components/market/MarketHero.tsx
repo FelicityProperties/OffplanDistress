@@ -5,22 +5,23 @@ import { getLocale, getT } from "@/i18n/server";
 import { BRAND } from "@/lib/config";
 import { formatAEDCompact, formatNumber, formatPct } from "@/lib/format";
 import { MIN_LIVE, type DistressIndex } from "@/lib/market";
-import { formatAsOf } from "./shared";
+import { formatAsOf, isoPct } from "./shared";
 
 /** Report cover: title, as-of time stamp (Dubai), one-line summary and the headline figure. */
 export async function MarketHero({ index }: { index: DistressIndex }) {
   const [t, tc, locale] = await Promise.all([getT("market"), getT("common"), getLocale()]);
   const s = index.supply;
   const count = formatNumber(index.live);
+  const available = formatNumber(s.available);
   const md = s.medianDiscount;
 
   const summary = !index.ready
     ? t("hero.summaryPending")
     : md == null
-      ? t("hero.summaryValue", { count, value: formatAEDCompact(s.saleValue, locale) })
+      ? t("hero.summaryValue", { count, available, value: formatAEDCompact(s.saleValue, locale) })
       : md >= 0
-        ? t("hero.summary", { count, pct: formatPct(md, 1) })
-        : t("hero.summaryPremium", { count, pct: formatPct(-md, 1) });
+        ? t("hero.summary", { count, available, pct: isoPct(formatPct(md, 1)) })
+        : t("hero.summaryPremium", { count, available, pct: isoPct(formatPct(-md, 1)) });
 
   return (
     <section className="relative isolate overflow-hidden bg-ink text-primary-foreground">

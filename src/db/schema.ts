@@ -143,6 +143,8 @@ export const listings = pgTable(
     adminNotes: text("admin_notes"),
     /** DLD advertising permit (Trakheesi). RERA requires it on every property advert; set by our team. */
     dldPermit: text("dld_permit"),
+    /** Asking price as last approved for the public advert; price-drop alerts compare against it on re-approval. */
+    publicPrice: integer("public_price"),
     rejectionReason: text("rejection_reason"),
     isSample: boolean("is_sample").notNull().default(false),
     // set when our team pauses a listing, so the seller can't simply resume it

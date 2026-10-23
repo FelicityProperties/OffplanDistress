@@ -28,7 +28,15 @@ export function share(n: number, total: number) {
  */
 export function signedPct(v: number | null, digits = 1) {
   if (v == null) return "—";
-  return v < 0 ? `⁦−${formatPct(-v, digits)}⁩` : formatPct(v, digits);
+  return isoPct(v < 0 ? `−${formatPct(-v, digits)}` : formatPct(v, digits));
+}
+
+/**
+ * A percentage inside a sentence, isolated left-to-right so the % stays after the digits in Arabic too
+ * (otherwise "27.1%" after Arabic letters is drawn as "%27.1").
+ */
+export function isoPct(s: string) {
+  return `\u2066${s}\u2069`;
 }
 
 /** "23 Oct 2026, 17:54" in Dubai time. */

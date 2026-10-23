@@ -69,7 +69,7 @@ export default defineMessages({
     "how.verify.desc":
       "Our transactions team confirms ownership, amount paid, any arrears and the developer's resale policy.",
     "how.live.title": "Listing goes live",
-    "how.live.desc": "Once you sign RERA Form A and the DLD advertising permit is issued, the unit is published with a verified badge, its payment plan and a true-cost breakdown.",
+    "how.live.desc": "Once you sign RERA Form A and the DLD advertising permit is issued, the unit is published with its payment plan and a true-cost breakdown, and a Verified badge once your SPA and statement of account are checked.",
     "how.offers.title": "Buyers make offers",
     "how.offers.desc":
       "Offers, counters and acceptance happen in the dashboard. We qualify every buyer before the NOC.",
@@ -90,7 +90,7 @@ export default defineMessages({
     "how.bento.eyebrow": "Built-in protection",
     "how.bento.title": "What we verify, and what you get",
     "how.bento.sub":
-      "Every listing is checked before it goes live, and every transfer settles at the DLD trustee office.",
+      "Every listing is reviewed by our team and carries a DLD advertising permit before it goes live, and every transfer settles at the DLD trustee office.",
     "how.bento.tag.verify": "We verify",
     "how.bento.tag.get": "You get",
     "how.bento.spa.title": "SPA & payment history",
@@ -221,7 +221,7 @@ export default defineMessages({
     "how.verify.title": "نتحقق لدى المطوّر",
     "how.verify.desc": "يتأكد فريق المعاملات لدينا من الملكية والمبلغ المدفوع وأي متأخرات وسياسة المطوّر لإعادة البيع.",
     "how.live.title": "نشر الإعلان",
-    "how.live.desc": "بعد توقيعك النموذج (A) وصدور تصريح الإعلان من دائرة الأراضي والأملاك، تُنشر الوحدة بشارة «موثّق» مع خطة الدفع وتفصيل للتكلفة الفعلية.",
+    "how.live.desc": "بعد توقيعك النموذج (A) وصدور تصريح الإعلان من دائرة الأراضي والأملاك، تُنشر الوحدة مع خطة الدفع وتفصيل للتكلفة الفعلية، وبشارة «موثّق» بعد التحقق من اتفاقية البيع والشراء وكشف الحساب.",
     "how.offers.title": "يقدّم المشترون عروضهم",
     "how.offers.desc":
       "تتم العروض والعروض المقابلة والقبول من لوحة التحكم، ونتحقق من جدية كل مشترٍ قبل طلب شهادة عدم الممانعة.",
@@ -241,7 +241,7 @@ export default defineMessages({
     "how.bento.eyebrow": "حماية في كل خطوة",
     "how.bento.title": "ما نتحقق منه، وما تحصل عليه",
     "how.bento.sub":
-      "نتحقق من كل إعلان قبل نشره، وتتم تسوية كل عملية نقل ملكية في مكتب أمين التسجيل لدى دائرة الأراضي والأملاك.",
+      "يراجع فريقنا كل إعلان ويستخرج له تصريح إعلان من دائرة الأراضي والأملاك قبل نشره، وتتم تسوية كل عملية نقل ملكية في مكتب أمين التسجيل لدى الدائرة.",
     "how.bento.tag.verify": "نتحقق منه",
     "how.bento.tag.get": "تحصل عليه",
     "how.bento.spa.title": "اتفاقية البيع والشراء وسجل الدفعات",

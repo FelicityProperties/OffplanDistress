@@ -53,7 +53,10 @@ export async function CashBands({ index }: { index: DistressIndex }) {
                   <span className="block text-xs text-muted-foreground tabular">{pct == null ? "—" : formatPct(pct, 0)}</span>
                   <Bar value={b.count} max={max} tone="gold" className="mt-1.5 h-2" />
                 </td>
-                <td className="py-4 pe-4 ps-2 text-end tabular text-muted-foreground sm:pe-8">{formatNumber(b.offers)}</td>
+                {/* One or two units in a band would expose those listings' private offer counts. */}
+                <td className="py-4 pe-4 ps-2 text-end tabular text-muted-foreground sm:pe-8">
+                  {b.count === 0 || b.count >= MIN_SAMPLE ? formatNumber(b.offers) : "—"}
+                </td>
               </tr>
             );
           })}

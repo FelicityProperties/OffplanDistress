@@ -228,6 +228,7 @@ export async function marketStats() {
       live: sql<number>`count(*) filter (where ${onMarket})::int`,
       value: sql<number>`coalesce(sum(${saleValue}) filter (where ${onMarket}), 0)::bigint`,
       avgDiscount: sql<number | null>`avg(${discount}) filter (where ${onMarket})`,
+      withLaunch: sql<number>`count(${discount}) filter (where ${onMarket})::int`,
       transferred: sql<number>`count(*) filter (where ${listings.status} = 'transferred')::int`,
     })
     .from(listings)
@@ -241,6 +242,7 @@ export async function marketStats() {
     live: row.live,
     value: Number(row.value),
     avgDiscount: row.avgDiscount == null ? null : Number(row.avgDiscount),
+    withLaunch: row.withLaunch,
     transferred: row.transferred,
     buyers,
   };

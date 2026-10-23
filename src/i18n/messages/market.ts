@@ -12,10 +12,10 @@ export default defineMessages({
     "hero.live": "Live",
     "hero.title": "Dubai Distress Index",
     "hero.summary":
-      "{count} distressed off-plan units are on the market right now. Where today's launch price is recorded, they are priced at a median {pct} below it.",
+      "{count} distressed off-plan units are listed on OffplanDistress right now, {available} of them still available. Where today's launch price is recorded, they are priced at a median {pct} below it.",
     "hero.summaryPremium":
-      "{count} distressed off-plan units are on the market right now. Where today's launch price is recorded, they are priced at a median {pct} above it.",
-    "hero.summaryValue": "{count} distressed off-plan units are on the market right now, with a combined sale value of {value}.",
+      "{count} distressed off-plan units are listed on OffplanDistress right now, {available} of them still available. Where today's launch price is recorded, they are priced at a median {pct} above it.",
+    "hero.summaryValue": "{count} distressed off-plan units are listed on OffplanDistress right now, {available} of them still available, with a combined sale value of {value}.",
     "hero.summaryPending": "Live statistics on distressed off-plan supply and demand in Dubai, computed only from real listings.",
     "hero.asOf": "As of {date}, Dubai time",
     "hero.updates": "Updates live",
@@ -33,10 +33,10 @@ export default defineMessages({
     "kpi.value": "Total sale value",
     "kpi.valueHint": "{upfront} upfront to sellers, the rest in remaining plans",
     "kpi.discount": "Median discount vs launch",
+    "kpi.premium": "Median premium over launch",
     "kpi.discountHint": "Average {avg} · based on {n} units with a launch price",
     "kpi.paid": "Median paid to the developer",
     "kpi.paidHint": "Share of the original purchase price",
-    premium: "{pct} above launch",
     insufficient: "Shown from {min} qualifying units",
     notEnough: "Not enough units yet",
 
@@ -70,7 +70,7 @@ export default defineMessages({
     "cash.band.1mTo2m": "AED 1M – 2M",
     "cash.band.gt2m": "Over AED 2M",
     "cash.medianUpfront": "Median upfront cash: {value}",
-    "cash.note": "Each band opens the marketplace filtered to that budget.",
+    "cash.note": "Each band opens the marketplace filtered to that budget. Offers show once a band has at least 3 units.",
 
     "seller.eyebrow": "Seller profile",
     "seller.title": "Who is selling, and how fast",
@@ -130,7 +130,7 @@ export default defineMessages({
     "method.eyebrow": "Methodology",
     "method.title": "How the index is calculated",
     "method.sub":
-      "Every figure is computed from the marketplace database at the moment this page loads. Nothing is estimated or modelled.",
+      "Every figure is computed directly from the marketplace's listing data at the moment this page loads, without modelling. Two inputs involve judgement: launch prices are recorded by our team for an equivalent new unit, and days to transfer is approximate.",
     "method.scope.title": "What counts",
     "method.scope.body":
       "Real listings that buyers can see on the marketplace right now: available, with an accepted offer, or with the NOC in progress. Listings under review, rejected, paused, withdrawn or already transferred are not part of supply.",
@@ -173,10 +173,10 @@ export default defineMessages({
     "hero.live": "مباشر",
     "hero.title": "مؤشر الوحدات المتعثرة في دبي",
     "hero.summary":
-      "يضم السوق الآن {count} من الوحدات على الخارطة المتعثرة، وحيثما سُجّل سعر الإطلاق الحالي تُعرض بخصم وسيط قدره {pct} عنه.",
+      "يُدرج على OffplanDistress الآن {count} من الوحدات على الخارطة المتعثرة (المتاح منها حالياً: {available})، وحيثما سُجّل سعر الإطلاق الحالي تُعرض بخصم وسيط قدره {pct} عنه.",
     "hero.summaryPremium":
-      "يضم السوق الآن {count} من الوحدات على الخارطة المتعثرة، وحيثما سُجّل سعر الإطلاق الحالي تُعرض بسعر وسيط يزيد عليه بنسبة {pct}.",
-    "hero.summaryValue": "يضم السوق الآن {count} من الوحدات على الخارطة المتعثرة، بقيمة بيع إجمالية قدرها {value}.",
+      "يُدرج على OffplanDistress الآن {count} من الوحدات على الخارطة المتعثرة (المتاح منها حالياً: {available})، وحيثما سُجّل سعر الإطلاق الحالي تُعرض بسعر وسيط يزيد عليه بنسبة {pct}.",
+    "hero.summaryValue": "يُدرج على OffplanDistress الآن {count} من الوحدات على الخارطة المتعثرة (المتاح منها حالياً: {available})، بقيمة بيع إجمالية قدرها {value}.",
     "hero.summaryPending": "إحصاءات مباشرة عن عرض الوحدات على الخارطة المتعثرة والطلب عليها في دبي، محسوبة من الإعلانات الحقيقية فقط.",
     "hero.asOf": "حتى {date} بتوقيت دبي",
     "hero.updates": "يُحدَّث مباشرةً",
@@ -194,10 +194,10 @@ export default defineMessages({
     "kpi.value": "إجمالي قيمة البيع",
     "kpi.valueHint": "منها {upfront} تُدفع مقدّماً للبائعين، والباقي أقساط متبقية",
     "kpi.discount": "الخصم الوسيط عن سعر الإطلاق",
+    "kpi.premium": "العلاوة الوسيطة على سعر الإطلاق",
     "kpi.discountHint": "المتوسط {avg} · عدد الوحدات المحتسبة: {n}",
     "kpi.paid": "النسبة الوسيطة المسدَّدة للمطوّر",
     "kpi.paidHint": "من سعر الشراء الأصلي",
-    premium: "أعلى من سعر الإطلاق بنسبة {pct}",
     insufficient: "يظهر عند توفر {min} وحدات مؤهّلة",
     notEnough: "لا تتوفر وحدات كافية بعد",
 
@@ -229,7 +229,7 @@ export default defineMessages({
     "cash.band.1mTo2m": "من مليون إلى مليوني درهم",
     "cash.band.gt2m": "أكثر من مليوني درهم",
     "cash.medianUpfront": "المبلغ المقدّم الوسيط: {value}",
-    "cash.note": "انقر أي فئة لعرض الصفقات ضمن تلك الميزانية.",
+    "cash.note": "انقر أي فئة لعرض الصفقات ضمن تلك الميزانية. يظهر عدد العروض متى ضمّت الفئة 3 وحدات على الأقل.",
 
     "seller.eyebrow": "ملف البائعين",
     "seller.title": "من يبيع، وبأي سرعة",
@@ -288,7 +288,7 @@ export default defineMessages({
 
     "method.eyebrow": "المنهجية",
     "method.title": "كيف يُحتسب المؤشر",
-    "method.sub": "تُحتسب كل الأرقام من قاعدة بيانات المنصة لحظة تحميل هذه الصفحة، دون أي تقدير أو نمذجة.",
+    "method.sub": "تُحتسب كل الأرقام مباشرة من بيانات الإعلانات على المنصة لحظة تحميل هذه الصفحة، دون أي نمذجة. ويدخل التقدير في عنصرين: سعر الإطلاق يسجّله فريقنا لوحدة جديدة مماثلة، وعدد الأيام حتى نقل الملكية تقريبي.",
     "method.scope.title": "ما الذي يُحتسب",
     "method.scope.body":
       "الإعلانات الحقيقية التي يراها المشترون في السوق الآن: المتاحة، أو التي عليها عرض مقبول، أو التي يجري استخراج شهادة عدم الممانعة لها. أما الإعلانات قيد المراجعة أو المرفوضة أو الموقوفة مؤقتاً أو المسحوبة أو التي نُقلت ملكيتها فلا تدخل في العرض.",
