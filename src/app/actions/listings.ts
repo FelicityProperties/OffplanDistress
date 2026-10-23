@@ -109,8 +109,16 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
   if (pending >= 10) return { error: t("listing.tooManyPending") };
 
   const parsed = listingSchema(t).safeParse(readListingForm(formData), { error: fallbackErrors(t) });
-  if (!parsed.success) {
-    return { error: t("form.fixDetails"), fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  // Final step of the sell form: "I own this unit or am authorised to sell it, the documents are genuine,
+  // and I agree to the Terms of Use". Enforced here too, not only in the browser.
+  const ownershipConfirmed = formData.get("confirmOwnership") === "on";
+  if (!parsed.success || !ownershipConfirmed) {
+    const ts = await getT("sell");
+    const fieldErrors: Record<string, string[] | undefined> = parsed.success
+      ? {}
+      : { ...z.flattenError(parsed.error).fieldErrors };
+    if (!ownershipConfirmed) fieldErrors.confirmOwnership = [ts("error.confirmOwnership")];
+    return { error: parsed.success ? ts("error.confirmOwnership") : t("form.fixDetails"), fieldErrors };
   }
   const v = parsed.data;
 

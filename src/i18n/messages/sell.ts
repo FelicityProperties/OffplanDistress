@@ -118,6 +118,10 @@ export default defineMessages({
     "submit.saving": "Saving your listing…",
     "submit.uploading": "Uploading documents ({i}/{n})…",
     "submit.cta": "Submit for verification",
+    "confirm.label":
+      "I own this unit or am authorised to sell it, the documents are genuine, and I agree to the {terms}",
+    "confirm.terms": "Terms of Use",
+    "error.confirmOwnership": "Please confirm you can sell this unit and accept the Terms of Use",
     "submit.success": "Listing submitted for verification",
 
     "done.title": "Submitted for verification",
@@ -275,6 +279,9 @@ export default defineMessages({
     "submit.saving": "جارٍ حفظ إعلانك…",
     "submit.uploading": "جارٍ رفع المستندات ({i}/{n})…",
     "submit.cta": "أرسل للتحقق",
+    "confirm.label": "أُقرّ بأنني مالك هذه الوحدة أو مخوَّل ببيعها، وبأن المستندات أصلية، وأوافق على {terms}",
+    "confirm.terms": "شروط الاستخدام",
+    "error.confirmOwnership": "يرجى تأكيد أحقيتك في بيع هذه الوحدة والموافقة على شروط الاستخدام",
     "submit.success": "تم إرسال إعلانك للتحقق",
 
     "done.title": "تم الإرسال للتحقق",

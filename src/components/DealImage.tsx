@@ -17,8 +17,14 @@ export function DealImage({ src, alt, className }: { src?: string | null; alt: s
 
   if (!src || failed) {
     return (
-      <div className={cn("grid h-full w-full place-items-center bg-ink-gradient", className)} role="img" aria-label={alt}>
-        <LogoMark tone="light" className="h-10 w-10 opacity-80" />
+      <div
+        className={cn("relative grid h-full w-full place-items-center overflow-hidden bg-ink-gradient", className)}
+        role="img"
+        aria-label={alt}
+      >
+        <div aria-hidden className="absolute inset-0 bg-dots-dark opacity-40" />
+        <div aria-hidden className="absolute inset-x-0 -bottom-1/3 mx-auto h-2/3 w-2/3 bg-glow-gold opacity-25" />
+        <LogoMark tone="light" className="relative h-10 w-10 opacity-80" />
       </div>
     );
   }

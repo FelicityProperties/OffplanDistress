@@ -22,6 +22,13 @@
       "when": 1792506311137,
       "tag": "0002_throttle_and_admin_pause",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792747422477,
+      "tag": "0003_terms_accepted_at",
+      "breakpoints": true
     }
   ]
 }

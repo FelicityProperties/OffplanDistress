@@ -17,9 +17,9 @@ export default async function ForgotPasswordPage() {
   return (
     <AuthShell title={t("forgot.title")} sub={t("forgot.sub")}>
       <ForgotPasswordForm defaultEmail={user?.email} />
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-8 border-t border-border/70 pt-6 text-center text-sm text-muted-foreground">
         {t("forgot.remembered")}{" "}
-        <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
+        <Link href="/login" className="rounded-sm font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           {tc("logIn")}
         </Link>
       </p>

@@ -70,7 +70,12 @@ export async function DealCard({
           </div>
         </div>
       </Link>
-      <WatchButton listingId={deal.id} watching={watching} className="absolute end-3 top-3" />
+      <WatchButton
+        listingId={deal.id}
+        watching={watching}
+        // In list view the photo is an 18rem start column: keep the heart on its top-end corner, not over the text.
+        className={cn("absolute end-3 top-3", list && "sm:end-auto sm:start-[15.25rem]")}
+      />
       <Link href={href} className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="font-semibold uppercase tracking-[0.14em]">{developer}</span>

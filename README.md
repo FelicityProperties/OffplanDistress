@@ -12,6 +12,7 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Area | Pages |
 | --- | --- |
 | Marketing | Home, How it works, Fees (with calculator), Contact |
+| Legal | Terms of Use, Privacy Policy, Cookie Policy (`/terms`, `/privacy`, `/cookies`) |
 | Marketplace | Browse deals (filters, sort, search, saved searches), deal page (payment plan, true-cost breakdown, offer, watchlist, viewing request) |
 | Sellers | 5-step "Sell my unit" form with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline) |
 | Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts |
@@ -23,6 +24,17 @@ bypass the platform.
 
 Design (logo, favicon, colours, typography and page layouts) was generated in Lovable and ported to this
 Next.js app. Brand name, contact details and fee terms live in `src/lib/config.ts`.
+
+### Legal
+
+`/terms`, `/privacy` and `/cookies` render the Terms of Use, Privacy Policy (UAE PDPL) and Cookie Policy in
+English and Arabic from `src/content/legal/`; company name, email, phone, RERA ORN, licence number, address and
+fee rates are pulled from `src/lib/config.ts`, so the texts follow the config. Consent is collected at three
+points: a required "I agree to the Terms of Use and Privacy Policy" box at sign-up (stored as
+`users.terms_accepted_at`), a required ownership / authority / genuine-documents confirmation on the last step
+of the sell form (enforced in `createListing`), and a short notice under the offer button that offers aren't
+binding until Form F / MOU is signed; the contact form links to the Privacy Policy. **The texts are templates
+for a Dubai real-estate brokerage — have them reviewed by a UAE-qualified lawyer before relying on them.**
 
 ### Notifications
 
@@ -64,7 +76,8 @@ In-app notifications always work. Emails go out through [Resend](https://resend.
    - `CRON_SECRET` — **required for alerts**: any long random string. The daily alert job refuses to run without it.
    - Optional: `RESEND_API_KEY` + `EMAIL_FROM` for email, `NEXT_PUBLIC_SITE_URL` (e.g. `https://offplandistress.com`;
      defaults to the Vercel production URL) for links in emails, and the
-     `NEXT_PUBLIC_CONTACT_*` / `NEXT_PUBLIC_RERA_ORN` values shown on the site.
+     `NEXT_PUBLIC_CONTACT_*` / `NEXT_PUBLIC_RERA_ORN` values shown on the site, plus `NEXT_PUBLIC_TRADE_LICENCE`
+     (licence number) and `NEXT_PUBLIC_ADDRESS` (defaults to "Dubai, United Arab Emirates") for the legal pages.
 3. Deploy. `vercel.json` pins the Next.js framework preset, so it doesn't matter what Vercel detected when the
    project was created. `npm run build` first runs `scripts/migrate.mjs`: it applies database migrations (a
    production build fails if Vercel has no database URL for Production, so a broken deploy never goes live),

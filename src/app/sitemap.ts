@@ -10,7 +10,9 @@ export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
-  const pages = ["", "/deals", "/sell", "/how-it-works", "/fees", "/contact"].map((p) => ({ url: `${base}${p}` }));
+  const pages = ["", "/deals", "/sell", "/how-it-works", "/fees", "/contact", "/terms", "/privacy", "/cookies"].map(
+    (p) => ({ url: `${base}${p}` }),
+  );
   const deals = await db
     .select({ refNo: listings.refNo, updatedAt: listings.updatedAt })
     .from(listings)

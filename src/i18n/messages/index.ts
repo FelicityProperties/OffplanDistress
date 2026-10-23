@@ -6,6 +6,7 @@ import deal from "./deal";
 import deals from "./deals";
 import errors from "./errors";
 import home from "./home";
+import legal from "./legal";
 import marketing from "./marketing";
 import notifications from "./notifications";
 import password from "./password";
@@ -22,6 +23,7 @@ export const messages = {
   deals,
   errors,
   home,
+  legal,
   marketing,
   notifications,
   password,

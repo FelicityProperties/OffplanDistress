@@ -14,6 +14,10 @@ export const BRAND = {
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP ?? "",
   /** RERA office registration number */
   orn: process.env.NEXT_PUBLIC_RERA_ORN ?? "",
+  /** Commercial (trade) licence number; the legal pages mention it only when filled in. */
+  licence: process.env.NEXT_PUBLIC_TRADE_LICENCE ?? "",
+  /** Registered office address shown on the legal pages (omitted when set to an empty string). */
+  address: process.env.NEXT_PUBLIC_ADDRESS ?? "Dubai, United Arab Emirates",
 };
 
 /**

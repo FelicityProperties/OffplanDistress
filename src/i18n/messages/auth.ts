@@ -30,6 +30,10 @@ export default defineMessages({
     "signup.submit": "Create account",
     "signup.pending": "Creating account…",
     "signup.consent": "By creating an account you agree to be contacted by our team about your listings and offers.",
+    "signup.acceptTerms": "I agree to the {terms} and {privacy}",
+    "signup.acceptTerms.terms": "Terms of Use",
+    "signup.acceptTerms.privacy": "Privacy Policy",
+    "signup.acceptTerms.error": "Please accept the Terms of Use and Privacy Policy to create an account.",
     "signup.haveAccount": "Already have an account?",
 
     "shell.headline": "Exit an off-plan unit, or buy one below launch price — with the paperwork handled.",
@@ -65,6 +69,10 @@ export default defineMessages({
     "signup.submit": "إنشاء الحساب",
     "signup.pending": "جارٍ إنشاء الحساب…",
     "signup.consent": "بإنشائك حساباً، فإنك توافق على أن يتواصل معك فريقنا بخصوص إعلاناتك وعروضك.",
+    "signup.acceptTerms": "أوافق على {terms} و{privacy}",
+    "signup.acceptTerms.terms": "شروط الاستخدام",
+    "signup.acceptTerms.privacy": "سياسة الخصوصية",
+    "signup.acceptTerms.error": "يرجى الموافقة على شروط الاستخدام وسياسة الخصوصية لإنشاء الحساب.",
     "signup.haveAccount": "لديك حساب بالفعل؟",
 
     "shell.headline": "بِع وحدتك على الخارطة بسرعة، أو اشترِ وحدة بأقل من سعر الإطلاق — ونتولى عنك جميع الإجراءات.",

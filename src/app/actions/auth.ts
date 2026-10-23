@@ -30,24 +30,27 @@ function fallbackErrors(t: T): z.core.$ZodErrorMap {
   };
 }
 
-const signupSchema = (t: T) =>
+const signupSchema = (t: T, ta: TFn<"auth">) =>
   z.object({
     fullName: z.string(t("field.fullName")).trim().min(2, t("field.fullName")),
     email: z.string(t("field.email")).trim().pipe(z.email(t("field.email"))),
     phone: z.string().trim().max(30).optional(),
     password: z.string(t("field.passwordMin")).min(8, t("field.passwordMin")),
     intent: z.enum(["buy", "sell", "both"]),
+    // The "I agree to the Terms of Use and Privacy Policy" checkbox; unticked boxes aren't submitted at all.
+    acceptTerms: z.literal("on", ta("signup.acceptTerms.error")),
   });
 
 export async function signup(_prev: FormState, formData: FormData): Promise<FormState> {
-  const t = await getT("errors");
-  const parsed = signupSchema(t).safeParse(
+  const [t, ta] = await Promise.all([getT("errors"), getT("auth")]);
+  const parsed = signupSchema(t, ta).safeParse(
     {
       fullName: formData.get("fullName"),
       email: formData.get("email"),
       phone: formData.get("phone") || undefined,
       password: formData.get("password"),
       intent: formData.get("intent") || "both",
+      acceptTerms: formData.get("acceptTerms"),
     },
     { error: fallbackErrors(t) },
   );
@@ -72,6 +75,7 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
       intent,
       // Notifications and emails go out in the language the account was created in.
       locale: await getLocale(),
+      termsAcceptedAt: new Date(),
     })
     .returning({ id: users.id });
 
