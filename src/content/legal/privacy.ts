@@ -31,13 +31,14 @@ export const privacyPolicy: LegalContent = {
           "Activity and preferences: your watchlist, saved searches and alert settings, and the in-app notifications and emails we send you.",
           "Enquiries: the name, email address, telephone number and message you send through our contact, viewing-request or seller assessment forms (for the seller assessment form, also the figures you enter about your Unit, such as the purchase price, the amount paid and whether you have received a default notice), or when you call us or message us on WhatsApp (including any figures you choose to send, such as those pre-filled from the exit calculator).",
           "Technical data: server logs containing your IP address, the pages requested and the date and time; rate-limit records containing your IP address and, for sign-in attempts, the email address entered; the two cookies described in our Cookie Policy; and, when you send one of our forms, how your visit reached us (the campaign tags of the link you followed, a partner’s referral code, the first page you opened and the referring website), which your browser keeps for that visit in session storage rather than in a cookie.",
+          "Visit statistics: for each page you view outside your dashboard, the page’s address (without any query string), the website whose link brought you to us (if you arrived from another site), the campaign tags and partner referral code in the link you followed, your country and city as derived from your IP address by our hosting provider, the type of device (mobile, tablet or desktop) and browser, the language you use on the Platform and how long the page was shown on your screen. Pages are grouped into visits by a random identifier that your browser keeps in session storage for that tab (a new one after 30 minutes of inactivity), and visitors are told apart by an anonymous identifier calculated from your IP address and browser details together with the date and a secret key, which changes every day. We use no cookies for this, and we do not store your IP address or your browser’s full identification string (its user agent) with these statistics, only the device type and browser name. When you send one of our forms, the identifier of your visit is sent with it, so that we can see which pages were viewed before the form was sent. Nothing is recorded for our signed-in staff or for automated browsers.",
         ],
       },
       {
         id: "sources",
         heading: "Where the data comes from",
         paragraphs: [
-          "Most of the personal data we hold is provided by you when you register, list a Unit, make an Offer, upload documents or contact us. Some is generated automatically when you use the Platform, such as server logs, rate-limit records and notifications.",
+          "Most of the personal data we hold is provided by you when you register, list a Unit, make an Offer, upload documents or contact us. Some is generated automatically when you use the Platform, such as server logs, rate-limit records, visit statistics and notifications.",
           "In the course of a transaction we also receive information from Developers (for example, statements of account and NOC conditions), from the DLD and trustee offices, and from the other party to the transaction. To meet our legal obligations we may also check public sources, such as sanctions lists.",
         ],
       },
@@ -56,6 +57,7 @@ export const privacyPolicy: LegalContent = {
           "keep the Platform and your account secure, prevent fraud and abuse, for example by limiting repeated sign-in attempts, and fix faults (necessary to perform our agreement with you and to meet our duty under the PDPL to protect personal data);",
           "answer your enquiries, viewing requests and seller assessment requests (steps you ask us to take);",
           "record, when you send one of our forms, how your visit reached us (campaign tags, a partner’s referral code, the first page you opened and the referring website), so that we can tell which campaigns and partners bring enquiries and credit partner agents (with your consent, which you give by sending the form after being told about it here and next to the form; you can withdraw it by asking us to delete that record);",
+          "compile the visit statistics described above, to understand how the Platform is used, improve it and measure how our campaigns perform (to the extent these statistics are personal data at all, this is necessary to provide, secure and improve the Platform you use under the Terms of Use). Visitors cannot be identified from these statistics alone and we use them only in aggregate, except that when you send one of our forms we can see the pages viewed during that visit alongside your enquiry (with your consent, which you give by sending the form after being told about it here; you can withdraw it by asking us to delete that record);",
           "send saved-search alerts and price-drop emails for deals on your watchlist (at your request; you can turn off the alerts for each saved search at any time, and stop price-drop emails for a deal by removing it from your watchlist); and",
           "establish, exercise or defend legal claims and respond to lawful requests from courts, the DLD, RERA and other authorities.",
         ],
@@ -92,8 +94,9 @@ export const privacyPolicy: LegalContent = {
           "Transaction and AML records: Listings, Offers, documents and records relating to a transaction, and the identity and source-of-funds information collected for anti-money-laundering purposes, for at least five years, as the law requires.",
           "Server logs: up to 30 days.",
           "Rate-limit records: deleted automatically once they are more than 24 hours old. The clean-up runs whenever a new attempt is recorded and at least once a day.",
+          "Visit statistics: 13 months, then deleted automatically by a daily clean-up.",
           "Enquiries: as long as needed to respond and follow up, and afterwards only as part of the transaction records described above where relevant.",
-          "Seller assessment requests: up to 24 months after our last contact with you, then deleted automatically, unless they become part of a Listing or transaction, in which case the periods above apply.",
+          "Seller assessment requests: up to 24 months after our last contact with you, then deleted automatically, unless they have been linked to your account or have become part of a Listing or transaction, in which case the periods above apply.",
         ],
       },
       {
@@ -138,7 +141,7 @@ export const privacyPolicy: LegalContent = {
         id: "cookies",
         heading: "Cookies",
         paragraphs: [
-          "We use only two cookies, both strictly necessary: od_session keeps you logged in and od_locale remembers your language. We do not use analytics, advertising or third-party cookies. Our Cookie Policy explains them in detail.",
+          "We use only two cookies, both strictly necessary: od_session keeps you logged in and od_locale remembers your language. We do not use analytics, advertising or third-party cookies; our visit statistics work without cookies. Our Cookie Policy explains them in detail.",
         ],
       },
       {
@@ -198,13 +201,14 @@ export const privacyPolicy: LegalContent = {
           "النشاط والتفضيلات: قائمة المتابعة، وعمليات البحث المحفوظة وإعدادات التنبيه، والإشعارات داخل المنصة والرسائل الإلكترونية التي نرسلها إليك.",
           "الاستفسارات: الاسم وعنوان البريد الإلكتروني ورقم الهاتف والرسالة التي ترسلها عبر نموذج التواصل أو نموذج طلب المعاينة أو نموذج تقييم البائع (وفي نموذج تقييم البائع أيضاً الأرقام التي تُدخلها عن وحدتك، كسعر الشراء والمبلغ المدفوع وما إذا كنت قد تسلّمت إخطاراً بالتعثّر في السداد)، أو عند اتصالك بنا هاتفياً أو مراسلتنا عبر واتساب (بما في ذلك أي أرقام تختار إرسالها، كالأرقام المعبّأة مسبقاً من حاسبة الخروج).",
           "البيانات التقنية: سجلات الخادم التي تتضمن عنوان IP الخاص بك والصفحات المطلوبة وتاريخ الطلب ووقته؛ وسجلات الحدّ من المحاولات المتكررة التي تتضمن عنوان IP الخاص بك، وكذلك عنوان البريد الإلكتروني المُدخَل في محاولات تسجيل الدخول؛ وملفّا تعريف الارتباط المبيّنان في سياسة ملفات تعريف الارتباط؛ وعند إرسالك أحد نماذجنا، طريقة وصول زيارتك إلينا (وسوم الحملة في الرابط الذي اتبعته، ورمز الإحالة الخاص بأحد الشركاء، وأول صفحة فتحتها، والموقع الذي أحالك إلينا)، ويحتفظ بها متصفحك طوال تلك الزيارة في مساحة تخزين الجلسة لا في ملف تعريف ارتباط.",
+          "إحصاءات الزيارات: نسجّل لكل صفحة تتصفحها خارج لوحة التحكم الخاصة بك عنوانها (دون أي معاملات استعلام)، والموقع الذي أوصلك رابطه إلينا (إن جئت من موقع آخر)، ووسوم الحملة ورمز إحالة الشريك في الرابط الذي اتبعته، والدولة والمدينة كما يستنتجهما مزوّد الاستضافة من عنوان IP الخاص بك، ونوع الجهاز (هاتف محمول أو جهاز لوحي أو حاسوب) والمتصفح، واللغة التي تستخدمها على المنصة، والمدة التي ظلّت فيها الصفحة معروضة على شاشتك. وتُجمَع الصفحات في زيارات بواسطة معرّف عشوائي يحتفظ به متصفحك في مساحة تخزين الجلسة لعلامة التبويب تلك (ويُستبدل بآخر بعد 30 دقيقة دون أي نشاط)، ويُميَّز الزوار بعضهم من بعض بمعرّف مجهول يُحتسب من عنوان IP وبيانات المتصفح مع التاريخ ومفتاح سري، ويتغيّر كل يوم. ولا نستخدم لذلك أي ملفات تعريف ارتباط، ولا نخزّن مع هذه الإحصاءات عنوان IP الخاص بك ولا سلسلة تعريف متصفحك الكاملة (وكيل المستخدم)، بل نوع الجهاز واسم المتصفح فقط. وعند إرسالك أحد نماذجنا، يُرسَل معه معرّف زيارتك لنتمكن من معرفة الصفحات التي تُصفِّحت قبل إرساله. ولا يُسجَّل شيء لموظفينا المسجّلين الدخول ولا للمتصفحات الآلية.",
         ],
       },
       {
         id: "sources",
         heading: "مصادر البيانات",
         paragraphs: [
-          "تقدّم أنت معظم البيانات الشخصية التي نحتفظ بها عند التسجيل أو إدراج وحدة أو تقديم عرض أو رفع المستندات أو التواصل معنا، ويُنشأ بعضها تلقائياً عند استخدامك للمنصة، مثل سجلات الخادم وسجلات الحدّ من المحاولات والإشعارات.",
+          "تقدّم أنت معظم البيانات الشخصية التي نحتفظ بها عند التسجيل أو إدراج وحدة أو تقديم عرض أو رفع المستندات أو التواصل معنا، ويُنشأ بعضها تلقائياً عند استخدامك للمنصة، مثل سجلات الخادم وسجلات الحدّ من المحاولات وإحصاءات الزيارات والإشعارات.",
           "وفي سياق المعاملة، نتلقى أيضاً معلومات من المطوّرين (مثل كشوف الحساب وشروط إصدار شهادة عدم الممانعة)، ومن دائرة الأراضي والأملاك ومكاتب أمناء التسجيل، ومن الطرف الآخر في المعاملة. وقد نرجع كذلك إلى مصادر عامة، مثل قوائم العقوبات، للوفاء بالتزاماتنا القانونية.",
         ],
       },
@@ -223,6 +227,7 @@ export const privacyPolicy: LegalContent = {
           "حماية المنصة وحسابك، ومنع الاحتيال وإساءة الاستخدام، كالحدّ من محاولات تسجيل الدخول المتكررة، وإصلاح الأعطال (وهي معالجة ضرورية لتنفيذ اتفاقنا معك وللوفاء بواجبنا في حماية البيانات الشخصية بموجب القانون)؛",
           "الرد على استفساراتك وطلبات المعاينة وطلبات تقييم وحدات البائعين (بناءً على طلبك)؛",
           "تسجيل الطريقة التي وصلت بها زيارتك إلينا عند إرسالك أحد نماذجنا (وسوم الحملة، ورمز إحالة الشريك، وأول صفحة فتحتها، والموقع الذي أحالك)، لنعرف الحملات والشركاء الذين يجلبون الاستفسارات ولنحتسب مستحقات الوسطاء الشركاء (بناءً على موافقتك التي تمنحها بإرسال النموذج بعد إعلامك بذلك هنا وبجوار النموذج، ويمكنك سحبها بأن تطلب منا حذف هذا السجل)؛",
+          "إعداد إحصاءات الزيارات المبيّنة أعلاه، لفهم كيفية استخدام المنصة وتحسينها وقياس أداء حملاتنا (وبقدر ما تُعدّ هذه الإحصاءات بيانات شخصية أصلاً، فإن معالجتها ضرورية لتقديم المنصة التي تستخدمها بموجب شروط الاستخدام وحمايتها وتحسينها). ولا يمكن التعرّف على الزوار من هذه الإحصاءات وحدها، ولا نستخدمها إلا مجمّعةً، باستثناء أنه عند إرسالك أحد نماذجنا يمكننا الاطلاع على الصفحات التي تُصفِّحت خلال تلك الزيارة إلى جانب طلبك (بناءً على موافقتك التي تمنحها بإرسال النموذج بعد إعلامك بذلك هنا، ويمكنك سحبها بأن تطلب منا حذف هذا السجل)؛",
           "إرسال تنبيهات عمليات البحث المحفوظة ورسائل انخفاض أسعار الصفقات المدرجة في قائمة متابعتك (بناءً على طلبك، ويمكنك في أي وقت إيقاف التنبيهات لكل عملية بحث محفوظة على حدة، وإيقاف رسائل انخفاض السعر لصفقة ما بإزالتها من قائمة المتابعة)؛",
           "إثبات الحقوق القانونية أو ممارستها أو الدفاع عنها، والاستجابة للطلبات المشروعة من المحاكم ودائرة الأراضي والأملاك ومؤسسة التنظيم العقاري وغيرها من الجهات.",
         ],
@@ -259,8 +264,9 @@ export const privacyPolicy: LegalContent = {
           "سجلات المعاملات ومكافحة غسل الأموال: الإعلانات والعروض والمستندات والسجلات المتعلقة بأي معاملة، وبيانات الهوية ومصدر الأموال التي نجمعها لأغراض مكافحة غسل الأموال، لمدة لا تقل عن خمس سنوات وفقاً لما يقتضيه القانون.",
           "سجلات الخادم: مدة أقصاها 30 يوماً.",
           "سجلات الحدّ من المحاولات المتكررة: تُحذف تلقائياً متى تجاوز عمرها 24 ساعة، وتجري عملية الحذف عند تسجيل كل محاولة جديدة ومرة واحدة يومياً على الأقل.",
+          "إحصاءات الزيارات: 13 شهراً، ثم تُحذف تلقائياً بعملية تنظيف يومية.",
           "الاستفسارات: المدة اللازمة للرد عليها ومتابعتها، ثم ضمن سجلات المعاملات المبيّنة أعلاه عند الاقتضاء.",
-          "طلبات تقييم وحدات البائعين: مدة أقصاها 24 شهراً من آخر تواصل بيننا، ثم تُحذف تلقائياً، ما لم تصبح جزءاً من إعلان أو معاملة، فتسري عندئذ المدد المبيّنة أعلاه.",
+          "طلبات تقييم وحدات البائعين: مدة أقصاها 24 شهراً من آخر تواصل بيننا، ثم تُحذف تلقائياً، ما لم تُربط بحسابك أو تصبح جزءاً من إعلان أو معاملة، فتسري عندئذ المدد المبيّنة أعلاه.",
         ],
       },
       {
@@ -305,7 +311,7 @@ export const privacyPolicy: LegalContent = {
         id: "cookies",
         heading: "ملفات تعريف الارتباط",
         paragraphs: [
-          `لا نستخدم سوى ملفَّي تعريف ارتباط، وكلاهما ضروري تماماً: ${iso("od_session")} لإبقائك مسجّلاً الدخول، و${iso("od_locale")} لتذكّر لغتك. ولا نستخدم ملفات تعريف ارتباط للتحليلات أو الإعلانات أو تابعة لأطراف أخرى. وتوضّحها سياسة ملفات تعريف الارتباط بالتفصيل.`,
+          `لا نستخدم سوى ملفَّي تعريف ارتباط، وكلاهما ضروري تماماً: ${iso("od_session")} لإبقائك مسجّلاً الدخول، و${iso("od_locale")} لتذكّر لغتك. ولا نستخدم ملفات تعريف ارتباط للتحليلات أو الإعلانات أو تابعة لأطراف أخرى، ولا تعتمد إحصاءات الزيارات لدينا على أي ملفات تعريف ارتباط. وتوضّحها سياسة ملفات تعريف الارتباط بالتفصيل.`,
         ],
       },
       {

@@ -1,4 +1,5 @@
 import admin from "./admin";
+import analytics from "./analytics";
 import auth from "./auth";
 import common from "./common";
 import dashboard from "./dashboard";
@@ -18,6 +19,7 @@ import sell from "./sell";
 // One namespace per area of the app; each file owns its English + Arabic copy.
 export const messages = {
   admin,
+  analytics,
   auth,
   common,
   dashboard,

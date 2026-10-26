@@ -13,6 +13,7 @@ export default defineMessages({
     "nav.inquiries": "Inquiries",
     "nav.users": "Users",
     "nav.leads": "Seller leads",
+    "nav.analytics": "Analytics",
 
     "col.listing": "Listing",
     "col.seller": "Seller",
@@ -203,6 +204,7 @@ export default defineMessages({
     "nav.inquiries": "الاستفسارات",
     "nav.users": "المستخدمون",
     "nav.leads": "طلبات البائعين",
+    "nav.analytics": "التحليلات",
 
     "col.listing": "الإعلان",
     "col.seller": "البائع",

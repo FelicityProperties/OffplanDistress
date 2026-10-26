@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigserial,
   boolean,
   customType,
   date,
@@ -89,6 +90,8 @@ export type Source = {
   ref?: string;
   landing?: string;
   referrer_host?: string;
+  /** The tab's anonymous analytics session (page_views.session_id), so /admin/analytics can show the pages viewed first. */
+  sid?: string;
 };
 
 export const users = pgTable(
@@ -369,6 +372,53 @@ export const sellerLeads = pgTable(
     uniqueIndex("seller_leads_ref_idx").on(t.refNo),
     index("seller_leads_status_idx").on(t.status, t.createdAt),
     index("seller_leads_user_idx").on(t.userId),
+  ],
+);
+
+/**
+ * First-party, cookieless visit statistics (src/lib/analytics.ts, collected by src/components/analytics/PageViewTracker.tsx
+ * through POST /api/a). One row per page shown. No IP address, user agent or account is stored: visitors are told apart by
+ * visitor_hash, a keyed hash of IP + user agent + the Dubai date that changes every day. Signed-in admins and devices
+ * marked "ignore" are never recorded. Rows older than 13 months are deleted by the daily ops cron.
+ */
+export const pageViews = pgTable(
+  "page_views",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    /** Random id the browser gives this page view, so the leave beacon can add the time spent on it. */
+    viewId: uuid("view_id").notNull(),
+    /** Random per browser tab (sessionStorage), renewed after 30 minutes without a page view. */
+    sessionId: text("session_id").notNull(),
+    /** Keyed HMAC-SHA256 of Dubai date + IP + user agent (src/lib/analytics.ts), 32 hex characters; rotates daily. */
+    visitorHash: text("visitor_hash").notNull(),
+    /** Path only, never the query string. */
+    path: text("path").notNull(),
+    /** Host of an external referring site, on the first page of a visit only. */
+    referrerHost: text("referrer_host"),
+    utmSource: text("utm_source"),
+    utmMedium: text("utm_medium"),
+    utmCampaign: text("utm_campaign"),
+    /** A partner's ?ref= code. */
+    ref: text("ref"),
+    /** ISO country code and city from the hosting platform's IP geolocation (x-vercel-ip-country / -city). */
+    country: text("country"),
+    city: text("city"),
+    /** "mobile" | "tablet" | "desktop" */
+    device: text("device"),
+    /** Browser family only, e.g. "Chrome", "Safari". */
+    browser: text("browser"),
+    /** Site language when the page was shown: "en" | "ar". */
+    locale: text("locale"),
+    /** Time the page was visible, set by the leave beacon (only ever increases, at most 30 minutes); null until then. */
+    durationMs: integer("duration_ms"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("page_views_view_idx").on(t.viewId),
+    index("page_views_created_idx").on(t.createdAt),
+    index("page_views_session_idx").on(t.sessionId, t.createdAt),
+    index("page_views_visitor_idx").on(t.visitorHash),
+    index("page_views_path_idx").on(t.path),
   ],
 );
 
