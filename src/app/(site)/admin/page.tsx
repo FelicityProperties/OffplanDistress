@@ -7,8 +7,9 @@ import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
 import { platformFee } from "@/lib/deal-math";
 import { adminListings, adminStats } from "@/lib/admin";
+import { todaySnapshot } from "@/lib/analytics-report";
 import { leadStats } from "@/lib/leads";
-import { formatAED, formatAEDCompact, formatDate, refCode } from "@/lib/format";
+import { formatAED, formatAEDCompact, formatDate, formatNumber, refCode } from "@/lib/format";
 import { listingsWithoutPermitExpiry } from "@/lib/permits";
 import { developerName } from "@/lib/place-names";
 
@@ -17,12 +18,14 @@ const NO_EXPIRY_LINKS = 12;
 
 export default async function AdminQueue() {
   await requireAdmin();
-  const [s, leads, queue, t, tc, locale] = await Promise.all([
+  const [s, leads, queue, t, tc, ta, today, locale] = await Promise.all([
     adminStats(),
     leadStats(),
     adminListings("pending_review"),
     getT("admin"),
     getT("common"),
+    getT("analytics"),
+    todaySnapshot(),
     getLocale(),
   ]);
   const noExpiry = await listingsWithoutPermitExpiry();
@@ -52,7 +55,7 @@ export default async function AdminQueue() {
           </div>
         </div>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Kpi label={t("queue.kpi.awaiting")} value={String(s.pending)} />
         {/* Sellers from the free estimate, waiting for a call */}
         <Link
@@ -74,6 +77,19 @@ export default async function AdminQueue() {
           }
         />
         <Kpi label={t("queue.kpi.feesEarned")} value={formatAEDCompact(platformFee(s.transferredValue).total, locale)} />
+        {/* Today's visit statistics (your own visits are never counted) */}
+        <Link
+          href="/admin/analytics?range=today"
+          className="rounded-xl border bg-card p-5 shadow-card transition hover:border-gold/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <p className="text-sm text-muted-foreground">{ta("tile.visitors")}</p>
+          <p className="mt-2 text-2xl font-semibold">{today ? formatNumber(today.visitors) : "—"}</p>
+          {today && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {ta("tile.hint", { live: formatNumber(today.live), leads: formatNumber(today.leads) })}
+            </p>
+          )}
+        </Link>
       </div>
 
       <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
