@@ -38,7 +38,8 @@ export default async function WatchlistPage() {
             // Off the market, or no longer an advert because its DLD permit or Form A ran out.
             const available = isAdvertised(d);
             return (
-              <div key={d.id} className="relative flex gap-4 rounded-xl border bg-card p-3 shadow-card card-lift">
+              // min-w-0: a grid item otherwise grows to its longest unbroken line, past the screen on a phone.
+              <div key={d.id} className="relative flex min-w-0 gap-4 rounded-xl border bg-card p-3 shadow-card card-lift">
                 <Link href={`/deals/${refCode(d.refNo)}`} className="flex min-w-0 flex-1 gap-4">
                   <div className="h-24 w-28 shrink-0 overflow-hidden rounded-lg">
                     <DealImage src={d.images[0]} alt={d.projectName} />

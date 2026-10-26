@@ -97,8 +97,9 @@ export default async function AdminQueue() {
             )}
             {queue.map((q) => (
               <TableRow key={q.id}>
-                {/* wrap-anywhere: a typed developer (or project) name can be one word wider than the column. */}
-                <TableCell className="wrap-anywhere">
+                {/* wrap-anywhere: a typed developer (or project) name can be one word wider than the column; min-w keeps
+                    the column readable once it may break anywhere. */}
+                <TableCell className="min-w-56 wrap-anywhere">
                   <Link href={`/admin/listings/${q.id}`} className="font-medium hover:underline">
                     {q.projectName}
                   </Link>
