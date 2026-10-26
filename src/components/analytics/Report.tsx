@@ -101,7 +101,8 @@ export function rateDelta(cur: number | null, prev: number | null, t: TA, higher
   const prevLabel = pct(prev);
   if (Math.abs(pts) < 0.05) return { text: t("delta.same", { prev: prevLabel }), dir: "flat", good: null };
   const good = pts > 0 === higherIsBetter;
-  const change = isoPct(t("delta.points", { n: `${pts > 0 ? "+" : "−"}${Math.abs(pts).toFixed(1)}` }));
+  // Only the signed number is isolated: wrapping the words too would put "نقطة مئوية" before the number in Arabic.
+  const change = t("delta.points", { n: isoPct(`${pts > 0 ? "+" : "−"}${Math.abs(pts).toFixed(1)}`) });
   return { text: t("delta.vs", { change, prev: prevLabel }), dir: pts > 0 ? "up" : "down", good, sr: t(good ? "delta.better" : "delta.worse") };
 }
 
@@ -167,12 +168,28 @@ function labelled(n: number) {
 
 type ChartPoint = SeriesPoint & { short: string; week?: string; long: string };
 
-/** One single-series column chart (a small multiple); decorative, the table below carries the numbers. */
-function Columns({ points, field, title, color, t }: { points: ChartPoint[]; field: "visitors" | "leads"; title: string; color: string; t: TA }) {
+/**
+ * One single-series column chart (a small multiple); decorative, the table below carries the numbers. `total` is the
+ * period's figure from the headline: per hour, someone seen in two hours is in both columns but one visitor of the day.
+ */
+function Columns({
+  points,
+  field,
+  title,
+  color,
+  total,
+  t,
+}: {
+  points: ChartPoint[];
+  field: "visitors" | "leads";
+  title: string;
+  color: string;
+  total: number;
+  t: TA;
+}) {
   const values = points.map((p) => p[field]);
   const max = Math.max(0, ...values);
   const top = niceTop(max);
-  const total = values.reduce((a, b) => a + b, 0);
   const n = points.length;
   const labels = labelled(n);
   const gap = n > 31 ? "gap-px" : "gap-0.5";
@@ -262,7 +279,20 @@ function Columns({ points, field, title, color, t }: { points: ChartPoint[]; fie
 }
 
 /** Visitors and leads per day (or per hour today) as two small multiples on their own scales, plus the table. */
-export function DailyChart({ points, hourly, locale, t }: { points: SeriesPoint[]; hourly: boolean; locale: Locale; t: TA }) {
+export function DailyChart({
+  points,
+  hourly,
+  totals,
+  locale,
+  t,
+}: {
+  points: SeriesPoint[];
+  hourly: boolean;
+  /** The period's visitors and leads, as in the headline tiles. */
+  totals: { visitors: number; leads: number };
+  locale: Locale;
+  t: TA;
+}) {
   const il = intlLocale(locale);
   const few = !hourly && points.length <= 8;
   const short = hourly
@@ -283,8 +313,8 @@ export function DailyChart({ points, hourly, locale, t }: { points: SeriesPoint[
   return (
     <Section id="chart" title={t("chart.title")} sub={t(hourly ? "chart.sub.hours" : "chart.sub.days")}>
       <div aria-hidden className="space-y-6">
-        <Columns points={rows} field="visitors" title={t("chart.visitors")} color={VISITORS_COLOR} t={t} />
-        <Columns points={rows} field="leads" title={t("chart.leads")} color={LEADS_COLOR} t={t} />
+        <Columns points={rows} field="visitors" title={t("chart.visitors")} color={VISITORS_COLOR} total={totals.visitors} t={t} />
+        <Columns points={rows} field="leads" title={t("chart.leads")} color={LEADS_COLOR} total={totals.leads} t={t} />
       </div>
       <div className="mt-5">
         <TableToggle>

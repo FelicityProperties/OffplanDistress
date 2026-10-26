@@ -32,13 +32,14 @@ export type Bucket = { key: string; start: Date };
 export type Period = { from: Date; to: Date };
 
 /**
- * The selected range (from the start of the first Dubai day to now), the period just before it of the same length for
- * the comparison, and the chart's buckets: hours for today, Dubai days otherwise.
+ * The selected range (from the start of the first Dubai day to now), the comparison period (the same number of Dubai
+ * days just before, up to the same time of day: today until 14:30 against yesterday until 14:30, never against
+ * yesterday evening), and the chart's buckets: hours for today, Dubai days otherwise.
  */
 export function rangeBounds(range: RangeKey, now = new Date()) {
   const todayStart = Math.floor((now.getTime() + DUBAI_OFFSET) / DAY) * DAY - DUBAI_OFFSET;
   const from = new Date(todayStart - (RANGE_DAYS[range] - 1) * DAY);
-  const len = now.getTime() - from.getTime();
+  const shift = RANGE_DAYS[range] * DAY;
   const hourly = range === "today";
   const step = hourly ? HOUR : DAY;
   const buckets: Bucket[] = [];
@@ -48,7 +49,7 @@ export function rangeBounds(range: RangeKey, now = new Date()) {
   }
   return {
     current: { from, to: now } as Period,
-    previous: { from: new Date(from.getTime() - len), to: from } as Period,
+    previous: { from: new Date(from.getTime() - shift), to: new Date(now.getTime() - shift) } as Period,
     hourly,
     buckets,
   };

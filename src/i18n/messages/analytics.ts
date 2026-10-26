@@ -6,7 +6,7 @@ export default defineMessages({
   en: {
     "meta.title": "Analytics",
     title: "Analytics",
-    sub: "Who visits the site, how long they stay, where they come from and which visitors become leads. Your own visits are never counted.",
+    sub: "Who visits the site, how long they stay, where they come from and which visitors become leads. Your visits are never counted while you're signed in, nor from a device you mark below.",
     privacy:
       "No cookies. IP addresses aren't stored: each visitor gets an anonymous id that changes every day. Visits are kept for 13 months.",
 
@@ -16,7 +16,7 @@ export default defineMessages({
     "range.30d": "30 days",
     "range.90d": "90 days",
     "compare.today": "Dubai time. Compared with yesterday up to the same time.",
-    "compare.period": "Dubai time. Compared with the period of the same length just before.",
+    "compare.period": "Dubai time. Compared with the same number of days just before, up to the same time of day.",
 
     "kpi.visitors": "Visitors",
     "kpi.visitors.hint": "Different people each day, added up",
@@ -164,7 +164,7 @@ export default defineMessages({
   ar: {
     "meta.title": "التحليلات",
     title: "التحليلات",
-    sub: "من يزور الموقع، وكم يبقى، ومن أين يأتي، وأيّ الزوار يتحولون إلى عملاء محتملين. ولا تُحتسب زياراتك أنت أبداً.",
+    sub: "من يزور الموقع، وكم يبقى، ومن أين يأتي، وأيّ الزوار يتحولون إلى عملاء محتملين. ولا تُحتسب زياراتك أبداً وأنت مسجّل الدخول، ولا من جهاز تستثنيه أدناه.",
     privacy:
       "لا ملفات تعريف ارتباط، ولا تُخزَّن عناوين IP؛ إذ يحصل كل زائر على معرّف مجهول يتغيّر يومياً. وتُحفظ بيانات الزيارات مدة 13 شهراً.",
 
@@ -174,7 +174,7 @@ export default defineMessages({
     "range.30d": "30 يوماً",
     "range.90d": "90 يوماً",
     "compare.today": "بتوقيت دبي، ومقارنةً بالأمس حتى الوقت نفسه.",
-    "compare.period": "بتوقيت دبي، ومقارنةً بالفترة السابقة المماثلة في المدة.",
+    "compare.period": "بتوقيت دبي، ومقارنةً بالعدد نفسه من الأيام السابقة حتى الوقت نفسه من اليوم.",
 
     "kpi.visitors": "الزوار",
     "kpi.visitors.hint": "عدد الأشخاص المختلفين في كل يوم، مجموعاً",

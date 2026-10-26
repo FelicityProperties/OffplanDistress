@@ -146,7 +146,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       <StatTiles tiles={tiles} />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <DailyChart points={r.points} hourly={r.hourly} locale={locale} t={t} />
+        <DailyChart points={r.points} hourly={r.hourly} totals={{ visitors: cur.visitors, leads: cur.leads }} locale={locale} t={t} />
         <LivePanel sessions={r.live} minutes={LIVE_MINUTES} generatedAt={r.generatedAt} locale={locale} t={t} />
       </div>
 

@@ -1,7 +1,7 @@
 import "server-only";
-import { createHash } from "node:crypto";
+import { createHmac, randomBytes, scrypt } from "node:crypto";
 import { userAgent } from "next/server";
-import { and, eq, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { pageViews, sellerLeads } from "@/db/schema";
 
@@ -17,8 +17,26 @@ export const VIEW_RETENTION_MONTHS = 13;
 /** Seller estimate requests not linked to an account or a listing, untouched for this long, are deleted too. */
 export const LEAD_RETENTION_MONTHS = 24;
 
-/** Pages never recorded: our own consoles and the API (the tracker skips them too). */
-export const UNTRACKED_PATH = /^\/(admin|dashboard|api)(\/|$)/;
+/** Pages never recorded: our own consoles and the API (the tracker skips them too). Tested on cleanPath's result. */
+export const UNTRACKED_PATH = /^\/(admin|dashboard|api)(\/|$)/i;
+
+/**
+ * Characters a page address may contain: letters and digits of any script (an Arabic slug, raw or percent-encoded) and
+ * the URL punctuation. No spaces, control characters or bidirectional-formatting marks (they could break the insert or
+ * disguise the text on /admin/analytics); no query string or fragment.
+ */
+export const PATH_RE = /^\/[\p{L}\p{M}\p{N}\-._~%!$&'()*+,;=:@/]*$/u;
+
+/** Repeated slashes collapsed and the trailing one dropped, so "//admin/" can't pass as a public page. */
+export function cleanPath(path: string) {
+  return path.replace(/\/{2,}/g, "/").replace(/\/+$/, "") || "/";
+}
+
+// Control characters and invisible / bidirectional-formatting marks, removed from free text before it is stored.
+const UNSAFE_CHARS = /[\u0000-\u001f\u007f-\u009f؜​-‏‪-‮⁠-⁩﻿]/g;
+export function cleanText(s: string) {
+  return s.replace(UNSAFE_CHARS, "").trim();
+}
 
 // Crawlers, link previews, uptime monitors, headless browsers and scripts. Next's userAgent().isBot catches more.
 const BOT_UA =
@@ -57,7 +75,7 @@ export function geoFrom(headers: Headers) {
   try {
     city = decodeURIComponent(city);
   } catch {}
-  city = city.replace(/[\u0000-\u001f]/g, "").trim().slice(0, 80);
+  city = cleanText(city).slice(0, 80);
   return { country: /^[A-Z]{2}$/.test(country) ? country : null, city: city || null };
 }
 
@@ -71,23 +89,43 @@ export function dubaiDate(at = new Date()) {
   return new Date(at.getTime() + 4 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
-let salt: string | undefined;
-function analyticsSalt() {
-  if (salt) return salt;
-  const own = process.env.ANALYTICS_SALT?.trim();
-  if (own) return (salt = own);
-  const secret = process.env.CRON_SECRET || process.env.ADMIN_PASSWORD;
-  if (!secret) console.warn("[analytics] ANALYTICS_SALT (or CRON_SECRET / ADMIN_PASSWORD) is not set; visitor ids use a public salt");
-  // A hash of an existing secret, never the secret itself.
-  return (salt = createHash("sha256").update(`offplandistress-analytics:${secret ?? "public"}`).digest("hex"));
+// scrypt cost for a borrowed secret: about 0.1 s and 32 MB per guess, like the bcrypt on passwords (once per instance).
+const SCRYPT = { N: 2 ** 15, r: 8, p: 1, maxmem: 96 * 1024 * 1024 };
+let key: Promise<Buffer> | undefined;
+
+/**
+ * The secret key of the visitor id. ANALYTICS_SALT as set. Otherwise derived from CRON_SECRET (else ADMIN_PASSWORD)
+ * with scrypt, a deliberately slow hash: with a fast one, anyone holding a copy of page_views could test guesses of that
+ * password offline (they know their own IP address, browser and visit date) millions of times faster than its bcrypt
+ * hash allows. With no secret at all, a random key for this server instance: visitors may then be counted once per
+ * instance, but nobody can recompute an id from an IP address.
+ */
+function analyticsKey(): Promise<Buffer> {
+  key ??= (async () => {
+    const own = process.env.ANALYTICS_SALT?.trim();
+    if (own) return Buffer.from(own);
+    const secret = process.env.CRON_SECRET || process.env.ADMIN_PASSWORD;
+    if (!secret) {
+      console.warn("[analytics] ANALYTICS_SALT (or CRON_SECRET / ADMIN_PASSWORD) is not set; visitor ids use a random key per server instance");
+      return randomBytes(32);
+    }
+    return new Promise<Buffer>((resolve, reject) =>
+      scrypt(secret, "offplandistress-analytics-visitor-id", 32, SCRYPT, (err, k) => (err ? reject(err) : resolve(k))),
+    );
+  })().catch((err) => {
+    key = undefined; // try again on the next beacon
+    throw err;
+  });
+  return key;
 }
 
 /**
- * Anonymous visitor id for one Dubai day: salted sha256 of the date, IP address and user agent (first 128 bits, hex).
- * The same browser gets a different id tomorrow, and neither the IP address nor the user agent is stored.
+ * Anonymous visitor id for one Dubai day: HMAC-SHA256 of the date, IP address and user agent under the secret key
+ * (first 128 bits, hex). The same browser gets a different id tomorrow, and neither the IP address nor the user agent
+ * is stored.
  */
-export function visitorHash(ip: string, ua: string, day = dubaiDate()) {
-  return createHash("sha256").update(`${analyticsSalt()}|${day}|${ip}|${ua}`).digest("hex").slice(0, 32);
+export async function visitorHash(ip: string, ua: string, day = dubaiDate()) {
+  return createHmac("sha256", await analyticsKey()).update(`${day}|${ip}|${ua}`).digest("hex").slice(0, 32);
 }
 
 export type NewView = {
@@ -170,7 +208,8 @@ function monthsAgo(months: number, now = new Date()) {
 
 /**
  * Retention, run by the daily ops cron: deletes page views older than VIEW_RETENTION_MONTHS, and seller estimate requests
- * last updated more than LEAD_RETENTION_MONTHS ago that never became an account or a listing (as the Privacy Policy
+ * last updated more than LEAD_RETENTION_MONTHS ago that never became an account or a listing, nor were marked
+ * "converted" (as the Privacy Policy
  * promises). Deletes in batches so a large backlog never holds long locks; whatever is left goes in the next run.
  */
 export async function purgeExpiredData(now = new Date()) {
@@ -189,7 +228,16 @@ export async function purgeExpiredData(now = new Date()) {
     const batch = db
       .select({ id: sellerLeads.id })
       .from(sellerLeads)
-      .where(and(lt(sellerLeads.updatedAt, leadCutoff), isNull(sellerLeads.userId), isNull(sellerLeads.listingId)))
+      .where(
+        and(
+          lt(sellerLeads.updatedAt, leadCutoff),
+          isNull(sellerLeads.userId),
+          isNull(sellerLeads.listingId),
+          // "Converted" means it became a listing (even if that listing was later removed, which unlinks it): the
+          // listing and transaction periods apply instead.
+          ne(sellerLeads.status, "converted"),
+        ),
+      )
       .limit(LEAD_BATCH);
     const gone = await db.delete(sellerLeads).where(inArray(sellerLeads.id, batch)).returning({ id: sellerLeads.id });
     leads += gone.length;
