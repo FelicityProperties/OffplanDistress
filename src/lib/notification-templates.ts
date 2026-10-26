@@ -140,6 +140,10 @@ export const TEMPLATES = {
       cta: "عرض عروضي",
     },
   },
+  "deal.withdrawn.admin": {
+    en: { title: "Seller withdrew {project} after a deal was agreed", body: "{seller} withdrew {ref} while it was under offer. The buyer has been told the deal did not go ahead.", cta: "Open listing" },
+    ar: { title: "سحب البائع {project} بعد الاتفاق على صفقة", body: "سحب {seller} الإعلان {ref} وهو قيد عرض مقبول، وأُبلغ المشتري بأن الصفقة لم تتم.", cta: "فتح الإعلان" },
+  },
   "deal.agreed.admin": {
     en: { title: "Deal agreed on {project} at {amount}", body: "Seller {seller}, buyer {buyer}. Start the developer NOC and move the listing to “NOC in progress”.", cta: "Open listing" },
     ar: { title: "تم الاتفاق على صفقة {project} بمبلغ {amount}", body: "البائع {seller}، المشتري {buyer}. ابدأ إجراءات شهادة عدم الممانعة وانقل الإعلان إلى «قيد إصدار شهادة عدم الممانعة».", cta: "فتح الإعلان" },

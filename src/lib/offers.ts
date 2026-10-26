@@ -1,7 +1,7 @@
 import "server-only";
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { offers } from "@/db/schema";
+import { listings, offers } from "@/db/schema";
 import { OFFERS } from "./config";
 import { notify } from "./notify";
 import type { TemplateKey } from "./notification-templates";
@@ -62,12 +62,15 @@ export async function closeOpenOffers(unit: Unit, why: "sold" | "unavailable", e
  * carries an accepted offer (acceptOffer in src/app/actions/market.ts refuses a second one while one exists).
  * Returns how many accepted offers it closed.
  */
-export async function cancelAcceptedOffers(unit: Unit) {
+export async function cancelAcceptedOffers(unit: Unit, whileStatus: "live" | "withdrawn" = "live") {
   try {
+    // Only while the unit is still in that status: if the seller accepted a new offer in the moment since it went live,
+    // that offer is the deal now and stays accepted. ("withdrawn": the seller pulled out of the agreed deal.)
+    const stillLive = sql`exists (select 1 from ${listings} where ${listings.id} = ${unit.id} and ${listings.status} = ${whileStatus})`;
     const cancelled = await db
       .update(offers)
       .set({ status: "declined", updatedAt: new Date() })
-      .where(and(eq(offers.listingId, unit.id), eq(offers.status, "accepted")))
+      .where(and(eq(offers.listingId, unit.id), eq(offers.status, "accepted"), stillLive))
       .returning({ buyerId: offers.buyerId, amount: offers.amount });
     await tell(unit, cancelled, "offer.deal_cancelled", BUYER_HREF);
     return cancelled.length;

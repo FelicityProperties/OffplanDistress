@@ -12,8 +12,8 @@ import { getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
 import { formatDate, refCode } from "@/lib/format";
 import { notify, notifyPriceDrop } from "@/lib/notify";
-import { closeOpenOffers, reopenUnit } from "@/lib/offers";
-import { expiryDateBounds, isDldPermitUrl, publishBlocker } from "@/lib/permits";
+import { closeOpenOffers, DEAL_STATUSES, reopenUnit } from "@/lib/offers";
+import { expiryDateBounds, isAdvertised, isDldPermitUrl, publishBlocker } from "@/lib/permits";
 import { scrubTypedName } from "@/lib/typed-names";
 import type { FormState } from "./auth";
 
@@ -145,14 +145,17 @@ const statuses = Object.keys(LISTING_STATUS) as [ListingStatusKey, ...ListingSta
 /**
  * A permit or Form A expiry: a real calendar date (z.iso.date checks the day exists in that month) no more than a year
  * back or three years ahead (expiryDateBounds), so a typo in the year is a field error rather than a database error.
+ * The date already stored on the listing (`stored`) is accepted as it is, however old.
  */
-const expiryDate = (t: T, range: { min: string; max: string }, rangeMessage: string) =>
+type ExpiryRange = { min: string; max: string; stored?: string | null };
+
+const expiryDate = (t: T, range: ExpiryRange, rangeMessage: string) =>
   z.iso
     .date(t("field.date"))
-    .refine((d) => d >= range.min && d <= range.max, rangeMessage)
+    .refine((d) => d === range.stored || (d >= range.min && d <= range.max), rangeMessage)
     .optional();
 
-const adminEditSchema = (t: T, range: { min: string; max: string }, rangeMessage: string) =>
+const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored: { dld: string | null; formA: string | null }) =>
   z.object({
     listingId: z.uuid(),
     status: z.enum(statuses),
@@ -162,7 +165,7 @@ const adminEditSchema = (t: T, range: { min: string; max: string }, rangeMessage
     askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative(),
     adminNotes: z.string().trim().max(4000).optional(),
     dldPermit: z.string().trim().max(40).optional(),
-    dldPermitExpiresAt: expiryDate(t, range, rangeMessage),
+    dldPermitExpiresAt: expiryDate(t, { ...range, stored: stored.dld }, rangeMessage),
     // Stored as the parsed link, so the QR code encodes exactly what the check passed and a browser opens (the raw
     // text may hold a "\" or a tab that other URL parsers, such as a phone's QR scanner, read differently).
     dldPermitUrl: z
@@ -172,7 +175,7 @@ const adminEditSchema = (t: T, range: { min: string; max: string }, rangeMessage
       .refine(isDldPermitUrl, t("field.dldPermitUrl"))
       .transform((u) => new URL(u).href)
       .optional(),
-    formAExpiresAt: expiryDate(t, range, rangeMessage),
+    formAExpiresAt: expiryDate(t, { ...range, stored: stored.formA }, rangeMessage),
     images: z.array(z.string().max(500)).max(20),
     // Mapping a seller's "Other" to a listed name (or correcting it). Left out = unchanged.
     developer: z.string().max(80).optional(),
@@ -189,7 +192,17 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   const [t, locale] = await Promise.all([getT("errors"), getLocale()]);
   const range = expiryDateBounds();
   const rangeMessage = t("field.expiryRange", { from: formatDate(range.min, locale), to: formatDate(range.max, locale) });
-  const parsed = adminEditSchema(t, range, rangeMessage).safeParse(
+  // A date already on the listing may be saved back unchanged even once it is more than a year old: the range catches
+  // typing mistakes, and mustn't make an old listing uneditable (or force its history to be wiped) a year on.
+  const id = z.uuid().safeParse(formData.get("listingId"));
+  const [stored = { dld: null, formA: null }] = id.success
+    ? await db
+        .select({ dld: listings.dldPermitExpiresAt, formA: listings.formAExpiresAt })
+        .from(listings)
+        .where(eq(listings.id, id.data))
+        .limit(1)
+    : [];
+  const parsed = adminEditSchema(t, range, rangeMessage, stored).safeParse(
     {
       listingId: formData.get("listingId"),
       status: formData.get("status"),
@@ -235,14 +248,21 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (!COMMUNITIES.includes(community) && community !== current.community) {
     return { error: t("form.checkFields"), fieldErrors: { community: [t("field.community")] } };
   }
-  const blocker = PUBLIC_STATUSES.includes(v.status)
-    ? publishBlocker({
-        isSample: current.isSample,
-        dldPermit: v.dldPermit || null,
-        dldPermitExpiresAt: v.dldPermitExpiresAt ?? null,
-        formAExpiresAt: v.formAExpiresAt ?? null,
-      })
-    : null;
+  const saving = {
+    status: v.status,
+    isSample: current.isSample,
+    dldPermit: v.dldPermit || null,
+    dldPermitExpiresAt: v.dldPermitExpiresAt ?? null,
+    formAExpiresAt: v.formAExpiresAt ?? null,
+  };
+  // A unit with an agreed deal may stay in (or move between) under offer and NOC in progress once its permit or Form A
+  // has run out: the daily job leaves it so for our team to renew or decide (src/lib/permits.ts), and no public page
+  // shows it as an advert until a current date is entered. It still needs its permit number and expiry date.
+  const isDeal = (s: ListingStatusKey) => (DEAL_STATUSES as readonly string[]).includes(s);
+  const dealGoesOn = isDeal(current.status) && isDeal(v.status) && saving.dldPermit != null && saving.dldPermitExpiresAt != null;
+  const blocker = PUBLIC_STATUSES.includes(v.status) && !dealGoesOn ? publishBlocker(saving) : null;
+  // Whether the public sees the listing as an advert once saved (a deal whose permit ran out isn't one).
+  const advertised = isAdvertised(saving);
   if (blocker) {
     const field = { "listing.permitRequired": "dldPermit", "listing.permitExpiry": "dldPermitExpiresAt", "listing.formAExpired": "formAExpiresAt" }[blocker];
     return { error: t("form.checkFields"), fieldErrors: { [field]: [t(blocker)] } };
@@ -267,7 +287,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       // Only an "Other" keeps a typed name; mapping to a listed name clears it. Left out of the form = unchanged.
       ...(v.developer ? { developerOther: developer === "Other" ? (v.developerOther ?? null) : null } : {}),
       ...(v.community ? { communityOther: community === "Other" ? (v.communityOther ?? null) : null } : {}),
-      publicPrice: PUBLIC_STATUSES.includes(v.status) ? v.askingPrice : current.publicPrice,
+      publicPrice: advertised ? v.askingPrice : current.publicPrice,
       images: v.images.filter((u) => /^https:\/\//.test(u) || u.startsWith("/api/files/")),
       publishedAt: current.publishedAt ?? (v.status === "live" ? now : null),
       updatedAt: now,
@@ -289,8 +309,9 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (statusChanged && v.status === "transferred") await closeOpenOffers(current, "sold");
   if (statusChanged && (v.status === "withdrawn" || v.status === "rejected")) await closeOpenOffers(current, "unavailable");
   if (statusChanged && v.status === "live") await reopenUnit(current, current.status);
-  // Watchers only hear about drops on deals they can open (and never on sample listings).
-  if (!current.isSample && PUBLIC_STATUSES.includes(v.status)) {
+  // Watchers only hear about drops on deals they can open (and never on sample listings): not while the permit or
+  // Form A of a unit in a deal has run out, and the drop is announced from the last public price once it is renewed.
+  if (!current.isSample && advertised) {
     await notifyPriceDrop(current, current.publicPrice ?? current.askingPrice, v.askingPrice);
   }
 

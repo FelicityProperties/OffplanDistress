@@ -43,6 +43,13 @@
       "when": 1792767412738,
       "tag": "0005_public_price",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793025878153,
+      "tag": "0006_wave1_leads_permits",
+      "breakpoints": true
     }
   ]
 }

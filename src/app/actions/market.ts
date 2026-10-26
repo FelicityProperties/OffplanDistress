@@ -12,7 +12,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { refCode } from "@/lib/format";
 import { notify, notifyAdmins, type TemplateParams } from "@/lib/notify";
 import { settleOtherOffers } from "@/lib/offers";
-import { isAdvertised } from "@/lib/permits";
+import { advertisedSql, isAdvertised } from "@/lib/permits";
 import { clientIp, hit, MINUTE } from "@/lib/throttle";
 import type { FormState } from "./auth";
 
@@ -117,6 +117,13 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
     )
     .limit(1);
 
+  // The write only goes through while the unit is still an advert, checked in the same statement: if it was withdrawn,
+  // rejected or sold since the check above, its open offers were (or are being) closed, and this one mustn't be left
+  // open behind them. A revision is of a row the closing update locks and re-checks anyway; a new offer is a row that
+  // update can't see, so it locks the listing row (FOR SHARE) and waits for a status change in flight. Only the insert
+  // locks it: a revision waits on its offer row, which an acceptance locks before the listing, so the two would deadlock.
+  const advertisedNow = (lock: boolean) =>
+    sql`exists (select 1 from ${listings} where ${listings.id} = ${v.listingId} and ${advertisedSql()}${lock ? sql` for share` : sql``})`;
   // Only while it is still open: if the seller accepted (or anyone closed) it since the read above, the revision is a
   // new offer rather than putting an accepted offer back to pending under a unit that is already under offer.
   const revised = open
@@ -130,17 +137,17 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
           counterAmount: null,
           updatedAt: new Date(),
         })
-        .where(and(eq(offers.id, open.id), inArray(offers.status, ["pending", "countered"])))
+        .where(and(eq(offers.id, open.id), inArray(offers.status, ["pending", "countered"]), advertisedNow(false)))
         .returning({ id: offers.id })
     : [];
   if (!revised.length) {
-    await db.insert(offers).values({
-      listingId: v.listingId,
-      buyerId: user.id,
-      amount: v.amount,
-      financing: v.financing,
-      message: v.message ?? null,
-    });
+    const { rows } = await db.execute<{ id: string }>(sql`
+      insert into ${offers} (listing_id, buyer_id, amount, financing, message)
+      select ${v.listingId}::uuid, ${user.id}::uuid, ${v.amount}::int, ${v.financing}::financing, ${v.message ?? null}::text
+      where ${advertisedNow(true)}
+      returning id`);
+    // As when the check above refuses: the form says so (a refresh would replace the page with a 404 first).
+    if (!rows.length) return { error: t("offer.closed") };
   }
 
   const params: TemplateParams = {

@@ -12,7 +12,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS, UNIT_TYPES } from "@/lib/config";
 import { refCode } from "@/lib/format";
 import { notifyAdmins } from "@/lib/notify";
-import { closeOpenOffers } from "@/lib/offers";
+import { cancelAcceptedOffers, closeOpenOffers } from "@/lib/offers";
 import { publishBlocker } from "@/lib/permits";
 import { scrubTypedName } from "@/lib/typed-names";
 import type { FormState } from "./auth";
@@ -317,12 +317,31 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
   if (action === "withdraw" && !["transferred", "noc_in_progress", "withdrawn"].includes(l.status)) next = "withdrawn";
   if (!next) return { error: t("listing.changeUnavailable") };
 
-  await db
+  // Only from the status checked above: if our team moved it on in the meantime (to NOC in progress or transferred, say),
+  // a withdrawal mustn't overwrite that nor close its offers as "no longer available".
+  const [changed] = await db
     .update(listings)
     .set({ status: next, pausedByAdmin: false, updatedAt: new Date() })
-    .where(eq(listings.id, listingId));
-  // Off the market: buyers with an open offer on it are told it is no longer available.
-  if (next === "withdrawn") await closeOpenOffers({ id: listingId, projectName: l.projectName }, "unavailable");
+    .where(and(eq(listings.id, listingId), eq(listings.status, l.status)))
+    .returning({ id: listings.id });
+  if (!changed) {
+    refresh();
+    return { error: t("listing.changeUnavailable") };
+  }
+  // Off the market: buyers with an open offer on it are told it is no longer available. Withdrawing a unit under
+  // offer also ends the agreed deal: that buyer is told it did not go ahead, and our team hears about it.
+  if (next === "withdrawn") {
+    const unit = { id: listingId, projectName: l.projectName };
+    await closeOpenOffers(unit, "unavailable");
+    if (l.status === "under_offer" && (await cancelAcceptedOffers(unit, "withdrawn")) > 0) {
+      await notifyAdmins(
+        "deal.withdrawn.admin",
+        { project: l.projectName, seller: user.fullName, ref: refCode(l.refNo) },
+        `/admin/listings/${listingId}`,
+        { except: [user.id] },
+      );
+    }
+  }
   // A resume that can't go straight back live goes to our team (documents or the DLD permit are missing).
   const review = action === "resume" && next === "pending_review";
   if (review) {
