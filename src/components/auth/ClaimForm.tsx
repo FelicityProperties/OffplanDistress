@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 import { claimListing } from "@/app/actions/password";
-import { Field, FormMessage, SubmitButton } from "@/components/forms";
+import { Field, FormMessage } from "@/components/forms";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { richText } from "@/content/legal/rich-text";
 import { useT } from "@/i18n/client";
@@ -21,11 +22,20 @@ export function ClaimForm({ token, existing, email }: { token: string; existing:
   const tc = useT("common");
   const tl = useT("legal");
   const [state, action] = useActionState(claimListing, {});
+  const [pending, start] = useTransition();
   const fe = state.fieldErrors ?? {};
   const ownershipError = fe.confirmOwnership?.[0];
 
   return (
-    <form action={action} className="space-y-4">
+    // Submitted from onSubmit (not the form's action) so a field that needs fixing doesn't clear the others.
+    <form
+      className="space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        start(() => action(fd));
+      }}
+    >
       <input type="hidden" name="token" value={token} />
       {!existing && (
         <>
@@ -106,9 +116,10 @@ export function ClaimForm({ token, existing, email }: { token: string; existing:
         )}
       </div>
       <FormMessage state={state} />
-      <SubmitButton className="w-full" size="lg" pendingText={tc("saving")}>
-        {existing ? t("claim.submitExisting") : t("claim.submit")}
-      </SubmitButton>
+      <Button type="submit" className="w-full" size="lg" disabled={pending}>
+        {pending && <Loader2 className="animate-spin" aria-hidden />}
+        {pending ? tc("saving") : existing ? t("claim.submitExisting") : t("claim.submit")}
+      </Button>
       <p className="text-center text-xs leading-relaxed text-muted-foreground">{t("claim.after")}</p>
     </form>
   );

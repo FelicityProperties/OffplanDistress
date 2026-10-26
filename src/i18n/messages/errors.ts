@@ -37,6 +37,7 @@ export default defineMessages({
     "field.amountPaidMax": "Amount paid can't exceed the purchase price",
     "field.overdueMax": "Overdue instalments can't be more than the balance still owed to the developer (AED {amount})",
     "field.arrearsCheckedAt": "Pick the day you checked the statement: today or earlier.",
+    "field.amountTooLarge": "That amount is too large. Check the figure.",
     "field.counterAmount": "Enter a counter amount.",
     "field.dldPermitUrl": "Paste the https:// link on dubailand.gov.ae that the permit's QR code opens.",
     "field.expiryRange": "Check the date: it has to be between {from} and {to}.",
@@ -104,6 +105,10 @@ export default defineMessages({
     "notify.expiry.thenHide": "The unit has an agreed deal, so it won't be paused, but from the day after it runs out it no longer shows as an advert.",
     "notify.paused.permit": "We have paused the advert for {ref} because its DLD advertising permit has expired: RERA doesn't allow an advert to stay online without a valid permit. Our team will contact you about renewing it.",
     "notify.paused.formA": "We have paused the advert for {ref} because its Form A (your listing agreement with us) has expired: under RERA rules the advert can't stay online without one. Our team will contact you about renewing it.",
+    // The documents still missing, in the "seller.upload_docs" reminder (src/lib/reminders.ts).
+    "notify.reminder.missing.both": "your SPA (or Oqood certificate) and your latest statement of account from the developer",
+    "notify.reminder.missing.spa": "your SPA or Oqood certificate",
+    "notify.reminder.missing.soa": "your latest statement of account from the developer",
   },
   ar: {
     "auth.signInAgain": "يرجى تسجيل الدخول مرة أخرى.",
@@ -139,6 +144,7 @@ export default defineMessages({
     "field.amountPaidMax": "لا يمكن أن يتجاوز المبلغ المدفوع سعر الشراء",
     "field.overdueMax": "لا يمكن أن تتجاوز الأقساط المتأخرة الرصيد المستحق للمطوّر (⁨{amount} درهم⁩)",
     "field.arrearsCheckedAt": "اختر تاريخ التحقق من كشف الحساب: اليوم أو قبله.",
+    "field.amountTooLarge": "المبلغ المُدخل كبير جداً، يُرجى التحقق منه.",
     "field.counterAmount": "أدخل قيمة العرض المقابل.",
     "field.dldPermitUrl": "الصق رابط ⁦https://⁩ على موقع ⁦dubailand.gov.ae⁩ الذي يفتحه رمز QR الخاص بالتصريح.",
     "field.expiryRange": "تحقّق من التاريخ: يجب أن يقع بين {from} و{to}.",
@@ -201,5 +207,8 @@ export default defineMessages({
     "notify.expiry.thenHide": "على الوحدة صفقة متفق عليها، لذلك لن يُوقَف نشر الإعلان، لكنه لن يظهر كإعلان على الموقع اعتباراً من اليوم التالي لانتهاء الصلاحية.",
     "notify.paused.permit": "أوقفنا نشر الإعلان ⁨{ref}⁩ مؤقتاً لانتهاء صلاحية تصريح الإعلان من دائرة الأراضي والأملاك، إذ لا تسمح مؤسسة التنظيم العقاري ببقاء إعلان منشور دون تصريح سارٍ. سيتواصل معك فريقنا بشأن تجديده.",
     "notify.paused.formA": "أوقفنا نشر الإعلان ⁨{ref}⁩ مؤقتاً لانتهاء صلاحية النموذج (A) (اتفاقية الإدراج المبرمة معنا)، إذ لا تسمح قواعد مؤسسة التنظيم العقاري ببقاء الإعلان منشوراً دونه. سيتواصل معك فريقنا بشأن تجديده.",
+    "notify.reminder.missing.both": "اتفاقية البيع والشراء (أو شهادة أوقود) وآخر كشف حساب صادر عن المطوّر",
+    "notify.reminder.missing.spa": "اتفاقية البيع والشراء أو شهادة أوقود",
+    "notify.reminder.missing.soa": "آخر كشف حساب صادر عن المطوّر",
   },
 });

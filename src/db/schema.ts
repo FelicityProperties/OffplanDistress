@@ -452,6 +452,24 @@ export const pageViews = pgTable(
   ],
 );
 
+/**
+ * Follow-up nudges the daily ops cron already sent (src/lib/reminders.ts), so each goes out once even when runs
+ * overlap or are repeated: the cron inserts the row first and only sends if the insert went in. entity_type is "user",
+ * "listing" or "offer" (entity_id is then that row's id) or "digest" (entity_id is the Dubai date of the admins' daily
+ * digest); kind names the nudge, e.g. "finish_listing:24h".
+ */
+export const reminders = pgTable(
+  "reminders",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    kind: text("kind").notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("reminders_entity_kind_idx").on(t.entityType, t.entityId, t.kind)],
+);
+
 export type User = typeof users.$inferSelect;
 export type Listing = typeof listings.$inferSelect;
 export type Offer = typeof offers.$inferSelect;

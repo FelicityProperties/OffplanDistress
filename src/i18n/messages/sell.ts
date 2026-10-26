@@ -115,9 +115,16 @@ export default defineMessages({
     // WhatsApp intake card on /sell: our team prepares the listing from the documents; the seller confirms it by link.
     "whatsapp.title": "Prefer WhatsApp? Send us your SPA and latest statement",
     "whatsapp.body":
-      "Send photos or PDFs of your SPA (or Oqood) and your latest statement of account. Our team prepares the listing for you, in English, Arabic, Russian or Hindi, then sends you a link to confirm you own the unit before anything is published.",
+      "Send photos or PDFs of your SPA (or Oqood) and your latest statement of account. Our team prepares the listing for you, then sends you a link to confirm you own the unit before anything is published.",
     "whatsapp.cta": "Send on WhatsApp",
     "whatsapp.note": "Free for sellers. Your contact details are never shown to buyers.",
+    // The sell form's saved draft (src/components/sell/sell-draft.ts), offered back on the next visit.
+    "draft.body":
+      "Your answers are kept on this device (last saved {when}). Documents and photos aren't kept: add them again on the Documents step.",
+    "draft.continue": "Continue where you left off",
+    "draft.startOver": "Start over",
+    "draft.cleared": "The form was cleared.",
+    "draft.undo": "Undo",
     "review.asking": "Your asking price",
     "review.docs": "Documents attached",
     "review.docsCount": "{n} of {total}",
@@ -380,9 +387,15 @@ export default defineMessages({
     "page.calculatorLink": "افتح حاسبة الخروج",
     "whatsapp.title": "تفضّل واتساب؟ أرسل إلينا اتفاقية البيع والشراء وآخر كشف حساب",
     "whatsapp.body":
-      "أرسل صوراً أو ملفات PDF لاتفاقية البيع والشراء (أو شهادة أوقود) وآخر كشف حساب لديك. يُعدّ فريقنا الإعلان نيابةً عنك، بالعربية أو الإنجليزية أو الروسية أو الهندية، ثم يرسل إليك رابطاً لتأكيد ملكيتك للوحدة قبل نشر أي شيء.",
+      "أرسل صوراً أو ملفات PDF لاتفاقية البيع والشراء (أو شهادة أوقود) وآخر كشف حساب لديك. يُعدّ فريقنا الإعلان نيابةً عنك، ثم يرسل إليك رابطاً لتأكيد ملكيتك للوحدة قبل نشر أي شيء.",
     "whatsapp.cta": "أرسل عبر واتساب",
     "whatsapp.note": "الخدمة مجانية للبائعين، ولا تظهر بيانات التواصل الخاصة بك للمشترين أبداً.",
+    "draft.body":
+      "إجاباتك محفوظة على هذا الجهاز (آخر حفظ: {when}). لا تُحفظ المستندات والصور، لذا أضِفها مجدداً في خطوة المستندات.",
+    "draft.continue": "تابِع من حيث توقفت",
+    "draft.startOver": "البدء من جديد",
+    "draft.cleared": "تم مسح النموذج.",
+    "draft.undo": "تراجع",
     "review.asking": "السعر المطلوب",
     "review.docs": "المستندات المرفقة",
     "review.docsCount": "{n} من {total}",

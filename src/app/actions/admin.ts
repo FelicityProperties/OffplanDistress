@@ -184,7 +184,9 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
     askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative(),
     // Arrears from the developer's statement of account; both empty = not known. See arrearsUpdate below.
     overdueAmount: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
-    overduePenalty: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
+    // An int4 column: a typo with extra zeros is a field error, not a failed save. (The overdue amount is capped by
+    // the remaining balance below.)
+    overduePenalty: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(2_147_483_647, t("field.amountTooLarge")).optional(),
     arrearsCheckedAt: z.iso
       .date(t("field.date"))
       .refine((d) => d >= "2000-01-01" && d <= dubaiToday(), t("field.arrearsCheckedAt"))
@@ -501,10 +503,12 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
     ...(fields.ok ? {} : fields.fieldErrors),
     ...(seller.success ? {} : z.flattenError(seller.error).fieldErrors),
   };
-  const phoneDigits = seller.success && seller.data.sellerPhone ? whatsappNumber(seller.data.sellerPhone) : null;
-  if (seller.success) {
-    if (!seller.data.sellerEmail && !seller.data.sellerPhone) fieldErrors.sellerPhone = [t("admin.sellerContact")];
-    else if (seller.data.sellerPhone && !phoneDigits) fieldErrors.sellerPhone = [t("admin.sellerPhone")];
+  const typedPhone = opt("sellerPhone")?.trim();
+  const phoneDigits = typedPhone ? whatsappNumber(typedPhone) : null;
+  // A way to reach the seller (for the claim link): a mobile number, an email, or both.
+  if (!fieldErrors.sellerPhone) {
+    if (!typedPhone && !opt("sellerEmail")) fieldErrors.sellerPhone = [t("admin.sellerContact")];
+    else if (typedPhone && !phoneDigits) fieldErrors.sellerPhone = [t("admin.sellerPhone")];
   }
   if (!fields.ok && !("fieldErrors" in fields)) return { error: fields.error };
   if (!seller.success || !fields.ok || Object.keys(fieldErrors).length) return { error: t("form.checkFields"), fieldErrors };

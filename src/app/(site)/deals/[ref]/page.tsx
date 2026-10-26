@@ -154,6 +154,11 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   });
   // The rest of the balance still owed after transfer that no listed future instalment covers.
   const unlisted = a.remainingAfterTransfer - schedule.future;
+  // Part of that is usually listed instalments whose date has passed since the listing was made, beyond the overdue
+  // amount on transfer day: paid since, or overdue. Those get their own step, so they don't read as balance the plan
+  // pays later; only what is left is "schedule not listed".
+  const pastDueOpen = Math.min(Math.max(schedule.pastDue.sum - a.overdue, 0), Math.max(unlisted, 0));
+  const unscheduled = unlisted - pastDueOpen;
   const dueSoon = schedule.dueSoon;
   const dueSoonText = dueSoon
     ? richText(t(dueSoon.amount ? "side.dueSoon" : "side.dueSoonNoAmount"), {
@@ -164,6 +169,16 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const instalments = (count: number) =>
     count === 1 ? t("timeline.instalments.one") : t("timeline.instalments.many", { count });
   const timeline: { key: string; title: string; when: string; amount: number; tag?: string }[] = [
+    ...(pastDueOpen > 0
+      ? [
+          {
+            key: "pastDue",
+            title: t("timeline.pastDueStep"),
+            when: arrearsChecked ? t("timeline.pastDueStepChecked", { date: checkedOn }) : t("timeline.pastDueStepHint"),
+            amount: pastDueOpen,
+          },
+        ]
+      : []),
     ...(schedule.preHandover.sum > 0
       ? [
           {
@@ -198,7 +213,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     ...(schedule.undated.sum > 0
       ? [{ key: "undated", title: t("timeline.undated"), when: instalments(schedule.undated.count), amount: schedule.undated.sum }]
       : []),
-    ...(unlisted > 0 ? [{ key: "unlisted", title: t("timeline.unlisted"), when: t("timeline.unlistedHint"), amount: unlisted }] : []),
+    ...(unscheduled > 0
+      ? [{ key: "unlisted", title: t("timeline.unlisted"), when: t("timeline.unlistedHint"), amount: unscheduled }]
+      : []),
   ];
 
   const cost: [string, number | null][] = [
@@ -378,7 +395,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
 
           {/* Price & actions — right after the title on mobile, a sticky column on desktop */}
           <aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-            <div className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-lift lg:sticky lg:top-24">
+            {/* On a short desktop screen the card scrolls inside itself (like the /deals filter panel), so the permit,
+                QR code and report link at its foot stay reachable while it is stuck. */}
+            <div className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-lift [scrollbar-width:thin] lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
               <div className="relative overflow-hidden bg-ink-gradient px-6 pb-6 pt-5 text-primary-foreground">
                 <div aria-hidden className="absolute inset-0 bg-dots-dark opacity-70 mask-fade-b" />
                 <div aria-hidden className="absolute -end-16 -top-20 h-48 w-48 bg-glow-gold opacity-60" />
@@ -394,21 +413,23 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     {t("side.thenPlan", { amount: formatAED(a.remainingAfterTransfer, locale), developer })}
                   </p>
                   {/* Next to the equity figure (unchanged): what the buyer actually needs on the day, an estimate. */}
-                  <div className="mt-4 border-t border-primary-foreground/15 pt-4">
+                  <div className="mt-4 border-t border-primary-foreground/15 pt-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">{t("side.cashAtTransfer")}</p>
-                    <p className="mt-1.5 font-display text-2xl font-semibold leading-none tabular" data-cash-at-transfer={a.cashToClose}>
-                      {t("side.approx", { amount: formatAED(a.cashToClose, locale) })}
-                    </p>
+                    <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <p className="font-display text-2xl font-semibold leading-none tabular" data-cash-at-transfer={a.cashToClose}>
+                        {t("side.approx", { amount: formatAED(a.cashToClose, locale) })}
+                      </p>
+                      <a
+                        href="#cash-timeline"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-sm text-xs font-medium text-gold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                      >
+                        {t("side.timelineLink")}
+                        <ArrowDown className="h-3.5 w-3.5" aria-hidden />
+                      </a>
+                    </div>
                     <p className="mt-1.5 text-xs text-primary-foreground/60">
                       {t(a.arrears > 0 ? "side.cashNoteArrears" : "side.cashNote")}
                     </p>
-                    <a
-                      href="#cash-timeline"
-                      className="mt-2 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-gold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
-                    >
-                      {t("side.timelineLink")}
-                      <ArrowDown className="h-3.5 w-3.5" aria-hidden />
-                    </a>
                   </div>
                 </div>
               </div>
@@ -418,13 +439,11 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   <div
                     role="note"
                     data-due-soon={dueSoon.dueDate}
-                    className="flex items-start gap-2.5 rounded-2xl border border-gold/50 bg-gold-soft px-3.5 py-3 text-sm text-gold-foreground"
+                    className="flex items-start gap-2.5 rounded-2xl border border-gold/50 bg-gold-soft px-3.5 py-2.5 text-sm text-gold-foreground"
                   >
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                    <div className="min-w-0">
-                      <p className="font-medium leading-snug">{dueSoonText}</p>
-                      <p className="mt-1 text-xs opacity-80">{t("side.dueSoonHint")}</p>
-                    </div>
+                    {/* The transfer-window hint is in the timeline's copy of this note, to keep the card short. */}
+                    <p className="min-w-0 font-medium leading-snug">{dueSoonText}</p>
                   </div>
                 ) : (
                   l.nextInstalmentDate && (
@@ -729,7 +748,8 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     </li>
                   ))}
                 </ol>
-                {schedule.pastDue.sum > 0 && (
+                {/* Past-due instalments the timeline doesn't already show as their own step (pastDueOpen). */}
+                {schedule.pastDue.sum > 0 && pastDueOpen === 0 && (
                   <p className="mt-5 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
                     <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
                     <span>

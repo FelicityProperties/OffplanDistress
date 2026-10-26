@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarClock, FileCheck2, FilePlus2, FileX2 } from "lucide-react";
 import { DeleteSamplesButton, ReviewButtons } from "@/components/admin/AdminControls";
+import { FollowUps } from "@/components/admin/FollowUps";
 import { StatusPill } from "@/components/badges";
 import { Kpi, PageTitle } from "@/components/Kpi";
 import { Button } from "@/components/ui/button";
@@ -177,6 +178,8 @@ export default async function AdminQueue() {
         </Table>
       </div>
       <p className="text-xs text-muted-foreground">{t("queue.tip")}</p>
+      {/* Who is waiting on whom: the same items the admins' daily digest counts (src/lib/reminders.ts). */}
+      <FollowUps />
     </div>
   );
 }

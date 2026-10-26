@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BadgeCheck, Bell, LayoutGrid, List, Loader2, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
@@ -164,7 +164,9 @@ function BudgetFilter({
   const max = Math.min(Number(params.get(maxName) ?? ceiling), ceiling);
   const [value, setValue] = useState<[number, number]>([min, max]);
   useEffect(() => setValue([min, max]), [min, max]);
-  const hintId = hint ? `${minName}-hint` : undefined;
+  // The panel renders twice (desktop column, phone sheet), so the hint's id is unique per instance.
+  const uid = useId();
+  const hintId = hint ? `${uid}-hint` : undefined;
   return (
     <FilterSection title={title}>
       <p className="mb-4 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground tabular">

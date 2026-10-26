@@ -147,7 +147,7 @@ export default async function SellPage({ searchParams }: PageProps<"/sell">) {
           // SellForm opens with its own step indicator (top margin dropped here) and renders its form card + summary.
           // The tinted frame starts at sm: on phones a card inside a card would squeeze the form fields.
           <div className="*:first:mt-0 sm:rounded-3xl sm:border sm:border-border/70 sm:bg-secondary/50 sm:p-6 sm:shadow-card lg:p-8">
-            <SellForm needsPhone={!user.phone} initial={start} />
+            <SellForm needsPhone={!user.phone} initial={start} userId={user.id} />
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">

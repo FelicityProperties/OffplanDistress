@@ -149,7 +149,7 @@ export type PlanSchedule = ReturnType<typeof planSchedule>;
  *     paid since or are overdue; the developer's statement says which (the listing's arrears fields).
  *   - preHandover: due from today up to handover (`months`: from today to the handover date).
  *   - atHandover: the handover payment, by its label ("On handover", "عند التسليم"…), or, when no label says so,
- *     an instalment dated in the handover quarter. A handover mortgage can finance it.
+ *     the last instalment dated in the handover quarter (up to the handover date). A handover mortgage can finance it.
  *   - postHandover: due after the handover date, or labelled post-handover.
  *   - undated: no due date given.
  * transferDay is the usual window for the transfer if an offer is agreed today; dueSoon is the next instalment falling
@@ -167,6 +167,17 @@ export function planSchedule(
   const dated = (p: PlanInstalment) => (p.dueDate && ISO_DAY.test(p.dueDate) ? p.dueDate : null);
   const labelledHandover = plan.some((p) => isHandoverLabel(p.label));
   const handoverQuarter = handover ? quarterStart(handover) : null;
+  // With no label naming it, the handover payment is the last instalment dated in the handover quarter, up to the
+  // handover date: only that one. Earlier ones in the quarter (a monthly plan, say) are paid before handover, and a
+  // handover mortgage can't finance them.
+  const lastInHandoverQuarter =
+    !labelledHandover && handover && handoverQuarter
+      ? plan.reduce<string | null>((last, p) => {
+          const due = dated(p);
+          const fits = due != null && due >= handoverQuarter && due <= handover && !PRE_HANDOVER.test(p.label);
+          return fits && (last == null || due > last) ? due : last;
+        }, null)
+      : null;
 
   const pastDue = bucket();
   const pre = bucket();
@@ -178,7 +189,7 @@ export function planSchedule(
     if (due && due < today) add(pastDue, p.amount);
     else if ((due && handover && due > handover) || POST_HANDOVER.test(p.label)) add(post, p.amount);
     else if (isHandoverLabel(p.label)) add(at, p.amount);
-    else if (!labelledHandover && due && handover && handoverQuarter && due >= handoverQuarter) add(at, p.amount);
+    else if (due != null && due === lastInHandoverQuarter && !PRE_HANDOVER.test(p.label)) add(at, p.amount);
     else if (due) add(pre, p.amount);
     else add(undated, p.amount);
   }

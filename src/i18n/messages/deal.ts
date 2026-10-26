@@ -79,6 +79,11 @@ export default defineMessages({
     "timeline.undated": "Instalments without a due date yet",
     "timeline.unlisted": "Rest of the balance, schedule not listed",
     "timeline.unlistedHint": "Paid to the developer by its plan. Ask us for the statement of account.",
+    "timeline.pastDueStep": "Instalments dated before today",
+    "timeline.pastDueStepHint":
+      "Paid since, or overdue and then paid on transfer day. We check the developer's statement of account before the MOU.",
+    "timeline.pastDueStepChecked":
+      "Not in the arrears on the developer's statement checked {date}; we reconcile the balance with it before the MOU.",
     "timeline.pastDue":
       "The listed plan also has {amount} dated before today: paid since, or overdue. We confirm it with the developer's statement of account before the MOU.",
     "timeline.pastDueChecked":
@@ -211,6 +216,11 @@ export default defineMessages({
     "timeline.undated": "أقساط لم يُحدَّد تاريخ استحقاقها بعد",
     "timeline.unlisted": "باقي الرصيد، ولم يُدرَج جدوله",
     "timeline.unlistedHint": "يُسدَّد للمطوّر وفق خطة الدفع. اطلب منا كشف الحساب.",
+    "timeline.pastDueStep": "أقساط بتواريخ سابقة لليوم",
+    "timeline.pastDueStepHint":
+      "إمّا سُدِّدت منذ ذلك الحين، وإمّا متأخرة فتُسدَّد يوم نقل الملكية. ونتحقق من كشف حساب المطوّر قبل توقيع مذكرة التفاهم.",
+    "timeline.pastDueStepChecked":
+      "غير مدرجة ضمن المتأخرات في كشف حساب المطوّر الذي تم التحقق منه بتاريخ {date}، وسنطابق الرصيد معه قبل توقيع مذكرة التفاهم.",
     "timeline.pastDue":
       "تتضمن خطة الدفع المدرجة أيضاً {amount} بتواريخ سابقة لليوم: إمّا سُدِّدت منذ ذلك الحين وإمّا متأخرة. ونتحقق من ذلك من كشف حساب المطوّر قبل توقيع مذكرة التفاهم.",
     "timeline.pastDueChecked":
