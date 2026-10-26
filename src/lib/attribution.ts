@@ -11,6 +11,13 @@ export type { Source };
 const KEY = "od_src";
 const FIELDS = ["utm_source", "utm_medium", "utm_campaign", "ref", "landing", "referrer_host"] as const;
 
+/**
+ * Control characters and invisible / bidirectional-formatting marks, never kept from untrusted text: Postgres refuses a
+ * NUL inside jsonb (a link with "?utm_campaign=%00" would make every form in that tab fail), and the others could
+ * disguise text on the admin pages.
+ */
+export const UNSAFE_TEXT = /[\u0000-\u001f\u007f-\u009f\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g;
+
 /** Shape of an analytics session id (page_views.session_id): what analyticsSessionId makes, checked on the server too. */
 export const SESSION_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
 
@@ -20,7 +27,8 @@ export function sanitizeSource(v: unknown): Source | null {
   const out: Source = {};
   for (const k of FIELDS) {
     const s = (v as Record<string, unknown>)[k];
-    if (typeof s === "string" && s.trim()) out[k] = s.trim().slice(0, 200);
+    const clean = typeof s === "string" ? s.replace(UNSAFE_TEXT, "").trim() : "";
+    if (clean) out[k] = clean.slice(0, 200);
   }
   const sid = (v as Record<string, unknown>).sid;
   if (typeof sid === "string" && SESSION_ID_RE.test(sid)) out.sid = sid;

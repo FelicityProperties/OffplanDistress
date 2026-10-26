@@ -378,7 +378,7 @@ export const sellerLeads = pgTable(
 /**
  * First-party, cookieless visit statistics (src/lib/analytics.ts, collected by src/components/analytics/PageViewTracker.tsx
  * through POST /api/a). One row per page shown. No IP address, user agent or account is stored: visitors are told apart by
- * visitor_hash, a salted hash of IP + user agent + the Dubai date that changes every day. Signed-in admins and devices
+ * visitor_hash, a keyed hash of IP + user agent + the Dubai date that changes every day. Signed-in admins and devices
  * marked "ignore" are never recorded. Rows older than 13 months are deleted by the daily ops cron.
  */
 export const pageViews = pgTable(
@@ -389,7 +389,7 @@ export const pageViews = pgTable(
     viewId: uuid("view_id").notNull(),
     /** Random per browser tab (sessionStorage), renewed after 30 minutes without a page view. */
     sessionId: text("session_id").notNull(),
-    /** sha256(salt, Dubai date, IP, user agent), first 32 hex characters; rotates daily. */
+    /** Keyed HMAC-SHA256 of Dubai date + IP + user agent (src/lib/analytics.ts), 32 hex characters; rotates daily. */
     visitorHash: text("visitor_hash").notNull(),
     /** Path only, never the query string. */
     path: text("path").notNull(),

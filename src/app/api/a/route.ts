@@ -10,7 +10,7 @@ import {
   geoFrom,
   ipFrom,
   isBotRequest,
-  PATH_RE,
+  isSafePath,
   recordDuration,
   recordView,
   UNTRACKED_PATH,
@@ -39,7 +39,7 @@ const Beacon = z.discriminatedUnion("t", [
     t: z.literal("v"),
     viewId: z.uuid(),
     sessionId,
-    path: z.string().min(1).max(300).regex(PATH_RE),
+    path: z.string().min(1).max(300).refine(isSafePath),
     // Host of the referring site, sent with the first page of a visit only.
     referrer: z
       .string()

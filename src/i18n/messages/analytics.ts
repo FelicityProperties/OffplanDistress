@@ -78,6 +78,7 @@ export default defineMessages({
     "sources.title": "Where visitors come from",
     "sources.sub":
       "The site or app that sent each visit, else its campaign tag. Leads are credited to the way their own visit arrived.",
+    "leads.since": "Leads are counted from when visit statistics started ({date}).",
     "sources.col.source": "Source",
     "sources.col.visitors": "Visitors",
     "sources.col.leads": "Leads",
@@ -124,6 +125,7 @@ export default defineMessages({
       "The latest leads in this period, how their visit arrived and the pages they viewed before getting in touch.",
     "journey.empty": "No leads in this period.",
     "journey.stats": "{n} pages in {span} before getting in touch · {time} on screen",
+    "journey.stats.one": "1 page in {span} before getting in touch · {time} on screen",
     "journey.steps": "Pages viewed before getting in touch",
     "journey.earlier": "Earlier pages not shown: {n}",
     "journey.noPages":
@@ -236,6 +238,7 @@ export default defineMessages({
     "sources.title": "مصادر الزوار",
     "sources.sub":
       "الموقع أو التطبيق الذي أحال كل زيارة، وإلا فوسم حملتها. ويُنسب كل عميل محتمل إلى الطريقة التي وصلت بها زيارته.",
+    "leads.since": "ويُحتسب العملاء المحتملون منذ بدء تسجيل إحصاءات الزيارات (⁨{date}⁩).",
     "sources.col.source": "المصدر",
     "sources.col.visitors": "الزوار",
     "sources.col.leads": "العملاء المحتملون",
@@ -281,6 +284,7 @@ export default defineMessages({
     "journey.sub": "أحدث العملاء المحتملين في هذه الفترة، وكيف وصلت زياراتهم، والصفحات التي تصفحوها قبل التواصل معنا.",
     "journey.empty": "لا يوجد عملاء محتملون في هذه الفترة.",
     "journey.stats": "عدد الصفحات قبل التواصل: {n} · خلال {span} · منها {time} على الشاشة",
+    "journey.stats.one": "عدد الصفحات قبل التواصل: 1 · خلال {span} · منها {time} على الشاشة",
     "journey.steps": "الصفحات التي تصفحها قبل التواصل",
     "journey.earlier": "صفحات سابقة غير معروضة: {n}",
     "journey.noPages":

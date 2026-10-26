@@ -101,6 +101,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   ];
 
   const share = (v: number) => (cur.visitors ? pct(v / cur.visitors, 0) : "—");
+  // The lead columns below start when visit statistics did, if that was inside this period: say so under each table.
+  const leadsSince = r.leadsSince ? ` ${t("leads.since", { date: formatAsOf(r.leadsSince, locale) })}` : "";
   const named = (prefix: "device" | "lang", key: string | null) => {
     if (!key) return t("unknown");
     const k = `${prefix}.${key}` as TKey<"analytics">;
@@ -147,7 +149,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <DailyChart points={r.points} hourly={r.hourly} totals={{ visitors: cur.visitors, leads: cur.leads }} locale={locale} t={t} />
-        <LivePanel sessions={r.live} minutes={LIVE_MINUTES} generatedAt={r.generatedAt} locale={locale} t={t} />
+        <LivePanel total={r.live.total} sessions={r.live.sessions} minutes={LIVE_MINUTES} generatedAt={r.generatedAt} locale={locale} t={t} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -181,7 +183,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         </Section>
       </div>
 
-      <Section id="sources" title={t("sources.title")} sub={t("sources.sub")}>
+      <Section id="sources" title={t("sources.title")} sub={t("sources.sub") + leadsSince}>
         <RankTable
           label={t("sources.title")}
           testId="sources"
@@ -197,7 +199,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       </Section>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Section id="campaigns" title={t("campaigns.title")} sub={t("campaigns.sub")}>
+        <Section id="campaigns" title={t("campaigns.title")} sub={t("campaigns.sub") + leadsSince}>
           <RankTable
             label={t("campaigns.title")}
             testId="campaigns"
@@ -214,7 +216,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
             empty={t("campaigns.empty")}
           />
         </Section>
-        <Section id="refs" title={t("refs.title")} sub={t("refs.sub")}>
+        <Section id="refs" title={t("refs.title")} sub={t("refs.sub") + leadsSince}>
           <RankTable
             label={t("refs.title")}
             testId="refs"

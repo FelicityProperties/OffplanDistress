@@ -18,7 +18,8 @@ export function TableToggle({ children }: { children: React.ReactNode }) {
   const [shown, setShown] = useState(false);
   return (
     <div>
-      <Button type="button" size="sm" variant="outline" aria-pressed={shown} onClick={() => setShown((v) => !v)}>
+      {/* The label says what a press does, so no aria-pressed (a toggle's label must not change with its state). */}
+      <Button type="button" size="sm" variant="outline" onClick={() => setShown((v) => !v)}>
         <Table2 aria-hidden /> {t(shown ? "chart.table.hide" : "chart.table.show")}
       </Button>
       <div className={cn(shown ? "mt-4 overflow-x-auto" : "sr-only")}>{children}</div>

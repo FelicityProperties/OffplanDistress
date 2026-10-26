@@ -223,9 +223,22 @@ export type RefRow = { ref: string; sessions: number; visitors: number; leads: n
 export type CountRow = { key: string | null; visitors: number };
 export type CityRow = { country: string | null; city: string | null; visitors: number };
 
-async function breakdowns(p: Period) {
+/** A ranked table's rows: the ten with most visitors, plus every one that brought a lead (at most 20 in all). */
+function topRows<T extends { visitors: number; sessions: number; leads: number }>(rows: T[]) {
+  return [...rows]
+    .sort((a, b) => b.visitors - a.visitors || b.sessions - a.sessions || b.leads - a.leads)
+    .filter((r, i) => i < 10 || r.leads > 0)
+    .slice(0, 20);
+}
+
+/**
+ * The tables. `since`: when visit statistics started inside the period, the sources, campaigns and partner codes count
+ * only the leads from then on (as the headline conversion does), so earlier leads can't pile up against no visitors.
+ */
+async function breakdowns(p: Period, since: Date | null) {
   const channel = channelSql(sql`referrer_host`, sql`utm_source`);
   const leadChannel = channelSql(sql`(source->>'referrer_host')`, sql`(source->>'utm_source')`);
+  const lp: Period = since ? { from: since, to: p.to } : p;
   const q = <T extends Record<string, unknown>>(query: SQL) => db.execute<T>(query).then((r) => r.rows);
   const [pages, entries, sources, sourceLeads, campaigns, campaignLeads, refs, refLeads, countries, cities, devices, locales, browsers] =
     await Promise.all([
@@ -240,22 +253,22 @@ async function breakdowns(p: Period) {
         with ${sessionsIn(p)}, c as (select e.*, ${channel} as channel from e)
         select channel, count(*)::int as sessions, count(distinct visitor_hash)::int as visitors from c group by channel`),
       q<{ channel: Channel; leads: number }>(sql`
-        with l as (${leadsIn(p)}), c as (select ${leadChannel} as channel from l)
+        with l as (${leadsIn(lp)}), c as (select ${leadChannel} as channel from l)
         select channel, count(*)::int as leads from c group by channel`),
       q<{ source: string | null; campaign: string | null; sessions: number; visitors: number }>(sql`
         with ${sessionsIn(p)}
         select utm_source as source, utm_campaign as campaign, count(*)::int as sessions, count(distinct visitor_hash)::int as visitors
         from e where utm_source is not null or utm_campaign is not null
-        group by 1, 2 order by sessions desc limit 10`),
+        group by 1, 2 order by sessions desc limit 500`),
       q<{ source: string | null; campaign: string | null; leads: number }>(sql`
         select source->>'utm_source' as source, source->>'utm_campaign' as campaign, count(*)::int as leads
-        from (${leadsIn(p)}) l where source->>'utm_source' is not null or source->>'utm_campaign' is not null group by 1, 2`),
+        from (${leadsIn(lp)}) l where source->>'utm_source' is not null or source->>'utm_campaign' is not null group by 1, 2`),
       q<{ ref: string; sessions: number; visitors: number }>(sql`
         with ${sessionsIn(p)}
         select ref, count(*)::int as sessions, count(distinct visitor_hash)::int as visitors
-        from e where ref is not null group by ref order by sessions desc limit 10`),
+        from e where ref is not null group by ref order by sessions desc limit 500`),
       q<{ ref: string; leads: number }>(sql`
-        select source->>'ref' as ref, count(*)::int as leads from (${leadsIn(p)}) l where source->>'ref' is not null group by 1`),
+        select source->>'ref' as ref, count(*)::int as leads from (${leadsIn(lp)}) l where source->>'ref' is not null group by 1`),
       q<{ key: string | null; visitors: number }>(sql`
         select country as key, count(distinct visitor_hash)::int as visitors from (${viewsIn(p)}) v
         group by country order by visitors desc, country limit 8`),
@@ -282,6 +295,8 @@ async function breakdowns(p: Period) {
     .filter((r) => r.sessions > 0 || r.leads > 0)
     .sort((a, b) => b.visitors - a.visitors || b.leads - a.leads);
 
+  // Campaigns and partner codes: every one with visits or leads in the range (a form sent days after the click still
+  // counts), merged before ranking, so a campaign outside the ten biggest never shows its leads against "0 visitors".
   const ck = (s: string | null, c: string | null) => `${s ?? ""}\u0000${c ?? ""}`;
   const campaignLeadMap = new Map(campaignLeads.map((r) => [ck(r.source, r.campaign), Number(r.leads)]));
   const campaignRows: CampaignRow[] = campaigns.map((r) => ({
@@ -291,11 +306,9 @@ async function breakdowns(p: Period) {
     visitors: Number(r.visitors),
     leads: campaignLeadMap.get(ck(r.source, r.campaign)) ?? 0,
   }));
-  // Campaigns that brought leads but no recorded visit in the range (a form sent days after the click) still show.
+  const seenCampaigns = new Set(campaigns.map((c) => ck(c.source, c.campaign)));
   for (const r of campaignLeads) {
-    if (!campaigns.some((c) => ck(c.source, c.campaign) === ck(r.source, r.campaign)) && campaignRows.length < 12) {
-      campaignRows.push({ source: r.source, campaign: r.campaign, sessions: 0, visitors: 0, leads: Number(r.leads) });
-    }
+    if (!seenCampaigns.has(ck(r.source, r.campaign))) campaignRows.push({ source: r.source, campaign: r.campaign, sessions: 0, visitors: 0, leads: Number(r.leads) });
   }
   const refLeadMap = new Map(refLeads.map((r) => [r.ref, Number(r.leads)]));
   const refRows: RefRow[] = refs.map((r) => ({
@@ -304,19 +317,19 @@ async function breakdowns(p: Period) {
     visitors: Number(r.visitors),
     leads: refLeadMap.get(r.ref) ?? 0,
   }));
-  for (const r of refLeads) {
-    if (!refs.some((x) => x.ref === r.ref) && refRows.length < 12) refRows.push({ ref: r.ref, sessions: 0, visitors: 0, leads: Number(r.leads) });
-  }
+  const seenRefs = new Set(refs.map((x) => x.ref));
+  for (const r of refLeads) if (!seenRefs.has(r.ref)) refRows.push({ ref: r.ref, sessions: 0, visitors: 0, leads: Number(r.leads) });
 
   const num = <T extends { visitors: number }>(rows: T[]) => rows.map((r) => ({ ...r, visitors: Number(r.visitors) }));
   return {
+    leadsSince: since,
     pages: pages.map(
       (r): PageRow => ({ path: r.path, views: Number(r.views), visitors: Number(r.visitors), avgMs: r.avg_ms == null ? null : Number(r.avg_ms) }),
     ),
     entries: entries.map((r): EntryRow => ({ path: r.path, sessions: Number(r.sessions), bounceRate: Number(r.bounces) / Number(r.sessions) })),
     sources: sourceRows,
-    campaigns: campaignRows,
-    refs: refRows,
+    campaigns: topRows(campaignRows),
+    refs: topRows(refRows),
     countries: num(countries) as CountRow[],
     cities: num(cities) as CityRow[],
     devices: num(devices) as CountRow[],
@@ -327,15 +340,28 @@ async function breakdowns(p: Period) {
 
 export type LiveSession = { path: string; country: string | null; city: string | null; device: string | null; at: Date };
 
-/** Sessions with a page view in the last LIVE_MINUTES minutes, each with the page it is on now. */
-export async function liveSessions(): Promise<LiveSession[]> {
-  const { rows } = await db.execute<{ path: string; country: string | null; city: string | null; device: string | null; at_ms: number }>(sql`
-    select * from (
+/**
+ * Sessions with a page view in the last LIVE_MINUTES minutes: how many (all of them), and the most recent ones, each with
+ * the page it is on now.
+ */
+export async function liveSessions(): Promise<{ total: number; sessions: LiveSession[] }> {
+  const { rows } = await db.execute<{
+    path: string;
+    country: string | null;
+    city: string | null;
+    device: string | null;
+    at_ms: number;
+    total: number;
+  }>(sql`
+    select *, count(*) over ()::int as total from (
       select distinct on (session_id) path, country, city, device, (extract(epoch from created_at) * 1000)::float8 as at_ms
       from page_views where created_at > now() - make_interval(mins => ${LIVE_MINUTES})
       order by session_id, created_at desc
     ) x order by at_ms desc limit 200`);
-  return rows.map((r) => ({ path: r.path, country: r.country, city: r.city, device: r.device, at: new Date(Number(r.at_ms)) }));
+  return {
+    total: Number(rows[0]?.total ?? 0),
+    sessions: rows.map((r) => ({ path: r.path, country: r.country, city: r.city, device: r.device, at: new Date(Number(r.at_ms)) })),
+  };
 }
 
 export type JourneyStep = { path: string; at: Date; durationMs: number | null };
@@ -449,11 +475,13 @@ export async function todaySnapshot(now = new Date()) {
 export async function analyticsReport(range: RangeKey, now = new Date()) {
   const bounds = rangeBounds(range, now);
   const start = await trackingStart();
+  const { from, to } = bounds.current;
+  const since = start && start > from && start < to ? start : null;
   const [current, previous, points, detail, live, leads] = await Promise.all([
     headline(bounds.current, start),
     headline(bounds.previous, start),
     series(bounds.current, bounds.buckets, bounds.hourly),
-    breakdowns(bounds.current),
+    breakdowns(bounds.current, since),
     liveSessions(),
     journeys(bounds.current, start),
   ]);

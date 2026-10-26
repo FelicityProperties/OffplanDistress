@@ -4,6 +4,7 @@ import { userAgent } from "next/server";
 import { and, eq, gt, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { pageViews, sellerLeads } from "@/db/schema";
+import { UNSAFE_TEXT } from "@/lib/attribution";
 
 // First-party, cookieless visit statistics: what POST /api/a records (src/app/api/a/route.ts) and how long it is kept.
 // The browser side is src/components/analytics/PageViewTracker.tsx; the report is src/lib/analytics-report.ts.
@@ -32,10 +33,23 @@ export function cleanPath(path: string) {
   return path.replace(/\/{2,}/g, "/").replace(/\/+$/, "") || "/";
 }
 
-// Control characters and invisible / bidirectional-formatting marks, removed from free text before it is stored.
-const UNSAFE_CHARS = /[\u0000-\u001f\u007f-\u009f؜​-‏‪-‮⁠-⁩﻿]/g;
+/** Free text without control characters or invisible / bidirectional-formatting marks (see UNSAFE_TEXT). */
 export function cleanText(s: string) {
-  return s.replace(UNSAFE_CHARS, "").trim();
+  return s.replace(UNSAFE_TEXT, "").trim();
+}
+const UNSAFE_CHAR = new RegExp(UNSAFE_TEXT.source);
+
+/**
+ * A page address worth keeping: only PATH_RE's characters, and nothing unsafe once its percent-escapes are decoded the
+ * way /admin/analytics shows them ("/%E2%80%AE…" is a right-to-left override in disguise, "%00" a NUL).
+ */
+export function isSafePath(path: string) {
+  if (!PATH_RE.test(path)) return false;
+  let shown = path;
+  try {
+    shown = decodeURIComponent(path);
+  } catch {}
+  return !UNSAFE_CHAR.test(shown);
 }
 
 // Crawlers, link previews, uptime monitors, headless browsers and scripts. Next's userAgent().isBot catches more.

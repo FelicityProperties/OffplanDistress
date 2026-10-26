@@ -5,6 +5,7 @@ import { StatusPill } from "@/components/badges";
 import { intlLocale, type Locale } from "@/i18n/config";
 import type { TFn } from "@/i18n/translator";
 import type { LeadJourney, LiveSession, SeriesPoint } from "@/lib/analytics-report";
+import { UNSAFE_TEXT } from "@/lib/attribution";
 import { formatNumber, formatPct, refCode, timeAgo } from "@/lib/format";
 import { leadCode } from "@/lib/estimate";
 import { cn } from "@/lib/utils";
@@ -409,17 +410,41 @@ export function RankTable({
   );
 }
 
+/** A path as people read it: browsers send "/deals/%D9%85…" for Arabic (or any non-ASCII) addresses. */
+export function readablePath(path: string) {
+  try {
+    // Escapes can hide control or bidirectional-formatting characters ("%E2%80%AE" reverses the text after it).
+    return decodeURIComponent(path).replace(UNSAFE_TEXT, "");
+  } catch {
+    return path; // a broken escape (e.g. cut at the length cap) stays as sent
+  }
+}
+
 /** A path as typed in the address bar, kept left-to-right inside Arabic text. */
 export function PathText({ path }: { path: string }) {
   return (
     <bdi dir="ltr" className="font-mono text-[13px]">
-      {path}
+      {readablePath(path)}
     </bdi>
   );
 }
 
-/** Who is on the site now, and the pages they are on. */
-export function LivePanel({ sessions, minutes, generatedAt, locale, t }: { sessions: LiveSession[]; minutes: number; generatedAt: Date; locale: Locale; t: TA }) {
+/** Who is on the site now (`total`: every session; `sessions`: the most recent ones), and the pages they are on. */
+export function LivePanel({
+  total,
+  sessions,
+  minutes,
+  generatedAt,
+  locale,
+  t,
+}: {
+  total: number;
+  sessions: LiveSession[];
+  minutes: number;
+  generatedAt: Date;
+  locale: Locale;
+  t: TA;
+}) {
   const byPath = new Map<string, number>();
   const byCountry = new Map<string, number>();
   for (const s of sessions) {
@@ -436,7 +461,7 @@ export function LivePanel({ sessions, minutes, generatedAt, locale, t }: { sessi
     <Section id="live" title={t("live.title")} action={<RefreshButton />}>
       <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="text-4xl font-semibold" data-metric="live">
-          {formatNumber(sessions.length)}
+          {formatNumber(total)}
         </span>
         <span className="text-sm text-muted-foreground">{t("live.label", { min: minutes })}</span>
       </p>
@@ -497,7 +522,7 @@ export function Journeys({ leads, locale, t, ta }: { leads: LeadJourney[]; local
           [src?.utm_source, src?.utm_medium, src?.utm_campaign].filter(Boolean).join(" / "),
           src?.ref ? ta("leads.source.ref", { ref: src.ref }) : "",
           src?.referrer_host ? ta("leads.source.from", { host: src.referrer_host }) : "",
-          src?.landing ? ta("leads.source.landing", { path: src.landing }) : "",
+          src?.landing ? ta("leads.source.landing", { path: readablePath(src.landing) }) : "",
         ].filter(Boolean);
         const ref =
           l.kind === "seller" && l.refNo != null ? leadCode(l.refNo) : l.refNo != null ? refCode(l.refNo) : null;
@@ -533,7 +558,7 @@ export function Journeys({ leads, locale, t, ta }: { leads: LeadJourney[]; local
             ) : (
               <div className="mt-2 space-y-1.5">
                 <p className="text-xs font-medium" data-journey-stats>
-                  {t("journey.stats", {
+                  {t(steps.length === 1 ? "journey.stats.one" : "journey.stats", {
                     n: formatNumber(steps.length),
                     span: formatDuration(l.spanMs, t),
                     time: formatDuration(l.engagedMs, t),
