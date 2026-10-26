@@ -44,7 +44,7 @@ import { communityName, developerName } from "@/lib/place-names";
 import { siteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 import { getListingByRef, similarDeals, watchedIds } from "@/lib/listings";
-import { permitQrSvg } from "@/lib/permits";
+import { isAdvertised, permitQrSvg } from "@/lib/permits";
 
 async function load(ref: string) {
   const refNo = parseRefCode(ref);
@@ -55,7 +55,8 @@ async function load(ref: string) {
 export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): Promise<Metadata> {
   const { ref } = await params;
   const [row, t, tc, locale] = await Promise.all([load(ref), getT("deal"), getT("common"), getLocale()]);
-  if (!row || !PUBLIC_STATUSES.includes(row.listing.status)) return { title: t("meta.unavailable"), robots: { index: false } };
+  // Not an advert (a private status, or a DLD permit / Form A that has run out): never indexed, nothing about the unit.
+  if (!row || !isAdvertised(row.listing)) return { title: t("meta.unavailable"), robots: { index: false } };
   const l = row.listing;
   const a = analyzeDeal(l);
   const vars = { unit: tc(`unit.${l.unitType}`), project: l.projectName };
@@ -87,7 +88,10 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const l = row.listing;
   const isOwner = user?.id === l.sellerId;
   const isAdmin = user?.role === "admin";
-  if (!PUBLIC_STATUSES.includes(l.status) && !isOwner && !isAdmin) notFound();
+  // Only an advert is public. Anything else (including a live listing whose DLD permit or Form A ran out before the
+  // daily job paused it) is a private page for its seller and our team: no offers, no listing markup.
+  const advertised = isAdvertised(l);
+  if (!advertised && !isOwner && !isAdmin) notFound();
 
   if (!isOwner && !isAdmin) {
     after(() => db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, l.id)));
@@ -154,7 +158,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   // Only an available real advert gets listing markup. The price is the whole unit (equity + remaining plan),
   // not the equity payment, so search results never show the unit for less than it costs.
   const listingJsonLd =
-    !l.isSample && l.status === "live"
+    !l.isSample && l.status === "live" && advertised
       ? {
           "@context": "https://schema.org",
           "@type": "RealEstateListing",
@@ -183,13 +187,15 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           {t("back")}
         </Link>
 
-        {l.status !== "live" && (
+        {(l.status !== "live" || !advertised) && (
           <div className="mt-4 flex items-start gap-3 rounded-2xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-foreground">
             <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <p>
-              {PUBLIC_STATUSES.includes(l.status)
+              {advertised
                 ? t("banner.underOffer")
-                : t("banner.private", { status: tc(`listing.${l.status}`) })}
+                : PUBLIC_STATUSES.includes(l.status)
+                  ? t("banner.permitLapsed")
+                  : t("banner.private", { status: tc(`listing.${l.status}`) })}
             </p>
           </div>
         )}
@@ -328,14 +334,17 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   </p>
                 )}
                 <div className={l.nextInstalmentDate ? "mt-5 grid gap-2.5" : "grid gap-2.5"}>
-                  <OfferDialog
-                    listingId={l.id}
-                    project={l.projectName}
-                    asking={l.askingPrice}
-                    signedIn={!!user}
-                    loginHref={loginHref}
-                    disabledReason={isOwner ? t("offer.ownListing") : l.isSample ? t("offer.sampleListing") : undefined}
-                  />
+                  {/* Offers only on an advert (the server refuses any other way too). */}
+                  {advertised && (
+                    <OfferDialog
+                      listingId={l.id}
+                      project={l.projectName}
+                      asking={l.askingPrice}
+                      signedIn={!!user}
+                      loginHref={loginHref}
+                      disabledReason={isOwner ? t("offer.ownListing") : l.isSample ? t("offer.sampleListing") : undefined}
+                    />
+                  )}
                   <WatchButton listingId={l.id} watching={watched.has(l.id)} variant="full" className="h-12" />
                   {/* A sample is an illustration, so nothing on it invites a viewing or an enquiry. */}
                   {!l.isSample && (

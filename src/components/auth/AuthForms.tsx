@@ -12,7 +12,7 @@ import { richText } from "@/content/legal/rich-text";
 import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({ next, lead }: { next?: string; lead?: string }) {
   const t = useT("auth");
   const tc = useT("common");
   const [state, action] = useActionState(login, {});
@@ -21,6 +21,7 @@ export function LoginForm({ next }: { next?: string }) {
   return (
     <form action={action} className="space-y-4">
       {next && <input type="hidden" name="next" value={next} />}
+      {lead && <input type="hidden" name="lead" value={lead} />}
       <Field label={t("field.email")} htmlFor="email" error={fe.email}>
         <Input id="email" name="email" type="email" dir="ltr" required autoComplete="email" />
       </Field>

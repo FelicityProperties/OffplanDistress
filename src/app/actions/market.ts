@@ -9,10 +9,10 @@ import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { sourceFromForm } from "@/lib/attribution";
 import { getCurrentUser } from "@/lib/auth";
-import { PUBLIC_STATUSES } from "@/lib/config";
 import { refCode } from "@/lib/format";
 import { notify, notifyAdmins, type TemplateParams } from "@/lib/notify";
 import { settleOtherOffers } from "@/lib/offers";
+import { isAdvertised } from "@/lib/permits";
 import { clientIp, hit, MINUTE } from "@/lib/throttle";
 import type { FormState } from "./auth";
 
@@ -45,11 +45,17 @@ export async function toggleWatch(listingId: string): Promise<{ watching?: boole
   }
 
   const [l] = await db
-    .select({ askingPrice: listings.askingPrice, status: listings.status })
+    .select({
+      askingPrice: listings.askingPrice,
+      status: listings.status,
+      isSample: listings.isSample,
+      dldPermitExpiresAt: listings.dldPermitExpiresAt,
+      formAExpiresAt: listings.formAExpiresAt,
+    })
     .from(listings)
     .where(eq(listings.id, listingId))
     .limit(1);
-  if (!l || !PUBLIC_STATUSES.includes(l.status)) return { error: (await getT("errors"))("watch.unavailable") };
+  if (!l || !isAdvertised(l)) return { error: (await getT("errors"))("watch.unavailable") };
   await db.insert(watchlist).values({ userId: user.id, listingId, savedPrice: l.askingPrice }).onConflictDoNothing();
   refresh();
   return { watching: true };
@@ -87,12 +93,15 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
       projectName: listings.projectName,
       askingPrice: listings.askingPrice,
       isSample: listings.isSample,
+      dldPermitExpiresAt: listings.dldPermitExpiresAt,
+      formAExpiresAt: listings.formAExpiresAt,
     })
     .from(listings)
     .where(eq(listings.id, v.listingId))
     .limit(1);
-  // Sample listings are illustrations and cannot receive offers (Terms s.4), whatever calls this action.
-  if (!l || !PUBLIC_STATUSES.includes(l.status) || l.isSample) return { error: t("offer.closed") };
+  // Sample listings are illustrations and cannot receive offers (Terms s.4), whatever calls this action; nor can a
+  // listing that isn't an advert any more (its DLD permit or Form A ran out, even before the daily job paused it).
+  if (!l || !isAdvertised(l) || l.isSample) return { error: t("offer.closed") };
   if (l.sellerId === user.id) return { error: t("offer.own") };
 
   // One open offer per buyer per listing: a new offer replaces the open one.
@@ -162,7 +171,9 @@ const TAKEN_STATUSES: ListingStatus[] = ["under_offer", "noc_in_progress", "tran
  * (neon-http has db.batch but no transactions, node-postgres the reverse). The offer row is locked first and must
  * still be as the user saw it: in `from`, at `amount` (the offer, or the seller's counter); the listing only moves
  * from live to under_offer if so; the offer is only accepted if the listing moved. Of two acceptances racing on one
- * unit, the second finds it no longer live and changes nothing. Returns whether this call accepted the offer.
+ * unit, the second finds it no longer live and changes nothing. Nor does an acceptance while the unit still carries an
+ * accepted offer (one from a deal that fell through is closed as the unit goes live again, reopenUnit in
+ * src/lib/offers.ts), so a unit never has two. Returns whether this call accepted the offer.
  */
 async function acceptOffer(offerId: string, listingId: string, from: "pending" | "countered", amount: number) {
   // A buyer revising their offer at the same moment must not be accepted at the old amount.
@@ -175,6 +186,7 @@ async function acceptOffer(offerId: string, listingId: string, from: "pending" |
     ), unit as (
       update listings set status = 'under_offer', updated_at = now()
       where id = ${listingId} and status = 'live' and exists (select 1 from target)
+        and not exists (select 1 from offers where listing_id = ${listingId} and status = 'accepted')
       returning id
     ), accepted as (
       update offers set status = 'accepted', amount = ${amount}, updated_at = now()

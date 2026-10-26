@@ -2,7 +2,7 @@ import type { Locale } from "@/i18n/config";
 import type { Vars } from "@/i18n/define";
 import type { Namespace } from "@/i18n/messages";
 import { translator, type TKey } from "@/i18n/translator";
-import { formatAED } from "./format";
+import { formatAED, formatDate } from "./format";
 
 // In-app + email copy for every notification, in each supported language.
 // {placeholders} are filled from the params passed to notify(), resolved in each recipient's language.
@@ -37,17 +37,30 @@ export const TEMPLATES = {
     en: { title: "Your listing needs attention: {project}", body: "{reason}", cta: "Open listing" },
     ar: { title: "إعلانك بحاجة إلى إجراء منك: {project}", body: "{reason}", cta: "فتح الإعلان" },
   },
-  // Permit lifecycle, from the daily ops cron (src/lib/permits.ts). {document}, {when} and {reason} are errors.ts
-  // "notify.doc.*", "notify.expiry.*" and "notify.paused.*" lines. Admins only:
+  // Permit lifecycle, from the daily ops cron (src/lib/permits.ts). {document}, {when}, {then} and {reason} are
+  // errors.ts "notify.doc.*", "notify.expiry.*" and "notify.paused.*" lines. Admins only:
   "listing.permit_expiring": {
     en: {
       title: "{document} expires {when}: {project}",
-      body: "The {document} for {ref} expires {when}. Renew it and enter the new expiry date in the listing editor; otherwise the listing is paused automatically the day after it runs out.",
+      body: "The {document} for {ref} expires {when}. Renew it and enter the new expiry date in the listing editor. {then}",
       cta: "Open listing",
     },
     ar: {
       title: "تنتهي صلاحية {document} {when}: {project}",
-      body: "تنتهي صلاحية {document} للإعلان ⁨{ref}⁩ {when}. جدِّده وأدخِل تاريخ الانتهاء الجديد في صفحة تعديل الإعلان، وإلا فسيُوقَف نشر الإعلان تلقائياً في اليوم التالي لانتهاء صلاحيته.",
+      body: "تنتهي صلاحية {document} للإعلان ⁨{ref}⁩ {when}. جدِّده وأدخِل تاريخ الانتهاء الجديد في صفحة تعديل الإعلان. {then}",
+      cta: "فتح الإعلان",
+    },
+  },
+  // A unit with an agreed deal whose permit or Form A ran out: not paused, the admins decide. {status} is its status.
+  "listing.permit_lapsed": {
+    en: {
+      title: "{document} expired during a deal: {project}",
+      body: "The {document} for {ref} expired on {date}. The listing is “{status}”, so it was not paused and the deal is unaffected, but it no longer shows as an advert on the site. Renew the {document} and enter the new expiry date, or decide what should happen to the listing.",
+      cta: "Open listing",
+    },
+    ar: {
+      title: "انتهت صلاحية {document} أثناء صفقة: {project}",
+      body: "انتهت صلاحية {document} للإعلان ⁨{ref}⁩ في {date}. حالة الإعلان «{status}»، لذلك لم يُوقَف نشره ولم تتأثر الصفقة، لكنه لم يعد يظهر كإعلان على الموقع. جدِّد {document} وأدخِل تاريخ الانتهاء الجديد، أو قرِّر ما يلزم بشأن الإعلان.",
       cta: "فتح الإعلان",
     },
   },
@@ -108,6 +121,24 @@ export const TEMPLATES = {
   "offer.unit_sold": {
     en: { title: "Your offer on {project} was closed", body: "The seller agreed a sale with another buyer, so the unit is no longer available and your offer of {amount} was closed.", cta: "Browse deals" },
     ar: { title: "أُغلق عرضك على {project}", body: "اتفق البائع على البيع لمشترٍ آخر، لذلك لم تعد الوحدة متاحة وأُغلق عرضك البالغ {amount}.", cta: "تصفّح الصفقات" },
+  },
+  // The unit left the market without a sale (withdrawn, rejected or removed): its open offers are closed.
+  "offer.unit_unavailable": {
+    en: { title: "{project} is no longer available", body: "The unit is no longer available, so your offer of {amount} was closed.", cta: "Browse deals" },
+    ar: { title: "لم تعد الوحدة في {project} متاحة", body: "لم تعد الوحدة متاحة، لذلك أُغلق عرضك البالغ {amount}.", cta: "تصفّح الصفقات" },
+  },
+  // The buyer whose offer was accepted, when the unit is put back on the market (the deal fell through).
+  "offer.deal_cancelled": {
+    en: {
+      title: "The deal on {project} did not go ahead",
+      body: "The deal agreed on your offer of {amount} did not go ahead, so your offer is now closed. The unit may be offered again, and you can make a new offer if it is.",
+      cta: "View my offers",
+    },
+    ar: {
+      title: "لم تكتمل الصفقة على {project}",
+      body: "لم تكتمل الصفقة المتفق عليها بناءً على عرضك البالغ {amount}، لذلك أُغلق عرضك. قد تُعرض الوحدة للبيع مجدداً، وعندها يمكنك تقديم عرض جديد.",
+      cta: "عرض عروضي",
+    },
   },
   "deal.agreed.admin": {
     en: { title: "Deal agreed on {project} at {amount}", body: "Seller {seller}, buyer {buyer}. Start the developer NOC and move the listing to “NOC in progress”.", cta: "Open listing" },
@@ -173,16 +204,24 @@ export type TemplateKey = keyof typeof TEMPLATES;
 export type TermParam = { [N in Namespace]: { t: N; key: TKey<N>; vars?: Vars } }[Namespace];
 
 /**
- * One {placeholder} value. Plain strings/numbers are used as-is; { aed } is formatted as money and
- * { t, key } is translated — both in the recipient's language.
+ * One {placeholder} value. Plain strings/numbers are used as-is; { aed } is formatted as money, { date: "2026-11-02" }
+ * as a date and { t, key } is translated — all in the recipient's language.
  */
-export type TemplateParam = string | number | null | undefined | { aed: number | null | undefined } | TermParam;
+export type TemplateParam =
+  | string
+  | number
+  | null
+  | undefined
+  | { aed: number | null | undefined }
+  | { date: string | null | undefined }
+  | TermParam;
 export type TemplateParams = Record<string, TemplateParam>;
 
 export function resolveParam(p: TemplateParam, locale: Locale): string {
   if (p == null) return "";
   if (typeof p === "string" || typeof p === "number") return String(p);
   if ("aed" in p) return formatAED(p.aed, locale);
+  if ("date" in p) return formatDate(p.date, locale);
   return (translator(p.t, locale) as (key: string, vars?: Vars) => string)(p.key, p.vars);
 }
 

@@ -5,6 +5,7 @@ import { AuthShell } from "@/components/AuthShell";
 import { SignupForm } from "@/components/auth/AuthForms";
 import { getT } from "@/i18n/server";
 import { getCurrentUser, safeNext } from "@/lib/auth";
+import { authHref, leadFromAuthParams } from "@/lib/leads";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("auth");
@@ -14,8 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SignupPage({ searchParams }: PageProps<"/signup">) {
   const { next, intent, lead } = await searchParams;
   // From the free estimate's thank-you link: the account takes over that lead and the sell form starts from it.
-  const leadId =
-    typeof lead === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lead) ? lead : undefined;
+  const leadId = leadFromAuthParams(lead, next);
   const target = safeNext(next, leadId ? `/sell?lead=${leadId}` : "");
   if (await getCurrentUser()) redirect(target || "/dashboard");
   const [t, tc] = await Promise.all([getT("auth"), getT("common")]);
@@ -25,8 +25,9 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
       <SignupForm next={target || undefined} intent={typeof intent === "string" ? intent : undefined} lead={leadId} />
       <p className="mt-8 border-t border-border/70 pt-6 text-center text-sm text-muted-foreground">
         {t("signup.haveAccount")}{" "}
+        {/* Logging in instead of signing up claims the estimate's lead just the same. */}
         <Link
-          href={target ? `/login?next=${encodeURIComponent(target)}` : "/login"}
+          href={authHref("/login", target, leadId)}
           className="rounded-sm font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {tc("logIn")}

@@ -170,6 +170,11 @@ export const listings = pgTable(
     dldPermitUrl: text("dld_permit_url"),
     /** Last day of the seller's RERA Form A (listing agreement); the advert comes down with it, like the permit. */
     formAExpiresAt: date("form_a_expires_at"),
+    /**
+     * Permit / Form A notices the daily ops cron already sent the admins for the current expiry dates, e.g.
+     * "permit:2026-11-02:week" (src/lib/permits.ts), so a repeated or missed run neither duplicates nor skips one.
+     */
+    expiryNotices: text("expiry_notices").array().notNull().default(sql`'{}'::text[]`),
     /** Asking price as last approved for the public advert; price-drop alerts compare against it on re-approval. */
     publicPrice: integer("public_price"),
     rejectionReason: text("rejection_reason"),

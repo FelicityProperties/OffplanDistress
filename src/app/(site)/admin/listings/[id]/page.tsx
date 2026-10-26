@@ -13,6 +13,7 @@ import { analyzeDeal } from "@/lib/deal-math";
 import { adminListing, adminOffers } from "@/lib/admin";
 import { listingFiles } from "@/lib/dashboard";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
+import { expiryDateBounds } from "@/lib/permits";
 import { communityName, developerName } from "@/lib/place-names";
 
 export default async function AdminListingPage({ params }: PageProps<"/admin/listings/[id]">) {
@@ -33,8 +34,19 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
   // Community and developer are stored as English text; translate the known ones, keep anything else as entered.
   // A name the seller typed for "Other" is flagged, so the team knows it still needs mapping in the form below.
   const unmapped = (typed: string | null) => (typed ? ` (${tc("developer.Other")})` : "");
-  const community = communityName(tc, l.community, l.communityOther) + unmapped(l.community === "Other" ? l.communityOther : null);
-  const developer = developerName(tc, l.developer, l.developerOther) + unmapped(l.developer === "Other" ? l.developerOther : null);
+  // Each name in its own <bdi>: a typed Arabic name in an English line (or the reverse) keeps the separators in place.
+  const community = (
+    <>
+      <bdi>{communityName(tc, l.community, l.communityOther)}</bdi>
+      {unmapped(l.community === "Other" ? l.communityOther : null)}
+    </>
+  );
+  const developer = (
+    <>
+      <bdi>{developerName(tc, l.developer, l.developerOther)}</bdi>
+      {unmapped(l.developer === "Other" ? l.developerOther : null)}
+    </>
+  );
 
   return (
     <div className="space-y-6">
@@ -42,7 +54,8 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" /> {t("listing.back")}
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+        {/* wrap-anywhere: typed names (and project names) can be one word wider than a phone. */}
+        <div className="min-w-0 wrap-anywhere">
           <p className="text-sm text-muted-foreground">
             <bdi>{refCode(l.refNo)}</bdi> · {developer} · {t("listing.listed", { date: formatDate(l.createdAt, locale) })}
           </p>
@@ -50,7 +63,12 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           <p className="text-muted-foreground">
             {tc(`unit.${l.unitType}`)} · {tc("sqft", { n: formatNumber(l.sizeSqft) })} · {community}
             {l.floor ? ` · ${tc("floor", { n: l.floor })}` : ""}
-            {l.view ? ` · ${l.view}` : ""}
+            {l.view && (
+              <>
+                {" · "}
+                <bdi>{l.view}</bdi>
+              </>
+            )}
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -202,6 +220,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           dldPermitExpiresAt={l.dldPermitExpiresAt}
           dldPermitUrl={l.dldPermitUrl}
           formAExpiresAt={l.formAExpiresAt}
+          expiryBounds={expiryDateBounds()}
           images={l.images}
         />
       </section>

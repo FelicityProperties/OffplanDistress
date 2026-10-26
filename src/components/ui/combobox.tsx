@@ -18,8 +18,11 @@ function score(o: ComboboxOption, q: string) {
 }
 
 /**
- * Type-to-search select (WAI-ARIA combobox with a listbox popup). The text box filters by the label in the page's
- * language and by the English name; arrows move through the matches, Enter picks one, Escape closes the list.
+ * Type-to-search select (WAI-ARIA APG editable combobox with a listbox popup). The text box filters by the label in
+ * the page's language and by the English name; arrows move through the matches, Enter picks one, Escape closes the list.
+ * Focus stays in the text box: aria-activedescendant names the highlighted option, and only that option carries
+ * aria-selected="true" (the others leave it out, so screen readers don't say "not selected" on every one). The current
+ * choice is the text box's value, ticked in the list for sighted users.
  * `pinned` (e.g. "Other") is always listed last, whatever is typed, so a seller who can't find a name can still go on;
  * onChange then also gets the text they typed.
  */
@@ -73,6 +76,8 @@ export function Combobox({
       .map((m) => m.o);
   }, [options, q]);
   const shown = pinned ? [...matches, pinned] : matches;
+  // The highlighted option: what aria-activedescendant points at and Enter picks (-1 while the list is closed).
+  const highlighted = open && active >= 0 && active < shown.length ? active : -1;
 
   useEffect(() => {
     if (open && active >= 0) document.getElementById(optionId(active))?.scrollIntoView({ block: "nearest" });
@@ -106,16 +111,16 @@ export function Combobox({
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (!open || e.altKey) show(open ? active : undefined);
-      else setActive((a) => (a + 1) % n);
+      else if (n) setActive((a) => (a + 1) % n);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (!open) show(n - 1);
-      else setActive((a) => (a <= 0 ? n - 1 : a - 1));
+      else if (n) setActive((a) => (a <= 0 ? n - 1 : a - 1));
     } else if (e.key === "Enter") {
       // Inside a form, Enter on an open list picks the option instead of submitting.
-      if (open && active >= 0 && shown[active]) {
+      if (highlighted >= 0) {
         e.preventDefault();
-        pick(shown[active]);
+        pick(shown[highlighted]);
       }
     } else if (e.key === "Escape") {
       if (open || query != null) {
@@ -140,7 +145,7 @@ export function Combobox({
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={listId}
-        aria-activedescendant={open && active >= 0 ? optionId(active) : undefined}
+        aria-activedescendant={highlighted >= 0 ? optionId(highlighted) : undefined}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         value={query ?? selected?.label ?? ""}
@@ -179,12 +184,13 @@ export function Combobox({
                   key={o.value}
                   id={optionId(i)}
                   role="option"
-                  aria-selected={isSelected}
+                  // APG: "selected" is the highlighted option only; left out (not "false") on the rest.
+                  aria-selected={i === highlighted ? true : undefined}
                   onClick={() => pick(o)}
                   onMouseMove={() => active !== i && setActive(i)}
                   className={cn(
                     "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 ps-2 pe-8 text-sm",
-                    i === active && "bg-accent text-accent-foreground",
+                    i === highlighted && "bg-accent text-accent-foreground",
                     o === pinned && matches.length > 0 && "mt-1 border-t pt-2",
                   )}
                 >

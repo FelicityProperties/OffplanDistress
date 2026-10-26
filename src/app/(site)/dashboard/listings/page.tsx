@@ -46,14 +46,15 @@ export default async function MyListingsPage() {
           <div className="h-32 w-full overflow-hidden rounded-lg sm:w-44 sm:shrink-0">
             <DealImage src={l.images[0]} alt={l.projectName} />
           </div>
-          <div className="flex-1 space-y-3">
+          <div className="min-w-0 flex-1 space-y-3">
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
+              {/* A typed community (or project) name can be one word wider than a phone, or Arabic in an English line. */}
+              <div className="min-w-0 wrap-anywhere">
                 <Link href={`/dashboard/listings/${l.id}`} className="font-semibold hover:underline">
                   {l.projectName}
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  <bdi>{refCode(l.refNo)}</bdi> · {tc(`unit.${l.unitType}`)} · {communityName(tc, l.community, l.communityOther)} ·{" "}
+                  <bdi>{refCode(l.refNo)}</bdi> · {tc(`unit.${l.unitType}`)} · <bdi>{communityName(tc, l.community, l.communityOther)}</bdi> ·{" "}
                   {formatAED(l.askingPrice, locale)}
                 </p>
               </div>

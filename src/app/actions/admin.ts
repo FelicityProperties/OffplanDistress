@@ -2,18 +2,19 @@
 
 import { randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { files, inquiries, listings, offers, sessions, users } from "@/db/schema";
-import { getT } from "@/i18n/server";
+import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
-import { refCode } from "@/lib/format";
+import { formatDate, refCode } from "@/lib/format";
 import { notify, notifyPriceDrop } from "@/lib/notify";
-import { closeOpenOffers, reopenBackups } from "@/lib/offers";
-import { isDldPermitUrl, publishBlocker } from "@/lib/permits";
+import { closeOpenOffers, reopenUnit } from "@/lib/offers";
+import { expiryDateBounds, isDldPermitUrl, publishBlocker } from "@/lib/permits";
+import { scrubTypedName } from "@/lib/typed-names";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
@@ -110,6 +111,8 @@ export async function approveListing(listingId: string) {
     .where(eq(listings.id, listingId));
   if (before.status !== "live") {
     await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });
+    // Back on the market: no deal agreed earlier stays accepted on it (see reopenUnit).
+    await reopenUnit(before, before.status);
   }
   // A seller's price cut waits for re-approval; watchers hear about it once it is public again.
   if (!before.isSample && before.publicPrice != null) await notifyPriceDrop(before, before.publicPrice, before.askingPrice);
@@ -130,6 +133,8 @@ export async function rejectListing(listingId: string, reason: string) {
       project: before.projectName,
       reason: clean || { t: "errors", key: "notify.rejectedFallback" },
     });
+    // Off the market: buyers with an open offer on it are told it is no longer available.
+    await closeOpenOffers(before, "unavailable");
   }
   refresh();
   return { ok: true };
@@ -137,7 +142,17 @@ export async function rejectListing(listingId: string, reason: string) {
 
 const statuses = Object.keys(LISTING_STATUS) as [ListingStatusKey, ...ListingStatusKey[]];
 
-const adminEditSchema = (t: T) =>
+/**
+ * A permit or Form A expiry: a real calendar date (z.iso.date checks the day exists in that month) no more than a year
+ * back or three years ahead (expiryDateBounds), so a typo in the year is a field error rather than a database error.
+ */
+const expiryDate = (t: T, range: { min: string; max: string }, rangeMessage: string) =>
+  z.iso
+    .date(t("field.date"))
+    .refine((d) => d >= range.min && d <= range.max, rangeMessage)
+    .optional();
+
+const adminEditSchema = (t: T, range: { min: string; max: string }, rangeMessage: string) =>
   z.object({
     listingId: z.uuid(),
     status: z.enum(statuses),
@@ -147,7 +162,7 @@ const adminEditSchema = (t: T) =>
     askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative(),
     adminNotes: z.string().trim().max(4000).optional(),
     dldPermit: z.string().trim().max(40).optional(),
-    dldPermitExpiresAt: z.iso.date(t("field.date")).optional(),
+    dldPermitExpiresAt: expiryDate(t, range, rangeMessage),
     // Stored as the parsed link, so the QR code encodes exactly what the check passed and a browser opens (the raw
     // text may hold a "\" or a tab that other URL parsers, such as a phone's QR scanner, read differently).
     dldPermitUrl: z
@@ -157,19 +172,24 @@ const adminEditSchema = (t: T) =>
       .refine(isDldPermitUrl, t("field.dldPermitUrl"))
       .transform((u) => new URL(u).href)
       .optional(),
-    formAExpiresAt: z.iso.date(t("field.date")).optional(),
+    formAExpiresAt: expiryDate(t, range, rangeMessage),
     images: z.array(z.string().max(500)).max(20),
     // Mapping a seller's "Other" to a listed name (or correcting it). Left out = unchanged.
     developer: z.string().max(80).optional(),
     community: z.string().max(80).optional(),
-    developerOther: z.string().trim().max(80).optional(),
-    communityOther: z.string().trim().max(80).optional(),
+    // Shown publicly: links, emails and phone numbers are taken out here too (a seller's name saved back as it was).
+    developerOther: z.string().trim().max(80).transform(scrubbedName).optional(),
+    communityOther: z.string().trim().max(80).transform(scrubbedName).optional(),
   });
+
+const scrubbedName = (v: string) => scrubTypedName(v).name || undefined;
 
 export async function adminUpdateListing(_prev: FormState, formData: FormData): Promise<FormState> {
   await assertAdmin();
-  const t = await getT("errors");
-  const parsed = adminEditSchema(t).safeParse(
+  const [t, locale] = await Promise.all([getT("errors"), getLocale()]);
+  const range = expiryDateBounds();
+  const rangeMessage = t("field.expiryRange", { from: formatDate(range.min, locale), to: formatDate(range.max, locale) });
+  const parsed = adminEditSchema(t, range, rangeMessage).safeParse(
     {
       listingId: formData.get("listingId"),
       status: formData.get("status"),
@@ -264,11 +284,11 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   }
   if (statusChanged && v.status === "noc_in_progress") await notifyDealStep(current, "deal.noc_in_progress");
   if (statusChanged && v.status === "transferred") await notifyDealStep(current, "deal.transferred");
-  // The other bidders: a sold unit closes their offers; a deal that fell through makes the backups active again.
-  if (statusChanged && v.status === "transferred") await closeOpenOffers(current);
-  if (statusChanged && v.status === "live" && ["under_offer", "noc_in_progress"].includes(current.status)) {
-    await reopenBackups(current);
-  }
+  // The bidders: a sold unit closes the open offers, and so does one taken off the market. A unit back on the market
+  // has no deal any more: the accepted offer is closed (that buyer told) and the backups are active again.
+  if (statusChanged && v.status === "transferred") await closeOpenOffers(current, "sold");
+  if (statusChanged && (v.status === "withdrawn" || v.status === "rejected")) await closeOpenOffers(current, "unavailable");
+  if (statusChanged && v.status === "live") await reopenUnit(current, current.status);
   // Watchers only hear about drops on deals they can open (and never on sample listings).
   if (!current.isSample && PUBLIC_STATUSES.includes(v.status)) {
     await notifyPriceDrop(current, current.publicPrice ?? current.askingPrice, v.askingPrice);
@@ -322,6 +342,14 @@ export async function setInquiryHandled(id: string, handled: boolean) {
 
 export async function deleteSampleListings() {
   await assertAdmin();
+  // Samples don't take offers, but any open one left on them (from before that rule) is closed and its buyer told
+  // before the offers go with the listings.
+  const withOpenOffers = await db
+    .selectDistinct({ id: listings.id, projectName: listings.projectName })
+    .from(listings)
+    .innerJoin(offers, eq(offers.listingId, listings.id))
+    .where(and(eq(listings.isSample, true), inArray(offers.status, ["pending", "countered"])));
+  for (const unit of withOpenOffers) await closeOpenOffers(unit, "unavailable");
   await db.delete(listings).where(eq(listings.isSample, true));
   refresh();
   return { ok: true };

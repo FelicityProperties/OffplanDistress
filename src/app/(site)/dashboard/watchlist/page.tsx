@@ -8,7 +8,7 @@ import { StatusPill } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
-import { PUBLIC_STATUSES } from "@/lib/config";
+import { isAdvertised } from "@/lib/permits";
 import { myWatchlist } from "@/lib/dashboard";
 import { formatAED, formatAEDCompact, formatDate, refCode } from "@/lib/format";
 import { communityName } from "@/lib/place-names";
@@ -35,7 +35,8 @@ export default async function WatchlistPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           {items.map((d) => {
             const drop = d.savedPrice - d.askingPrice;
-            const available = PUBLIC_STATUSES.includes(d.status);
+            // Off the market, or no longer an advert because its DLD permit or Form A ran out.
+            const available = isAdvertised(d);
             return (
               <div key={d.id} className="relative flex gap-4 rounded-xl border bg-card p-3 shadow-card card-lift">
                 <Link href={`/deals/${refCode(d.refNo)}`} className="flex min-w-0 flex-1 gap-4">
@@ -44,8 +45,9 @@ export default async function WatchlistPage() {
                   </div>
                   <div className="min-w-0 flex-1 pe-8">
                     <p className="truncate font-semibold">{d.projectName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {tc(`unit.${d.unitType}`)} · {communityName(tc, d.community, d.communityOther)}
+                    {/* A typed community name can be one long word, or Arabic in an English line. */}
+                    <p className="truncate text-xs text-muted-foreground">
+                      {tc(`unit.${d.unitType}`)} · <bdi>{communityName(tc, d.community, d.communityOther)}</bdi>
                     </p>
                     <p className="mt-2 font-semibold tabular">{formatAED(d.askingPrice, locale)}</p>
                     {!available ? (

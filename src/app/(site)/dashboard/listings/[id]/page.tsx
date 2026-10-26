@@ -50,13 +50,14 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+        {/* Typed names (and project names) can be one word wider than a phone, or Arabic inside an English line. */}
+        <div className="min-w-0 wrap-anywhere">
           <p className="text-sm text-muted-foreground">
-            <bdi>{refCode(l.refNo)}</bdi> · {developer}
+            <bdi>{refCode(l.refNo)}</bdi> · <bdi>{developer}</bdi>
           </p>
           <h1 className="text-2xl font-semibold sm:text-3xl">{l.projectName}</h1>
           <p className="text-muted-foreground">
-            {tc(`unit.${l.unitType}`)} · {tc("sqft", { n: formatNumber(l.sizeSqft) })} · {community}
+            {tc(`unit.${l.unitType}`)} · {tc("sqft", { n: formatNumber(l.sizeSqft) })} · <bdi>{community}</bdi>
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">

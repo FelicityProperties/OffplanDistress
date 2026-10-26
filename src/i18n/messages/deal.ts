@@ -13,6 +13,7 @@ export default defineMessages({
     back: "Back to deals",
     "banner.underOffer": "The seller has accepted an offer on this unit. You can still save it or send a backup offer.",
     "banner.private": "Only you can see this page — the listing is currently “{status}”.",
+    "banner.permitLapsed": "Only you can see this page: the listing's DLD advertising permit or Form A has expired, so it isn't shown as an advert until the new expiry date is entered.",
 
     "badge.verified": "SPA & payment history verified",
     "badge.nocEligible": "NOC eligible",
@@ -102,6 +103,7 @@ export default defineMessages({
     back: "العودة إلى الصفقات",
     "banner.underOffer": "قبل البائع عرضاً على هذه الوحدة. لا يزال بإمكانك حفظها أو إرسال عرض احتياطي.",
     "banner.private": "هذه الصفحة مرئية لك فقط — حالة الإعلان حالياً «{status}».",
+    "banner.permitLapsed": "هذه الصفحة مرئية لك فقط: انتهت صلاحية تصريح الإعلان من دائرة الأراضي والأملاك أو النموذج (A)، لذلك لا يظهر الإعلان للجمهور إلى أن يُدخَل تاريخ الانتهاء الجديد.",
 
     "badge.verified": "اتفاقية البيع والشراء وسجل الدفعات موثّقان",
     "badge.nocEligible": "مؤهّلة لشهادة عدم الممانعة",

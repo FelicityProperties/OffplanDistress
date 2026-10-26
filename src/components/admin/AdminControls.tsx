@@ -97,6 +97,8 @@ type EditProps = {
   dldPermitExpiresAt: string | null;
   dldPermitUrl: string | null;
   formAExpiresAt: string | null;
+  /** The range the permit and Form A dates may take (expiryDateBounds in src/lib/permits.ts); the server checks it too. */
+  expiryBounds?: { min: string; max: string };
   images: string[];
 };
 
@@ -165,7 +167,9 @@ export function AdminListingForm(p: EditProps) {
   }, [state]);
   const fe = state.fieldErrors ?? {};
   return (
-    <form action={action} className="grid gap-4 sm:grid-cols-2">
+    // noValidate: the server checks every field and answers in the page's language, next to the field (the browser's
+    // own bubbles follow the browser's language); min/max on the dates still limit the date picker.
+    <form action={action} noValidate className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="listingId" value={p.listingId} />
       {/* The status this form was loaded with: saving after it changed (e.g. an offer was accepted) is refused. */}
       <input type="hidden" name="statusWas" value={p.status} />
@@ -218,7 +222,15 @@ export function AdminListingForm(p: EditProps) {
         error={fe.dldPermitExpiresAt}
         hint={t("form.dldPermitExpiresAtHint")}
       >
-        <Input id="dldPermitExpiresAt" name="dldPermitExpiresAt" type="date" defaultValue={p.dldPermitExpiresAt ?? ""} />
+        <Input
+          id="dldPermitExpiresAt"
+          name="dldPermitExpiresAt"
+          type="date"
+          min={p.expiryBounds?.min}
+          max={p.expiryBounds?.max}
+          aria-invalid={fe.dldPermitExpiresAt ? true : undefined}
+          defaultValue={p.dldPermitExpiresAt ?? ""}
+        />
       </Field>
       <Field label={t("form.dldPermitUrl")} htmlFor="dldPermitUrl" error={fe.dldPermitUrl} hint={t("form.dldPermitUrlHint")}>
         <Input
@@ -232,7 +244,15 @@ export function AdminListingForm(p: EditProps) {
         />
       </Field>
       <Field label={t("form.formAExpiresAt")} htmlFor="formAExpiresAt" error={fe.formAExpiresAt} hint={t("form.formAExpiresAtHint")}>
-        <Input id="formAExpiresAt" name="formAExpiresAt" type="date" defaultValue={p.formAExpiresAt ?? ""} />
+        <Input
+          id="formAExpiresAt"
+          name="formAExpiresAt"
+          type="date"
+          min={p.expiryBounds?.min}
+          max={p.expiryBounds?.max}
+          aria-invalid={fe.formAExpiresAt ? true : undefined}
+          defaultValue={p.formAExpiresAt ?? ""}
+        />
       </Field>
       <div className="flex flex-col justify-center gap-3 pt-5">
         <label className="flex items-center gap-2 text-sm">

@@ -12,7 +12,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS, UNIT_TYPES } from "@/lib/config";
 import { refCode } from "@/lib/format";
 import { notifyAdmins } from "@/lib/notify";
+import { closeOpenOffers } from "@/lib/offers";
 import { publishBlocker } from "@/lib/permits";
+import { scrubTypedName } from "@/lib/typed-names";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
@@ -71,14 +73,24 @@ const listingSchema = (t: T) =>
       path: ["amountPaid"],
       message: t("field.amountPaidMax"),
     })
-    .refine((v) => v.developer !== "Other" || (v.developerOther ?? "").length >= 2, {
-      path: ["developerOther"],
-      message: t("field.developerOther"),
+    // Typed names go public once the listing is approved, so links, emails / handles and phone numbers in them are
+    // taken out (the transform below). "Other" needs a name of 2+ characters left after that; a name that was nothing
+    // but contact details is refused with a message that says why.
+    .superRefine((v, ctx) => {
+      for (const k of ["developer", "community"] as const) {
+        const typed = scrubTypedName(v[`${k}Other`] ?? "");
+        if (v[k] !== "Other" || typed.name.length >= 2) continue;
+        const message = typed.removed
+          ? t("field.otherNameContact")
+          : t(k === "developer" ? "field.developerOther" : "field.communityOther");
+        ctx.addIssue({ code: "custom", path: [`${k}Other`], message });
+      }
     })
-    .refine((v) => v.community !== "Other" || (v.communityOther ?? "").length >= 2, {
-      path: ["communityOther"],
-      message: t("field.communityOther"),
-    });
+    .transform((v) => ({
+      ...v,
+      developerOther: v.developerOther && scrubTypedName(v.developerOther).name,
+      communityOther: v.communityOther && scrubTypedName(v.communityOther).name,
+    }));
 
 function readListingForm(formData: FormData) {
   let plan: unknown = [];
@@ -309,6 +321,8 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
     .update(listings)
     .set({ status: next, pausedByAdmin: false, updatedAt: new Date() })
     .where(eq(listings.id, listingId));
+  // Off the market: buyers with an open offer on it are told it is no longer available.
+  if (next === "withdrawn") await closeOpenOffers({ id: listingId, projectName: l.projectName }, "unavailable");
   // A resume that can't go straight back live goes to our team (documents or the DLD permit are missing).
   const review = action === "resume" && next === "pending_review";
   if (review) {

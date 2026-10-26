@@ -168,6 +168,11 @@ export default defineMessages({
     "uploader.photoHint": "JPG, PNG or WebP · large photos are resized automatically",
     "uploader.uploaded": "File uploaded",
     "uploader.uploadedMany": "{n} files uploaded",
+    "uploader.uploadedSome": "{done} of {n} files uploaded",
+    "uploader.progress": "Uploading {i} of {n}…",
+    "uploader.failedList": "Couldn't upload the following. Fix them and pick them again:",
+    "uploader.fileError": "{name}: {error}",
+    "uploader.dismiss": "Dismiss",
     "uploader.failed": "Upload failed",
     "uploader.failedStatus": "Upload failed ({status})",
 
@@ -417,6 +422,11 @@ export default defineMessages({
     "uploader.photoHint": "JPG أو PNG أو WebP · يُصغَّر حجم الصور الكبيرة تلقائياً",
     "uploader.uploaded": "تم رفع الملف",
     "uploader.uploadedMany": "تم رفع الملفات ({n})",
+    "uploader.uploadedSome": "تم رفع بعض الملفات ({done} من {n})",
+    "uploader.progress": "جارٍ رفع الملف {i} من {n}…",
+    "uploader.failedList": "تعذّر رفع ما يلي. يُرجى معالجته ثم اختياره مجدداً:",
+    "uploader.fileError": "⁨{name}⁩: {error}",
+    "uploader.dismiss": "إخفاء",
     "uploader.failed": "تعذّر رفع الملف",
     "uploader.failedStatus": "تعذّر رفع الملف ({status})",
 

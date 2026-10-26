@@ -97,12 +97,13 @@ export default async function AdminQueue() {
             )}
             {queue.map((q) => (
               <TableRow key={q.id}>
-                <TableCell>
+                {/* wrap-anywhere: a typed developer (or project) name can be one word wider than the column. */}
+                <TableCell className="wrap-anywhere">
                   <Link href={`/admin/listings/${q.id}`} className="font-medium hover:underline">
                     {q.projectName}
                   </Link>
                   <p className="text-xs text-muted-foreground">
-                    <bdi>{refCode(q.refNo)}</bdi> · {developerName(tc, q.developer, q.developerOther)} ·{" "}
+                    <bdi>{refCode(q.refNo)}</bdi> · <bdi>{developerName(tc, q.developer, q.developerOther)}</bdi> ·{" "}
                     {tc(`unit.${q.unitType}`)} · {t("queue.submitted", { date: formatDate(q.createdAt, locale) })}
                   </p>
                 </TableCell>

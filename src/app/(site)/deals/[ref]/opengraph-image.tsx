@@ -1,9 +1,10 @@
 import { translator } from "@/i18n/translator";
-import { BRAND, PUBLIC_STATUSES, UNIT_TYPES } from "@/lib/config";
+import { BRAND, UNIT_TYPES } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, parseRefCode, refCode } from "@/lib/format";
 import { getListingByRef } from "@/lib/listings";
 import { hasArabic, OG, OG_SIZE, OgWordmark, photoDataUrl, renderOg } from "@/lib/og";
+import { isAdvertised } from "@/lib/permits";
 import { communityName, developerName } from "@/lib/place-names";
 
 export const alt = `Distressed off-plan deal on ${BRAND.name}`;
@@ -18,7 +19,8 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
   const { ref } = await params;
   const refNo = parseRefCode(ref);
   const row = refNo ? await getListingByRef(refNo) : null;
-  const l = row && PUBLIC_STATUSES.includes(row.listing.status) ? row.listing : null;
+  // The card is the advert itself when forwarded: none for a private listing or one whose permit / Form A ran out.
+  const l = row && isAdvertised(row.listing) ? row.listing : null;
   if (!l) return fallback();
 
   const a = analyzeDeal(l);

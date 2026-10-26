@@ -44,14 +44,41 @@ export async function adminLeads() {
     .limit(500);
 }
 
+/** A strict UUID: anything else would make Postgres throw (a mangled link must not break a page). */
+function isLeadId(v: unknown): v is string {
+  return typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+}
+
+/**
+ * The estimate lead the sign-up and log-in pages carry on (from the thank-you link): `?lead=`, or the lead in a
+ * `?next=/sell?lead=…` target. Undefined unless it is a well-formed id.
+ */
+export function leadFromAuthParams(lead: unknown, next: unknown) {
+  if (isLeadId(lead)) return lead;
+  if (typeof next !== "string" || !next.startsWith("/sell?")) return undefined;
+  const fromNext = new URLSearchParams(next.slice("/sell?".length)).get("lead");
+  return isLeadId(fromNext) ? fromNext : undefined;
+}
+
+/** Link between the sign-up and log-in pages that keeps where to go next and the estimate's lead. */
+export function authHref(path: "/login" | "/signup", next: string, lead?: string) {
+  const q = new URLSearchParams();
+  if (next) q.set("next", next);
+  if (lead) {
+    if (path === "/signup") q.set("intent", "sell");
+    q.set("lead", lead);
+  }
+  const s = q.toString();
+  return s ? `${path}?${s}` : path;
+}
+
 /**
  * The numbers a signed-in seller brings from their estimate into the sell form. Only their own lead, or one nobody
  * has claimed yet (they followed the thank-you link and logged in rather than signed up); the id is an unguessable
  * UUID that only the person who sent the estimate was given. Contact details are not returned.
  */
 export async function leadForSeller(leadId: string, userId: string) {
-  // A strict UUID: anything else would make Postgres throw (a mangled link must not break /sell).
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(leadId)) return null;
+  if (!isLeadId(leadId)) return null;
   const [row] = await db
     .select({
       id: sellerLeads.id,
