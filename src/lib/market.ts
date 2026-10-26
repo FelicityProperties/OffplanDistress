@@ -2,8 +2,8 @@ import "server-only";
 import { and, eq, inArray, isNotNull, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { listings, offers, savedSearches, users, watchlist } from "@/db/schema";
-import { PUBLIC_STATUSES } from "./config";
 import { discountSql, paidPctSql, saleValueSql } from "./listings";
+import { advertisedSql } from "./permits";
 
 // The Dubai Distress Index (/market): live statistics computed only from real listings and real activity.
 // Sample listings (is_sample = true) are excluded from every figure, including the demand figures, and demand
@@ -21,8 +21,11 @@ export const DUBAI_TZ = "Asia/Dubai";
 const discount = discountSql;
 const paidPct = paidPctSql;
 
-/** Real listings a buyer can see on the marketplace right now. */
-const onMarket = and(inArray(listings.status, PUBLIC_STATUSES), eq(listings.isSample, false))!;
+/**
+ * Real listings a buyer can see on the marketplace right now: adverts only, so not one whose DLD permit or Form A has
+ * run out (built per call, as "today" moves on).
+ */
+const onMarketSql = () => and(advertisedSql(), eq(listings.isSample, false))!;
 
 /** Demand comes from ordinary accounts only; admin (staff) accounts are left out. Use with a join on `users`. */
 const buyerAccount = eq(users.role, "user");
@@ -88,6 +91,7 @@ export type DistressIndex = Awaited<ReturnType<typeof getDistressIndex>>;
 
 export async function getDistressIndex() {
   const asOf = new Date();
+  const onMarket = onMarketSql();
 
   const monthKey = sql<string>`to_char(date_trunc('month', ${listings.publishedAt} at time zone 'Asia/Dubai'), 'YYYY-MM')`;
 

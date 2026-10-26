@@ -1,16 +1,20 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { listings, users } from "@/db/schema";
+import { listings, sellerLeads, users } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { sourceFromForm } from "@/lib/attribution";
 import { getCurrentUser } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS, UNIT_TYPES } from "@/lib/config";
 import { refCode } from "@/lib/format";
 import { notifyAdmins } from "@/lib/notify";
+import { cancelAcceptedOffers, closeOpenOffers } from "@/lib/offers";
+import { publishBlocker } from "@/lib/permits";
+import { scrubTypedName } from "@/lib/typed-names";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
@@ -47,6 +51,10 @@ const listingSchema = (t: T) =>
       projectName: z.string().trim().min(2, t("field.projectName")).max(120),
       developer: z.string().refine((v) => DEVELOPERS.includes(v), t("field.developer")),
       community: z.string().refine((v) => COMMUNITIES.includes(v), t("field.community")),
+      // The name the seller typed when they picked "Other": our team needs the developer for the NOC, and buyers
+      // see it instead of "Other".
+      developerOther: z.string().trim().max(80).optional(),
+      communityOther: z.string().trim().max(80).optional(),
       unitType: z.enum(Object.keys(UNIT_TYPES) as [keyof typeof UNIT_TYPES, ...(keyof typeof UNIT_TYPES)[]], t("field.unitType")),
       sizeSqft: z.coerce.number(t("field.size")).int(t("field.size")).positive(t("field.size")),
       floor: z.string().trim().max(40).optional(),
@@ -64,7 +72,25 @@ const listingSchema = (t: T) =>
     .refine((v) => v.amountPaid <= v.originalPrice, {
       path: ["amountPaid"],
       message: t("field.amountPaidMax"),
-    });
+    })
+    // Typed names go public once the listing is approved, so links, emails / handles and phone numbers in them are
+    // taken out (the transform below). "Other" needs a name of 2+ characters left after that; a name that was nothing
+    // but contact details is refused with a message that says why.
+    .superRefine((v, ctx) => {
+      for (const k of ["developer", "community"] as const) {
+        const typed = scrubTypedName(v[`${k}Other`] ?? "");
+        if (v[k] !== "Other" || typed.name.length >= 2) continue;
+        const message = typed.removed
+          ? t("field.otherNameContact")
+          : t(k === "developer" ? "field.developerOther" : "field.communityOther");
+        ctx.addIssue({ code: "custom", path: [`${k}Other`], message });
+      }
+    })
+    .transform((v) => ({
+      ...v,
+      developerOther: v.developerOther && scrubTypedName(v.developerOther).name,
+      communityOther: v.communityOther && scrubTypedName(v.communityOther).name,
+    }));
 
 function readListingForm(formData: FormData) {
   let plan: unknown = [];
@@ -79,6 +105,8 @@ function readListingForm(formData: FormData) {
     projectName: formData.get("projectName"),
     developer: formData.get("developer"),
     community: formData.get("community"),
+    developerOther: opt("developerOther"),
+    communityOther: opt("communityOther"),
     unitType: formData.get("unitType"),
     sizeSqft: formData.get("sizeSqft"),
     floor: opt("floor"),
@@ -134,6 +162,8 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
       projectName: v.projectName,
       developer: v.developer,
       community: v.community,
+      developerOther: v.developer === "Other" ? (v.developerOther ?? null) : null,
+      communityOther: v.community === "Other" ? (v.communityOther ?? null) : null,
       unitType: v.unitType,
       sizeSqft: v.sizeSqft,
       floor: v.floor ?? null,
@@ -147,8 +177,24 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
       motivation: v.motivation,
       description: v.description ?? null,
       paymentPlan: v.paymentPlan,
+      source: sourceFromForm(formData),
     })
     .returning({ id: listings.id, refNo: listings.refNo });
+
+  // Started from the free estimate: the lead becomes this seller's and this listing's (theirs, or not yet claimed).
+  const leadId = z.uuid().safeParse(formData.get("leadId"));
+  if (leadId.success) {
+    await db
+      .update(sellerLeads)
+      .set({ listingId: row.id, userId: user.id, status: "converted", updatedAt: new Date() })
+      .where(
+        and(
+          eq(sellerLeads.id, leadId.data),
+          isNull(sellerLeads.listingId),
+          or(eq(sellerLeads.userId, user.id), isNull(sellerLeads.userId)),
+        ),
+      );
+  }
 
   await notifyAdmins(
     "listing.submitted",
@@ -250,6 +296,8 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
       pausedByAdmin: listings.pausedByAdmin,
       isSample: listings.isSample,
       dldPermit: listings.dldPermit,
+      dldPermitExpiresAt: listings.dldPermitExpiresAt,
+      formAExpiresAt: listings.formAExpiresAt,
       projectName: listings.projectName,
       refNo: listings.refNo,
     })
@@ -261,17 +309,39 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
   let next: (typeof listings.$inferSelect)["status"] | null = null;
   if (action === "pause" && l.status === "live") next = "paused";
   // A pause by our team (e.g. during a document dispute) can only be lifted by our team.
-  // Straight back to live only if it still has its DLD advertising permit (samples need none); otherwise review again.
+  // Straight back to live only if its DLD advertising permit (with an expiry after today) and Form A are still current
+  // (samples need none); otherwise review again.
   if (action === "resume" && l.status === "paused" && !l.pausedByAdmin) {
-    next = l.verified && (l.isSample || l.dldPermit) ? "live" : "pending_review";
+    next = l.verified && !publishBlocker(l) ? "live" : "pending_review";
   }
   if (action === "withdraw" && !["transferred", "noc_in_progress", "withdrawn"].includes(l.status)) next = "withdrawn";
   if (!next) return { error: t("listing.changeUnavailable") };
 
-  await db
+  // Only from the status checked above: if our team moved it on in the meantime (to NOC in progress or transferred, say),
+  // a withdrawal mustn't overwrite that nor close its offers as "no longer available".
+  const [changed] = await db
     .update(listings)
     .set({ status: next, pausedByAdmin: false, updatedAt: new Date() })
-    .where(eq(listings.id, listingId));
+    .where(and(eq(listings.id, listingId), eq(listings.status, l.status)))
+    .returning({ id: listings.id });
+  if (!changed) {
+    refresh();
+    return { error: t("listing.changeUnavailable") };
+  }
+  // Off the market: buyers with an open offer on it are told it is no longer available. Withdrawing a unit under
+  // offer also ends the agreed deal: that buyer is told it did not go ahead, and our team hears about it.
+  if (next === "withdrawn") {
+    const unit = { id: listingId, projectName: l.projectName };
+    await closeOpenOffers(unit, "unavailable");
+    if (l.status === "under_offer" && (await cancelAcceptedOffers(unit, "withdrawn")) > 0) {
+      await notifyAdmins(
+        "deal.withdrawn.admin",
+        { project: l.projectName, seller: user.fullName, ref: refCode(l.refNo) },
+        `/admin/listings/${listingId}`,
+        { except: [user.id] },
+      );
+    }
+  }
   // A resume that can't go straight back live goes to our team (documents or the DLD permit are missing).
   const review = action === "resume" && next === "pending_review";
   if (review) {

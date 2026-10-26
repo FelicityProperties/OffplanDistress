@@ -7,11 +7,11 @@ import { WatchButton } from "@/components/WatchButton";
 import { StatusPill } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
-import type { TKey } from "@/i18n/translator";
 import { requireUser } from "@/lib/auth";
-import { COMMUNITIES, PUBLIC_STATUSES } from "@/lib/config";
+import { isAdvertised } from "@/lib/permits";
 import { myWatchlist } from "@/lib/dashboard";
 import { formatAED, formatAEDCompact, formatDate, refCode } from "@/lib/format";
+import { communityName } from "@/lib/place-names";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("dashboard");
@@ -21,7 +21,6 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function WatchlistPage() {
   const user = await requireUser("/dashboard/watchlist");
   const [items, t, tc, locale] = await Promise.all([myWatchlist(user.id), getT("dashboard"), getT("common"), getLocale()]);
-  const community = (c: string) => (COMMUNITIES.includes(c) ? tc(`community.${c}` as TKey<"common">) : c);
 
   return (
     <div className="space-y-6">
@@ -36,17 +35,20 @@ export default async function WatchlistPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           {items.map((d) => {
             const drop = d.savedPrice - d.askingPrice;
-            const available = PUBLIC_STATUSES.includes(d.status);
+            // Off the market, or no longer an advert because its DLD permit or Form A ran out.
+            const available = isAdvertised(d);
             return (
-              <div key={d.id} className="relative flex gap-4 rounded-xl border bg-card p-3 shadow-card card-lift">
+              // min-w-0: a grid item otherwise grows to its longest unbroken line, past the screen on a phone.
+              <div key={d.id} className="relative flex min-w-0 gap-4 rounded-xl border bg-card p-3 shadow-card card-lift">
                 <Link href={`/deals/${refCode(d.refNo)}`} className="flex min-w-0 flex-1 gap-4">
                   <div className="h-24 w-28 shrink-0 overflow-hidden rounded-lg">
                     <DealImage src={d.images[0]} alt={d.projectName} />
                   </div>
                   <div className="min-w-0 flex-1 pe-8">
                     <p className="truncate font-semibold">{d.projectName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {tc(`unit.${d.unitType}`)} · {community(d.community)}
+                    {/* A typed community name can be one long word, or Arabic in an English line. */}
+                    <p className="truncate text-xs text-muted-foreground">
+                      {tc(`unit.${d.unitType}`)} · <bdi>{communityName(tc, d.community, d.communityOther)}</bdi>
                     </p>
                     <p className="mt-2 font-semibold tabular">{formatAED(d.askingPrice, locale)}</p>
                     {!available ? (

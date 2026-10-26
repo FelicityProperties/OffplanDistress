@@ -1,12 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { sellerLeads, users } from "@/db/schema";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { sourceFromForm } from "@/lib/attribution";
 import { clear, clientIp, hit, MINUTE } from "@/lib/throttle";
 import {
   createSession,
@@ -82,12 +83,32 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
       // Notifications and emails go out in the language the account was created in.
       locale: await getLocale(),
       termsAcceptedAt: new Date(),
+      source: sourceFromForm(formData),
     })
     .returning({ id: users.id });
 
+  // Signed up from the free estimate's thank-you link: that lead is now this account's (if nobody claimed it yet),
+  // and the sell form starts from its numbers.
+  const lead = await claimLead(formData.get("lead"), user.id, email);
+
   await createSession(user.id);
-  const fallback = intent === "sell" ? "/sell" : "/dashboard";
+  const fallback = lead ? `/sell?lead=${lead}` : intent === "sell" ? "/sell" : "/dashboard";
   redirect(safeNext(formData.get("next"), fallback));
+}
+
+/**
+ * The free estimate's thank-you link carries the lead's id through sign-up or log-in. The account takes the lead over
+ * only while nobody has claimed it; a malformed id is ignored. Returns the well-formed id (the sell form checks again
+ * whose lead it is before using its numbers).
+ */
+async function claimLead(raw: FormDataEntryValue | null, userId: string, email: string) {
+  const lead = z.uuid().safeParse(raw);
+  if (!lead.success) return null;
+  await db
+    .update(sellerLeads)
+    .set({ userId, email: sql`coalesce(${sellerLeads.email}, ${email.toLowerCase()})`, updatedAt: new Date() })
+    .where(and(eq(sellerLeads.id, lead.data), isNull(sellerLeads.userId)));
+  return lead.data;
 }
 
 const loginSchema = (t: T) =>
@@ -121,9 +142,13 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
   const locale = await getLocale();
   if (user.locale !== locale) await db.update(users).set({ locale }).where(eq(users.id, user.id));
 
+  // Logged in from the free estimate's thank-you link (its sign-up page links here): same as signing up, the lead
+  // becomes this account's if nobody has claimed it yet.
+  const lead = await claimLead(formData.get("lead"), user.id, user.email);
+
   // Admin rights come from the database only — owners get theirs from scripts/migrate.mjs.
   await createSession(user.id);
-  redirect(safeNext(formData.get("next"), user.role === "admin" ? "/admin" : "/dashboard"));
+  redirect(safeNext(formData.get("next"), lead ? `/sell?lead=${lead}` : user.role === "admin" ? "/admin" : "/dashboard"));
 }
 
 export async function logout() {

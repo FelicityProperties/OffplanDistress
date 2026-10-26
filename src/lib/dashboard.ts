@@ -13,6 +13,7 @@ export async function myListings(userId: string) {
       verified: listings.verified,
       projectName: listings.projectName,
       community: listings.community,
+      communityOther: listings.communityOther,
       unitType: listings.unitType,
       askingPrice: listings.askingPrice,
       images: listings.images,
@@ -69,6 +70,7 @@ export async function offersReceived(userId: string) {
       refNo: listings.refNo,
       projectName: listings.projectName,
       askingPrice: listings.askingPrice,
+      listingStatus: listings.status,
       buyerKyc: users.kycStatus,
     })
     .from(offers)
@@ -101,12 +103,19 @@ export async function offersSent(userId: string) {
 
 export async function myWatchlist(userId: string) {
   const rows = await db
-    .select({ ...cardColumns, savedPrice: watchlist.savedPrice, savedAt: watchlist.createdAt })
+    .select({
+      ...cardColumns,
+      // the permit dates decide whether the deal is still an advert (isAdvertised in src/lib/permits.ts)
+      dldPermitExpiresAt: listings.dldPermitExpiresAt,
+      formAExpiresAt: listings.formAExpiresAt,
+      savedPrice: watchlist.savedPrice,
+      savedAt: watchlist.createdAt,
+    })
     .from(watchlist)
     .innerJoin(listings, eq(listings.id, watchlist.listingId))
     .where(eq(watchlist.userId, userId))
     .orderBy(desc(watchlist.createdAt));
-  return rows as (ListingCard & { savedPrice: number; savedAt: Date })[];
+  return rows as (ListingCard & { dldPermitExpiresAt: string | null; formAExpiresAt: string | null; savedPrice: number; savedAt: Date })[];
 }
 
 export async function mySearches(userId: string) {

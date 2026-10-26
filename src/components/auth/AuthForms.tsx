@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
 import { Building2, ExternalLink, KeyRound, Repeat } from "lucide-react";
 import { login, signup } from "@/app/actions/auth";
+import { AttributionField } from "@/components/Attribution";
 import { Field, FormMessage, SubmitButton } from "@/components/forms";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,7 @@ import { richText } from "@/content/legal/rich-text";
 import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({ next, lead }: { next?: string; lead?: string }) {
   const t = useT("auth");
   const tc = useT("common");
   const [state, action] = useActionState(login, {});
@@ -20,6 +21,7 @@ export function LoginForm({ next }: { next?: string }) {
   return (
     <form action={action} className="space-y-4">
       {next && <input type="hidden" name="next" value={next} />}
+      {lead && <input type="hidden" name="lead" value={lead} />}
       <Field label={t("field.email")} htmlFor="email" error={fe.email}>
         <Input id="email" name="email" type="email" dir="ltr" required autoComplete="email" />
       </Field>
@@ -50,7 +52,7 @@ const roles = [
   { v: "both", icon: Repeat },
 ] as const;
 
-export function SignupForm({ next, intent }: { next?: string; intent?: string }) {
+export function SignupForm({ next, intent, lead }: { next?: string; intent?: string; lead?: string }) {
   const t = useT("auth");
   const tl = useT("legal");
   const [state, action] = useActionState(signup, {});
@@ -76,6 +78,8 @@ export function SignupForm({ next, intent }: { next?: string; intent?: string })
     >
       {next && <input type="hidden" name="next" value={next} />}
       <input type="hidden" name="intent" value={role} />
+      {lead && <input type="hidden" name="lead" value={lead} />}
+      <AttributionField />
       <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("signup.roleGroup")}>
         {roles.map((r) => (
           <button

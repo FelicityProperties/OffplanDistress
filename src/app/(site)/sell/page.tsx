@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BadgeCheck, Calculator, FileCheck2, FileSignature, Handshake, Wallet } from "lucide-react";
-import { SellForm } from "@/components/sell/SellForm";
+import { QuickEstimate } from "@/components/sell/QuickEstimate";
+import { SellForm, type SellPrefill } from "@/components/sell/SellForm";
 import { Button } from "@/components/ui/button";
 import { getT } from "@/i18n/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, type SessionUser } from "@/lib/auth";
+import { DEVELOPERS } from "@/lib/config";
+import { nextQuarters, prefillFromParams } from "@/lib/estimate";
+import { formatNumber } from "@/lib/format";
+import { leadForSeller } from "@/lib/leads";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("sell");
@@ -18,8 +23,47 @@ const REASSURANCE = [
   [FileSignature, "paperwork"],
 ] as const;
 
-export default async function SellPage() {
-  const [user, t, tc, tm] = await Promise.all([getCurrentUser(), getT("sell"), getT("common"), getT("marketing")]);
+type Params = Awaited<PageProps<"/sell">["searchParams"]>;
+
+/**
+ * Where the sell form starts: the seller's own estimate (?lead=, from the estimate's thank-you link) or the exit
+ * calculator's numbers (?spa=&paid=&handover=). A handover outside the form's quarters is left for the seller to pick.
+ */
+async function sellFormStart(user: SessionUser, params: Params): Promise<SellPrefill | undefined> {
+  const quarter = (d: string | undefined) => (d && nextQuarters().includes(d) ? d : "");
+  const lead = typeof params.lead === "string" ? await leadForSeller(params.lead, user.id) : null;
+  if (lead) {
+    const listed = DEVELOPERS.includes(lead.developer);
+    return {
+      leadId: lead.id,
+      developer: listed ? lead.developer : "Other",
+      developerOther: listed ? "" : lead.developer,
+      projectName: lead.project ?? "",
+      originalPrice: formatNumber(lead.spaPrice),
+      amountPaid: formatNumber(lead.amountPaid),
+      handoverDate: quarter(lead.handoverQuarter),
+      arrears: lead.missed,
+    };
+  }
+  const p = prefillFromParams(params);
+  if (!p.spa) return undefined;
+  return { originalPrice: formatNumber(p.spa), amountPaid: p.paid ? formatNumber(p.paid) : "", handoverDate: quarter(p.handover) };
+}
+
+export default async function SellPage({ searchParams }: PageProps<"/sell">) {
+  const [user, t, tc, tm, params] = await Promise.all([getCurrentUser(), getT("sell"), getT("common"), getT("marketing"), searchParams]);
+  const start = user ? await sellFormStart(user, params) : undefined;
+  const prefill = prefillFromParams(params);
+  // Signing up or logging in from the pitch keeps the exit calculator's numbers too: the sell form starts from them.
+  const sellNext = encodeURIComponent(
+    prefill.spa
+      ? `/sell?${new URLSearchParams({
+          spa: String(prefill.spa),
+          ...(prefill.paid ? { paid: String(prefill.paid) } : {}),
+          ...(prefill.handover ? { handover: prefill.handover } : {}),
+        })}`
+      : "/sell",
+  );
 
   return (
     <>
@@ -64,10 +108,12 @@ export default async function SellPage() {
           // SellForm opens with its own step indicator (top margin dropped here) and renders its form card + summary.
           // The tinted frame starts at sm: on phones a card inside a card would squeeze the form fields.
           <div className="*:first:mt-0 sm:rounded-3xl sm:border sm:border-border/70 sm:bg-secondary/50 sm:p-6 sm:shadow-card lg:p-8">
-            <SellForm needsPhone={!user.phone} />
+            <SellForm needsPhone={!user.phone} initial={start} />
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+            {/* Free estimate first: a number before any sign-up wall. #estimate is where the exit calculator links to. */}
+            <QuickEstimate id="estimate" initial={prefill} signedIn={false} className="lg:col-span-2" />
             <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-lift sm:p-10">
               <h2 className="text-2xl font-semibold sm:text-3xl">{t("pitch.title")}</h2>
               <p className="mt-3 max-w-xl leading-relaxed text-muted-foreground">{t("pitch.body")}</p>
@@ -82,10 +128,10 @@ export default async function SellPage() {
               </div>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild size="lg">
-                  <Link href="/signup?intent=sell&next=/sell">{t("pitch.signup")}</Link>
+                  <Link href={`/signup?intent=sell&next=${sellNext}`}>{t("pitch.signup")}</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
-                  <Link href="/login?next=/sell">{t("pitch.login")}</Link>
+                  <Link href={`/login?next=${sellNext}`}>{t("pitch.login")}</Link>
                 </Button>
               </div>
             </div>

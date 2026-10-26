@@ -1,6 +1,7 @@
 // Runs before `next build` on Vercel: applies pending SQL migrations from ./drizzle to the
 // Neon database, then seeds sample listings into an empty marketplace.
-// Skips quietly when no database URL is configured (e.g. a local build without .env).
+// Skips quietly when no database URL is configured (e.g. a local build without .env), and skips
+// Preview builds unless PREVIEW_DB_ISOLATED=true (see below).
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -20,6 +21,18 @@ for (const file of [".env.local", ".env"]) {
       if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
     }
   } catch {}
+}
+
+// A Preview build can point at the production database (Neon connected to Preview too), which holds SPAs and
+// Emirates IDs: an unreviewed branch must never migrate or seed it. Set PREVIEW_DB_ISOLATED=true for the Preview
+// environment only once every preview gets its own Neon branch.
+if (process.env.VERCEL_ENV === "preview" && process.env.PREVIEW_DB_ISOLATED !== "true") {
+  console.warn(
+    "[migrate] Preview build — migrations and sample data skipped, so this branch cannot change a database it may " +
+      "share with production. Pages that need a column this branch adds will fail in this preview until the change " +
+      "is merged. To migrate previews, give each one its own Neon branch and set PREVIEW_DB_ISOLATED=true for Preview.",
+  );
+  process.exit(0);
 }
 
 const found = findDatabaseUrl(process.env, { unpooled: true });

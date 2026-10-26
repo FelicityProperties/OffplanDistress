@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { LayoutDashboard, LogOut, Menu, ShieldCheck } from "lucide-react";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
@@ -55,8 +56,19 @@ async function loadBell(userId: string): Promise<{ unread: number; items: BellIt
   }
 }
 
+/** The signed-in user, or null. A database blip shows the logged-out header rather than the error page. */
+async function loadUser() {
+  try {
+    return await getCurrentUser();
+  } catch (err) {
+    unstable_rethrow(err); // Next.js signals dynamic rendering by throwing from cookies(); let that through
+    console.error("Loading the signed-in user for the header failed", err);
+    return null;
+  }
+}
+
 export async function SiteHeader() {
-  const [user, t, tn] = await Promise.all([getCurrentUser(), getT("common"), getT("notifications")]);
+  const [user, t, tn] = await Promise.all([loadUser(), getT("common"), getT("notifications")]);
   const bell = user ? await loadBell(user.id) : null;
   const firstName = user?.fullName.split(" ")[0];
   const nav = [

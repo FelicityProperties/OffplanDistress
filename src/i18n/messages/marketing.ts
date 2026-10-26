@@ -98,7 +98,7 @@ export default defineMessages({
       "We check the SPA, Oqood and statement of account against the developer's records: the amount paid, any arrears and the remaining plan.",
     "how.bento.resale.title": "Resale eligibility & NOC",
     "how.bento.resale.desc":
-      "We confirm the developer's resale policy — many only issue a NOC after 30–40% is paid — then apply for the NOC for you.",
+      "We confirm the developer's resale policy — most require 30–50% of the price to be paid before they issue a NOC — then apply for the NOC for you.",
     "how.bento.kyc.title": "Buyer KYC",
     "how.bento.kyc.desc": "Every buyer's identity is checked and their offer qualified before we request the NOC.",
     "how.bento.settlement.title": "Protected settlement at the DLD trustee",
@@ -249,7 +249,7 @@ export default defineMessages({
       "نطابق اتفاقية البيع والشراء وشهادة أوقود وكشف الحساب مع سجلات المطوّر: المبلغ المدفوع وأي متأخرات والمتبقي من خطة الدفع.",
     "how.bento.resale.title": "أهلية إعادة البيع وشهادة عدم الممانعة",
     "how.bento.resale.desc":
-      "نتأكد من سياسة المطوّر لإعادة البيع، إذ لا يُصدر كثير من المطوّرين شهادة عدم الممانعة إلا بعد سداد 30–40% من السعر، ثم نتقدّم بطلبها نيابةً عنك.",
+      "نتأكد من سياسة المطوّر لإعادة البيع، إذ يشترط معظم المطوّرين سداد ما بين 30% و50% من السعر قبل إصدار شهادة عدم الممانعة، ثم نتقدّم بطلبها نيابةً عنك.",
     "how.bento.kyc.title": "التحقق من هوية المشتري",
     "how.bento.kyc.desc": "نتحقق من هوية كل مشترٍ ومن جدية عرضه قبل أن نطلب شهادة عدم الممانعة.",
     "how.bento.settlement.title": "تسوية آمنة لدى أمين التسجيل",

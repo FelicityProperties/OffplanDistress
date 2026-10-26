@@ -6,11 +6,12 @@ import { DealsToolbar, FilterPanel, SaveSearchButton } from "@/components/deals/
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
-import type { TFn, TKey } from "@/i18n/translator";
+import type { TFn } from "@/i18n/translator";
 import { getCurrentUser } from "@/lib/auth";
 import type { MOTIVATION } from "@/lib/config";
 import { formatAEDCompact } from "@/lib/format";
-import { PAGE_SIZE, parseFilters, searchDeals, watchedIds, type DealFilters } from "@/lib/listings";
+import { dealFacets, PAGE_SIZE, parseFilters, searchDeals, watchedIds, type DealFilters } from "@/lib/listings";
+import { communityName, developerName } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,18 +22,11 @@ export async function generateMetadata(): Promise<Metadata> {
 type RawParams = Awaited<PageProps<"/deals">["searchParams"]>;
 type Chip = { key: string; label: string; href: string };
 
-/** Arabic/English community name; unknown names are shown as entered. */
-function communityName(tc: TFn<"common">, name: string) {
-  const key = `community.${name}` as TKey<"common">;
-  const label = tc(key);
-  return label === key ? name : label;
-}
-
 /** Short human name for the current filters, used as the saved search's name (in the visitor's language). */
 function summarize(f: DealFilters, t: TFn<"deals">, tc: TFn<"common">, locale: Locale) {
   const parts = [
     ...f.community.map((c) => communityName(tc, c)),
-    ...f.developer.map((d) => (d === "Other" ? tc("developer.Other") : d)),
+    ...f.developer.map((d) => developerName(tc, d)),
     ...f.type.map((u) => tc(`unit.${u}`)),
     ...f.motivation.map((m) => tc(`motivation.${m as keyof typeof MOTIVATION}`)),
     f.maxCash ? t("summary.maxCash", { amount: formatAEDCompact(f.maxCash, locale) }) : "",
@@ -95,7 +89,7 @@ function activeChips(raw: RawParams, f: DealFilters, t: TFn<"deals">, tc: TFn<"c
   }
   for (const c of f.community) chips.push({ key: `community-${c}`, label: communityName(tc, c), href: without("community", c) });
   for (const d of f.developer)
-    chips.push({ key: `developer-${d}`, label: d === "Other" ? tc("developer.Other") : d, href: without("developer", d) });
+    chips.push({ key: `developer-${d}`, label: developerName(tc, d), href: without("developer", d) });
   for (const u of f.type) chips.push({ key: `type-${u}`, label: tc(`unit.${u}`), href: without("type", u) });
   if (f.minPaid) chips.push({ key: "minPaid", label: t("chips.minPaid", { pct: f.minPaid }), href: without("minPaid") });
   if (f.minDiscount)
@@ -130,8 +124,9 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
   const raw = await searchParams;
   const filters = parseFilters(raw);
   const user = await getCurrentUser();
-  const [{ rows, total }, watched, t, tc, locale] = await Promise.all([
+  const [{ rows, total }, facets, watched, t, tc, locale] = await Promise.all([
     searchDeals(filters),
+    dealFacets(),
     watchedIds(user?.id),
     getT("deals"),
     getT("common"),
@@ -182,7 +177,7 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
       </div>
 
       <div className="container-page pb-20">
-        <DealsToolbar activeCount={filterCount} />
+        <DealsToolbar activeCount={filterCount} facets={facets} />
 
         <div className="mt-6 grid gap-8 lg:grid-cols-[16.25rem_minmax(0,1fr)]">
           <aside className="hidden lg:block">
@@ -201,7 +196,7 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
                 )}
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-5 [scrollbar-width:thin]">
-                <FilterPanel />
+                <FilterPanel facets={facets} />
                 {/* Fades the last rows so it's clear the panel scrolls. */}
                 <div aria-hidden className="pointer-events-none sticky bottom-0 -mx-5 mt-2 h-6 bg-gradient-to-t from-card to-transparent" />
               </div>
@@ -289,8 +284,8 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
                     : "grid gap-5"
                 }
               >
-                {rows.map((d) => (
-                  <DealCard key={d.id} deal={d} layout={layout} watching={watched.has(d.id)} />
+                {rows.map((d, i) => (
+                  <DealCard key={d.id} deal={d} layout={layout} watching={watched.has(d.id)} priority={i < 3} />
                 ))}
               </div>
             )}

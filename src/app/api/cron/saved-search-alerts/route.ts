@@ -1,18 +1,18 @@
-import { timingSafeEqual } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { savedSearches, users } from "@/db/schema";
 import { isLocale, type Locale } from "@/i18n/config";
 import { tFor } from "@/i18n/server";
-import type { TKey } from "@/i18n/translator";
-import { COMMUNITIES } from "@/lib/config";
+import { runCron } from "@/lib/cron";
 import { formatAEDCompact } from "@/lib/format";
 import { filtersFromQuery, newDealsSince, type ListingCard } from "@/lib/listings";
 import { notify } from "@/lib/notify";
+import { communityName } from "@/lib/place-names";
 import { purgeOldAttempts } from "@/lib/throttle";
 
 // Daily saved-search alerts, run by Vercel Cron (see vercel.json): for every saved search with alerts on,
-// tell its owner about deals that went live since the last run, in their language.
+// tell its owner about deals that went live since the last run, in their language. runCron checks CRON_SECRET and
+// alerts the admins when a run fails; HEARTBEAT_URL (optional) is pinged after every clean run.
 
 export const maxDuration = 60;
 
@@ -31,8 +31,10 @@ type SearchRow = {
 };
 
 export async function GET(request: Request) {
-  if (!authorised(request)) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  return runCron("saved-search-alerts", request, sendAlerts, { heartbeatUrl: process.env.HEARTBEAT_URL });
+}
 
+async function sendAlerts() {
   // Daily housekeeping: rate-limit records are kept for 24 hours (Privacy Policy), even on quiet days.
   await purgeOldAttempts().catch((err) => console.error("[cron] purging old auth attempts failed", err));
 
@@ -68,7 +70,7 @@ export async function GET(request: Request) {
     });
   }
 
-  return Response.json({ searches: searches.length, notified, failed });
+  return { searches: searches.length, notified, failed };
 }
 
 /** Alerts the owner if there are new matches; returns whether they were notified. */
@@ -96,7 +98,7 @@ function matchList(rows: ListingCard[], total: number, locale: Locale) {
   const tc = tFor("common", locale);
   const t = tFor("searches", locale);
   const lines = rows.slice(0, LIST_LINES).map((r) => {
-    const community = COMMUNITIES.includes(r.community) ? tc(`community.${r.community}` as TKey<"common">) : r.community;
+    const community = communityName(tc, r.community, r.communityOther);
     return [r.projectName, community, formatAEDCompact(r.askingPrice, locale)].join(" — ");
   });
   if (total > lines.length) lines.push(t("alert.more", { count: total - lines.length }));
@@ -109,23 +111,4 @@ function dealsHref(query: string) {
   params.delete("page");
   params.set("sort", "newest");
   return `/deals?${params.toString()}`;
-}
-
-/**
- * Vercel Cron sends "Authorization: Bearer $CRON_SECRET" once that variable is set. Fail closed without
- * it: a user agent is trivially spoofed, and each run sends emails.
- */
-function authorised(request: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    console.error("[cron] CRON_SECRET is not set — refusing to run saved-search alerts");
-    return false;
-  }
-  return safeEqual(request.headers.get("authorization") ?? "", `Bearer ${secret}`);
-}
-
-function safeEqual(a: string, b: string) {
-  const x = Buffer.from(a);
-  const y = Buffer.from(b);
-  return x.length === y.length && timingSafeEqual(x, y);
 }

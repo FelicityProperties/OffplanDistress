@@ -8,11 +8,11 @@ import { Pipeline } from "@/components/Pipeline";
 import { ToneStatus } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
-import type { TKey } from "@/i18n/translator";
 import { requireUser } from "@/lib/auth";
-import { COMMUNITIES, LISTING_STATUS } from "@/lib/config";
+import { LISTING_STATUS } from "@/lib/config";
 import { myListings } from "@/lib/dashboard";
 import { formatAED, formatNumber, refCode } from "@/lib/format";
+import { communityName } from "@/lib/place-names";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("dashboard");
@@ -22,7 +22,6 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function MyListingsPage() {
   const user = await requireUser("/dashboard/listings");
   const [listings, t, tc, locale] = await Promise.all([myListings(user.id), getT("dashboard"), getT("common"), getLocale()]);
-  const community = (c: string) => (COMMUNITIES.includes(c) ? tc(`community.${c}` as TKey<"common">) : c);
 
   return (
     <div className="space-y-6">
@@ -47,14 +46,15 @@ export default async function MyListingsPage() {
           <div className="h-32 w-full overflow-hidden rounded-lg sm:w-44 sm:shrink-0">
             <DealImage src={l.images[0]} alt={l.projectName} />
           </div>
-          <div className="flex-1 space-y-3">
+          <div className="min-w-0 flex-1 space-y-3">
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
+              {/* A typed community (or project) name can be one word wider than a phone, or Arabic in an English line. */}
+              <div className="min-w-0 wrap-anywhere">
                 <Link href={`/dashboard/listings/${l.id}`} className="font-semibold hover:underline">
                   {l.projectName}
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  <bdi>{refCode(l.refNo)}</bdi> · {tc(`unit.${l.unitType}`)} · {community(l.community)} ·{" "}
+                  <bdi>{refCode(l.refNo)}</bdi> · {tc(`unit.${l.unitType}`)} · <bdi>{communityName(tc, l.community, l.communityOther)}</bdi> ·{" "}
                   {formatAED(l.askingPrice, locale)}
                 </p>
               </div>

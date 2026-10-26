@@ -20,8 +20,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useT } from "@/i18n/client";
-import { LISTING_STATUS, type ListingStatusKey } from "@/lib/config";
+import { useLocale, useT } from "@/i18n/client";
+import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, type ListingStatusKey } from "@/lib/config";
+import { communityName, developerName } from "@/lib/place-names";
 
 export function ReviewButtons({ listingId }: { listingId: string }) {
   const t = useT("admin");
@@ -87,10 +88,73 @@ type EditProps = {
   nocEligible: boolean;
   launchPrice: number | null;
   askingPrice: number;
+  developer: string;
+  developerOther: string | null;
+  community: string;
+  communityOther: string | null;
   adminNotes: string | null;
   dldPermit: string | null;
+  dldPermitExpiresAt: string | null;
+  dldPermitUrl: string | null;
+  formAExpiresAt: string | null;
+  /** The range the permit and Form A dates may take (expiryDateBounds in src/lib/permits.ts); the server checks it too. */
+  expiryBounds?: { min: string; max: string };
   images: string[];
 };
+
+/**
+ * Developer or community select for the listing editor. When the seller picked "Other", the name they typed is shown
+ * (and editable) under it; choosing the matching name from the list maps the listing and clears the typed name.
+ */
+function NamePicker({
+  kind,
+  label,
+  otherLabel,
+  hint,
+  all,
+  value,
+  other,
+  errors,
+}: {
+  kind: "developer" | "community";
+  label: string;
+  otherLabel: string;
+  hint: string;
+  all: string[];
+  value: string;
+  other: string | null;
+  errors: (string[] | undefined)[];
+}) {
+  const tc = useT("common");
+  const locale = useLocale();
+  const [picked, setPicked] = useState(value);
+  const name = (v: string) => (kind === "developer" ? developerName(tc, v) : communityName(tc, v));
+  const collator = new Intl.Collator(locale);
+  // A stored name that is no longer in config.ts stays selectable, so saving the form doesn't change it.
+  const options = [...new Set([...all, value])]
+    .filter((v) => v !== "Other")
+    .sort((a, b) => collator.compare(name(a), name(b)));
+  const otherName = `${kind}Other`;
+  return (
+    <div className="space-y-3">
+      <Field label={label} htmlFor={kind} error={errors[0]}>
+        <select id={kind} name={kind} value={picked} onChange={(e) => setPicked(e.target.value)} className={selectClass}>
+          {options.map((v) => (
+            <option key={v} value={v}>
+              {name(v)}
+            </option>
+          ))}
+          <option value="Other">{tc(kind === "developer" ? "developer.Other" : "community.Other")}</option>
+        </select>
+      </Field>
+      {picked === "Other" && (
+        <Field label={otherLabel} htmlFor={otherName} error={errors[1]} hint={other ? hint : undefined}>
+          <Input id={otherName} name={otherName} dir="auto" maxLength={80} defaultValue={other ?? ""} />
+        </Field>
+      )}
+    </div>
+  );
+}
 
 export function AdminListingForm(p: EditProps) {
   const t = useT("admin");
@@ -103,8 +167,12 @@ export function AdminListingForm(p: EditProps) {
   }, [state]);
   const fe = state.fieldErrors ?? {};
   return (
-    <form action={action} className="grid gap-4 sm:grid-cols-2">
+    // noValidate: the server checks every field and answers in the page's language, next to the field (the browser's
+    // own bubbles follow the browser's language); min/max on the dates still limit the date picker.
+    <form action={action} noValidate className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="listingId" value={p.listingId} />
+      {/* The status this form was loaded with: saving after it changed (e.g. an offer was accepted) is refused. */}
+      <input type="hidden" name="statusWas" value={p.status} />
       <Field label={t("form.status")} htmlFor="status" error={fe.status}>
         <select id="status" name="status" defaultValue={p.status} className={selectClass}>
           {(Object.keys(LISTING_STATUS) as ListingStatusKey[]).map((k) => (
@@ -117,6 +185,26 @@ export function AdminListingForm(p: EditProps) {
       <Field label={t("form.askingPrice")} htmlFor="askingPrice" error={fe.askingPrice}>
         <Input id="askingPrice" name="askingPrice" type="number" min={0} defaultValue={p.askingPrice} />
       </Field>
+      <NamePicker
+        kind="developer"
+        label={t("form.developer")}
+        otherLabel={t("form.developerOther")}
+        hint={t("form.otherHint")}
+        all={DEVELOPERS}
+        value={p.developer}
+        other={p.developerOther}
+        errors={[fe.developer, fe.developerOther]}
+      />
+      <NamePicker
+        kind="community"
+        label={t("form.community")}
+        otherLabel={t("form.communityOther")}
+        hint={t("form.otherHint")}
+        all={COMMUNITIES}
+        value={p.community}
+        other={p.communityOther}
+        errors={[fe.community, fe.communityOther]}
+      />
       <Field
         label={t("form.launchPrice")}
         htmlFor="launchPrice"
@@ -127,6 +215,44 @@ export function AdminListingForm(p: EditProps) {
       </Field>
       <Field label={t("form.dldPermit")} htmlFor="dldPermit" error={fe.dldPermit} hint={t("form.dldPermitHint")}>
         <Input id="dldPermit" name="dldPermit" dir="ltr" maxLength={40} defaultValue={p.dldPermit ?? ""} />
+      </Field>
+      <Field
+        label={t("form.dldPermitExpiresAt")}
+        htmlFor="dldPermitExpiresAt"
+        error={fe.dldPermitExpiresAt}
+        hint={t("form.dldPermitExpiresAtHint")}
+      >
+        <Input
+          id="dldPermitExpiresAt"
+          name="dldPermitExpiresAt"
+          type="date"
+          min={p.expiryBounds?.min}
+          max={p.expiryBounds?.max}
+          aria-invalid={fe.dldPermitExpiresAt ? true : undefined}
+          defaultValue={p.dldPermitExpiresAt ?? ""}
+        />
+      </Field>
+      <Field label={t("form.dldPermitUrl")} htmlFor="dldPermitUrl" error={fe.dldPermitUrl} hint={t("form.dldPermitUrlHint")}>
+        <Input
+          id="dldPermitUrl"
+          name="dldPermitUrl"
+          type="url"
+          dir="ltr"
+          maxLength={500}
+          placeholder="https://…dubailand.gov.ae/…"
+          defaultValue={p.dldPermitUrl ?? ""}
+        />
+      </Field>
+      <Field label={t("form.formAExpiresAt")} htmlFor="formAExpiresAt" error={fe.formAExpiresAt} hint={t("form.formAExpiresAtHint")}>
+        <Input
+          id="formAExpiresAt"
+          name="formAExpiresAt"
+          type="date"
+          min={p.expiryBounds?.min}
+          max={p.expiryBounds?.max}
+          aria-invalid={fe.formAExpiresAt ? true : undefined}
+          defaultValue={p.formAExpiresAt ?? ""}
+        />
       </Field>
       <div className="flex flex-col justify-center gap-3 pt-5">
         <label className="flex items-center gap-2 text-sm">

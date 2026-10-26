@@ -15,10 +15,10 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Market tools | Distress Index (`/market`: live stats on real listings — discounts, cash needed, developers, communities), seller exit calculator (`/exit-calculator`: keep paying vs stop paying vs sell here) |
 | Legal | Terms of Use, Privacy Policy, Cookie Policy (`/terms`, `/privacy`, `/cookies`) |
 | Marketplace | Browse deals (filters, sort, search, saved searches), deal page (payment plan, true-cost breakdown, offer, watchlist, viewing request) |
-| Sellers | 5-step "Sell my unit" form with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline) |
+| Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; 5-step "Sell my unit" form (type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline) |
 | Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts |
 | Everyone | Notification bell + notifications page, email notifications, self-service password reset, English / العربية (full right-to-left layout) |
-| Admin (`/admin`) | Verification queue (approve / reject with reason), deals pipeline, per-listing review with documents and both parties' contacts, all offers, inquiries, users (KYC, roles, password reset), remove sample data |
+| Admin (`/admin`) | Verification queue (approve / reject with reason), seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline, per-listing review with documents, permit details and both parties' contacts, all offers, inquiries, users (KYC, roles, password reset), remove sample data |
 
 Buyers stay anonymous to sellers in the app — every negotiation goes through our team, so neither side can
 bypass the platform.
@@ -50,6 +50,32 @@ the advert never shows a price or text the permit and our team haven't seen; wit
 fields are fixed. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each
 real deal page adds a `RealEstateListing` with its price.
 
+Each permit also has an expiry date, and optionally its DLD verification link (`https://…dubailand.gov.ae/…`),
+shown on the deal page as "Verify this advert with DLD" with a QR code; Form A has an expiry date too. A listing
+can only go live with a permit valid in the future (dates must fall between a year ago and three years ahead). An
+advert whose permit or Form A has lapsed disappears from every public page at once (deals, home, Distress Index,
+sitemap, share image); the daily `ops-daily` job then pauses live ones, tells the seller, and reminds admins 7
+days and 1 day before expiry. Deals already under offer or in NOC keep their status; admins are told to renew.
+Listings that were live before expiry dates existed keep running until a date is entered (admin banner).
+
+### Offers
+
+One accepted offer per unit, enforced in a single database statement, so a double click or two tabs can't accept
+two. The other bidders keep their offers as backups and are told; if the deal falls through and the unit goes
+live again, the accepted offer is declined and backups are told the unit is available. A unit that is withdrawn,
+rejected or transferred closes its open offers; a seller who withdraws a unit under offer ends the deal (the buyer
+and admins are told). `OFFERS.keepBackups` in `src/lib/config.ts` switches backups off.
+
+### Seller leads and attribution
+
+The free estimate on `/sell` (no account needed) shows what a buyer would take over and a likely range for the
+seller, using the exit calculator's maths, then asks for a name and mobile / WhatsApp. Each lead lands in
+`/admin/leads` and notifies admins (marked urgent when the seller has had a default notice or missed more than one
+instalment). The link the visitor arrived on (utm tags, a partner's `ref` code, landing page, referring site) is
+kept in session storage, not a cookie, and saved with the lead, sign-up, listing or viewing request. Signing up or
+logging in from the thank-you link attaches the lead to the account and pre-fills the sell form. Leads with no
+listing or account are deleted 24 months after the last update.
+
 ### Notifications
 
 | Event | Who hears about it |
@@ -63,6 +89,11 @@ real deal page adds a `RealEstateListing` with its price.
 | Viewing request / contact form | Admins |
 | Seller changes price or description of a live listing | Admins — update the permit and approve again |
 | Price drop on a watched deal (once the new price is approved) | Watchers |
+| Seller estimate submitted | Admins (urgent when a default notice was received) |
+| Offer accepted on a unit you also bid on / deal fell through / unit sold or withdrawn | Other bidders, buyer |
+| Permit or Form A expiring (7 days, 1 day) or lapsed on a deal | Admins |
+| Listing paused because its permit or Form A expired | Seller |
+| A scheduled job failed or `CRON_SECRET` is missing | Admins (at most once per 12 h per job) |
 | New deals matching a saved search (daily, 09:00 Dubai) | Search owner |
 
 In-app notifications always work. Emails go out through [Resend](https://resend.com) once `RESEND_API_KEY` and
@@ -88,7 +119,12 @@ In-app notifications always work. Emails go out through [Resend](https://resend.
      emails in `ADMIN_EMAILS`). The repo is public, so owner emails can't be registered through the sign-up form;
      every production build creates or repairs the owner login from this variable instead (preview builds leave
      it alone). To change the owner password, change the variable and redeploy production.
-   - `CRON_SECRET` — **required for alerts**: any long random string. The daily alert job refuses to run without it.
+   - `CRON_SECRET` — **required for the daily jobs**: any long random string. Saved-search alerts and the
+     `ops-daily` permit job refuse to run without it (admins get an in-app alert). Optional `HEARTBEAT_URL` /
+     `OPS_HEARTBEAT_URL` receive a ping after each successful run, for an uptime monitor; `/api/health` answers 200
+     when the app and database are up.
+   - Previews: preview builds skip migrations and sample data (they may share the production database). Once
+     each preview has its own Neon branch, set `PREVIEW_DB_ISOLATED=true` for Preview.
    - Optional: `RESEND_API_KEY` + `EMAIL_FROM` for email, `NEXT_PUBLIC_SITE_URL` (e.g. `https://offplandistress.com`;
      defaults to the Vercel production URL) for links in emails.
    - Company details (trade licence 1145910, RERA ORN 33951, broker BRN 59244, phone/WhatsApp +971 56 352 0611,

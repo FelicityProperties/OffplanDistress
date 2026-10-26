@@ -13,6 +13,7 @@ export default defineMessages({
     back: "Back to deals",
     "banner.underOffer": "The seller has accepted an offer on this unit. You can still save it or send a backup offer.",
     "banner.private": "Only you can see this page — the listing is currently “{status}”.",
+    "banner.permitLapsed": "Only you can see this page: the listing's DLD advertising permit or Form A has expired, so it isn't shown as an advert until the new expiry date is entered.",
 
     "badge.verified": "SPA & payment history verified",
     "badge.nocEligible": "NOC eligible",
@@ -66,6 +67,8 @@ export default defineMessages({
     "listedBy.office": "{company} · RERA ORN {orn}",
     "listedBy.broker": "Broker: {name} · BRN {brn}",
     "listedBy.permit": "DLD advertising permit No. {permit}",
+    "listedBy.permitValid": "Permit valid until {date}",
+    "listedBy.verify": "Verify this advert with DLD",
     "listedBy.sample": "Sample listing — not a property advert, so no DLD permit applies.",
     "listedBy.report": "Report this listing",
     "listedBy.reportSubject": "Report listing {ref}",
@@ -100,6 +103,7 @@ export default defineMessages({
     back: "العودة إلى الصفقات",
     "banner.underOffer": "قبل البائع عرضاً على هذه الوحدة. لا يزال بإمكانك حفظها أو إرسال عرض احتياطي.",
     "banner.private": "هذه الصفحة مرئية لك فقط — حالة الإعلان حالياً «{status}».",
+    "banner.permitLapsed": "هذه الصفحة مرئية لك فقط: انتهت صلاحية تصريح الإعلان من دائرة الأراضي والأملاك أو النموذج (A)، لذلك لا يظهر الإعلان للجمهور إلى أن يُدخَل تاريخ الانتهاء الجديد.",
 
     "badge.verified": "اتفاقية البيع والشراء وسجل الدفعات موثّقان",
     "badge.nocEligible": "مؤهّلة لشهادة عدم الممانعة",
@@ -154,6 +158,8 @@ export default defineMessages({
     "listedBy.office": "{company} · رقم تسجيل المكتب لدى ريرا {orn}",
     "listedBy.broker": "الوسيط: {name} · رقم الوسيط {brn}",
     "listedBy.permit": "رقم تصريح الإعلان من دائرة الأراضي والأملاك {permit}",
+    "listedBy.permitValid": "التصريح سارٍ حتى {date}",
+    "listedBy.verify": "تحقّق من هذا الإعلان لدى دائرة الأراضي والأملاك",
     "listedBy.sample": "إعلان توضيحي وليس إعلاناً عن عقار معروض، لذا لا يلزمه تصريح من دائرة الأراضي والأملاك.",
     "listedBy.report": "الإبلاغ عن هذا الإعلان",
     "listedBy.reportSubject": "بلاغ عن الإعلان {ref}",

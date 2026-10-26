@@ -75,6 +75,22 @@ export const fileKind = pgEnum("file_kind", ["spa", "oqood", "soa", "id", "photo
 
 export const inquiryType = pgEnum("inquiry_type", ["info", "viewing", "contact"]);
 
+export const leadMissed = pgEnum("lead_missed", ["none", "one", "more"]);
+export const leadStatus = pgEnum("lead_status", ["new", "contacted", "converted", "lost"]);
+
+/**
+ * First-touch attribution from the visitor's browser session (src/lib/attribution.ts): campaign tags, a partner's
+ * ?ref= code, the first page they landed on and the referring site's host. Kept in sessionStorage, not a cookie.
+ */
+export type Source = {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  ref?: string;
+  landing?: string;
+  referrer_host?: string;
+};
+
 export const users = pgTable(
   "users",
   {
@@ -89,6 +105,8 @@ export const users = pgTable(
     locale: text("locale").notNull().default("en"),
     /** When the user ticked "I agree to the Terms of Use and Privacy Policy" at sign-up; null for older accounts. */
     termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
+    /** How the visitor found us when they signed up; null for older accounts. */
+    source: jsonb("source").$type<Source>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("users_email_idx").on(sql`lower(${t.email})`)],
@@ -124,6 +142,9 @@ export const listings = pgTable(
     projectName: text("project_name").notNull(),
     developer: text("developer").notNull(),
     community: text("community").notNull(),
+    /** The name the seller typed when they picked "Other" (developer / community stay "Other" until our team maps it). */
+    developerOther: text("developer_other"),
+    communityOther: text("community_other"),
     unitType: unitType("unit_type").notNull(),
     sizeSqft: integer("size_sqft").notNull(),
     floor: text("floor"),
@@ -143,6 +164,17 @@ export const listings = pgTable(
     adminNotes: text("admin_notes"),
     /** DLD advertising permit (Trakheesi). RERA requires it on every property advert; set by our team. */
     dldPermit: text("dld_permit"),
+    /** Last day the permit is valid (a Dubai date). The daily ops cron pauses a public listing once it has passed. */
+    dldPermitExpiresAt: date("dld_permit_expires_at"),
+    /** The permit's verification page on dubailand.gov.ae (what the Trakheesi QR code opens); shown with a QR code. */
+    dldPermitUrl: text("dld_permit_url"),
+    /** Last day of the seller's RERA Form A (listing agreement); the advert comes down with it, like the permit. */
+    formAExpiresAt: date("form_a_expires_at"),
+    /**
+     * Permit / Form A notices the daily ops cron already sent the admins for the current expiry dates, e.g.
+     * "permit:2026-11-02:week" (src/lib/permits.ts), so a repeated or missed run neither duplicates nor skips one.
+     */
+    expiryNotices: text("expiry_notices").array().notNull().default(sql`'{}'::text[]`),
     /** Asking price as last approved for the public advert; price-drop alerts compare against it on re-approval. */
     publicPrice: integer("public_price"),
     rejectionReason: text("rejection_reason"),
@@ -153,6 +185,8 @@ export const listings = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     publishedAt: timestamp("published_at", { withTimezone: true }),
+    /** Attribution of the session the listing was submitted in. */
+    source: jsonb("source").$type<Source>(),
   },
   (t) => [
     uniqueIndex("listings_ref_idx").on(t.refNo),
@@ -228,6 +262,7 @@ export const inquiries = pgTable(
     phone: text("phone"),
     message: text("message"),
     handled: boolean("handled").notNull().default(false),
+    source: jsonb("source").$type<Source>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("inquiries_listing_idx").on(t.listingId)],
@@ -296,7 +331,49 @@ export const authAttempts = pgTable(
   (t) => [index("auth_attempts_key_idx").on(t.key, t.createdAt)],
 );
 
+/**
+ * Sellers who used the free estimate (src/components/sell/QuickEstimate.tsx) without an account, shown as L-123.
+ * user_id is set when they sign up from the thank-you link, listing_id when they submit the full listing.
+ */
+export const sellerLeads = pgTable(
+  "seller_leads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    refNo: serial("ref_no").notNull(),
+    name: text("name").notNull(),
+    phone: text("phone").notNull(),
+    email: text("email"),
+    locale: text("locale").notNull().default("en"),
+    // A name from DEVELOPERS in config.ts, or the name the seller typed after picking "Other"
+    developer: text("developer").notNull(),
+    community: text("community"),
+    project: text("project"),
+    // whole AED
+    spaPrice: integer("spa_price").notNull(),
+    amountPaid: integer("amount_paid").notNull(),
+    /** Today's price for a similar unit, when it came from the exit calculator; the estimate used it. */
+    marketPrice: integer("market_price"),
+    /** End date of the expected handover quarter, e.g. "2027-12-31" (same format as listings.handover_date). */
+    handoverQuarter: text("handover_quarter").notNull(),
+    missed: leadMissed("missed").notNull().default("none"),
+    defaultNotice: boolean("default_notice").notNull().default(false),
+    source: jsonb("source").$type<Source>(),
+    status: leadStatus("status").notNull().default("new"),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    listingId: uuid("listing_id").references(() => listings.id, { onDelete: "set null" }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("seller_leads_ref_idx").on(t.refNo),
+    index("seller_leads_status_idx").on(t.status, t.createdAt),
+    index("seller_leads_user_idx").on(t.userId),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type Listing = typeof listings.$inferSelect;
 export type Offer = typeof offers.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
+export type SellerLead = typeof sellerLeads.$inferSelect;

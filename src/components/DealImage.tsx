@@ -4,8 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import { LogoMark } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 
-/** Listing photo with a branded fallback when there's no image or it fails to load. */
-export function DealImage({ src, alt, className }: { src?: string | null; alt: string; className?: string }) {
+/**
+ * Listing photo with a branded fallback when there's no image or it fails to load. `priority` is for photos in the
+ * first screen (the gallery's main image, the first cards): fetched eagerly and ahead of other images.
+ */
+export function DealImage({
+  src,
+  alt,
+  className,
+  priority = false,
+}: {
+  src?: string | null;
+  alt: string;
+  className?: string;
+  priority?: boolean;
+}) {
   const [failed, setFailed] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
 
@@ -34,7 +47,8 @@ export function DealImage({ src, alt, className }: { src?: string | null; alt: s
       ref={ref}
       src={src}
       alt={alt}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : undefined}
       onError={() => setFailed(true)}
       className={cn("h-full w-full object-cover", className)}
     />

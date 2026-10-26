@@ -45,6 +45,8 @@ export async function adminListings(status?: (typeof listings.$inferSelect)["sta
       projectName: listings.projectName,
       developer: listings.developer,
       community: listings.community,
+      developerOther: listings.developerOther,
+      communityOther: listings.communityOther,
       unitType: listings.unitType,
       askingPrice: listings.askingPrice,
       originalPrice: listings.originalPrice,

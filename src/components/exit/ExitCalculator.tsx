@@ -12,6 +12,7 @@ import { BRAND, FEES } from "@/lib/config";
 import { formatAED, formatAEDCompact, formatNumber, formatPct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Aed, AedRange } from "./Aed";
+import { quarterInMonths } from "@/lib/estimate";
 import { analyzeExit, quickSalePct, type Tier } from "./exit-math";
 import { ltr } from "./ltr";
 
@@ -348,6 +349,14 @@ export function ExitCalculator() {
     progress: notStarted ? t("wa.notStarted") : t("wa.progress", { pct: progress }),
   });
   const waHref = BRAND.whatsapp ? `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(waText)}` : null;
+  // "List my unit" carries these numbers to the free estimate on /sell (or the sell form, when signed in).
+  const handoverQuarter = a.months ? quarterInMonths(a.months) : null;
+  const sellHref = `/sell?${new URLSearchParams({
+    spa: String(a.price),
+    paid: String(a.paid),
+    ...(handoverQuarter ? { handover: handoverQuarter } : {}),
+    ...(a.hasMarket ? { market: String(a.market) } : {}),
+  })}#estimate`;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start lg:gap-8">
@@ -724,7 +733,7 @@ export function ExitCalculator() {
                   note={a.remaining > 0 ? rich(t("opt3.takeover"), { amount: money(a.remaining) }) : undefined}
                 />
               </dl>
-              {(!a.hasMarket || a.position === 0 || a.paidPct < 0.4) && (
+              {(!a.hasMarket || a.position === 0 || a.belowNocThreshold) && (
                 <ul className="mt-3 space-y-2 text-xs leading-relaxed text-primary-foreground/75">
                   {!a.hasMarket && (
                     <li className="flex items-start gap-2">
@@ -738,7 +747,7 @@ export function ExitCalculator() {
                       {t("opt3.underwater")}
                     </li>
                   )}
-                  {a.paidPct < 0.4 && (
+                  {a.belowNocThreshold && (
                     <li className="flex items-start gap-2">
                       <Info className="mt-px h-3.5 w-3.5 shrink-0 text-gold" aria-hidden />
                       {tx("opt3.nocWarning")}
@@ -748,7 +757,7 @@ export function ExitCalculator() {
               )}
               <div className="mt-5 flex flex-wrap gap-2.5">
                 <Button asChild variant="gold" size="lg" className="flex-1 sm:flex-none">
-                  <Link href="/sell">
+                  <Link href={sellHref}>
                     {t("cta.list")} <ArrowRight className="rtl:-scale-x-100" aria-hidden />
                   </Link>
                 </Button>

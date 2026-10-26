@@ -29,8 +29,8 @@ export const privacyPolicy: LegalContent = {
           "Listing photographs: photographs of the Unit that you upload with a Listing. These are published with the Listing and anyone can view them; even while the Listing is under review, anyone who has a photograph’s web address can view it.",
           "Transaction data: Offers and counter-offers, financing preferences, messages for the other party, the status of each deal and the information needed for the NOC and the Transfer.",
           "Activity and preferences: your watchlist, saved searches and alert settings, and the in-app notifications and emails we send you.",
-          "Enquiries: the name, email address, telephone number and message you send through our contact or viewing-request forms, or when you call us or message us on WhatsApp (including any figures you choose to send, such as those pre-filled from the exit calculator).",
-          "Technical data: server logs containing your IP address, the pages requested and the date and time; rate-limit records containing your IP address and, for sign-in attempts, the email address entered; and the two cookies described in our Cookie Policy.",
+          "Enquiries: the name, email address, telephone number and message you send through our contact, viewing-request or seller assessment forms (for the seller assessment form, also the figures you enter about your Unit, such as the purchase price, the amount paid and whether you have received a default notice), or when you call us or message us on WhatsApp (including any figures you choose to send, such as those pre-filled from the exit calculator).",
+          "Technical data: server logs containing your IP address, the pages requested and the date and time; rate-limit records containing your IP address and, for sign-in attempts, the email address entered; the two cookies described in our Cookie Policy; and, when you send one of our forms, how your visit reached us (the campaign tags of the link you followed, a partner’s referral code, the first page you opened and the referring website), which your browser keeps for that visit in session storage rather than in a cookie.",
         ],
       },
       {
@@ -52,9 +52,10 @@ export const privacyPolicy: LegalContent = {
         bullets: [
           "create and manage your account, publish and manage Listings, present Offers and run watchlists, saved searches and notifications (necessary to perform our agreement with you under the Terms of Use);",
           "verify documents and broker your transaction, including requesting the NOC and arranging the Transfer (necessary to perform our brokerage agreement, including RERA Forms A and B, and to take the steps you request);",
-          "verify your identity, check the source of funds, screen against sanctions lists, keep records and report suspicious activity (necessary to comply with our legal obligations, including under Federal Decree-Law No. (20) of 2018);",
+          "verify your identity, check the source of funds, screen against sanctions lists, keep records and report suspicious activity (necessary to comply with our legal obligations, including under Federal Decree-Law No. (10) of 2025 on Anti-Money Laundering and Combating the Financing of Terrorism and Proliferation Financing);",
           "keep the Platform and your account secure, prevent fraud and abuse, for example by limiting repeated sign-in attempts, and fix faults (necessary to perform our agreement with you and to meet our duty under the PDPL to protect personal data);",
-          "answer your enquiries and viewing requests (steps you ask us to take);",
+          "answer your enquiries, viewing requests and seller assessment requests (steps you ask us to take);",
+          "record, when you send one of our forms, how your visit reached us (campaign tags, a partner’s referral code, the first page you opened and the referring website), so that we can tell which campaigns and partners bring enquiries and credit partner agents (with your consent, which you give by sending the form after being told about it here and next to the form; you can withdraw it by asking us to delete that record);",
           "send saved-search alerts and price-drop emails for deals on your watchlist (at your request; you can turn off the alerts for each saved search at any time, and stop price-drop emails for a deal by removing it from your watchlist); and",
           "establish, exercise or defend legal claims and respond to lawful requests from courts, the DLD, RERA and other authorities.",
         ],
@@ -92,6 +93,7 @@ export const privacyPolicy: LegalContent = {
           "Server logs: up to 30 days.",
           "Rate-limit records: deleted automatically once they are more than 24 hours old. The clean-up runs whenever a new attempt is recorded and at least once a day.",
           "Enquiries: as long as needed to respond and follow up, and afterwards only as part of the transaction records described above where relevant.",
+          "Seller assessment requests: up to 24 months after our last contact with you, then deleted automatically, unless they become part of a Listing or transaction, in which case the periods above apply.",
         ],
       },
       {
@@ -194,8 +196,8 @@ export const privacyPolicy: LegalContent = {
           "صور الإعلان: صور الوحدة التي ترفعها مع الإعلان، وتُنشر معه ويمكن لأي شخص مشاهدتها، بل يمكن لكل من لديه رابط الصورة مشاهدتها حتى أثناء مراجعة الإعلان.",
           "بيانات المعاملات: العروض والعروض المقابلة، وطريقة التمويل المفضّلة، والرسائل الموجّهة إلى الطرف الآخر، وحالة كل صفقة، والمعلومات اللازمة لشهادة عدم الممانعة ونقل الملكية.",
           "النشاط والتفضيلات: قائمة المتابعة، وعمليات البحث المحفوظة وإعدادات التنبيه، والإشعارات داخل المنصة والرسائل الإلكترونية التي نرسلها إليك.",
-          "الاستفسارات: الاسم وعنوان البريد الإلكتروني ورقم الهاتف والرسالة التي ترسلها عبر نموذج التواصل أو نموذج طلب المعاينة، أو عند اتصالك بنا هاتفياً أو مراسلتنا عبر واتساب (بما في ذلك أي أرقام تختار إرسالها، كالأرقام المعبّأة مسبقاً من حاسبة الخروج).",
-          "البيانات التقنية: سجلات الخادم التي تتضمن عنوان IP الخاص بك والصفحات المطلوبة وتاريخ الطلب ووقته؛ وسجلات الحدّ من المحاولات المتكررة التي تتضمن عنوان IP الخاص بك، وكذلك عنوان البريد الإلكتروني المُدخَل في محاولات تسجيل الدخول؛ وملفّا تعريف الارتباط المبيّنان في سياسة ملفات تعريف الارتباط.",
+          "الاستفسارات: الاسم وعنوان البريد الإلكتروني ورقم الهاتف والرسالة التي ترسلها عبر نموذج التواصل أو نموذج طلب المعاينة أو نموذج تقييم البائع (وفي نموذج تقييم البائع أيضاً الأرقام التي تُدخلها عن وحدتك، كسعر الشراء والمبلغ المدفوع وما إذا كنت قد تسلّمت إخطاراً بالتعثّر في السداد)، أو عند اتصالك بنا هاتفياً أو مراسلتنا عبر واتساب (بما في ذلك أي أرقام تختار إرسالها، كالأرقام المعبّأة مسبقاً من حاسبة الخروج).",
+          "البيانات التقنية: سجلات الخادم التي تتضمن عنوان IP الخاص بك والصفحات المطلوبة وتاريخ الطلب ووقته؛ وسجلات الحدّ من المحاولات المتكررة التي تتضمن عنوان IP الخاص بك، وكذلك عنوان البريد الإلكتروني المُدخَل في محاولات تسجيل الدخول؛ وملفّا تعريف الارتباط المبيّنان في سياسة ملفات تعريف الارتباط؛ وعند إرسالك أحد نماذجنا، طريقة وصول زيارتك إلينا (وسوم الحملة في الرابط الذي اتبعته، ورمز الإحالة الخاص بأحد الشركاء، وأول صفحة فتحتها، والموقع الذي أحالك إلينا)، ويحتفظ بها متصفحك طوال تلك الزيارة في مساحة تخزين الجلسة لا في ملف تعريف ارتباط.",
         ],
       },
       {
@@ -217,9 +219,10 @@ export const privacyPolicy: LegalContent = {
         bullets: [
           "إنشاء حسابك وإدارته، ونشر الإعلانات وإدارتها، وعرض العروض، وتشغيل قوائم المتابعة وعمليات البحث المحفوظة والإشعارات (وهي معالجة ضرورية لتنفيذ اتفاقنا معك بموجب شروط الاستخدام)؛",
           "التحقق من المستندات وإتمام معاملتك بصفتنا وسيطاً، بما في ذلك طلب شهادة عدم الممانعة وترتيب نقل الملكية (وهي معالجة ضرورية لتنفيذ اتفاقية الوساطة، بما فيها النموذجان (A) و(B) الصادران عن مؤسسة التنظيم العقاري، ولاتخاذ الإجراءات التي تطلبها)؛",
-          "التحقق من هويتك ومن مصدر الأموال، وفحص قوائم العقوبات، والاحتفاظ بالسجلات، والإبلاغ عن الأنشطة المشبوهة (وهي معالجة ضرورية للوفاء بالتزاماتنا القانونية، بما فيها الالتزامات المقررة بموجب المرسوم بقانون اتحادي رقم (20) لسنة 2018)؛",
+          "التحقق من هويتك ومن مصدر الأموال، وفحص قوائم العقوبات، والاحتفاظ بالسجلات، والإبلاغ عن الأنشطة المشبوهة (وهي معالجة ضرورية للوفاء بالتزاماتنا القانونية، بما فيها الالتزامات المقررة بموجب المرسوم بقانون اتحادي رقم (10) لسنة 2025 في شأن مواجهة غسل الأموال ومكافحة تمويل الإرهاب وتمويل انتشار التسلح)؛",
           "حماية المنصة وحسابك، ومنع الاحتيال وإساءة الاستخدام، كالحدّ من محاولات تسجيل الدخول المتكررة، وإصلاح الأعطال (وهي معالجة ضرورية لتنفيذ اتفاقنا معك وللوفاء بواجبنا في حماية البيانات الشخصية بموجب القانون)؛",
-          "الرد على استفساراتك وطلبات المعاينة (بناءً على طلبك)؛",
+          "الرد على استفساراتك وطلبات المعاينة وطلبات تقييم وحدات البائعين (بناءً على طلبك)؛",
+          "تسجيل الطريقة التي وصلت بها زيارتك إلينا عند إرسالك أحد نماذجنا (وسوم الحملة، ورمز إحالة الشريك، وأول صفحة فتحتها، والموقع الذي أحالك)، لنعرف الحملات والشركاء الذين يجلبون الاستفسارات ولنحتسب مستحقات الوسطاء الشركاء (بناءً على موافقتك التي تمنحها بإرسال النموذج بعد إعلامك بذلك هنا وبجوار النموذج، ويمكنك سحبها بأن تطلب منا حذف هذا السجل)؛",
           "إرسال تنبيهات عمليات البحث المحفوظة ورسائل انخفاض أسعار الصفقات المدرجة في قائمة متابعتك (بناءً على طلبك، ويمكنك في أي وقت إيقاف التنبيهات لكل عملية بحث محفوظة على حدة، وإيقاف رسائل انخفاض السعر لصفقة ما بإزالتها من قائمة المتابعة)؛",
           "إثبات الحقوق القانونية أو ممارستها أو الدفاع عنها، والاستجابة للطلبات المشروعة من المحاكم ودائرة الأراضي والأملاك ومؤسسة التنظيم العقاري وغيرها من الجهات.",
         ],
@@ -257,6 +260,7 @@ export const privacyPolicy: LegalContent = {
           "سجلات الخادم: مدة أقصاها 30 يوماً.",
           "سجلات الحدّ من المحاولات المتكررة: تُحذف تلقائياً متى تجاوز عمرها 24 ساعة، وتجري عملية الحذف عند تسجيل كل محاولة جديدة ومرة واحدة يومياً على الأقل.",
           "الاستفسارات: المدة اللازمة للرد عليها ومتابعتها، ثم ضمن سجلات المعاملات المبيّنة أعلاه عند الاقتضاء.",
+          "طلبات تقييم وحدات البائعين: مدة أقصاها 24 شهراً من آخر تواصل بيننا، ثم تُحذف تلقائياً، ما لم تصبح جزءاً من إعلان أو معاملة، فتسري عندئذ المدد المبيّنة أعلاه.",
         ],
       },
       {

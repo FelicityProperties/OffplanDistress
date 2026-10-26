@@ -81,7 +81,12 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
                         <ToneStatus {...offerStatus(o.status)} />
                       </TableCell>
                       <TableCell>
-                        <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} />
+                        <SellerOfferActions
+                          offerId={o.id}
+                          status={o.status}
+                          amount={o.amount}
+                          listingStatus={o.listingStatus}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -134,7 +139,12 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
                         <ToneStatus {...offerStatus(o.status)} />
                       </TableCell>
                       <TableCell>
-                        <BuyerOfferActions offerId={o.id} status={o.status} counterAmount={o.counterAmount} />
+                        <BuyerOfferActions
+                          offerId={o.id}
+                          status={o.status}
+                          counterAmount={o.counterAmount}
+                          listingStatus={o.listingStatus}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

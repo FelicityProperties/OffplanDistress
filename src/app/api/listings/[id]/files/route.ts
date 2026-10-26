@@ -7,6 +7,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { FILE_KINDS, MAX_UPLOAD_BYTES } from "@/lib/config";
 
 const ALLOWED = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
+// Photos go into the public gallery, so only formats every browser can show (the sell form converts phone photos to
+// JPEG before upload; HEIC scans of documents are still accepted for our team).
+const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 // Per-listing limits for sellers (documents live in Postgres, so keep them bounded).
 const MAX_FILES = 30;
 const MAX_BYTES = 60 * 1024 * 1024;
@@ -44,6 +47,9 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
   }
   if (kind === "photo" && !file.type.startsWith("image/")) {
     return NextResponse.json({ error: t("upload.photoOnly") }, { status: 415 });
+  }
+  if (kind === "photo" && !PHOTO_TYPES.has(file.type)) {
+    return NextResponse.json({ error: t("upload.photoType", { name: file.name }) }, { status: 415 });
   }
 
   const isAdmin = user.role === "admin";

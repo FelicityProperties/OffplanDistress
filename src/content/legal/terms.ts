@@ -180,7 +180,7 @@ export const termsOfUse: LegalContent = {
         id: "aml",
         heading: "Anti-money laundering and identity checks",
         paragraphs: [
-          "Real-estate brokers are reporting entities under UAE Federal Decree-Law No. (20) of 2018 on Anti-Money Laundering and Combating the Financing of Terrorism and Financing of Illegal Organisations, as amended, and its implementing regulations.",
+          "Real-estate brokers are reporting entities (designated non-financial businesses and professions) under UAE Federal Decree-Law No. (10) of 2025 on Anti-Money Laundering and Combating the Financing of Terrorism and Proliferation Financing, which replaced Federal Decree-Law No. (20) of 2018, and its implementing regulations.",
           "We will therefore ask for identity documents (passport or Emirates ID) and may ask for evidence of the source of funds or wealth, the purpose of the transaction and anyone on whose behalf you act, and verify it with reliable sources.",
           "We may refuse to act, pause a transaction or close an account if the information is not provided or we suspect a crime. Where the law requires, we report suspicious transactions to the competent authorities and may be prohibited from telling you. We keep identification and transaction records for at least five years.",
         ],
@@ -407,7 +407,7 @@ export const termsOfUse: LegalContent = {
         id: "aml",
         heading: "مكافحة غسل الأموال والتحقق من الهوية",
         paragraphs: [
-          "يُعدّ الوسطاء العقاريون من الجهات المُلزَمة بالإبلاغ بموجب المرسوم بقانون اتحادي رقم (20) لسنة 2018 في شأن مواجهة جرائم غسل الأموال ومكافحة تمويل الإرهاب وتمويل التنظيمات غير المشروعة وتعديلاته ولائحته التنفيذية.",
+          "يُعدّ الوسطاء العقاريون من الجهات المُلزَمة بالإبلاغ (من الأعمال والمهن غير المالية المحددة) بموجب المرسوم بقانون اتحادي رقم (10) لسنة 2025 في شأن مواجهة غسل الأموال ومكافحة تمويل الإرهاب وتمويل انتشار التسلح، الذي حلّ محل المرسوم بقانون اتحادي رقم (20) لسنة 2018، ولائحته التنفيذية.",
           "ولذلك سنطلب وثائق الهوية (جواز السفر أو بطاقة الهوية الإماراتية)، وقد نطلب ما يثبت مصدر الأموال أو الثروة والغرض من المعاملة وهوية من تتصرف نيابةً عنه، ونتحقق من ذلك من مصادر موثوقة.",
           "يجوز لنا الامتناع عن تقديم الخدمة أو تعليق المعاملة أو إغلاق الحساب إذا لم تُقدَّم المعلومات المطلوبة أو اشتبهنا في وجود جريمة. ونُبلغ السلطات المختصة عن المعاملات المشبوهة متى أوجب القانون ذلك، وقد يُحظر علينا إعلامك بذلك. ونحتفظ بسجلات الهوية والمعاملات لمدة لا تقل عن خمس سنوات.",
         ],

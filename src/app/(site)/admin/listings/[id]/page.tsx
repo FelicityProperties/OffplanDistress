@@ -7,13 +7,14 @@ import { SellerOfferActions } from "@/components/OfferActions";
 import { ToneStatus } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
-import type { TKey } from "@/i18n/translator";
 import { requireAdmin } from "@/lib/auth";
-import { COMMUNITIES, LISTING_STATUS, OFFER_STATUS } from "@/lib/config";
+import { LISTING_STATUS, OFFER_STATUS } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { adminListing, adminOffers } from "@/lib/admin";
 import { listingFiles } from "@/lib/dashboard";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
+import { expiryDateBounds } from "@/lib/permits";
+import { communityName, developerName } from "@/lib/place-names";
 
 export default async function AdminListingPage({ params }: PageProps<"/admin/listings/[id]">) {
   await requireAdmin();
@@ -31,8 +32,21 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
   ]);
   const a = analyzeDeal(l);
   // Community and developer are stored as English text; translate the known ones, keep anything else as entered.
-  const community = COMMUNITIES.includes(l.community) ? tc(`community.${l.community}` as TKey<"common">) : l.community;
-  const developer = l.developer === "Other" ? tc("developer.Other") : l.developer;
+  // A name the seller typed for "Other" is flagged, so the team knows it still needs mapping in the form below.
+  const unmapped = (typed: string | null) => (typed ? ` (${tc("developer.Other")})` : "");
+  // Each name in its own <bdi>: a typed Arabic name in an English line (or the reverse) keeps the separators in place.
+  const community = (
+    <>
+      <bdi>{communityName(tc, l.community, l.communityOther)}</bdi>
+      {unmapped(l.community === "Other" ? l.communityOther : null)}
+    </>
+  );
+  const developer = (
+    <>
+      <bdi>{developerName(tc, l.developer, l.developerOther)}</bdi>
+      {unmapped(l.developer === "Other" ? l.developerOther : null)}
+    </>
+  );
 
   return (
     <div className="space-y-6">
@@ -40,7 +54,8 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" /> {t("listing.back")}
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+        {/* wrap-anywhere: typed names (and project names) can be one word wider than a phone. */}
+        <div className="min-w-0 wrap-anywhere">
           <p className="text-sm text-muted-foreground">
             <bdi>{refCode(l.refNo)}</bdi> · {developer} · {t("listing.listed", { date: formatDate(l.createdAt, locale) })}
           </p>
@@ -48,7 +63,12 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           <p className="text-muted-foreground">
             {tc(`unit.${l.unitType}`)} · {tc("sqft", { n: formatNumber(l.sizeSqft) })} · {community}
             {l.floor ? ` · ${tc("floor", { n: l.floor })}` : ""}
-            {l.view ? ` · ${l.view}` : ""}
+            {l.view && (
+              <>
+                {" · "}
+                <bdi>{l.view}</bdi>
+              </>
+            )}
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -172,7 +192,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
                 </div>
                 <div className="flex items-center gap-3">
                   <ToneStatus label={tc(`offer.${o.status}`)} tone={OFFER_STATUS[o.status].tone} />
-                  <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} />
+                  <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} listingStatus={l.status} />
                 </div>
               </li>
             ))}
@@ -191,8 +211,16 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           nocEligible={l.nocEligible}
           launchPrice={l.launchPrice}
           askingPrice={l.askingPrice}
+          developer={l.developer}
+          developerOther={l.developerOther}
+          community={l.community}
+          communityOther={l.communityOther}
           adminNotes={l.adminNotes}
           dldPermit={l.dldPermit}
+          dldPermitExpiresAt={l.dldPermitExpiresAt}
+          dldPermitUrl={l.dldPermitUrl}
+          formAExpiresAt={l.formAExpiresAt}
+          expiryBounds={expiryDateBounds()}
           images={l.images}
         />
       </section>

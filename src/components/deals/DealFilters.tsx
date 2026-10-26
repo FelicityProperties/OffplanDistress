@@ -14,20 +14,16 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useLocale, useT } from "@/i18n/client";
-import type { TFn, TKey } from "@/i18n/translator";
 import { COMMUNITIES, DEVELOPERS, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
 import { formatAEDCompact } from "@/lib/format";
+import { communityName, developerName } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
 
 const MAX_BUDGET = 8_000_000;
 const YEARS = [2026, 2027, 2028, 2029];
 
-/** Arabic/English community name; unknown names are shown as entered. */
-function communityName(tc: TFn<"common">, name: string) {
-  const key = `community.${name}` as TKey<"common">;
-  const label = tc(key);
-  return label === key ? name : label;
-}
+/** Communities and developers that have listings on the market (lib/listings dealFacets). */
+export type Facets = { communities: string[]; developers: string[] };
 
 function useParamsUpdater() {
   const router = useRouter();
@@ -173,20 +169,27 @@ function BudgetFilter() {
   );
 }
 
-export function FilterPanel() {
+export function FilterPanel({ facets }: { facets: Facets }) {
   const t = useT("deals");
   const tc = useT("common");
+  const locale = useLocale();
   const { params, update } = useParamsUpdater();
   const handoverBy = params.get("handoverBy") ?? "any";
+  // Only names with listings, so the panel stays short; a ticked one stays listed so it can be unticked.
+  const choices = (name: string, all: string[], available: string[], label: (v: string) => string) => {
+    const ticked = params.getAll(name).filter((v) => all.includes(v));
+    const collator = new Intl.Collator(locale);
+    return [...new Set([...available, ...ticked])]
+      .map((v): [string, string] => [v, label(v)])
+      .sort((a, b) => collator.compare(a[1], b[1]));
+  };
+  const communities = choices("community", COMMUNITIES, facets.communities, (c) => communityName(tc, c));
+  const developers = choices("developer", DEVELOPERS, facets.developers, (d) => developerName(tc, d));
   return (
     <div className="space-y-5">
       <BudgetFilter />
-      <CheckGroup
-        label={t("filters.community")}
-        name="community"
-        options={COMMUNITIES.filter((c) => c !== "Other").map((c) => [c, communityName(tc, c)])}
-      />
-      <CheckGroup label={t("filters.developer")} name="developer" options={DEVELOPERS.filter((d) => d !== "Other").map((d) => [d, d])} />
+      {communities.length > 0 && <CheckGroup label={t("filters.community")} name="community" options={communities} />}
+      {developers.length > 0 && <CheckGroup label={t("filters.developer")} name="developer" options={developers} />}
       <CheckGroup
         label={t("filters.unitType")}
         name="type"
@@ -257,7 +260,7 @@ export function FilterPanel() {
 }
 
 /** Search, mobile filters sheet, sort and grid/list toggle — a sticky glass bar on desktop. */
-export function DealsToolbar({ activeCount = 0 }: { activeCount?: number }) {
+export function DealsToolbar({ activeCount = 0, facets }: { activeCount?: number; facets: Facets }) {
   const t = useT("deals");
   const { params, update, pending } = useParamsUpdater();
   const paramQ = params.get("q") ?? "";
@@ -328,7 +331,7 @@ export function DealsToolbar({ activeCount = 0 }: { activeCount?: number }) {
               {t("filters.title")}
             </SheetTitle>
             <div className="mt-6">
-              <FilterPanel />
+              <FilterPanel facets={facets} />
             </div>
           </SheetContent>
         </Sheet>

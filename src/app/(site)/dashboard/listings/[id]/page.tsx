@@ -10,12 +10,12 @@ import { SellerEditForm } from "@/components/SellerEditForm";
 import { ToneStatus } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
-import type { TKey } from "@/i18n/translator";
 import { requireUser } from "@/lib/auth";
-import { COMMUNITIES, FILE_KINDS, LISTING_STATUS, OFFER_STATUS, PUBLIC_STATUSES } from "@/lib/config";
+import { FILE_KINDS, LISTING_STATUS, OFFER_STATUS, PUBLIC_STATUSES } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { listingFiles, myListing, offersReceived } from "@/lib/dashboard";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
+import { communityName, developerName } from "@/lib/place-names";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("dashboard");
@@ -40,8 +40,8 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
   const a = analyzeDeal(l);
   const required: (keyof typeof FILE_KINDS)[] = ["spa", "soa", "oqood", "id"];
   const missing = required.filter((k) => !docs.some((d) => d.kind === k));
-  const community = COMMUNITIES.includes(l.community) ? tc(`community.${l.community}` as TKey<"common">) : l.community;
-  const developer = l.developer === "Other" ? tc("developer.Other") : l.developer;
+  const community = communityName(tc, l.community, l.communityOther);
+  const developer = developerName(tc, l.developer, l.developerOther);
 
   return (
     <div className="space-y-6">
@@ -50,13 +50,14 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+        {/* Typed names (and project names) can be one word wider than a phone, or Arabic inside an English line. */}
+        <div className="min-w-0 wrap-anywhere">
           <p className="text-sm text-muted-foreground">
-            <bdi>{refCode(l.refNo)}</bdi> · {developer}
+            <bdi>{refCode(l.refNo)}</bdi> · <bdi>{developer}</bdi>
           </p>
           <h1 className="text-2xl font-semibold sm:text-3xl">{l.projectName}</h1>
           <p className="text-muted-foreground">
-            {tc(`unit.${l.unitType}`)} · {tc("sqft", { n: formatNumber(l.sizeSqft) })} · {community}
+            {tc(`unit.${l.unitType}`)} · {tc("sqft", { n: formatNumber(l.sizeSqft) })} · <bdi>{community}</bdi>
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -128,7 +129,7 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
                 </div>
                 <div className="flex items-center gap-3">
                   <ToneStatus label={tc(`offer.${o.status}`)} tone={OFFER_STATUS[o.status].tone} />
-                  <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} />
+                  <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} listingStatus={l.status} />
                 </div>
               </li>
             ))}

@@ -65,6 +65,12 @@ export const FEES = {
   dldAdminEstimate: 4_200,
   /** Developer NOC / assignment admin fee (estimate, varies by developer). */
   nocEstimate: 5_000,
+  /**
+   * Share of the SPA price paid below which we warn that the developer may refuse a resale NOC. Most developers
+   * ask for 30–50% and the rule depends on the developer, so we warn at the upper-middle of that range.
+   * Used by the sell form and the exit calculator.
+   */
+  nocMinPaidPct: 0.4,
 };
 
 export const DEVELOPERS = [
@@ -82,23 +88,60 @@ export const DEVELOPERS = [
   "Select Group",
   "Samana",
   "Imtiaz",
+  "Object 1",
+  "Tiger",
+  "Reportage",
+  "Leos",
+  "Nshama",
+  "Dubai Properties",
+  "Arada",
+  "Majid Al Futtaim",
+  "Deyaar",
+  "Taraf",
+  "Prestige One",
+  "Beyond",
+  "Wasl",
+  "Meydan",
+  "Al Habtoor",
+  // Keep "Other" last. Every name needs a `developer.<name>` entry (EN + AR) in src/i18n/messages/common.ts.
   "Other",
 ];
 
 export const COMMUNITIES = [
+  "Al Furjan",
+  "Al Jaddaf",
+  "Arjan",
   "Business Bay",
+  "DAMAC Hills",
+  "DAMAC Hills 2",
   "Damac Lagoons",
   "Downtown Dubai",
   "Dubai Creek Harbour",
   "Dubai Hills Estate",
+  "Dubai Investment Park",
+  "Dubai Islands",
+  "Dubai Land Residence Complex",
   "Dubai Marina",
+  "Dubai Maritime City",
+  "Dubai Production City",
   "Dubai South",
+  "Dubai Sports City",
+  "Dubailand",
   "Emaar Beachfront",
+  "Expo City",
+  "Jumeirah Lake Towers",
   "Jumeirah Village Circle",
+  "Jumeirah Village Triangle",
+  "Majan",
   "Meydan",
   "Mohammed Bin Rashid City",
+  "Motor City",
   "Palm Jumeirah",
+  "Sobha Hartland",
+  "The Oasis",
   "The Valley",
+  "Town Square",
+  // Keep "Other" last. Every name needs a `community.<name>` entry (EN + AR) in src/i18n/messages/common.ts.
   "Other",
 ];
 
@@ -154,6 +197,15 @@ export const OFFER_STATUS = {
   countered: { label: "Countered", tone: "accent" },
   withdrawn: { label: "Withdrawn", tone: "muted" },
 } as const;
+
+export const OFFERS = {
+  /**
+   * When a seller accepts one offer, the unit's other open offers either stay on file as backups (true: they can't be
+   * accepted while that deal runs, and become active again if the unit returns to the market) or are closed (false).
+   * Either way those buyers are told. Offers still open when the unit is transferred are always closed.
+   */
+  keepBackups: true,
+};
 
 export const FILE_KINDS = {
   spa: "Sales & Purchase Agreement (SPA)",

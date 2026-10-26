@@ -5,8 +5,9 @@ import Link from "next/link";
 import { AlertTriangle, Check, ExternalLink, FileUp, Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { createListing } from "@/app/actions/listings";
-import { uploadListingFile } from "@/components/DocumentUploader";
+import { isHeic, preparePhoto, uploadListingFile } from "@/components/DocumentUploader";
 import { Button } from "@/components/ui/button";
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -14,16 +15,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { richText } from "@/content/legal/rich-text";
 import { useDir, useLocale, useT } from "@/i18n/client";
-import type { TKey } from "@/i18n/translator";
-import { COMMUNITIES, DEVELOPERS, FILE_KINDS, MAX_UPLOAD_BYTES, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
+import { readAttribution } from "@/lib/attribution";
+import { COMMUNITIES, DEVELOPERS, FEES, FILE_KINDS, MAX_UPLOAD_BYTES, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAED, formatPct, formatQuarter } from "@/lib/format";
+import { communityName, developerName, searchKey } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
 
 const STEPS = ["step.unit", "step.payment", "step.price", "step.documents", "step.review"] as const;
 const DOCS: (keyof typeof FILE_KINDS)[] = ["spa", "oqood", "soa", "id"];
 const UNIT_KEYS = Object.keys(UNIT_TYPES) as UnitTypeKey[];
 const MOTIVATION_KEYS = Object.keys(MOTIVATION) as (keyof typeof MOTIVATION)[];
+/** Which step each server-side field error belongs to, so a rejected submit opens the right step. */
+const FIELD_STEP: Record<string, number> = {
+  developer: 0,
+  developerOther: 0,
+  community: 0,
+  communityOther: 0,
+  projectName: 0,
+  unitType: 0,
+  sizeSqft: 0,
+  floor: 0,
+  view: 0,
+  originalPrice: 1,
+  amountPaid: 1,
+  nextInstalmentDate: 1,
+  nextInstalmentAmount: 1,
+  handoverDate: 1,
+  paymentPlan: 1,
+  askingPrice: 2,
+  phone: 2,
+  motivation: 2,
+  description: 2,
+  confirmOwnership: 4,
+};
 
 /** End dates of the next 20 quarters; labels come from formatQuarter in the viewer's language. */
 function quarters() {
@@ -48,6 +73,9 @@ type Plan = { label: string; dueDate: string; amount: string };
 type State = {
   developer: string;
   community: string;
+  /** The name typed when "Other" is picked. */
+  developerOther: string;
+  communityOther: string;
   projectName: string;
   unitType: string;
   sizeSqft: string;
@@ -65,17 +93,49 @@ type State = {
   phone: string;
 };
 
-function Field({ label, error, hint, children, className }: { label: string; error?: string; hint?: string; children: React.ReactNode; className?: string }) {
+/** Where the form starts: the seller's free estimate (a seller lead) or the exit calculator's numbers. See /sell. */
+export type SellPrefill = Partial<
+  Pick<State, "developer" | "developerOther" | "projectName" | "originalPrice" | "amountPaid" | "handoverDate" | "arrears">
+> & { leadId?: string };
+
+/** `id` labels the control with that id; its label is `${id}-label` and the error / hint `${id}-msg`. */
+function Field({
+  label,
+  error,
+  hint,
+  children,
+  className,
+  id,
+}: {
+  label: string;
+  error?: string;
+  hint?: string;
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+}) {
+  const msgId = id && `${id}-msg`;
   return (
     <div className={cn("space-y-2", className)}>
-      <Label>{label}</Label>
+      <Label htmlFor={id} id={id && `${id}-label`}>
+        {label}
+      </Label>
       {children}
-      {error ? <p className="text-xs font-medium text-destructive">{error}</p> : hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      {error ? (
+        <p id={msgId} className="text-xs font-medium text-destructive">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={msgId} className="text-xs text-muted-foreground">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }
 
-export function SellForm({ needsPhone }: { needsPhone: boolean }) {
+export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial?: SellPrefill }) {
+  const { leadId, ...prefill } = initial ?? {};
   const t = useT("sell");
   const tc = useT("common");
   const tl = useT("legal");
@@ -85,6 +145,8 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
   const [s, setS] = useState<State>({
     developer: "",
     community: "",
+    developerOther: "",
+    communityOther: "",
     projectName: "",
     unitType: "",
     sizeSqft: "",
@@ -100,10 +162,13 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
     motivation: "motivated",
     description: "",
     phone: "",
+    ...prefill,
   });
   const [plan, setPlan] = useState<Plan[]>([]);
   const [docs, setDocs] = useState<Partial<Record<keyof typeof FILE_KINDS, File>>>({});
   const [photos, setPhotos] = useState<File[]>([]);
+  /** Photos are resized when picked (see preparePhoto), so problems show up now rather than at submit. */
+  const [preparing, setPreparing] = useState(false);
   /** Final step: "I own this unit or am authorised to sell it… and I agree to the Terms of Use". */
   const [confirmed, setConfirmed] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -114,10 +179,77 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
   const set = (k: keyof State) => (v: string) => setS((prev) => ({ ...prev, [k]: v }));
   const num = (v: string) => Number(v.replace(/[^\d.]/g, "")) || 0;
   const aed = (v: number | null | undefined) => formatAED(v, locale);
-  // Developer brands stay in Latin; only "Other" is translated. Communities all have an Arabic name in common.
-  const developerLabel = (d: string) => (d === "Other" ? tc("developer.Other") : d);
-  const communityLabel = (c: string) => tc(`community.${c}` as TKey<"common">);
   const unitLabel = (u: string) => (u in UNIT_TYPES ? tc(`unit.${u as UnitTypeKey}`) : "—");
+
+  // Developer and community pickers: names in the viewer's language, in their alphabetical order, "Other" last.
+  const { developerOptions, communityOptions } = useMemo(() => {
+    const collator = new Intl.Collator(locale);
+    const options = (names: string[], label: (n: string) => string): ComboboxOption[] =>
+      names
+        .filter((n) => n !== "Other")
+        .map((n) => ({ value: n, label: label(n) }))
+        .sort((a, b) => collator.compare(a.label, b.label));
+    return {
+      developerOptions: options(DEVELOPERS, (d) => developerName(tc, d)),
+      communityOptions: options(COMMUNITIES, (c) => communityName(tc, c)),
+    };
+  }, [locale, tc]);
+
+  /** A pick in a combobox. "Other" after typing a name that isn't listed keeps that name as the typed one. */
+  const pickName = (k: "developer" | "community") => (value: string, typed: string) => {
+    const otherKey = k === "developer" ? "developerOther" : "communityOther";
+    // Same 80-character cap as the name field and the server.
+    const name = typed.trim().slice(0, 80);
+    // The word "Other" itself, in either language (an Arabic page still matches the English "Other"), is not a name.
+    const isOtherWord = [tc("developer.Other"), "Other"].some((w) => searchKey(name) === searchKey(w));
+    setS((prev) => ({
+      ...prev,
+      [k]: value,
+      [otherKey]: value === "Other" && !prev[otherKey] && name && !isOtherWord ? name : prev[otherKey],
+    }));
+    setErrors(({ [k]: _a, [otherKey]: _b, ...rest }) => rest);
+    // Picked from the list (focus still in the box): go on to the name field it just revealed.
+    if (value === "Other") {
+      requestAnimationFrame(() => {
+        if (document.activeElement?.id === k) document.getElementById(otherKey)?.focus();
+      });
+    }
+  };
+
+  /** Documents are checked when picked: a file over the limit is refused straight away, not at the last step. */
+  function pickDoc(k: keyof typeof FILE_KINDS, input: HTMLInputElement) {
+    const f = input.files?.[0];
+    if (f && f.size > MAX_UPLOAD_BYTES) {
+      input.value = "";
+      setDocs((d) => ({ ...d, [k]: undefined }));
+      setErrors((e) => ({ ...e, [k]: t("error.docTooLarge", { name: f.name }) }));
+      return;
+    }
+    setDocs((d) => ({ ...d, [k]: f }));
+    setErrors(({ [k]: _, ...rest }) => rest);
+  }
+
+  async function pickPhotos(input: HTMLInputElement) {
+    const files = Array.from(input.files ?? []);
+    input.value = "";
+    if (!files.length) return;
+    setPreparing(true);
+    const ready: File[] = [];
+    const failed: File[] = [];
+    for (const f of files) {
+      try {
+        ready.push(await preparePhoto(f, locale));
+      } catch {
+        failed.push(f);
+      }
+    }
+    setPhotos(ready);
+    setPreparing(false);
+    const names = failed.map((f) => f.name).join(locale === "ar" ? "، " : ", ");
+    setErrors(({ photos: _, ...rest }) =>
+      failed.length ? { ...rest, photos: t(failed.some(isHeic) ? "photo.heic" : "photo.unreadable", { name: names }) } : rest,
+    );
+  }
 
   const preview = analyzeDeal({
     originalPrice: num(s.originalPrice),
@@ -130,7 +262,9 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
     const e: Record<string, string> = {};
     if (i === 0) {
       if (!s.developer) e.developer = t("error.developer");
+      else if (s.developer === "Other" && s.developerOther.trim().length < 2) e.developerOther = t("error.developerOther");
       if (!s.community) e.community = t("error.community");
+      else if (s.community === "Other" && s.communityOther.trim().length < 2) e.communityOther = t("error.communityOther");
       if (s.projectName.trim().length < 2) e.projectName = t("error.projectName");
       if (!s.unitType) e.unitType = t("error.unitType");
       if (!num(s.sizeSqft)) e.sizeSqft = t("error.size");
@@ -145,7 +279,7 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
       if (needsPhone && s.phone.trim().length < 7) e.phone = t("error.phone");
     }
     if (i === 3) {
-      for (const [k, f] of Object.entries(docs)) if (f && f.size > MAX_UPLOAD_BYTES) e[k] = t("error.fileTooLarge");
+      for (const [k, f] of Object.entries(docs)) if (f && f.size > MAX_UPLOAD_BYTES) e[k] = t("error.docTooLarge", { name: f.name });
       for (const f of photos) if (f.size > MAX_UPLOAD_BYTES) e.photos = t("error.photoTooLarge", { name: f.name });
     }
     if (i === 4 && !confirmed) e.confirmOwnership = t("error.confirmOwnership");
@@ -168,6 +302,9 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
       fd.set(k, numeric.has(k) && v !== "" ? String(Math.round(num(v))) : v);
     }
     fd.set("confirmOwnership", confirmed ? "on" : "");
+    // Links the listing to the seller's free estimate, and records how they found us.
+    if (leadId) fd.set("leadId", leadId);
+    fd.set("source", readAttribution());
     const arrearsNote =
       s.arrears === "one" ? t("arrears.note.one") : s.arrears === "more" ? t("arrears.note.more") : "";
     fd.set("description", [s.description.trim(), arrearsNote].filter(Boolean).join("\n\n"));
@@ -185,6 +322,8 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
       setBusy(null);
       const fe = Object.fromEntries(Object.entries(res.fieldErrors ?? {}).map(([k, v]) => [k, v?.[0] ?? t("error.invalid")]));
       setErrors(fe);
+      const first = Math.min(...Object.keys(fe).map((k) => FIELD_STEP[k] ?? STEPS.length - 1));
+      if (Number.isFinite(first)) setStep(first);
       toast.error(res.error ?? t("error.checkDetails"));
       return;
     }
@@ -257,7 +396,7 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
           className="rounded-2xl border bg-card p-6 shadow-card sm:p-8"
           onSubmit={(e) => {
             e.preventDefault();
-            if (busy) return;
+            if (busy || preparing) return;
             if (step < STEPS.length - 1) {
               if (validate(step)) setStep(step + 1);
             } else void submit();
@@ -267,34 +406,53 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             {step === 0 && (
               <>
-                <Field label={t("field.developer")} error={errors.developer}>
-                  <Select dir={dir} value={s.developer} onValueChange={set("developer")}>
-                    <SelectTrigger aria-label={t("field.developer")}>
-                      <SelectValue placeholder={t("field.developer.placeholder")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DEVELOPERS.map((o) => (
-                        <SelectItem key={o} value={o}>
-                          {developerLabel(o)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label={t("field.community")} error={errors.community}>
-                  <Select dir={dir} value={s.community} onValueChange={set("community")}>
-                    <SelectTrigger aria-label={t("field.community")}>
-                      <SelectValue placeholder={t("field.community.placeholder")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COMMUNITIES.map((o) => (
-                        <SelectItem key={o} value={o}>
-                          {communityLabel(o)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
+                {(
+                  [
+                    ["developer", developerOptions, tc("developer.Other")],
+                    ["community", communityOptions, tc("community.Other")],
+                  ] as const
+                ).map(([k, options, otherLabel]) => {
+                  const otherKey = k === "developer" ? "developerOther" : "communityOther";
+                  const error = errors[k] ?? errors[otherKey];
+                  return (
+                    <Field key={k} id={k} label={t(`field.${k}`)} error={error}>
+                      <Combobox
+                        id={k}
+                        labelledBy={`${k}-label`}
+                        value={s[k]}
+                        onChange={pickName(k)}
+                        options={options}
+                        pinned={{ value: "Other", label: otherLabel }}
+                        placeholder={t(`field.${k}.placeholder`)}
+                        noMatchText={t("combobox.noMatch")}
+                        resultsText={(n) => t("combobox.results", { n })}
+                        invalid={!!errors[k]}
+                        describedBy={errors[k] ? `${k}-msg` : undefined}
+                      />
+                      {s[k] === "Other" && (
+                        <div className="space-y-1.5 pt-1">
+                          <Label htmlFor={otherKey} className="text-xs text-muted-foreground">
+                            {t(`field.${otherKey}`)}
+                          </Label>
+                          <Input
+                            id={otherKey}
+                            dir="auto"
+                            maxLength={80}
+                            value={s[otherKey]}
+                            onChange={(e) => {
+                              set(otherKey)(e.target.value);
+                              if (errors[otherKey]) setErrors(({ [otherKey]: _, ...rest }) => rest);
+                            }}
+                            placeholder={t(`field.${otherKey}.placeholder`)}
+                            aria-invalid={errors[otherKey] ? true : undefined}
+                            aria-describedby={errors[otherKey] ? `${k}-msg` : undefined}
+                            className={cn(errors[otherKey] && "border-destructive/60")}
+                          />
+                        </div>
+                      )}
+                    </Field>
+                  );
+                })}
                 <Field label={t("field.projectName")} error={errors.projectName}>
                   <Input value={s.projectName} onChange={(e) => set("projectName")(e.target.value)} placeholder={t("field.projectName.placeholder")} />
                 </Field>
@@ -441,20 +599,35 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
                     <span className="text-sm font-medium">{tc(`file.${k}`)}</span>
                     <span className="line-clamp-1 text-xs text-muted-foreground">{docs[k]?.name ?? t("docs.tileHint")}</span>
                     {errors[k] && <span className="text-xs font-medium text-destructive">{errors[k]}</span>}
-                    <input
-                      type="file"
-                      accept="application/pdf,image/*"
-                      className="sr-only"
-                      onChange={(e) => setDocs((d) => ({ ...d, [k]: e.target.files?.[0] }))}
-                    />
+                    <input type="file" accept="application/pdf,image/*" className="sr-only" onChange={(e) => pickDoc(k, e.currentTarget)} />
                   </label>
                 ))}
-                <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition hover:border-gold hover:bg-gold-soft/40 sm:col-span-2">
-                  <FileUp className="h-6 w-6 text-muted-foreground" />
+                <label
+                  className={cn(
+                    "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition hover:border-gold hover:bg-gold-soft/40 sm:col-span-2",
+                    photos.length > 0 && !errors.photos && "border-success bg-success-soft/40",
+                  )}
+                >
+                  {preparing ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  ) : photos.length > 0 ? (
+                    <Check className="h-6 w-6 text-success" />
+                  ) : (
+                    <FileUp className="h-6 w-6 text-muted-foreground" />
+                  )}
                   <span className="text-sm font-medium">{t("docs.photos")}</span>
-                  <span className="text-xs text-muted-foreground">{photos.length ? t("docs.photosSelected", { n: photos.length }) : t("docs.photosHint")}</span>
-                  {errors.photos && <span className="text-xs font-medium text-destructive">{errors.photos}</span>}
-                  <input type="file" multiple accept="image/*" className="sr-only" onChange={(e) => setPhotos(Array.from(e.target.files ?? []))} />
+                  <span className="text-xs text-muted-foreground" aria-live="polite">
+                    {preparing ? t("docs.preparing") : photos.length ? t("docs.photosSelected", { n: photos.length }) : t("docs.photosHint")}
+                  </span>
+                  {errors.photos && <span className="max-w-prose text-xs font-medium text-destructive">{errors.photos}</span>}
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="sr-only"
+                    disabled={preparing}
+                    onChange={(e) => void pickPhotos(e.currentTarget)}
+                  />
                 </label>
                 <p className="text-xs text-muted-foreground sm:col-span-2">{t("docs.privacy")}</p>
               </>
@@ -465,8 +638,11 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
                 <p className="text-muted-foreground">{t("review.intro")}</p>
                 <dl className="divide-y rounded-xl border">
                   {[
-                    [t("review.unit"), `${s.projectName || "—"} · ${unitLabel(s.unitType)} · ${s.community ? communityLabel(s.community) : "—"}`],
-                    [t("review.developer"), s.developer ? developerLabel(s.developer) : "—"],
+                    [
+                      t("review.unit"),
+                      `${s.projectName || "—"} · ${unitLabel(s.unitType)} · ${s.community ? communityName(tc, s.community, s.communityOther) : "—"}`,
+                    ],
+                    [t("review.developer"), s.developer ? developerName(tc, s.developer, s.developerOther) : "—"],
                     [t("review.purchasePrice"), aed(num(s.originalPrice))],
                     [t("review.paid"), `${aed(num(s.amountPaid))} (\u2066${formatPct(preview.paidPct)}\u2069)`],
                     [t("review.asking"), aed(num(s.askingPrice))],
@@ -534,7 +710,7 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
             <Button type="button" variant="ghost" disabled={step === 0 || !!busy} onClick={() => setStep(step - 1)}>
               {tc("back")}
             </Button>
-            <Button type="submit" disabled={!!busy}>
+            <Button type="submit" disabled={!!busy || preparing}>
               {busy ? (
                 <>
                   <Loader2 className="animate-spin" /> {busy}
@@ -574,7 +750,7 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
             </dl>
             <p className="mt-3 text-xs text-primary-foreground/60">{t("numbers.feeNote")}</p>
           </div>
-          {num(s.originalPrice) > 0 && preview.paidPct < 0.3 && (
+          {num(s.originalPrice) > 0 && preview.paidPct < FEES.nocMinPaidPct && (
             <div className="flex gap-3 rounded-2xl border border-warning/30 bg-warning-soft p-4 text-sm text-warning">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               {t("nocWarning")}
