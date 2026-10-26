@@ -20,6 +20,8 @@ import { communityName, developerName } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
 
 const MAX_BUDGET = 8_000_000;
+/** Cash at transfer adds roughly 7% in fees (and any arrears) to the equity, so its slider runs higher. */
+const MAX_TRANSFER = 10_000_000;
 const YEARS = [2026, 2027, 2028, 2029];
 
 /** Communities and developers that have listings on the market (lib/listings dealFacets). */
@@ -135,36 +137,66 @@ function RangeFilter({
   );
 }
 
-function BudgetFilter() {
+/**
+ * A min–max AED range on two query parameters. "minCash"/"maxCash" are the upfront cash to the seller (the asking
+ * price, as saved searches and /market links have always meant it); "minTransfer"/"maxTransfer" the cash needed on
+ * transfer day (src/lib/listings.ts cashToCloseSql).
+ */
+function BudgetFilter({
+  title,
+  label,
+  hint,
+  minName,
+  maxName,
+  ceiling,
+}: {
+  title: string;
+  label: string;
+  hint?: string;
+  minName: string;
+  maxName: string;
+  ceiling: number;
+}) {
   const t = useT("deals");
   const locale = useLocale();
   const { params, update } = useParamsUpdater();
-  const min = Number(params.get("minCash") ?? 0);
-  const max = Number(params.get("maxCash") ?? MAX_BUDGET);
+  const min = Number(params.get(minName) ?? 0);
+  const max = Math.min(Number(params.get(maxName) ?? ceiling), ceiling);
   const [value, setValue] = useState<[number, number]>([min, max]);
   useEffect(() => setValue([min, max]), [min, max]);
+  const hintId = hint ? `${minName}-hint` : undefined;
   return (
-    <FilterSection title={t("filters.budget")}>
+    <FilterSection title={title}>
       <p className="mb-4 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground tabular">
-        {formatAEDCompact(value[0], locale)} – {value[1] >= MAX_BUDGET ? t("filters.any") : formatAEDCompact(value[1], locale)}
+        <bdi>{formatAEDCompact(value[0], locale)}</bdi>
+        <span aria-hidden className="px-1">
+          –
+        </span>
+        <bdi>{value[1] >= ceiling ? t("filters.any") : formatAEDCompact(value[1], locale)}</bdi>
       </p>
       <Slider
         min={0}
-        max={MAX_BUDGET}
+        max={ceiling}
         step={50_000}
         value={value}
-        onValueChange={(v) => setValue([v[0] ?? 0, v[1] ?? MAX_BUDGET])}
+        onValueChange={(v) => setValue([v[0] ?? 0, v[1] ?? ceiling])}
         onValueCommit={(v) =>
           update((p) => {
-            if (v[0]) p.set("minCash", String(v[0]));
-            else p.delete("minCash");
-            if (v[1] != null && v[1] < MAX_BUDGET) p.set("maxCash", String(v[1]));
-            else p.delete("maxCash");
+            if (v[0]) p.set(minName, String(v[0]));
+            else p.delete(minName);
+            if (v[1] != null && v[1] < ceiling) p.set(maxName, String(v[1]));
+            else p.delete(maxName);
           })
         }
-        aria-label={t("filters.budgetLabel")}
+        aria-label={label}
+        aria-describedby={hintId}
         className="py-1.5"
       />
+      {hint && (
+        <p id={hintId} className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+          {hint}
+        </p>
+      )}
     </FilterSection>
   );
 }
@@ -187,7 +219,15 @@ export function FilterPanel({ facets }: { facets: Facets }) {
   const developers = choices("developer", DEVELOPERS, facets.developers, (d) => developerName(tc, d));
   return (
     <div className="space-y-5">
-      <BudgetFilter />
+      <BudgetFilter
+        title={t("filters.transfer")}
+        label={t("filters.transferLabel")}
+        hint={t("filters.transferHint")}
+        minName="minTransfer"
+        maxName="maxTransfer"
+        ceiling={MAX_TRANSFER}
+      />
+      <BudgetFilter title={t("filters.budget")} label={t("filters.budgetLabel")} minName="minCash" maxName="maxCash" ceiling={MAX_BUDGET} />
       {communities.length > 0 && <CheckGroup label={t("filters.community")} name="community" options={communities} />}
       {developers.length > 0 && <CheckGroup label={t("filters.developer")} name="developer" options={developers} />}
       <CheckGroup

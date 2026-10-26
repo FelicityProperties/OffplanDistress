@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { eq, sql } from "drizzle-orm";
 import {
+  AlertTriangle,
+  ArrowDown,
   ArrowLeft,
   BadgeCheck,
   BedDouble,
@@ -38,13 +40,14 @@ import { listings } from "@/db/schema";
 import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND, FEES, PUBLIC_STATUSES } from "@/lib/config";
-import { analyzeDeal } from "@/lib/deal-math";
+import { richText } from "@/content/legal/rich-text";
+import { analyzeDeal, planSchedule } from "@/lib/deal-math";
 import { formatAED, formatDate, formatPct, formatQuarter, formatUSDFromAED, parseRefCode, refCode } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
 import { siteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 import { getListingByRef, similarDeals, watchedIds } from "@/lib/listings";
-import { isAdvertised, permitQrSvg } from "@/lib/permits";
+import { dubaiToday, isAdvertised, permitQrSvg } from "@/lib/permits";
 
 async function load(ref: string) {
   const refNo = parseRefCode(ref);
@@ -133,9 +136,75 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   };
   const loginHref = `/login?next=${encodeURIComponent(`/deals/${refCode(l.refNo)}`)}`;
 
-  const cost: [string, number][] = [
+  // Arrears with the developer (overdue instalments + late fees): cleared before the NOC, so paid on transfer day.
+  // Known once our team checked the statement (arrearsCheckedAt) or the seller gave a figure; null amounts = unknown.
+  const arrearsKnown = l.overdueAmount != null || l.overduePenalty != null;
+  const arrearsChecked = arrearsKnown && l.arrearsCheckedAt != null;
+  const checkedOn = formatDate(l.arrearsCheckedAt, locale);
+  const arrearsRow: [string, number | null] =
+    arrearsKnown && a.arrears > 0
+      ? [arrearsChecked ? t("cost.arrears", { date: checkedOn }) : t("cost.arrearsSeller"), a.arrears]
+      : arrearsChecked
+        ? [t("cost.upToDate", { date: checkedOn }), 0]
+        : [t("cost.arrearsUnknown"), null];
+  // "Your cash timeline": the listed plan from today, in Dubai dates.
+  const schedule = planSchedule(plan, l.handoverDate, dubaiToday(), {
+    date: l.nextInstalmentDate,
+    amount: l.nextInstalmentAmount,
+  });
+  // The rest of the balance still owed after transfer that no listed future instalment covers.
+  const unlisted = a.remainingAfterTransfer - schedule.future;
+  const dueSoon = schedule.dueSoon;
+  const dueSoonText = dueSoon
+    ? richText(t(dueSoon.amount ? "side.dueSoon" : "side.dueSoonNoAmount"), {
+        amount: <bdi className="font-semibold tabular">{formatAED(dueSoon.amount, locale)}</bdi>,
+        date: <bdi className="font-semibold">{formatDate(dueSoon.dueDate, locale)}</bdi>,
+      })
+    : null;
+  const instalments = (count: number) =>
+    count === 1 ? t("timeline.instalments.one") : t("timeline.instalments.many", { count });
+  const timeline: { key: string; title: string; when: string; amount: number; tag?: string }[] = [
+    ...(schedule.preHandover.sum > 0
+      ? [
+          {
+            key: "pre",
+            title: t("timeline.pre"),
+            when: [
+              instalments(schedule.preHandover.count),
+              schedule.preHandover.months != null && schedule.preHandover.months >= 2
+                ? t("timeline.overMonths", { months: schedule.preHandover.months })
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" · "),
+            amount: schedule.preHandover.sum,
+          },
+        ]
+      : []),
+    ...(schedule.atHandover.sum > 0
+      ? [
+          {
+            key: "handover",
+            title: t("timeline.handover"),
+            when: formatQuarter(l.handoverDate, locale),
+            amount: schedule.atHandover.sum,
+            tag: t("timeline.mortgage"),
+          },
+        ]
+      : []),
+    ...(schedule.postHandover.sum > 0
+      ? [{ key: "post", title: t("timeline.post"), when: instalments(schedule.postHandover.count), amount: schedule.postHandover.sum }]
+      : []),
+    ...(schedule.undated.sum > 0
+      ? [{ key: "undated", title: t("timeline.undated"), when: instalments(schedule.undated.count), amount: schedule.undated.sum }]
+      : []),
+    ...(unlisted > 0 ? [{ key: "unlisted", title: t("timeline.unlisted"), when: t("timeline.unlistedHint"), amount: unlisted }] : []),
+  ];
+
+  const cost: [string, number | null][] = [
     [t("cost.asking"), l.askingPrice],
-    [t("cost.remaining"), a.remaining],
+    arrearsRow,
+    a.overdue > 0 ? [t("cost.remainingAfterArrears"), a.remainingAfterTransfer] : [t("cost.remaining"), a.remaining],
     ...(FEES.payer === "buyer"
       ? ([
           [t("cost.fee", { brand: BRAND.name, rate: formatPct(FEES.commissionRate) }), a.commission],
@@ -322,18 +391,50 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     {t("side.usd", { amount: formatUSDFromAED(l.askingPrice, locale) })}
                   </p>
                   <p className="mt-3 text-sm text-primary-foreground/75 wrap-anywhere">
-                    {t("side.thenPlan", { amount: formatAED(a.remaining, locale), developer })}
+                    {t("side.thenPlan", { amount: formatAED(a.remainingAfterTransfer, locale), developer })}
                   </p>
+                  {/* Next to the equity figure (unchanged): what the buyer actually needs on the day, an estimate. */}
+                  <div className="mt-4 border-t border-primary-foreground/15 pt-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">{t("side.cashAtTransfer")}</p>
+                    <p className="mt-1.5 font-display text-2xl font-semibold leading-none tabular" data-cash-at-transfer={a.cashToClose}>
+                      {t("side.approx", { amount: formatAED(a.cashToClose, locale) })}
+                    </p>
+                    <p className="mt-1.5 text-xs text-primary-foreground/60">
+                      {t(a.arrears > 0 ? "side.cashNoteArrears" : "side.cashNote")}
+                    </p>
+                    <a
+                      href="#cash-timeline"
+                      className="mt-2 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-gold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                    >
+                      {t("side.timelineLink")}
+                      <ArrowDown className="h-3.5 w-3.5" aria-hidden />
+                    </a>
+                  </div>
                 </div>
               </div>
               <div className="p-6">
-                {l.nextInstalmentDate && (
-                  <p className="inline-flex items-center gap-2 rounded-full bg-gold-soft px-3.5 py-1.5 text-sm font-medium text-gold-foreground">
-                    <CalendarClock className="h-4 w-4" aria-hidden />
-                    {t("side.nextInstalment", { date: formatDate(l.nextInstalmentDate, locale) })}
-                  </p>
+                {dueSoon ? (
+                  // An instalment due within the transfer window: whoever pays it has to be agreed before the MOU.
+                  <div
+                    role="note"
+                    data-due-soon={dueSoon.dueDate}
+                    className="flex items-start gap-2.5 rounded-2xl border border-gold/50 bg-gold-soft px-3.5 py-3 text-sm text-gold-foreground"
+                  >
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                    <div className="min-w-0">
+                      <p className="font-medium leading-snug">{dueSoonText}</p>
+                      <p className="mt-1 text-xs opacity-80">{t("side.dueSoonHint")}</p>
+                    </div>
+                  </div>
+                ) : (
+                  l.nextInstalmentDate && (
+                    <p className="inline-flex items-center gap-2 rounded-full bg-gold-soft px-3.5 py-1.5 text-sm font-medium text-gold-foreground">
+                      <CalendarClock className="h-4 w-4" aria-hidden />
+                      {t("side.nextInstalment", { date: formatDate(l.nextInstalmentDate, locale) })}
+                    </p>
+                  )
                 )}
-                <div className={l.nextInstalmentDate ? "mt-5 grid gap-2.5" : "grid gap-2.5"}>
+                <div className={dueSoon || l.nextInstalmentDate ? "mt-5 grid gap-2.5" : "grid gap-2.5"}>
                   {/* Offers only on an advert (the server refuses any other way too). */}
                   {advertised && (
                     <OfferDialog
@@ -550,6 +651,114 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
               </div>
             </section>
 
+            <section id="cash-timeline" aria-labelledby="cash-timeline-title" className="scroll-mt-28">
+              <h2 id="cash-timeline-title" className="text-2xl font-semibold sm:text-3xl">
+                {t("timeline.title")}
+              </h2>
+              <p className="mt-2 max-w-prose text-sm text-muted-foreground">{t("timeline.sub")}</p>
+              {dueSoon && (
+                <div
+                  role="note"
+                  className="mt-5 flex items-start gap-3 rounded-2xl border border-gold/50 bg-gold-soft p-4 text-sm text-gold-foreground"
+                >
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                  <div className="min-w-0">
+                    <p className="font-medium leading-snug">{dueSoonText}</p>
+                    <p className="mt-1 text-xs opacity-80">{t("side.dueSoonHint")}</p>
+                  </div>
+                </div>
+              )}
+              <div className="mt-5 rounded-3xl border border-border/80 bg-card p-5 shadow-card sm:p-6">
+                <ol aria-label={t("timeline.label")} className="space-y-0">
+                  {[
+                    {
+                      key: "transfer",
+                      title: t("timeline.transfer"),
+                      when: richText(t("timeline.transferWhen"), {
+                        from: <bdi>{formatDate(schedule.transferDay.from, locale)}</bdi>,
+                        to: <bdi>{formatDate(schedule.transferDay.to, locale)}</bdi>,
+                      }),
+                      amount: t("side.approx", { amount: formatAED(a.cashToClose, locale) }),
+                      tag: undefined as string | undefined,
+                      lead: true,
+                    },
+                    ...timeline.map((s) => ({ ...s, amount: formatAED(s.amount, locale), lead: false })),
+                  ].map((s, i, all) => (
+                    <li key={s.key} data-step={s.key} className="relative ps-10 pb-6 last:pb-0">
+                      {/* The rail runs down the start side (right in Arabic), from one marker to the next. */}
+                      {i < all.length - 1 && <span aria-hidden className="absolute start-[0.8125rem] top-7 bottom-0 w-px bg-border" />}
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "absolute start-0 top-0.5 grid h-7 w-7 place-items-center rounded-full text-[11px] font-semibold tabular ring-4 ring-card",
+                          s.lead ? "bg-ink text-gold" : "bg-gold-soft text-gold-foreground",
+                        )}
+                      >
+                        {i + 1}
+                      </span>
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <div className="min-w-0">
+                          <h3 className="font-sans text-base font-semibold">{s.title}</h3>
+                          <p className="mt-0.5 text-xs text-muted-foreground tabular">{s.when}</p>
+                        </div>
+                        {/* ms-auto: on a phone the amount wraps under the title and still lines up on the end side. */}
+                        <p className={cn("ms-auto shrink-0 whitespace-nowrap font-semibold tabular", s.lead ? "text-lg" : "text-base")}>{s.amount}</p>
+                      </div>
+                      {s.tag && (
+                        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-xs font-medium text-success">
+                          <Landmark className="h-3.5 w-3.5" aria-hidden />
+                          {s.tag}
+                        </p>
+                      )}
+                      {s.lead && (
+                        <dl className="mt-3 space-y-1.5 rounded-2xl bg-muted/50 px-4 py-3 text-xs">
+                          {(
+                            [
+                              [t("timeline.transferEquity"), formatAED(l.askingPrice, locale)],
+                              [t("timeline.transferFees"), t("side.approx", { amount: formatAED(a.buyerFees, locale) })],
+                              ...(a.arrears > 0 ? [[t("timeline.transferArrears"), formatAED(a.arrears, locale)]] : []),
+                            ] as [string, string][]
+                          ).map(([k, v]) => (
+                            <div key={k} className="flex items-baseline justify-between gap-4">
+                              <dt className="text-muted-foreground">{k}</dt>
+                              <dd className="shrink-0 whitespace-nowrap font-medium tabular">{v}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+                {schedule.pastDue.sum > 0 && (
+                  <p className="mt-5 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+                    <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <span>
+                      {richText(t(arrearsChecked ? "timeline.pastDueChecked" : "timeline.pastDue"), {
+                        amount: <bdi className="font-medium text-foreground tabular">{formatAED(schedule.pastDue.sum, locale)}</bdi>,
+                        date: <bdi>{checkedOn}</bdi>,
+                      })}
+                    </span>
+                  </p>
+                )}
+                {unlisted < 0 && (
+                  <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+                    <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <span>
+                      {richText(t("timeline.mismatch"), {
+                        amount: <bdi className="font-medium text-foreground tabular">{formatAED(-unlisted, locale)}</bdi>,
+                      })}
+                    </span>
+                  </p>
+                )}
+                <div className="mt-5 flex items-baseline justify-between gap-4 border-t border-border/70 pt-4">
+                  <p className="text-sm font-semibold">{t("timeline.total")}</p>
+                  <p className="shrink-0 whitespace-nowrap text-lg font-semibold tabular" data-timeline-total={a.totalCost}>
+                    {t("side.approx", { amount: formatAED(a.totalCost, locale) })}
+                  </p>
+                </div>
+              </div>
+            </section>
+
             <section>
               <h2 className="text-2xl font-semibold sm:text-3xl">{t("cost.title")}</h2>
               <div className="mt-5 grid overflow-hidden rounded-3xl border border-border/80 bg-card shadow-card md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -566,6 +775,10 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("cost.total")}</dt>
                       <dd className="mt-1 text-3xl font-semibold tabular">{formatAED(a.totalCost, locale)}</dd>
+                    </div>
+                    <div className="border-t border-border/70 pt-4">
+                      <dt className="text-xs leading-snug text-muted-foreground">{t("cost.transferDay")}</dt>
+                      <dd className="mt-1 text-xl font-semibold tabular">{t("side.approx", { amount: formatAED(a.cashToClose, locale) })}</dd>
                     </div>
                     {a.launchAllIn != null && (
                       <div className="border-t border-border/70 pt-4">
@@ -590,6 +803,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">{t("cost.disclaimer")}</p>
+              <p className="mt-1.5 text-xs text-muted-foreground">{t("cost.arrearsNote")}</p>
             </section>
           </div>
         </div>

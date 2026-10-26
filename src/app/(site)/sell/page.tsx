@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BadgeCheck, Calculator, FileCheck2, FileSignature, Handshake, Wallet } from "lucide-react";
+import { BadgeCheck, Calculator, ExternalLink, FileCheck2, FileSignature, Handshake, MessageCircle, Wallet } from "lucide-react";
 import { QuickEstimate } from "@/components/sell/QuickEstimate";
 import { SellForm, type SellPrefill } from "@/components/sell/SellForm";
 import { Button } from "@/components/ui/button";
 import { getT } from "@/i18n/server";
 import { getCurrentUser, type SessionUser } from "@/lib/auth";
-import { DEVELOPERS } from "@/lib/config";
+import { BRAND, DEVELOPERS } from "@/lib/config";
 import { nextQuarters, prefillFromParams } from "@/lib/estimate";
 import { formatNumber } from "@/lib/format";
 import { leadForSeller } from "@/lib/leads";
@@ -51,7 +51,14 @@ async function sellFormStart(user: SessionUser, params: Params): Promise<SellPre
 }
 
 export default async function SellPage({ searchParams }: PageProps<"/sell">) {
-  const [user, t, tc, tm, params] = await Promise.all([getCurrentUser(), getT("sell"), getT("common"), getT("marketing"), searchParams]);
+  const [user, t, tc, tm, params, tl] = await Promise.all([
+    getCurrentUser(),
+    getT("sell"),
+    getT("common"),
+    getT("marketing"),
+    searchParams,
+    getT("legal"),
+  ]);
   const start = user ? await sellFormStart(user, params) : undefined;
   const prefill = prefillFromParams(params);
   // Signing up or logging in from the pitch keeps the exit calculator's numbers too: the sell form starts from them.
@@ -100,6 +107,38 @@ export default async function SellPage({ searchParams }: PageProps<"/sell">) {
               </Link>
             </span>
           </p>
+          {/* WhatsApp intake: our team prepares the listing from the documents, the seller confirms it by link. */}
+          {BRAND.whatsapp && (
+            <section
+              aria-labelledby="sell-whatsapp"
+              className="mt-6 flex flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 p-5 shadow-card backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#25D366] text-white">
+                  <MessageCircle className="h-5 w-5" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <h2 id="sell-whatsapp" className="font-sans text-base font-semibold leading-snug">
+                    {t("whatsapp.title")}
+                  </h2>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("whatsapp.body")}</p>
+                  <p className="mt-1.5 text-xs text-muted-foreground">{t("whatsapp.note")}</p>
+                </div>
+              </div>
+              <Button asChild variant="outline" className="shrink-0 self-start sm:self-center">
+                <a
+                  href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(tm("whatsapp.prefill.sell"))}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="sell-whatsapp"
+                >
+                  <MessageCircle aria-hidden /> {t("whatsapp.cta")}
+                  <ExternalLink className="size-3.5 rtl:-scale-x-100" aria-hidden />
+                  <span className="sr-only">{tl("newTab")}</span>
+                </a>
+              </Button>
+            </section>
+          )}
         </div>
       </section>
 

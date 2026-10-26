@@ -120,6 +120,11 @@ export default defineMessages({
     "contact.sub":
       "Questions about a deal, the NOC process or selling your unit? Send us a message and we'll get back to you.",
     "contact.whatsapp": "WhatsApp us",
+    // The floating WhatsApp button's first message, picked by page (src/components/WhatsAppButton.tsx).
+    "whatsapp.prefill.sell": "Hello, I want to sell my off-plan unit.",
+    "whatsapp.prefill.exit": "Hello, I used the exit calculator and would like advice on selling my off-plan unit.",
+    "whatsapp.prefill.deal": "Hello, I'm interested in the deal {ref}.",
+    "whatsapp.prefill.default": "Hello, I have a question about OffplanDistress.",
     "contact.submit": "Send message",
     "contact.placeholder": "How can we help?",
     "contact.tile.email": "Email",
@@ -271,6 +276,10 @@ export default defineMessages({
     "contact.sub":
       "لديك أسئلة عن صفقة أو عن إجراءات شهادة عدم الممانعة أو عن بيع وحدتك؟ أرسل لنا رسالة وسنعاود التواصل معك.",
     "contact.whatsapp": "راسلنا عبر واتساب",
+    "whatsapp.prefill.sell": "مرحباً، أرغب في بيع وحدتي على الخارطة.",
+    "whatsapp.prefill.exit": "مرحباً، استخدمتُ حاسبة الخروج وأودّ الحصول على استشارة بشأن بيع وحدتي على الخارطة.",
+    "whatsapp.prefill.deal": "مرحباً، أنا مهتم بالصفقة ⁦{ref}⁩.",
+    "whatsapp.prefill.default": "مرحباً، لديّ استفسار بخصوص \u2066OffplanDistress\u2069.",
     "contact.submit": "إرسال الرسالة",
     "contact.placeholder": "كيف يمكننا مساعدتك؟",
     "contact.tile.email": "البريد الإلكتروني",

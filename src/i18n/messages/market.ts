@@ -144,7 +144,7 @@ export default defineMessages({
     "method.paid.body": "Amount already paid to the developer ÷ the original purchase price.",
     "method.upfront.title": "Upfront cash and sale value",
     "method.upfront.body":
-      "Upfront cash is the asking price: what the buyer pays the seller for the equity already paid. Sale value adds the remaining payment plan the buyer takes over. Neither includes fees.",
+      "Upfront cash is the asking price: what the buyer pays the seller for the equity already paid. Sale value adds the remaining payment plan the buyer takes over. Neither includes fees. The cash at transfer shown on deal cards and pages is larger: it adds the fees (ours, and the DLD and NOC fees, estimated) and any overdue instalments and late fees. The index keeps to the asking price.",
     "method.medians.title": "Medians and minimum sample",
     "method.medians.body":
       "We lead with medians so that one unusual listing cannot move the index. A median, average or share is shown only when at least {min} units qualify, and the full index is published once {live} real listings are on the market.",
@@ -302,7 +302,7 @@ export default defineMessages({
     "method.paid.body": "المبلغ المسدَّد للمطوّر حتى الآن ÷ سعر الشراء الأصلي.",
     "method.upfront.title": "المبلغ المقدّم وقيمة البيع",
     "method.upfront.body":
-      "المبلغ المقدّم هو السعر المطلوب، أي ما يدفعه المشتري للبائع مقابل ما سدّده. وتضيف قيمة البيع إليه المتبقي من خطة الدفع الذي يتولاه المشتري. ولا يشمل أيٌّ منهما الرسوم.",
+      "المبلغ المقدّم هو السعر المطلوب، أي ما يدفعه المشتري للبائع مقابل ما سدّده. وتضيف قيمة البيع إليه المتبقي من خطة الدفع الذي يتولاه المشتري. ولا يشمل أيٌّ منهما الرسوم. أما النقد يوم نقل الملكية الظاهر في بطاقات الصفقات وصفحاتها فأكبر من ذلك، إذ يضيف الرسوم (رسومنا، ورسوم دائرة الأراضي والأملاك وشهادة عدم الممانعة التقديرية) وأي أقساط متأخرة وغرامات تأخير. ويبقى المؤشر مستنداً إلى السعر المطلوب.",
     "method.medians.title": "القيم الوسيطة والحد الأدنى للعينة",
     "method.medians.body":
       "نعتمد القيم الوسيطة أساساً حتى لا يحرّك إعلانٌ واحد غير معتاد المؤشر. ولا يظهر الوسيط أو المتوسط أو النسبة إلا عند توفر {min} وحدات مؤهّلة على الأقل، ويُنشر المؤشر كاملاً عندما تتوفر {live} إعلانات حقيقية في السوق.",

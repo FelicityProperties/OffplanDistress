@@ -15,6 +15,7 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Buffer; driverData: Uint8Array | string }>({
@@ -161,6 +162,16 @@ export const listings = pgTable(
     nextInstalmentDate: date("next_instalment_date"),
     nextInstalmentAmount: integer("next_instalment_amount"),
     paymentPlan: jsonb("payment_plan").$type<PlanInstalment[]>().notNull().default([]),
+    /**
+     * Arrears on the developer's statement of account (whole AED): instalments past their due date and still unpaid —
+     * part of the remaining balance — and the late fees charged on them. Developers want both cleared before the NOC,
+     * so the buyer's cash on transfer day includes them (analyzeDeal / cashToCloseSql). Null = not known, 0 = none.
+     * The seller may give the overdue amount in the sell form; our team enters both from the statement.
+     */
+    overdueAmount: integer("overdue_amount"),
+    overduePenalty: integer("overdue_penalty"),
+    /** Dubai date our team last checked the arrears with the developer; null = never (a seller's figure at most). */
+    arrearsCheckedAt: date("arrears_checked_at"),
     motivation: motivation("motivation").notNull().default("motivated"),
     description: text("description"),
     images: text("images").array().notNull().default(sql`'{}'::text[]`),
@@ -190,6 +201,18 @@ export const listings = pgTable(
     publishedAt: timestamp("published_at", { withTimezone: true }),
     /** Attribution of the session the listing was submitted in. */
     source: jsonb("source").$type<Source>(),
+    /**
+     * Entered by our team from documents the seller sent (WhatsApp intake, /admin/listings/new) rather than through the
+     * sell form. Such a listing can't be approved until the seller confirms ownership through their claim link.
+     */
+    createdByStaff: boolean("created_by_staff").notNull().default(false),
+    /**
+     * When the seller confirmed they own the unit or are authorised to sell it, the documents are genuine and they agree
+     * to the Terms: the sell form's last step, or the claim link for a listing our team created. Older rows: created_at.
+     */
+    ownershipConfirmedAt: timestamp("ownership_confirmed_at", { withTimezone: true }),
+    /** The seller lead (free estimate) our team created this listing from, if any. */
+    leadId: uuid("lead_id").references((): AnyPgColumn => sellerLeads.id, { onDelete: "set null" }),
   },
   (t) => [
     uniqueIndex("listings_ref_idx").on(t.refNo),
@@ -318,6 +341,13 @@ export const passwordResets = pgTable(
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     usedAt: timestamp("used_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * "reset": the forgot-password email (1 hour). "claim": the link our team sends a seller whose listing they created
+     * (7 days, src/lib/claim.ts), opened at /reset-password?claim=1. Neither page accepts the other's token.
+     */
+    purpose: text("purpose").notNull().default("reset"),
+    /** The listing a "claim" token confirms ownership of. */
+    listingId: uuid("listing_id").references(() => listings.id, { onDelete: "cascade" }),
   },
   (t) => [index("password_resets_user_idx").on(t.userId)],
 );

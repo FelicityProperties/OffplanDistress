@@ -62,6 +62,8 @@ export async function adminListings(status?: (typeof listings.$inferSelect)["sta
       oqood: docFlag("oqood"),
       soa: docFlag("soa"),
       idDoc: docFlag("id"),
+      // Entered by our team and still waiting for the seller's own confirmation (it can't be approved until then).
+      awaitingSeller: sql<boolean>`(${listings.createdByStaff} and ${listings.ownershipConfirmedAt} is null and not ${listings.isSample})`,
     })
     .from(listings)
     .innerJoin(users, eq(users.id, listings.sellerId))
@@ -127,7 +129,12 @@ export async function adminInquiries() {
     .limit(500);
 }
 
-export async function adminUsers() {
+/**
+ * "registered": accounts that can log in. "pending": sellers our team added (staff-assisted intake, src/lib/claim.ts)
+ * who haven't set a password through their claim link yet: no password and at least one real listing (the sample
+ * seller, which has no password either, owns only samples).
+ */
+export async function adminUsers(tab: "registered" | "pending" = "registered") {
   return db
     .select({
       id: users.id,
@@ -140,9 +147,27 @@ export async function adminUsers() {
       createdAt: users.createdAt,
       listings: sql<number>`(select count(*)::int from ${listings} l where l.seller_id = ${users.id})`,
       offers: sql<number>`(select count(*)::int from ${offers} o where o.buyer_id = ${users.id})`,
+      // The newest listing still waiting for this seller's confirmation, for the "pending" tab's link.
+      pendingListingId: sql<string | null>`(select l.id from ${listings} l where l.seller_id = ${users.id} and l.created_by_staff and l.ownership_confirmed_at is null and not l.is_sample order by l.created_at desc limit 1)`,
+      pendingListingRef: sql<number | null>`(select l.ref_no from ${listings} l where l.seller_id = ${users.id} and l.created_by_staff and l.ownership_confirmed_at is null and not l.is_sample order by l.created_at desc limit 1)`,
     })
     .from(users)
-    .where(sql`${users.passwordHash} is not null`)
+    .where(
+      tab === "pending"
+        ? sql`${users.passwordHash} is null and ${users.role} = 'user' and exists (select 1 from ${listings} l where l.seller_id = ${users.id} and not l.is_sample)`
+        : sql`${users.passwordHash} is not null`,
+    )
     .orderBy(desc(users.createdAt))
     .limit(1000);
+}
+
+/** How many sellers are in the "pending" tab of /admin/users. */
+export async function pendingClaimCount() {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(users)
+    .where(
+      sql`${users.passwordHash} is null and ${users.role} = 'user' and exists (select 1 from ${listings} l where l.seller_id = ${users.id} and not l.is_sample)`,
+    );
+  return row?.n ?? 0;
 }

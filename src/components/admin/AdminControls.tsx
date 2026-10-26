@@ -100,6 +100,11 @@ type EditProps = {
   /** The range the permit and Form A dates may take (expiryDateBounds in src/lib/permits.ts); the server checks it too. */
   expiryBounds?: { min: string; max: string };
   images: string[];
+  /**
+   * Arrears with the developer (schema.ts overdue_amount, overdue_penalty, arrears_checked_at) and today's Dubai date.
+   * The fields only appear (and are only saved) when this is given.
+   */
+  arrears?: { overdueAmount: number | null; overduePenalty: number | null; checkedAt: string | null; today: string };
 };
 
 /**
@@ -213,6 +218,50 @@ export function AdminListingForm(p: EditProps) {
       >
         <Input id="launchPrice" name="launchPrice" type="number" min={0} defaultValue={p.launchPrice ?? ""} />
       </Field>
+      {p.arrears && (
+        <fieldset className="grid gap-4 rounded-xl border border-border/80 p-4 sm:col-span-2 sm:grid-cols-3">
+          <legend className="px-1 text-sm font-semibold">{t("form.arrears")}</legend>
+          <p className="text-xs text-muted-foreground sm:col-span-3">{t("form.arrearsHint")}</p>
+          {(p.arrears.overdueAmount != null || p.arrears.overduePenalty != null) && p.arrears.checkedAt == null && (
+            <p className="rounded-lg bg-gold-soft px-3 py-2 text-xs text-gold-foreground sm:col-span-3">{t("form.arrearsSellerFigure")}</p>
+          )}
+          <Field label={t("form.overdueAmount")} htmlFor="overdueAmount" error={fe.overdueAmount} hint={t("form.overdueAmountHint")}>
+            <Input
+              id="overdueAmount"
+              name="overdueAmount"
+              type="number"
+              min={0}
+              aria-invalid={fe.overdueAmount ? true : undefined}
+              defaultValue={p.arrears.overdueAmount ?? ""}
+            />
+          </Field>
+          <Field label={t("form.overduePenalty")} htmlFor="overduePenalty" error={fe.overduePenalty} hint={t("form.overduePenaltyHint")}>
+            <Input
+              id="overduePenalty"
+              name="overduePenalty"
+              type="number"
+              min={0}
+              aria-invalid={fe.overduePenalty ? true : undefined}
+              defaultValue={p.arrears.overduePenalty ?? ""}
+            />
+          </Field>
+          <Field
+            label={t("form.arrearsCheckedAt")}
+            htmlFor="arrearsCheckedAt"
+            error={fe.arrearsCheckedAt}
+            hint={t("form.arrearsCheckedAtHint")}
+          >
+            <Input
+              id="arrearsCheckedAt"
+              name="arrearsCheckedAt"
+              type="date"
+              max={p.arrears.today}
+              aria-invalid={fe.arrearsCheckedAt ? true : undefined}
+              defaultValue={p.arrears.checkedAt ?? ""}
+            />
+          </Field>
+        </fieldset>
+      )}
       <Field label={t("form.dldPermit")} htmlFor="dldPermit" error={fe.dldPermit} hint={t("form.dldPermitHint")}>
         <Input id="dldPermit" name="dldPermit" dir="ltr" maxLength={40} defaultValue={p.dldPermit ?? ""} />
       </Field>

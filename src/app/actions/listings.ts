@@ -10,7 +10,7 @@ import type { TFn } from "@/i18n/translator";
 import { sourceFromForm } from "@/lib/attribution";
 import { getCurrentUser } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS, UNIT_TYPES } from "@/lib/config";
-import { refCode } from "@/lib/format";
+import { formatNumber, refCode } from "@/lib/format";
 import { notifyAdmins } from "@/lib/notify";
 import { cancelAcceptedOffers, closeOpenOffers } from "@/lib/offers";
 import { publishBlocker } from "@/lib/permits";
@@ -65,6 +65,9 @@ const listingSchema = (t: T) =>
       handoverDate: optionalDate(t),
       nextInstalmentDate: optionalDate(t),
       nextInstalmentAmount: z.coerce.number().int().nonnegative().optional(),
+      // The seller's own figure for instalments past due and unpaid (sell form, when they report missed ones). Our team
+      // checks it against the statement of account; until then buyers see it as "being checked".
+      overdueAmount: money(t).optional(),
       motivation: z.enum(["urgent", "motivated", "flexible"]),
       description: z.string().trim().max(3000).optional(),
       paymentPlan: z.array(instalment).max(60),
@@ -72,6 +75,13 @@ const listingSchema = (t: T) =>
     .refine((v) => v.amountPaid <= v.originalPrice, {
       path: ["amountPaid"],
       message: t("field.amountPaidMax"),
+    })
+    // Overdue instalments are part of what is still owed to the developer.
+    .superRefine((v, ctx) => {
+      const owed = Math.max(v.originalPrice - v.amountPaid, 0);
+      if (v.overdueAmount != null && v.overdueAmount > owed) {
+        ctx.addIssue({ code: "custom", path: ["overdueAmount"], message: t("field.overdueMax", { amount: formatNumber(owed) }) });
+      }
     })
     // Typed names go public once the listing is approved, so links, emails / handles and phone numbers in them are
     // taken out (the transform below). "Other" needs a name of 2+ characters left after that; a name that was nothing
@@ -117,6 +127,7 @@ function readListingForm(formData: FormData) {
     handoverDate: opt("handoverDate"),
     nextInstalmentDate: opt("nextInstalmentDate"),
     nextInstalmentAmount: opt("nextInstalmentAmount"),
+    overdueAmount: opt("overdueAmount"),
     motivation: formData.get("motivation") || "motivated",
     description: opt("description"),
     paymentPlan: plan,
@@ -174,10 +185,14 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
       handoverDate: v.handoverDate,
       nextInstalmentDate: v.nextInstalmentDate,
       nextInstalmentAmount: v.nextInstalmentAmount ?? null,
+      // The seller's figure, unchecked (arrears_checked_at stays empty until our team checks the statement).
+      overdueAmount: v.overdueAmount ?? null,
       motivation: v.motivation,
       description: v.description ?? null,
       paymentPlan: v.paymentPlan,
       source: sourceFromForm(formData),
+      // The seller ticked the ownership / authority / Terms confirmation above (checked on the server too).
+      ownershipConfirmedAt: new Date(),
     })
     .returning({ id: listings.id, refNo: listings.refNo });
 
@@ -204,6 +219,20 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
   );
 
   return { ok: true, listingId: row.id, refNo: row.refNo };
+}
+
+/**
+ * Staff-assisted intake (adminCreateListing in ./admin.ts): the sell form's listing fields, checked by the same rules
+ * (listingSchema above), with errors in the request's language. Admins only, and it only validates: nothing is saved.
+ */
+export async function parseListingFields(formData: FormData) {
+  const [user, t] = await Promise.all([getCurrentUser(), getT("errors")]);
+  if (user?.role !== "admin") return { ok: false as const, error: t("auth.notAuthorised") };
+  const parsed = listingSchema(t).safeParse(readListingForm(formData), { error: fallbackErrors(t) });
+  if (!parsed.success) {
+    return { ok: false as const, error: t("form.fixDetails"), fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  }
+  return { ok: true as const, data: parsed.data };
 }
 
 const sellerEditSchema = (t: T) =>

@@ -37,6 +37,33 @@ export const TEMPLATES = {
     en: { title: "Your listing needs attention: {project}", body: "{reason}", cta: "Open listing" },
     ar: { title: "إعلانك بحاجة إلى إجراء منك: {project}", body: "{reason}", cta: "فتح الإعلان" },
   },
+  // Staff-assisted intake (src/lib/claim.ts). The seller, with their claim link (emailed, or the same words sent on
+  // WhatsApp by our team); never sent for sample listings.
+  "listing.claim": {
+    en: {
+      title: "Confirm your listing: {project}",
+      body: "Hello {name}, our team has prepared your listing {ref} from the documents you sent us. Open the link to check the details and confirm that you own the unit or are authorised to sell it. The link works once and expires in 7 days.",
+      cta: "Confirm my listing",
+    },
+    ar: {
+      title: "تأكيد إعلانك: {project}",
+      body: "مرحباً {name}، أعدّ فريقنا إعلانك ⁨{ref}⁩ من المستندات التي أرسلتها إلينا. افتح الرابط لمراجعة البيانات وتأكيد أنك مالك الوحدة أو مخوَّل ببيعها. يُستخدم الرابط مرة واحدة وتنتهي صلاحيته بعد 7 أيام.",
+      cta: "تأكيد إعلاني",
+    },
+  },
+  // Admins, once the seller has confirmed through that link.
+  "listing.claimed": {
+    en: {
+      title: "Seller confirmed ownership: {project}",
+      body: "{seller} confirmed {ref} through their claim link. Check the documents and the DLD permit, then approve it.",
+      cta: "Review listing",
+    },
+    ar: {
+      title: "أكّد البائع ملكيته: {project}",
+      body: "أكّد {seller} الإعلان ⁨{ref}⁩ عبر رابط التأكيد. راجِع المستندات وتصريح دائرة الأراضي والأملاك، ثم وافق عليه.",
+      cta: "مراجعة الإعلان",
+    },
+  },
   // Permit lifecycle, from the daily ops cron (src/lib/permits.ts). {document}, {when}, {then} and {reason} are
   // errors.ts "notify.doc.*", "notify.expiry.*" and "notify.paused.*" lines. Admins only:
   "listing.permit_expiring": {

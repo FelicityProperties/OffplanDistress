@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle, Phone } from "lucide-react";
+import { FilePlus2, MessageCircle, Phone } from "lucide-react";
 import { LeadNotes, LeadStatusSelect } from "@/components/admin/LeadControls";
 import { EmptyState, PageTitle } from "@/components/Kpi";
 import { StatusPill } from "@/components/badges";
@@ -125,6 +125,14 @@ export default async function LeadsPage() {
                         <a href={`mailto:${l.email}`}>
                           <bdi dir="ltr">{l.email}</bdi>
                         </a>
+                      </Button>
+                    )}
+                    {/* Staff-assisted intake: the seller sent their documents on WhatsApp instead of the sell form. */}
+                    {!l.listingId && (
+                      <Button asChild size="sm" variant="outline">
+                        <Link href={`/admin/listings/new?lead=${l.id}`}>
+                          <FilePlus2 aria-hidden /> {t("leads.createListing")}
+                        </Link>
                       </Button>
                     )}
                   </div>

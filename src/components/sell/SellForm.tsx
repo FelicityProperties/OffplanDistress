@@ -42,6 +42,7 @@ const FIELD_STEP: Record<string, number> = {
   nextInstalmentDate: 1,
   nextInstalmentAmount: 1,
   handoverDate: 1,
+  overdueAmount: 1,
   paymentPlan: 1,
   askingPrice: 2,
   phone: 2,
@@ -87,6 +88,8 @@ type State = {
   nextInstalmentAmount: string;
   handoverDate: string;
   arrears: string;
+  /** The missed instalments still unpaid, in AED (only asked, and only sent, when `arrears` isn't "none"). */
+  overdueAmount: string;
   askingPrice: string;
   motivation: string;
   description: string;
@@ -158,6 +161,7 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
     nextInstalmentAmount: "",
     handoverDate: "",
     arrears: "none",
+    overdueAmount: "",
     askingPrice: "",
     motivation: "motivated",
     description: "",
@@ -273,6 +277,9 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
       if (!num(s.originalPrice)) e.originalPrice = t("error.originalPrice");
       if (num(s.amountPaid) > num(s.originalPrice)) e.amountPaid = t("error.amountPaid");
       if (!s.handoverDate) e.handoverDate = t("error.handover");
+      if (s.arrears !== "none" && num(s.overdueAmount) > Math.max(num(s.originalPrice) - num(s.amountPaid), 0)) {
+        e.overdueAmount = t("error.overdueMax");
+      }
     }
     if (i === 2) {
       if (s.askingPrice === "") e.askingPrice = t("error.asking");
@@ -296,9 +303,11 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
     }
     setBusy(t("submit.saving"));
     const fd = new FormData();
-    const numeric = new Set(["sizeSqft", "originalPrice", "amountPaid", "askingPrice", "nextInstalmentAmount"]);
+    const numeric = new Set(["sizeSqft", "originalPrice", "amountPaid", "askingPrice", "nextInstalmentAmount", "overdueAmount"]);
     for (const [k, v] of Object.entries(s)) {
       if (k === "arrears") continue;
+      // Asked only after "Yes, …" to missed instalments; a figure typed before switching back to "No" isn't sent.
+      if (k === "overdueAmount" && s.arrears === "none") continue;
       fd.set(k, numeric.has(k) && v !== "" ? String(Math.round(num(v))) : v);
     }
     fd.set("confirmOwnership", confirmed ? "on" : "");
@@ -522,6 +531,23 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
                     </SelectContent>
                   </Select>
                 </Field>
+                {s.arrears !== "none" && (
+                  <Field id="overdueAmount" label={t("field.overdue")} error={errors.overdueAmount} hint={t("field.overdue.hint")}>
+                    <Input
+                      id="overdueAmount"
+                      inputMode="numeric"
+                      value={s.overdueAmount}
+                      onChange={(e) => {
+                        set("overdueAmount")(e.target.value);
+                        if (errors.overdueAmount) setErrors(({ overdueAmount: _, ...rest }) => rest);
+                      }}
+                      placeholder="117,500"
+                      aria-invalid={errors.overdueAmount ? true : undefined}
+                      aria-describedby="overdueAmount-msg"
+                      className={cn(errors.overdueAmount && "border-destructive/60")}
+                    />
+                  </Field>
+                )}
                 <div className="space-y-3 sm:col-span-2">
                   <div className="flex items-center justify-between">
                     <Label>{t("plan.title")}</Label>
@@ -646,6 +672,7 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
                     [t("review.purchasePrice"), aed(num(s.originalPrice))],
                     [t("review.paid"), `${aed(num(s.amountPaid))} (\u2066${formatPct(preview.paidPct)}\u2069)`],
                     [t("review.asking"), aed(num(s.askingPrice))],
+                    ...(s.arrears !== "none" && num(s.overdueAmount) > 0 ? [[t("review.overdue"), aed(num(s.overdueAmount))]] : []),
                     [
                       t("review.docs"),
                       `${t("review.docsCount", { n: Object.values(docs).filter(Boolean).length, total: DOCS.length })}${photos.length ? ` · ${t("review.photosCount", { n: photos.length })}` : ""}`,

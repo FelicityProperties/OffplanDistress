@@ -113,13 +113,25 @@ export async function DealCard({
           </span>
         </div>
         <div className="mt-auto grid grid-cols-2 gap-3 border-t pt-4">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{tc("upfrontToSeller")}</p>
-            <p className="mt-0.5 text-xl font-semibold leading-none tabular">{formatAEDCompact(deal.askingPrice, locale)}</p>
+          {/* Cash at transfer = equity to the seller + fees (DLD and NOC estimated) + any arrears, hence "≈". */}
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {tc("cashAtTransfer")}
+              <span className="sr-only"> ({tc("cashAtTransferSr")})</span>
+            </p>
+            <p className="mt-0.5 text-xl font-semibold leading-none tabular" data-cash-at-transfer={a.cashToClose}>
+              {tc("approx", { amount: formatAEDCompact(a.cashToClose, locale) })}
+            </p>
+            <p className="mt-1 truncate text-xs text-muted-foreground tabular" data-to-seller={deal.askingPrice}>
+              {tc("toSeller", { amount: formatAEDCompact(deal.askingPrice, locale) })}
+            </p>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{tc("remainingPlan")}</p>
-            <p className="mt-0.5 text-xl font-semibold leading-none tabular text-foreground/80">{formatAEDCompact(a.remaining, locale)}</p>
+            {/* Overdue instalments are paid on transfer day (in the figure opposite), so they leave the plan. */}
+            <p className="mt-0.5 text-xl font-semibold leading-none tabular text-foreground/80">
+              {formatAEDCompact(a.remainingAfterTransfer, locale)}
+            </p>
           </div>
         </div>
         {saving != null && (

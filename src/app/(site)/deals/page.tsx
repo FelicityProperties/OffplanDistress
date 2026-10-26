@@ -29,6 +29,7 @@ function summarize(f: DealFilters, t: TFn<"deals">, tc: TFn<"common">, locale: L
     ...f.developer.map((d) => developerName(tc, d)),
     ...f.type.map((u) => tc(`unit.${u}`)),
     ...f.motivation.map((m) => tc(`motivation.${m as keyof typeof MOTIVATION}`)),
+    f.maxTransfer ? t("summary.maxTransfer", { amount: formatAEDCompact(f.maxTransfer, locale) }) : "",
     f.maxCash ? t("summary.maxCash", { amount: formatAEDCompact(f.maxCash, locale) }) : "",
     f.minDiscount ? t("summary.minDiscount", { pct: f.minDiscount }) : "",
     f.handoverBy ? t("summary.handoverBy", { year: f.handoverBy }) : "",
@@ -70,6 +71,23 @@ function activeChips(raw: RawParams, f: DealFilters, t: TFn<"deals">, tc: TFn<"c
 
   const chips: Chip[] = [];
   if (f.q) chips.push({ key: "q", label: t("summary.query", { q: f.q }), href: without("q") });
+  if (f.minTransfer || f.maxTransfer) {
+    const min = f.minTransfer ? formatAEDCompact(f.minTransfer, locale) : null;
+    const max = f.maxTransfer ? formatAEDCompact(f.maxTransfer, locale) : null;
+    chips.push({
+      key: "transfer",
+      label:
+        min && max
+          ? t("chips.transferRange", { min, max })
+          : max
+            ? t("summary.maxTransfer", { amount: max })
+            : t("chips.transferFrom", { amount: min }),
+      href: href((p) => {
+        p.delete("minTransfer");
+        p.delete("maxTransfer");
+      }),
+    });
+  }
   if (f.minCash || f.maxCash) {
     const min = f.minCash ? formatAEDCompact(f.minCash, locale) : null;
     const max = f.maxCash ? formatAEDCompact(f.maxCash, locale) : null;

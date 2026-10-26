@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { CalendarClock, FileCheck2, FileX2 } from "lucide-react";
+import { CalendarClock, FileCheck2, FilePlus2, FileX2 } from "lucide-react";
 import { DeleteSamplesButton, ReviewButtons } from "@/components/admin/AdminControls";
+import { StatusPill } from "@/components/badges";
 import { Kpi, PageTitle } from "@/components/Kpi";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
@@ -33,7 +35,15 @@ export default async function AdminQueue() {
   return (
     <div className="space-y-6">
       <PageTitle title={t("queue.title")} sub={t("queue.sub")}>
-        <DeleteSamplesButton count={s.samples} />
+        <div className="flex flex-wrap gap-2">
+          {/* Staff-assisted intake: a listing from documents the seller sent on WhatsApp or by email. */}
+          <Button asChild size="sm">
+            <Link href="/admin/listings/new">
+              <FilePlus2 aria-hidden /> {t("create.button")}
+            </Link>
+          </Button>
+          <DeleteSamplesButton count={s.samples} />
+        </div>
       </PageTitle>
       {/* Adverts that went live before permit expiry dates were recorded: the cron can't take them down on time. */}
       {noExpiry.length > 0 && (
@@ -123,6 +133,11 @@ export default async function AdminQueue() {
                     <bdi>{refCode(q.refNo)}</bdi> · <bdi>{developerName(tc, q.developer, q.developerOther)}</bdi> ·{" "}
                     {tc(`unit.${q.unitType}`)} · {t("queue.submitted", { date: formatDate(q.createdAt, locale) })}
                   </p>
+                  {q.awaitingSeller && (
+                    <p className="mt-1">
+                      <StatusPill tone="warning">{t("claim.pendingBadge")}</StatusPill>
+                    </p>
+                  )}
                 </TableCell>
                 <TableCell>
                   {q.sellerName}

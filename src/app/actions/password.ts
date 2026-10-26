@@ -3,15 +3,18 @@
 import { createHash, randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { and, count, eq, gt, isNull, lt, ne } from "drizzle-orm";
+import { and, count, desc, eq, gt, isNull, lt, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { passwordResets, sessions, users } from "@/db/schema";
+import { listings, passwordResets, sessions, users } from "@/db/schema";
 import { dirOf, isLocale } from "@/i18n/config";
-import { getT } from "@/i18n/server";
-import { createSession, findUserByEmail, hashPassword, isOwnerEmail, safeNext } from "@/lib/auth";
+import { getLocale, getT } from "@/i18n/server";
+import { createSession, findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail, safeNext } from "@/lib/auth";
+import { claimPath, findClaim, isPlaceholderEmail, issueClaimToken } from "@/lib/claim";
 import { emailEnabled, sendEmail } from "@/lib/email";
+import { refCode } from "@/lib/format";
 import { renderTemplate } from "@/lib/notification-templates";
+import { notifyAdmins } from "@/lib/notify";
 import { clientIp, hit, MINUTE } from "@/lib/throttle";
 
 export type PasswordFormState = {
@@ -38,7 +41,10 @@ function sha256(token: string) {
 async function issueReset(email: string) {
   const user = await findUserByEmail(email);
   // Owner passwords are managed by ADMIN_PASSWORD; placeholder (.invalid) accounts can't receive email.
-  if (!user?.passwordHash || isOwnerEmail(user.email) || user.email.endsWith(".invalid")) return;
+  if (!user || isOwnerEmail(user.email) || user.email.endsWith(".invalid")) return;
+  // No password yet: an account our team created for a seller. It gets a new claim link instead (below), and only
+  // while one of its staff-created listings still waits for the seller's confirmation.
+  if (!user.passwordHash && user.role !== "user") return;
 
   const now = Date.now();
   const [recent] = await db
@@ -50,10 +56,38 @@ async function issueReset(email: string) {
   // Expired tokens were all created more than an hour ago, so dropping them doesn't affect the rate limit.
   await db.delete(passwordResets).where(and(eq(passwordResets.userId, user.id), lt(passwordResets.expiresAt, new Date(now))));
 
+  const locale = isLocale(user.locale) ? user.locale : "en";
+  if (!user.passwordHash) {
+    const [pending] = await db
+      .select({ id: listings.id, projectName: listings.projectName, refNo: listings.refNo })
+      .from(listings)
+      .where(
+        and(
+          eq(listings.sellerId, user.id),
+          eq(listings.createdByStaff, true),
+          eq(listings.isSample, false),
+          isNull(listings.ownershipConfirmedAt),
+        ),
+      )
+      .orderBy(desc(listings.createdAt))
+      .limit(1);
+    if (!pending) return;
+    const claimToken = await issueClaimToken(user.id, pending.id, { keepOthers: true });
+    const claim = renderTemplate("listing.claim", locale, { name: user.fullName, project: pending.projectName, ref: refCode(pending.refNo) });
+    await sendEmail({
+      to: user.email,
+      subject: claim.title,
+      heading: claim.title,
+      body: claim.body,
+      cta: { label: claim.cta, href: claimPath(claimToken) },
+      dir: dirOf(locale),
+    });
+    return;
+  }
+
   const token = randomBytes(32).toString("base64url");
   await db.insert(passwordResets).values({ id: sha256(token), userId: user.id, expiresAt: new Date(now + TOKEN_TTL_MS) });
 
-  const locale = isLocale(user.locale) ? user.locale : "en";
   const msg = renderTemplate("password.reset", locale, {});
   await sendEmail({
     to: user.email,
@@ -109,7 +143,15 @@ export async function resetPassword(_prev: PasswordFormState, formData: FormData
     .select({ userId: passwordResets.userId, email: users.email })
     .from(passwordResets)
     .innerJoin(users, eq(users.id, passwordResets.userId))
-    .where(and(eq(passwordResets.id, id), isNull(passwordResets.usedAt), gt(passwordResets.expiresAt, new Date())))
+    .where(
+      and(
+        eq(passwordResets.id, id),
+        // A claim link (src/lib/claim.ts) only works on its own page, which also takes the ownership confirmation.
+        eq(passwordResets.purpose, "reset"),
+        isNull(passwordResets.usedAt),
+        gt(passwordResets.expiresAt, new Date()),
+      ),
+    )
     .limit(1);
   if (!row || isOwnerEmail(row.email)) return { error: t("errors.invalidToken"), invalidToken: true };
 
@@ -122,9 +164,111 @@ export async function resetPassword(_prev: PasswordFormState, formData: FormData
   if (!claimed) return { error: t("errors.invalidToken"), invalidToken: true };
 
   await db.update(users).set({ passwordHash: await hashPassword(parsed.data.password) }).where(eq(users.id, row.userId));
-  await db.delete(passwordResets).where(and(eq(passwordResets.userId, row.userId), ne(passwordResets.id, id)));
+  // Other reset links go; a claim link our team sent stays (it now asks the seller to log in before confirming).
+  await db
+    .delete(passwordResets)
+    .where(and(eq(passwordResets.userId, row.userId), ne(passwordResets.id, id), eq(passwordResets.purpose, "reset")));
   // Sign out everywhere (including whoever may have the old password), then sign this browser in.
   await db.delete(sessions).where(eq(sessions.userId, row.userId));
   await createSession(row.userId);
   redirect(safeNext(formData.get("next"), "/dashboard"));
+}
+
+/**
+ * The claim link our team sends a seller whose listing they entered (src/lib/claim.ts): the seller confirms they own
+ * the unit or may sell it, the documents are genuine and they accept the Terms (as on the sell form's last step).
+ * - Account without a password (created by our team): the seller also chooses their login email and a password, and is
+ *   signed in. The password is only ever set while the account has none, so a link can't replace an existing one.
+ * - Account with a password: nothing about the account changes; only its owner, signed in, can confirm.
+ * The token works once and for 7 days.
+ */
+export async function claimListing(_prev: PasswordFormState, formData: FormData): Promise<PasswordFormState> {
+  const [t, ts] = await Promise.all([getT("password"), getT("sell")]);
+  const token = formData.get("token");
+  const claim = typeof token === "string" ? await findClaim(token) : null;
+  if (!claim || claim.role !== "user" || isOwnerEmail(claim.email) || claim.ownershipConfirmedAt) {
+    return { error: t("claim.invalidBody"), invalidToken: true };
+  }
+  const confirmed = formData.get("confirmOwnership") === "on";
+  const ownershipError = confirmed ? {} : { confirmOwnership: [ts("error.confirmOwnership")] };
+
+  if (claim.hasPassword) {
+    const me = await getCurrentUser();
+    if (me?.id !== claim.userId) return { error: t("claim.errors.signIn") };
+    if (!confirmed) return { error: ts("error.confirmOwnership"), fieldErrors: ownershipError };
+    if (!(await spendClaimToken(claim.tokenId))) return { error: t("claim.invalidBody"), invalidToken: true };
+    await confirmOwnership(claim);
+    redirect(`/dashboard/listings/${claim.listingId}`);
+  }
+
+  const parsed = z
+    .object({
+      email: z.string().trim().max(200).pipe(z.email(t("errors.email"))),
+      password: z.string().min(8, t("errors.passwordMin")),
+      confirm: z.string(),
+    })
+    .refine((d) => d.password === d.confirm, { message: t("errors.mismatch"), path: ["confirm"] })
+    .safeParse({ email: formData.get("email") ?? "", password: formData.get("password") ?? "", confirm: formData.get("confirm") ?? "" });
+  if (!parsed.success || !confirmed) {
+    const fieldErrors = { ...(parsed.success ? {} : z.flattenError(parsed.error).fieldErrors), ...ownershipError };
+    return { fieldErrors };
+  }
+  const email = parsed.data.email.toLowerCase();
+  if (isOwnerEmail(email) || isPlaceholderEmail(email)) return { fieldErrors: { email: [t("claim.errors.emailReserved")] } };
+  const other = email === claim.email.toLowerCase() ? null : await findUserByEmail(email);
+  if (other && other.id !== claim.userId) return { fieldErrors: { email: [t("claim.errors.emailTaken")] } };
+
+  const passwordHash = await hashPassword(parsed.data.password);
+  let updated: { id: string } | undefined;
+  try {
+    // Only while the account still has no password: this is what makes the link unable to take over an account (and
+    // a double submit set it twice). The token is spent only once this has worked.
+    [updated] = await db
+      .update(users)
+      .set({
+        passwordHash,
+        email,
+        termsAcceptedAt: sql`coalesce(${users.termsAcceptedAt}, now())`,
+        // Emails go out in the language the seller confirmed in.
+        locale: await getLocale(),
+      })
+      .where(and(eq(users.id, claim.userId), isNull(users.passwordHash)))
+      .returning({ id: users.id });
+  } catch {
+    // The email was taken by a sign-up in the meantime (unique index on lower(email)).
+    return { fieldErrors: { email: [t("claim.errors.emailTaken")] } };
+  }
+  if (!updated || !(await spendClaimToken(claim.tokenId))) return { error: t("claim.invalidBody"), invalidToken: true };
+  await confirmOwnership(claim);
+  await db.delete(sessions).where(eq(sessions.userId, claim.userId));
+  await createSession(claim.userId);
+  redirect(`/dashboard/listings/${claim.listingId}`);
+}
+
+/** Marks a claim token used, atomically: false if it was used (or replaced) in the meantime. */
+async function spendClaimToken(tokenId: string) {
+  const [row] = await db
+    .update(passwordResets)
+    .set({ usedAt: new Date() })
+    .where(and(eq(passwordResets.id, tokenId), eq(passwordResets.purpose, "claim"), isNull(passwordResets.usedAt)))
+    .returning({ id: passwordResets.id });
+  return Boolean(row);
+}
+
+/** The seller's confirmation on the listing (and the Terms on their account), then a heads-up to our team. */
+async function confirmOwnership(claim: NonNullable<Awaited<ReturnType<typeof findClaim>>>) {
+  const now = new Date();
+  await db
+    .update(listings)
+    .set({ ownershipConfirmedAt: now, updatedAt: now })
+    .where(and(eq(listings.id, claim.listingId), eq(listings.sellerId, claim.userId), isNull(listings.ownershipConfirmedAt)));
+  await db
+    .update(users)
+    .set({ termsAcceptedAt: sql`coalesce(${users.termsAcceptedAt}, now())` })
+    .where(eq(users.id, claim.userId));
+  await notifyAdmins(
+    "listing.claimed",
+    { project: claim.projectName, seller: claim.fullName, ref: refCode(claim.refNo) },
+    `/admin/listings/${claim.listingId}`,
+  );
 }

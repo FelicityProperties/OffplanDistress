@@ -1,14 +1,31 @@
 import "server-only";
-import { and, asc, desc, eq, gte, ilike, inArray, lte, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { listings, offers, users, watchlist } from "@/db/schema";
-import { COMMUNITIES, DEVELOPERS, UNIT_TYPES, type UnitTypeKey } from "./config";
+import { COMMUNITIES, DEVELOPERS, FEES, UNIT_TYPES, type UnitTypeKey } from "./config";
+import { FEE_BP, FIXED_FEES_ESTIMATE } from "./deal-math";
 // Every list and figure here shows adverts only: a public status, and for a real listing a permit and Form A that
 // haven't run out (advertisedSql), whether or not the daily job has paused it yet.
 import { advertisedSql } from "./permits";
 
 const remaining = sql<number>`(${listings.originalPrice} - ${listings.amountPaid})`;
 const saleValue = sql<number>`(${listings.askingPrice} + ${listings.originalPrice} - ${listings.amountPaid})`;
+
+/**
+ * Cash at transfer: the same definition as analyzeDeal's cashToClose in src/lib/deal-math.ts (see the comment there),
+ * so the /deals transfer-day filters and the "cash" sort always agree with the cards and the deal page:
+ *   asking + (commission + VAT on it, when the buyer pays our fee) + DLD transfer fee + FIXED_FEES_ESTIMATE
+ *   + overdue instalments + late fees.
+ * Percentages are whole basis points rounded half up on numerics (applyBp), matching Math.round on the JS side.
+ */
+const transferSaleValue = sql`(${listings.askingPrice}::bigint + greatest(${listings.originalPrice} - ${listings.amountPaid}, 0))`;
+const bpOf = (amount: SQL, rateBp: number) => sql`round((${amount})::numeric * ${sql.raw(String(rateBp))} / 10000)`;
+const commissionSql = bpOf(transferSaleValue, FEE_BP.commission);
+const cashToClose = sql<number>`(${listings.askingPrice}::numeric${
+  FEES.payer === "buyer" ? sql` + ${commissionSql} + ${bpOf(commissionSql, FEE_BP.vat)}` : sql``
+} + ${bpOf(transferSaleValue, FEE_BP.dld)} + ${sql.raw(String(FIXED_FEES_ESTIMATE))} + greatest(coalesce(${
+  listings.overdueAmount
+}, 0), 0) + greatest(coalesce(${listings.overduePenalty}, 0), 0))::bigint`;
 const discount = sql<number | null>`case when ${listings.launchPrice} > 0 then 1 - (${saleValue})::float / ${listings.launchPrice} end`;
 const paidPct = sql<number>`case when ${listings.originalPrice} > 0 then ${listings.amountPaid}::float / ${listings.originalPrice} else 0 end`;
 const watchers = sql<number>`(select count(*)::int from ${watchlist} w where w.listing_id = ${listings.id})`;
@@ -31,6 +48,8 @@ export const cardColumns = {
   amountPaid: listings.amountPaid,
   askingPrice: listings.askingPrice,
   launchPrice: listings.launchPrice,
+  overdueAmount: listings.overdueAmount,
+  overduePenalty: listings.overduePenalty,
   handoverDate: listings.handoverDate,
   motivation: listings.motivation,
   images: listings.images,
@@ -58,6 +77,9 @@ export type ListingCard = {
   amountPaid: number;
   askingPrice: number;
   launchPrice: number | null;
+  /** Arrears (see schema.ts): part of the cash at transfer. */
+  overdueAmount: number | null;
+  overduePenalty: number | null;
   handoverDate: string | null;
   motivation: "urgent" | "motivated" | "flexible";
   images: string[];
@@ -73,8 +95,12 @@ export type DealFilters = {
   developer: string[];
   type: UnitTypeKey[];
   motivation: string[];
+  /** Upfront cash to the seller (the asking price, equity) — what saved searches and /market links have always meant. */
   minCash?: number;
   maxCash?: number;
+  /** Cash needed on transfer day (cashToCloseSql: equity + estimated fees + arrears). */
+  minTransfer?: number;
+  maxTransfer?: number;
   minPaid?: number;
   handoverBy?: number;
   minDiscount?: number;
@@ -106,6 +132,9 @@ export function parseFilters(params: RawParams): DealFilters {
   // Whole numbers where the column is an integer (Postgres rejects "1.5" for int4); the bounds are integers.
   const minCash = num(params.minCash, 0, MAX_AED);
   const maxCash = num(params.maxCash, 0, MAX_AED);
+  // Cash at transfer can exceed an int4 (equity + fees + arrears); a bigint bound is still a whole number.
+  const minTransfer = num(params.minTransfer, 0, Number.MAX_SAFE_INTEGER);
+  const maxTransfer = num(params.maxTransfer, 0, Number.MAX_SAFE_INTEGER);
   const handoverBy = num(params.handoverBy, 1900, 2200);
   return {
     q: q?.trim() || undefined,
@@ -115,6 +144,8 @@ export function parseFilters(params: RawParams): DealFilters {
     motivation: list(params.motivation).filter((m) => ["urgent", "motivated", "flexible"].includes(m)),
     minCash: !minCash ? undefined : Math.ceil(minCash), // price >= 1.5 ⇔ price >= 2
     maxCash: !maxCash ? undefined : Math.floor(maxCash), // 0 would match nothing: treat as "no limit"
+    minTransfer: !minTransfer ? undefined : Math.ceil(minTransfer),
+    maxTransfer: !maxTransfer ? undefined : Math.floor(maxTransfer),
     minPaid: num(params.minPaid, 0, 100),
     handoverBy: handoverBy == null ? undefined : Math.floor(handoverBy),
     minDiscount: num(params.minDiscount, 0, 100),
@@ -149,6 +180,9 @@ function dealConditions(f: DealFilters): SQL[] {
     where.push(inArray(listings.motivation, f.motivation as ("urgent" | "motivated" | "flexible")[]));
   if (f.minCash != null) where.push(gte(listings.askingPrice, f.minCash));
   if (f.maxCash != null) where.push(lte(listings.askingPrice, f.maxCash));
+  // Bound as text with an explicit cast: both drivers (Neon HTTP, node-postgres) send it the same way.
+  if (f.minTransfer != null) where.push(sql`${cashToClose} >= ${String(f.minTransfer)}::bigint`);
+  if (f.maxTransfer != null) where.push(sql`${cashToClose} <= ${String(f.maxTransfer)}::bigint`);
   if (f.minPaid != null) where.push(sql`${paidPct} >= ${f.minPaid / 100}`);
   if (f.handoverBy != null) where.push(lte(listings.handoverDate, `${f.handoverBy}-12-31`));
   if (f.minDiscount != null) where.push(sql`${discount} >= ${f.minDiscount / 100}`);
@@ -162,7 +196,7 @@ export async function searchDeals(f: DealFilters) {
 
   const order =
     f.sort === "cash"
-      ? [asc(listings.askingPrice)]
+      ? [sql`${cashToClose} asc`]
       : f.sort === "handover"
         ? [sql`${listings.handoverDate} asc nulls last`]
         : f.sort === "newest"
@@ -313,6 +347,7 @@ export {
   watchers as watchersSql,
   offerCount as offerCountSql,
   saleValue as saleValueSql,
+  cashToClose as cashToCloseSql,
   remaining as remainingSql,
   discount as discountSql,
   paidPct as paidPctSql,

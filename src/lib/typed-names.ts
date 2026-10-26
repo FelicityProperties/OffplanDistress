@@ -63,3 +63,68 @@ function dropUnmatched(s: string) {
   for (const i of open) out[i] = "";
   return out.join("");
 }
+
+/** What contactKinds can find in a text. */
+export type ContactKind = "phone" | "email" | "link" | "handle";
+
+// Longer texts (a listing's description and "view") are only checked, never changed: prices, sizes, plot and unit
+// numbers are digits too, so a phone number is judged by its shape here, and stricter than in scrubTypedName.
+const LONG_EMAIL = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+|\b(?:gmail|hotmail|yahoo|outlook|icloud)\s*(?:\.|dot|نقطة)\s*com\b/giu;
+/** wa.me / t.me links and @handles (Instagram, Telegram…) that aren't part of an email address. */
+const HANDLE = new RegExp(
+  String.raw`(?:https?:\/\/)?(?:wa\.me|api\.whatsapp\.com|chat\.whatsapp\.com|t\.me|telegram\.me)(?:\/\S*)?|(?<![\p{L}\p{N}._%+-])@[\p{L}\p{N}_.]{2,}`,
+  "giu",
+);
+const LINK = new RegExp(
+  [String.raw`(?:https?:\/\/|www\.)\S+`, String.raw`${WORD}(?:\.${WORD})*\.(?:${TLDS})(?![\p{L}\p{N}])(?:[/?#:]\S*)?`].join("|"),
+  "giu",
+);
+/** 7+ digits with up to three spaces, dots, dashes, slashes or brackets between them ("050 - 123 - 4567"). */
+const DIGIT_RUN = /(?:\+|00)?\p{Nd}(?:[\s().\-–/]{0,3}\p{Nd}){6,}/gu;
+/** Zero of each digit block people type in: ASCII, Arabic-Indic, Extended Arabic-Indic (Persian/Urdu), Devanagari. */
+const ZEROS = [0x30, 0x660, 0x6f0, 0x966];
+
+function asciiDigits(s: string) {
+  let out = "";
+  for (const ch of s) {
+    if (!/\p{Nd}/u.test(ch)) continue;
+    const cp = ch.codePointAt(0)!;
+    const zero = ZEROS.find((z) => cp >= z && cp <= z + 9);
+    out += zero === undefined ? "1" : String(cp - zero);
+  }
+  return out;
+}
+
+/**
+ * A run of digits shaped like a phone number: with a + or 00 in front, a local 0… number (050 123 4567, 04 123 4567),
+ * a 971… number, a mobile without its 0 (50 123 4567), or 10 to 15 digits. Seven to nine digits that start otherwise
+ * read as a price or a plot number (1250000, AED 1 250 000) and are left alone, as are 16+ digits (an IBAN).
+ */
+function looksLikePhone(run: string) {
+  const d = asciiDigits(run);
+  const n = d.length;
+  if (n > 15) return false;
+  if (run.startsWith("+") || d.startsWith("00")) return n >= 9;
+  if (d.startsWith("971")) return n >= 11;
+  if (d.startsWith("0")) return n >= 9 && n <= 12;
+  if (n >= 10) return true;
+  return n === 9 && d.startsWith("5");
+}
+
+/**
+ * The kinds of contact details a longer text seems to hold (a phone number, an email address, a link, a WhatsApp link
+ * or @handle), for a warning to our team: sellers must not give buyers a way around the platform. Empty when none.
+ */
+export function contactKinds(text: string | null | undefined): ContactKind[] {
+  if (!text) return [];
+  const found = new Set<ContactKind>();
+  let rest = text;
+  // Each kind is taken out once found, so an email's domain or a wa.me number isn't counted again as a link or phone.
+  rest = rest.replace(LONG_EMAIL, () => (found.add("email"), " "));
+  rest = rest.replace(HANDLE, () => (found.add("handle"), " "));
+  rest = rest.replace(LINK, () => (found.add("link"), " "));
+  for (const m of rest.matchAll(DIGIT_RUN)) {
+    if (looksLikePhone(m[0])) found.add("phone");
+  }
+  return (["phone", "email", "link", "handle"] as const).filter((k) => found.has(k));
+}

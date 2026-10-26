@@ -5,17 +5,24 @@ import { refresh } from "next/cache";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { files, inquiries, listings, offers, sessions, users } from "@/db/schema";
+import { files, inquiries, listings, offers, sellerLeads, sessions, users } from "@/db/schema";
+import { dirOf, isLocale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
-import { getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
+import { findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
+import { claimPath, isPlaceholderEmail, issueClaimToken, placeholderEmail } from "@/lib/claim";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
-import { formatDate, refCode } from "@/lib/format";
+import { emailEnabled, sendEmail } from "@/lib/email";
+import { formatDate, formatNumber, refCode } from "@/lib/format";
+import { whatsappNumber } from "@/lib/leads";
+import { renderTemplate } from "@/lib/notification-templates";
 import { notify, notifyPriceDrop } from "@/lib/notify";
 import { closeOpenOffers, DEAL_STATUSES, reopenUnit } from "@/lib/offers";
-import { expiryDateBounds, isAdvertised, isDldPermitUrl, publishBlocker } from "@/lib/permits";
+import { dubaiToday, expiryDateBounds, isAdvertised, isDldPermitUrl, publishBlocker } from "@/lib/permits";
+import { siteUrl } from "@/lib/site-url";
 import { scrubTypedName } from "@/lib/typed-names";
 import type { FormState } from "./auth";
+import { parseListingFields } from "./listings";
 
 type T = TFn<"errors">;
 
@@ -72,7 +79,18 @@ const listingNoticeColumns = {
   askingPrice: listings.askingPrice,
   publicPrice: listings.publicPrice,
   publishedAt: listings.publishedAt,
+  createdByStaff: listings.createdByStaff,
+  ownershipConfirmedAt: listings.ownershipConfirmedAt,
 };
+
+/**
+ * A listing our team entered from the seller's documents stays unpublished until the seller has confirmed, through
+ * their claim link, that they own the unit or may sell it (src/lib/claim.ts). Listings sellers submit themselves
+ * confirm it on the sell form; samples aren't adverts.
+ */
+function awaitsSellerConfirmation(l: { isSample: boolean; createdByStaff: boolean; ownershipConfirmedAt: Date | null }) {
+  return !l.isSample && l.createdByStaff && l.ownershipConfirmedAt == null;
+}
 
 /**
  * "Verified" (Terms s.9) means we reviewed the SPA or Oqood plus the statement of account, so approving only sets
@@ -93,6 +111,7 @@ export async function approveListing(listingId: string) {
   await assertAdmin();
   const [before] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, listingId)).limit(1);
   if (!before) return { error: (await getT("errors"))("listing.notFound") };
+  if (awaitsSellerConfirmation(before)) return { error: (await getT("errors"))("listing.ownershipUnconfirmed") };
   // RERA: no property advert without a current DLD (Trakheesi) permit and Form A. Sample listings aren't adverts.
   const blocker = publishBlocker(before);
   if (blocker) return { error: (await getT("errors"))(blocker) };
@@ -163,6 +182,13 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
     nocEligible: z.boolean(),
     launchPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
     askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative(),
+    // Arrears from the developer's statement of account; both empty = not known. See arrearsUpdate below.
+    overdueAmount: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
+    overduePenalty: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
+    arrearsCheckedAt: z.iso
+      .date(t("field.date"))
+      .refine((d) => d >= "2000-01-01" && d <= dubaiToday(), t("field.arrearsCheckedAt"))
+      .optional(),
     adminNotes: z.string().trim().max(4000).optional(),
     dldPermit: z.string().trim().max(40).optional(),
     dldPermitExpiresAt: expiryDate(t, { ...range, stored: stored.dld }, rangeMessage),
@@ -210,6 +236,9 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       nocEligible: formData.get("nocEligible") === "on",
       launchPrice: formData.get("launchPrice") || undefined,
       askingPrice: formData.get("askingPrice"),
+      overdueAmount: formData.get("overdueAmount") || undefined,
+      overduePenalty: formData.get("overduePenalty") || undefined,
+      arrearsCheckedAt: formData.get("arrearsCheckedAt") || undefined,
       adminNotes: formData.get("adminNotes") || undefined,
       dldPermit: formData.get("dldPermit") || undefined,
       dldPermitExpiresAt: formData.get("dldPermitExpiresAt") || undefined,
@@ -230,11 +259,45 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   const v = parsed.data;
 
   const [current] = await db
-    .select({ ...listingNoticeColumns, developer: listings.developer, community: listings.community })
+    .select({
+      ...listingNoticeColumns,
+      developer: listings.developer,
+      community: listings.community,
+      originalPrice: listings.originalPrice,
+      amountPaid: listings.amountPaid,
+      overdueAmount: listings.overdueAmount,
+      overduePenalty: listings.overduePenalty,
+      arrearsCheckedAt: listings.arrearsCheckedAt,
+    })
     .from(listings)
     .where(eq(listings.id, v.listingId))
     .limit(1);
   if (!current) return { error: t("listing.notFound") };
+  // Overdue instalments are part of the balance still owed to the developer, so they can't be more than it.
+  const remainingBalance = Math.max(current.originalPrice - current.amountPaid, 0);
+  if (v.overdueAmount != null && v.overdueAmount > remainingBalance) {
+    return {
+      error: t("form.checkFields"),
+      fieldErrors: { overdueAmount: [t("field.overdueMax", { amount: formatNumber(remainingBalance) })] },
+    };
+  }
+  // Arrears, only when the form has the fields (another form posting here leaves them as they are). Both amounts empty
+  // = not known, and the check date goes with them. Otherwise the check date is the one the admin typed, or today when
+  // the amounts changed, and stays as it was when nothing changed: saving the form for something else never marks a
+  // seller's own figure as checked.
+  let arrearsUpdate: { overdueAmount: number | null; overduePenalty: number | null; arrearsCheckedAt: string | null } | null = null;
+  if (formData.has("overdueAmount") || formData.has("overduePenalty")) {
+    const overdueAmount = v.overdueAmount ?? null;
+    const overduePenalty = v.overduePenalty ?? null;
+    const known = overdueAmount != null || overduePenalty != null;
+    const changed = overdueAmount !== current.overdueAmount || overduePenalty !== current.overduePenalty;
+    const typed = v.arrearsCheckedAt && v.arrearsCheckedAt !== current.arrearsCheckedAt ? v.arrearsCheckedAt : null;
+    arrearsUpdate = {
+      overdueAmount,
+      overduePenalty,
+      arrearsCheckedAt: !known ? null : (typed ?? (changed ? dubaiToday() : current.arrearsCheckedAt)),
+    };
+  }
   // An editor opened before the status changed (say the seller accepted an offer since) would put the old status
   // back: the unit would go live again with an accepted offer, and its backup bidders be told the deal fell through.
   const statusWas = formData.get("statusWas");
@@ -267,6 +330,10 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
     const field = { "listing.permitRequired": "dldPermit", "listing.permitExpiry": "dldPermitExpiresAt", "listing.formAExpired": "formAExpiresAt" }[blocker];
     return { error: t("form.checkFields"), fieldErrors: { [field]: [t(blocker)] } };
   }
+  // Publishing from the editor is an approval too: not before the seller has confirmed a listing our team entered.
+  if (PUBLIC_STATUSES.includes(v.status) && awaitsSellerConfirmation(current)) {
+    return { error: t("listing.ownershipUnconfirmed"), fieldErrors: { status: [t("listing.ownershipUnconfirmed")] } };
+  }
   const now = new Date();
   const [saved] = await db
     .update(listings)
@@ -277,6 +344,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       nocEligible: v.nocEligible,
       launchPrice: v.launchPrice ?? null,
       askingPrice: v.askingPrice,
+      ...(arrearsUpdate ?? {}),
       adminNotes: v.adminNotes ?? null,
       dldPermit: v.dldPermit || null,
       dldPermitExpiresAt: v.dldPermitExpiresAt ?? null,
@@ -374,4 +442,209 @@ export async function deleteSampleListings() {
   await db.delete(listings).where(eq(listings.isSample, true));
   refresh();
   return { ok: true };
+}
+
+// ---- Staff-assisted intake: a listing entered by our team from the documents a seller sent (src/lib/claim.ts) ----
+
+const staffSellerSchema = (t: T) =>
+  z.object({
+    sellerName: z.string().trim().min(2, t("field.fullName")).max(120),
+    sellerEmail: z.string().trim().max(200).pipe(z.email(t("field.email"))).optional(),
+    sellerPhone: z.string().trim().max(30).optional(),
+    sellerLocale: z.enum(["en", "ar"]).catch("en"),
+    leadId: z.uuid().optional(),
+  });
+
+export type StaffListingState = FormState & { listingId?: string };
+
+/**
+ * The seller's account for a staff-created listing. With an email: the account with that email, if any. Without one:
+ * the only account whose mobile number is this one (several → staff must give the email). Staff accounts never sell.
+ */
+async function staffListingSeller(email: string | undefined, phoneDigits: string | null) {
+  if (email) {
+    const user = await findUserByEmail(email);
+    if (user) return { user: { id: user.id, role: user.role, email: user.email, phone: user.phone } };
+    return { user: null };
+  }
+  if (!phoneDigits) return { user: null };
+  // Phones are stored as typed; the last 9 digits narrow it down, then the full number is compared normalised.
+  const rows = await db
+    .select({ id: users.id, role: users.role, email: users.email, phone: users.phone })
+    .from(users)
+    .where(sql`regexp_replace(${users.phone}, '[^0-9]', '', 'g') like ${`%${phoneDigits.slice(-9)}`}`)
+    .limit(50);
+  const matches = rows.filter((u) => u.phone && whatsappNumber(u.phone) === phoneDigits);
+  if (matches.length > 1) return { error: "admin.phoneShared" as const };
+  return { user: matches[0] ?? null };
+}
+
+export async function adminCreateListing(_prev: StaffListingState, formData: FormData): Promise<StaffListingState> {
+  await assertAdmin();
+  const t = await getT("errors");
+  const opt = (k: string) => {
+    const v = formData.get(k);
+    return typeof v === "string" && v.trim() ? v : undefined;
+  };
+  const seller = staffSellerSchema(t).safeParse(
+    {
+      sellerName: formData.get("sellerName") ?? "",
+      sellerEmail: opt("sellerEmail"),
+      sellerPhone: opt("sellerPhone"),
+      sellerLocale: formData.get("sellerLocale"),
+      leadId: opt("leadId"),
+    },
+    { error: fallbackErrors(t) },
+  );
+  const fields = await parseListingFields(formData);
+  const fieldErrors: Record<string, string[] | undefined> = {
+    ...(fields.ok ? {} : fields.fieldErrors),
+    ...(seller.success ? {} : z.flattenError(seller.error).fieldErrors),
+  };
+  const phoneDigits = seller.success && seller.data.sellerPhone ? whatsappNumber(seller.data.sellerPhone) : null;
+  if (seller.success) {
+    if (!seller.data.sellerEmail && !seller.data.sellerPhone) fieldErrors.sellerPhone = [t("admin.sellerContact")];
+    else if (seller.data.sellerPhone && !phoneDigits) fieldErrors.sellerPhone = [t("admin.sellerPhone")];
+  }
+  if (!fields.ok && !("fieldErrors" in fields)) return { error: fields.error };
+  if (!seller.success || !fields.ok || Object.keys(fieldErrors).length) return { error: t("form.checkFields"), fieldErrors };
+  const s = seller.data;
+  const v = fields.data;
+
+  const lead = s.leadId
+    ? (await db.select({ id: sellerLeads.id, source: sellerLeads.source }).from(sellerLeads).where(eq(sellerLeads.id, s.leadId)).limit(1))[0]
+    : undefined;
+  if (s.leadId && !lead) return { error: t("admin.leadNotFound") };
+
+  if (s.sellerEmail && isOwnerEmail(s.sellerEmail)) {
+    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("admin.sellerIsStaff")] } };
+  }
+  const found = await staffListingSeller(s.sellerEmail, phoneDigits);
+  if (found.error) return { error: t("form.checkFields"), fieldErrors: { sellerPhone: [t(found.error)] } };
+  let sellerId = found.user?.id;
+  if (found.user && (found.user.role === "admin" || isOwnerEmail(found.user.email))) {
+    return { error: t("form.checkFields"), fieldErrors: { [s.sellerEmail ? "sellerEmail" : "sellerPhone"]: [t("admin.sellerIsStaff")] } };
+  }
+  if (found.user && !found.user.phone && s.sellerPhone) {
+    await db.update(users).set({ phone: s.sellerPhone }).where(eq(users.id, found.user.id));
+  }
+  if (!sellerId) {
+    // No password: the seller sets one (and their email, if we only have a phone number) with the claim link.
+    const email = s.sellerEmail?.toLowerCase() ?? placeholderEmail(phoneDigits!);
+    const [created] = await db
+      .insert(users)
+      .values({
+        email,
+        fullName: s.sellerName,
+        phone: s.sellerPhone ?? null,
+        passwordHash: null,
+        intent: "sell",
+        locale: s.sellerLocale,
+        source: lead?.source ?? null,
+      })
+      .onConflictDoNothing()
+      .returning({ id: users.id });
+    // Created at the same moment by someone else (a sign-up with this email): use that account.
+    sellerId = created?.id ?? (await findUserByEmail(email))?.id;
+    if (!sellerId) return { error: t("form.fixDetails") };
+  }
+
+  const [row] = await db
+    .insert(listings)
+    .values({
+      sellerId,
+      projectName: v.projectName,
+      developer: v.developer,
+      community: v.community,
+      developerOther: v.developer === "Other" ? (v.developerOther ?? null) : null,
+      communityOther: v.community === "Other" ? (v.communityOther ?? null) : null,
+      unitType: v.unitType,
+      sizeSqft: v.sizeSqft,
+      floor: v.floor ?? null,
+      view: v.view ?? null,
+      originalPrice: v.originalPrice,
+      amountPaid: v.amountPaid,
+      askingPrice: v.askingPrice,
+      handoverDate: v.handoverDate,
+      nextInstalmentDate: v.nextInstalmentDate,
+      nextInstalmentAmount: v.nextInstalmentAmount ?? null,
+      motivation: v.motivation,
+      description: v.description ?? null,
+      paymentPlan: v.paymentPlan,
+      source: lead?.source ?? null,
+      createdByStaff: true,
+      ownershipConfirmedAt: null,
+      leadId: lead?.id ?? null,
+    })
+    .returning({ id: listings.id, refNo: listings.refNo });
+
+  // From a seller lead: the lead becomes this listing's (unless it already has one) and this seller's.
+  if (lead) {
+    await db
+      .update(sellerLeads)
+      .set({
+        listingId: row.id,
+        userId: sql`coalesce(${sellerLeads.userId}, ${sellerId}::uuid)`,
+        status: "converted",
+        updatedAt: new Date(),
+      })
+      .where(and(eq(sellerLeads.id, lead.id), sql`${sellerLeads.listingId} is null`));
+  }
+  refresh();
+  return { ok: true, listingId: row.id };
+}
+
+/**
+ * A claim link for a staff-created listing: emailed to the seller (via "email"), or returned for the admin to send on
+ * WhatsApp (via "copy"), with a wa.me link to the seller's number carrying the same words as the email. Each new link
+ * replaces the previous one. The raw token is in the link only: it is never stored, logged or kept in this response
+ * beyond the admin's screen.
+ */
+export async function claimLink(listingId: string, via: "email" | "copy") {
+  await assertAdmin();
+  const t = await getT("errors");
+  if (!z.uuid().safeParse(listingId).success) return { error: t("listing.notFound") };
+  const [l] = await db
+    .select({
+      id: listings.id,
+      sellerId: listings.sellerId,
+      refNo: listings.refNo,
+      projectName: listings.projectName,
+      isSample: listings.isSample,
+      createdByStaff: listings.createdByStaff,
+      ownershipConfirmedAt: listings.ownershipConfirmedAt,
+      email: users.email,
+      fullName: users.fullName,
+      phone: users.phone,
+      locale: users.locale,
+      role: users.role,
+    })
+    .from(listings)
+    .innerJoin(users, eq(users.id, listings.sellerId))
+    .where(eq(listings.id, listingId))
+    .limit(1);
+  if (!l) return { error: t("listing.notFound") };
+  if (!awaitsSellerConfirmation(l)) return { error: t("admin.claim.notNeeded") };
+  if (l.role === "admin" || isOwnerEmail(l.email)) return { error: t("admin.sellerIsStaff") };
+  if (via === "email" && isPlaceholderEmail(l.email)) return { error: t("admin.claim.noEmail") };
+  if (via === "email" && !emailEnabled()) return { error: t("admin.claim.emailOff") };
+
+  const locale = isLocale(l.locale) ? l.locale : "en";
+  const msg = renderTemplate("listing.claim", locale, { name: l.fullName, project: l.projectName, ref: refCode(l.refNo) });
+  const token = await issueClaimToken(l.sellerId, l.id);
+  if (via === "email") {
+    const { sent } = await sendEmail({
+      to: l.email,
+      subject: msg.title,
+      heading: msg.title,
+      body: msg.body,
+      cta: { label: msg.cta, href: claimPath(token) },
+      dir: dirOf(locale),
+    });
+    return sent ? { ok: true as const, emailed: true } : { error: t("admin.claim.emailFailed") };
+  }
+  const url = `${siteUrl()}${claimPath(token)}`;
+  const wa = l.phone ? whatsappNumber(l.phone) : null;
+  const text = `${msg.title}\n\n${msg.body}\n\n${url}`;
+  return { ok: true as const, url, whatsapp: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(text)}` : null };
 }
