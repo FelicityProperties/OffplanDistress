@@ -3,7 +3,7 @@ import { BRAND, FEES } from "@/lib/config";
 // Company details and commercial terms for the legal texts, built from src/lib/config.ts so the config stays
 // the single source of truth. Optional details (ORN, licence, phone, address) are left out when empty.
 
-export const LEGAL_UPDATED = "2026-10-23";
+export const LEGAL_UPDATED = "2026-10-26";
 
 const pct = (rate: number) => `${Math.round(rate * 10_000) / 100}%`;
 

@@ -52,7 +52,7 @@ export const privacyPolicy: LegalContent = {
         bullets: [
           "create and manage your account, publish and manage Listings, present Offers and run watchlists, saved searches and notifications (necessary to perform our agreement with you under the Terms of Use);",
           "verify documents and broker your transaction, including requesting the NOC and arranging the Transfer (necessary to perform our brokerage agreement, including RERA Forms A and B, and to take the steps you request);",
-          "verify your identity, check the source of funds, screen against sanctions lists, keep records and report suspicious activity (necessary to comply with our legal obligations, including under Federal Decree-Law No. (20) of 2018);",
+          "verify your identity, check the source of funds, screen against sanctions lists, keep records and report suspicious activity (necessary to comply with our legal obligations, including under Federal Decree-Law No. (10) of 2025 on Anti-Money Laundering and Combating the Financing of Terrorism and Proliferation Financing);",
           "keep the Platform and your account secure, prevent fraud and abuse, for example by limiting repeated sign-in attempts, and fix faults (necessary to perform our agreement with you and to meet our duty under the PDPL to protect personal data);",
           "answer your enquiries and viewing requests (steps you ask us to take);",
           "send saved-search alerts and price-drop emails for deals on your watchlist (at your request; you can turn off the alerts for each saved search at any time, and stop price-drop emails for a deal by removing it from your watchlist); and",
@@ -217,7 +217,7 @@ export const privacyPolicy: LegalContent = {
         bullets: [
           "إنشاء حسابك وإدارته، ونشر الإعلانات وإدارتها، وعرض العروض، وتشغيل قوائم المتابعة وعمليات البحث المحفوظة والإشعارات (وهي معالجة ضرورية لتنفيذ اتفاقنا معك بموجب شروط الاستخدام)؛",
           "التحقق من المستندات وإتمام معاملتك بصفتنا وسيطاً، بما في ذلك طلب شهادة عدم الممانعة وترتيب نقل الملكية (وهي معالجة ضرورية لتنفيذ اتفاقية الوساطة، بما فيها النموذجان (A) و(B) الصادران عن مؤسسة التنظيم العقاري، ولاتخاذ الإجراءات التي تطلبها)؛",
-          "التحقق من هويتك ومن مصدر الأموال، وفحص قوائم العقوبات، والاحتفاظ بالسجلات، والإبلاغ عن الأنشطة المشبوهة (وهي معالجة ضرورية للوفاء بالتزاماتنا القانونية، بما فيها الالتزامات المقررة بموجب المرسوم بقانون اتحادي رقم (20) لسنة 2018)؛",
+          "التحقق من هويتك ومن مصدر الأموال، وفحص قوائم العقوبات، والاحتفاظ بالسجلات، والإبلاغ عن الأنشطة المشبوهة (وهي معالجة ضرورية للوفاء بالتزاماتنا القانونية، بما فيها الالتزامات المقررة بموجب المرسوم بقانون اتحادي رقم (10) لسنة 2025 في شأن مواجهة غسل الأموال ومكافحة تمويل الإرهاب وتمويل انتشار التسلح)؛",
           "حماية المنصة وحسابك، ومنع الاحتيال وإساءة الاستخدام، كالحدّ من محاولات تسجيل الدخول المتكررة، وإصلاح الأعطال (وهي معالجة ضرورية لتنفيذ اتفاقنا معك وللوفاء بواجبنا في حماية البيانات الشخصية بموجب القانون)؛",
           "الرد على استفساراتك وطلبات المعاينة (بناءً على طلبك)؛",
           "إرسال تنبيهات عمليات البحث المحفوظة ورسائل انخفاض أسعار الصفقات المدرجة في قائمة متابعتك (بناءً على طلبك، ويمكنك في أي وقت إيقاف التنبيهات لكل عملية بحث محفوظة على حدة، وإيقاف رسائل انخفاض السعر لصفقة ما بإزالتها من قائمة المتابعة)؛",
