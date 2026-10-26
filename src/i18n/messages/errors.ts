@@ -35,6 +35,7 @@ export default defineMessages({
     "field.spaPrice": "Enter the SPA price",
     "field.amountPaidMax": "Amount paid can't exceed the purchase price",
     "field.counterAmount": "Enter a counter amount.",
+    "field.dldPermitUrl": "Paste the https:// link on dubailand.gov.ae that the permit's QR code opens.",
 
     "watch.unavailable": "This deal is no longer available.",
     "offer.closed": "This deal is no longer taking offers.",
@@ -46,9 +47,12 @@ export default defineMessages({
 
     "listing.notFound": "Listing not found.",
     "listing.permitRequired": "Add the DLD advertising permit number (Trakheesi) before publishing — RERA requires it on every property advert.",
+    "listing.permitExpiry": "Add the permit's expiry date before publishing, and check it is after today: RERA doesn't allow an advert to stay online once its DLD permit has expired.",
+    "listing.formAExpired": "Form A has run out or ends today. Enter the renewed Form A's expiry date before publishing.",
     "listing.transferred": "This unit has already been transferred.",
     "listing.changeUnavailable": "That change isn't available for this listing right now.",
     "listing.lockedUnderOffer": "This unit has an accepted offer, so its price and description are fixed. Contact us if something needs to change.",
+    "listing.statusChanged": "This listing's status changed while you were editing it (for example, the seller accepted an offer). Reload the page and make your changes again.",
     "listing.tooManyPending": "You already have 10 listings waiting for review. We'll verify those first.",
 
     "admin.ownAccess": "You can't remove your own admin access.",
@@ -72,6 +76,14 @@ export default defineMessages({
     "notify.cron.missingSecret": "CRON_SECRET is not set, so the job refused to run, and it will keep refusing until it is. Add it in Vercel → Settings → Environment Variables, then redeploy.",
     "notify.cron.threw": "The run stopped with an error: {error}",
     "notify.cron.partial": "Items that failed in this run: {failed}.",
+    // Permit lifecycle (src/lib/permits.ts): the document in "listing.permit_expiring", when it runs out, and why
+    // "listing.paused_permit" took a seller's listing down.
+    "notify.doc.permit": "DLD advertising permit",
+    "notify.doc.formA": "Form A",
+    "notify.expiry.week": "in 7 days",
+    "notify.expiry.tomorrow": "tomorrow",
+    "notify.paused.permit": "The DLD advertising permit for {ref} has expired, and RERA doesn't allow an advert to stay online without a valid permit. Our team is renewing it and will put your listing back on the market once the new permit is issued.",
+    "notify.paused.formA": "The Form A (listing agreement) for {ref} has expired, so under RERA rules the advert can't stay online. We'll send you a new Form A to sign; your listing goes back on the market once it is signed and the permit is renewed.",
   },
   ar: {
     "auth.signInAgain": "يرجى تسجيل الدخول مرة أخرى.",
@@ -105,6 +117,7 @@ export default defineMessages({
     "field.spaPrice": "أدخل السعر الوارد في اتفاقية البيع والشراء",
     "field.amountPaidMax": "لا يمكن أن يتجاوز المبلغ المدفوع سعر الشراء",
     "field.counterAmount": "أدخل قيمة العرض المقابل.",
+    "field.dldPermitUrl": "الصق رابط ⁦https://⁩ على موقع ⁦dubailand.gov.ae⁩ الذي يفتحه رمز QR الخاص بالتصريح.",
 
     "watch.unavailable": "لم تعد هذه الصفقة متاحة.",
     "offer.closed": "لم تعد هذه الصفقة تقبل العروض.",
@@ -116,9 +129,12 @@ export default defineMessages({
 
     "listing.notFound": "الإعلان غير موجود.",
     "listing.permitRequired": "أضف رقم تصريح الإعلان من دائرة الأراضي والأملاك (تراخيصي) قبل النشر، إذ تشترطه مؤسسة التنظيم العقاري على كل إعلان عقاري.",
+    "listing.permitExpiry": "أضف تاريخ انتهاء التصريح قبل النشر، وتأكد من أنه لاحق لتاريخ اليوم، إذ لا تسمح مؤسسة التنظيم العقاري ببقاء الإعلان منشوراً بعد انتهاء صلاحية تصريح دائرة الأراضي والأملاك.",
+    "listing.formAExpired": "انتهت صلاحية النموذج (A) أو تنتهي اليوم. أدخل تاريخ انتهاء النموذج المجدَّد قبل النشر.",
     "listing.transferred": "تم نقل ملكية هذه الوحدة بالفعل.",
     "listing.changeUnavailable": "هذا التغيير غير متاح لهذا الإعلان حالياً.",
     "listing.lockedUnderOffer": "على هذه الوحدة عرض مقبول، لذا لا يمكن تعديل سعرها أو وصفها. تواصل معنا إن احتاج أمر ما إلى تعديل.",
+    "listing.statusChanged": "تغيّرت حالة هذا الإعلان أثناء تعديلك له (كأن يقبل البائع عرضاً). أعِد تحميل الصفحة ثم أدخِل تعديلاتك مرة أخرى.",
     "listing.tooManyPending": "لديك بالفعل 10 إعلانات بانتظار المراجعة. سنتحقق منها أولاً.",
 
     "admin.ownAccess": "لا يمكنك إزالة صلاحيات الإدارة من حسابك.",
@@ -140,5 +156,11 @@ export default defineMessages({
     "notify.cron.missingSecret": "لم يُضبط المتغير CRON_SECRET، لذلك رفضت المهمة التشغيل وستستمر في رفضه إلى أن يُضبط. أضِفه في Vercel من Settings ثم Environment Variables، ثم أعِد النشر.",
     "notify.cron.threw": "توقّف التشغيل بسبب خطأ: {error}",
     "notify.cron.partial": "عدد العناصر التي تعذّرت معالجتها في هذا التشغيل: {failed}.",
+    "notify.doc.permit": "تصريح الإعلان من دائرة الأراضي والأملاك",
+    "notify.doc.formA": "النموذج (A)",
+    "notify.expiry.week": "خلال 7 أيام",
+    "notify.expiry.tomorrow": "غداً",
+    "notify.paused.permit": "انتهت صلاحية تصريح الإعلان من دائرة الأراضي والأملاك للإعلان ⁨{ref}⁩، ولا تسمح مؤسسة التنظيم العقاري ببقاء إعلان منشور دون تصريح سارٍ. يعمل فريقنا على تجديده، وسنعيد إعلانك إلى السوق فور صدور التصريح الجديد.",
+    "notify.paused.formA": "انتهت صلاحية النموذج (A) (اتفاقية الإدراج) للإعلان ⁨{ref}⁩، ولا تسمح قواعد مؤسسة التنظيم العقاري ببقاء الإعلان منشوراً. سنرسل إليك نموذجاً (A) جديداً لتوقيعه، ويعود إعلانك إلى السوق بعد توقيعه وتجديد التصريح.",
   },
 });

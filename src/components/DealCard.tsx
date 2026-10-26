@@ -79,7 +79,8 @@ export async function DealCard({
       />
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span className="font-semibold uppercase tracking-[0.14em]">{developer}</span>
+          {/* truncate: a name the seller typed for "Other" can be long. */}
+          <span className="min-w-0 truncate font-semibold uppercase tracking-[0.14em]">{developer}</span>
           <div className="flex items-center gap-1.5">
             {deal.verified && !deal.isSample && (
               <span className="inline-flex items-center gap-1 font-medium text-success">
@@ -96,7 +97,7 @@ export async function DealCard({
             {deal.projectName}
           </Link>
         </h3>
-        <p className="text-sm text-muted-foreground">{community}</p>
+        <p className="truncate text-sm text-muted-foreground">{community}</p>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <BedDouble className="h-3.5 w-3.5" />

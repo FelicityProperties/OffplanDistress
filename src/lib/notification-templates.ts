@@ -37,6 +37,25 @@ export const TEMPLATES = {
     en: { title: "Your listing needs attention: {project}", body: "{reason}", cta: "Open listing" },
     ar: { title: "إعلانك بحاجة إلى إجراء منك: {project}", body: "{reason}", cta: "فتح الإعلان" },
   },
+  // Permit lifecycle, from the daily ops cron (src/lib/permits.ts). {document}, {when} and {reason} are errors.ts
+  // "notify.doc.*", "notify.expiry.*" and "notify.paused.*" lines. Admins only:
+  "listing.permit_expiring": {
+    en: {
+      title: "{document} expires {when}: {project}",
+      body: "The {document} for {ref} expires {when}. Renew it and enter the new expiry date in the listing editor; otherwise the listing is paused automatically the day after it runs out.",
+      cta: "Open listing",
+    },
+    ar: {
+      title: "تنتهي صلاحية {document} {when}: {project}",
+      body: "تنتهي صلاحية {document} للإعلان ⁨{ref}⁩ {when}. جدِّده وأدخِل تاريخ الانتهاء الجديد في صفحة تعديل الإعلان، وإلا فسيُوقَف نشر الإعلان تلقائياً في اليوم التالي لانتهاء صلاحيته.",
+      cta: "فتح الإعلان",
+    },
+  },
+  // The seller, when the cron takes their listing down:
+  "listing.paused_permit": {
+    en: { title: "Your listing is paused: {project}", body: "{reason}", cta: "Open listing" },
+    ar: { title: "أُوقف نشر إعلانك مؤقتاً: {project}", body: "{reason}", cta: "فتح الإعلان" },
+  },
   "offer.received": {
     en: { title: "New offer on {project}: {amount}", body: "A {financing} buyer offered {amount} for your equity (asking {asking}).", cta: "Review offer" },
     ar: { title: "عرض جديد على {project}: {amount}", body: "قدّم مشترٍ ({financing}) مبلغ {amount} مقابل حصتك (السعر المطلوب {asking}).", cta: "مراجعة العرض" },
@@ -73,12 +92,12 @@ export const TEMPLATES = {
   "offer.backup": {
     en: {
       title: "Your offer on {project} is kept as a backup",
-      body: "The seller accepted another buyer's offer. Your offer of {amount} stays on file as a backup: if that deal doesn't go ahead, the unit returns to the market and your offer becomes active again. You can withdraw it at any time.",
+      body: "The seller accepted another buyer's offer. Your offer of {amount} stays on file as a backup: if that deal doesn't go ahead and the unit comes back on the market, your offer becomes active again. You can withdraw it at any time.",
       cta: "View my offers",
     },
     ar: {
       title: "عرضك على {project} محفوظ كعرض احتياطي",
-      body: "قبل البائع عرض مشترٍ آخر. سيبقى عرضك البالغ {amount} محفوظاً كعرض احتياطي: إذا لم تكتمل تلك الصفقة، تعود الوحدة إلى السوق ويصبح عرضك نشطاً من جديد. يمكنك سحب عرضك في أي وقت.",
+      body: "قبل البائع عرض مشترٍ آخر. سيبقى عرضك البالغ {amount} محفوظاً كعرض احتياطي: إذا لم تكتمل تلك الصفقة وعادت الوحدة إلى السوق، يصبح عرضك نشطاً من جديد. يمكنك سحب عرضك في أي وقت.",
       cta: "عرض عروضي",
     },
   },
@@ -113,6 +132,20 @@ export const TEMPLATES = {
   "inquiry.received": {
     en: { title: "New {kind} from {name}", body: "{contact}\n{message}", cta: "Open inquiries" },
     ar: { title: "{kind} جديد من {name}", body: "{contact}\n{message}", cta: "فتح الاستفسارات" },
+  },
+  // Admins only: the free seller estimate (src/app/actions/leads.ts). {urgent}, {missed}, {notice} and {handover} are
+  // sell.ts "estimate.notify.*" words; {urgent} is empty unless there is a default notice or more than one missed instalment.
+  "lead.seller": {
+    en: {
+      title: "{urgent}New seller lead {ref}: {project}",
+      body: "{name} · {phone}\nSPA price {price}, paid {paid} ({pct}). Handover {handover}.\n{missed} {notice}\nEstimate shown: {low} to {high}.",
+      cta: "Open seller leads",
+    },
+    ar: {
+      title: "{urgent}طلب جديد من بائع ⁨{ref}⁩: {project}",
+      body: "{name} · ⁦{phone}⁩\nالسعر في الاتفاقية {price}، والمدفوع {paid} (⁨{pct}⁩). التسليم {handover}.\n{missed} {notice}\nالتقدير المعروض: من {low} إلى {high}.",
+      cta: "فتح طلبات البائعين",
+    },
   },
   "watch.price_drop": {
     en: { title: "Price drop on {project}", body: "The asking price fell from {from} to {to}.", cta: "View deal" },

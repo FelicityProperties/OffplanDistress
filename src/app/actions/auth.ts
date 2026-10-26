@@ -1,12 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { sellerLeads, users } from "@/db/schema";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { sourceFromForm } from "@/lib/attribution";
 import { clear, clientIp, hit, MINUTE } from "@/lib/throttle";
 import {
   createSession,
@@ -82,11 +83,22 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
       // Notifications and emails go out in the language the account was created in.
       locale: await getLocale(),
       termsAcceptedAt: new Date(),
+      source: sourceFromForm(formData),
     })
     .returning({ id: users.id });
 
+  // Signed up from the free estimate's thank-you link: that lead is now this account's (if nobody claimed it yet),
+  // and the sell form starts from its numbers.
+  const lead = z.uuid().safeParse(formData.get("lead"));
+  if (lead.success) {
+    await db
+      .update(sellerLeads)
+      .set({ userId: user.id, email: sql`coalesce(${sellerLeads.email}, ${email.toLowerCase()})`, updatedAt: new Date() })
+      .where(and(eq(sellerLeads.id, lead.data), isNull(sellerLeads.userId)));
+  }
+
   await createSession(user.id);
-  const fallback = intent === "sell" ? "/sell" : "/dashboard";
+  const fallback = lead.success ? `/sell?lead=${lead.data}` : intent === "sell" ? "/sell" : "/dashboard";
   redirect(safeNext(formData.get("next"), fallback));
 }
 

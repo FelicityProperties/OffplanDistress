@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { richText } from "@/content/legal/rich-text";
 import { useDir, useLocale, useT } from "@/i18n/client";
+import { readAttribution } from "@/lib/attribution";
 import { COMMUNITIES, DEVELOPERS, FEES, FILE_KINDS, MAX_UPLOAD_BYTES, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAED, formatPct, formatQuarter } from "@/lib/format";
@@ -92,6 +93,11 @@ type State = {
   phone: string;
 };
 
+/** Where the form starts: the seller's free estimate (a seller lead) or the exit calculator's numbers. See /sell. */
+export type SellPrefill = Partial<
+  Pick<State, "developer" | "developerOther" | "projectName" | "originalPrice" | "amountPaid" | "handoverDate" | "arrears">
+> & { leadId?: string };
+
 /** `id` labels the control with that id; its label is `${id}-label` and the error / hint `${id}-msg`. */
 function Field({
   label,
@@ -128,7 +134,8 @@ function Field({
   );
 }
 
-export function SellForm({ needsPhone }: { needsPhone: boolean }) {
+export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial?: SellPrefill }) {
+  const { leadId, ...prefill } = initial ?? {};
   const t = useT("sell");
   const tc = useT("common");
   const tl = useT("legal");
@@ -155,6 +162,7 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
     motivation: "motivated",
     description: "",
     phone: "",
+    ...prefill,
   });
   const [plan, setPlan] = useState<Plan[]>([]);
   const [docs, setDocs] = useState<Partial<Record<keyof typeof FILE_KINDS, File>>>({});
@@ -190,12 +198,14 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
   /** A pick in a combobox. "Other" after typing a name that isn't listed keeps that name as the typed one. */
   const pickName = (k: "developer" | "community") => (value: string, typed: string) => {
     const otherKey = k === "developer" ? "developerOther" : "communityOther";
-    const name = typed.trim();
+    // Same 80-character cap as the name field and the server.
+    const name = typed.trim().slice(0, 80);
+    // The word "Other" itself, in either language (an Arabic page still matches the English "Other"), is not a name.
+    const isOtherWord = [tc("developer.Other"), "Other"].some((w) => searchKey(name) === searchKey(w));
     setS((prev) => ({
       ...prev,
       [k]: value,
-      [otherKey]:
-        value === "Other" && !prev[otherKey] && name && searchKey(name) !== searchKey(tc("developer.Other")) ? name : prev[otherKey],
+      [otherKey]: value === "Other" && !prev[otherKey] && name && !isOtherWord ? name : prev[otherKey],
     }));
     setErrors(({ [k]: _a, [otherKey]: _b, ...rest }) => rest);
     // Picked from the list (focus still in the box): go on to the name field it just revealed.
@@ -292,6 +302,9 @@ export function SellForm({ needsPhone }: { needsPhone: boolean }) {
       fd.set(k, numeric.has(k) && v !== "" ? String(Math.round(num(v))) : v);
     }
     fd.set("confirmOwnership", confirmed ? "on" : "");
+    // Links the listing to the seller's free estimate, and records how they found us.
+    if (leadId) fd.set("leadId", leadId);
+    fd.set("source", readAttribution());
     const arrearsNote =
       s.arrears === "one" ? t("arrears.note.one") : s.arrears === "more" ? t("arrears.note.more") : "";
     fd.set("description", [s.description.trim(), arrearsNote].filter(Boolean).join("\n\n"));

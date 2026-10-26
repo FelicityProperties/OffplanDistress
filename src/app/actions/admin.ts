@@ -13,6 +13,7 @@ import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingS
 import { refCode } from "@/lib/format";
 import { notify, notifyPriceDrop } from "@/lib/notify";
 import { closeOpenOffers, reopenBackups } from "@/lib/offers";
+import { isDldPermitUrl, publishBlocker } from "@/lib/permits";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
@@ -65,6 +66,8 @@ const listingNoticeColumns = {
   status: listings.status,
   verified: listings.verified,
   dldPermit: listings.dldPermit,
+  dldPermitExpiresAt: listings.dldPermitExpiresAt,
+  formAExpiresAt: listings.formAExpiresAt,
   askingPrice: listings.askingPrice,
   publicPrice: listings.publicPrice,
   publishedAt: listings.publishedAt,
@@ -89,8 +92,9 @@ export async function approveListing(listingId: string) {
   await assertAdmin();
   const [before] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, listingId)).limit(1);
   if (!before) return { error: (await getT("errors"))("listing.notFound") };
-  // RERA: no property advert without a DLD (Trakheesi) permit. Sample listings aren't adverts.
-  if (!before.isSample && !before.dldPermit) return { error: (await getT("errors"))("listing.permitRequired") };
+  // RERA: no property advert without a current DLD (Trakheesi) permit and Form A. Sample listings aren't adverts.
+  const blocker = publishBlocker(before);
+  if (blocker) return { error: (await getT("errors"))(blocker) };
   const now = new Date();
   const verified = before.verified || (await hasVerificationDocs(listingId));
   await db
@@ -143,6 +147,17 @@ const adminEditSchema = (t: T) =>
     askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative(),
     adminNotes: z.string().trim().max(4000).optional(),
     dldPermit: z.string().trim().max(40).optional(),
+    dldPermitExpiresAt: z.iso.date(t("field.date")).optional(),
+    // Stored as the parsed link, so the QR code encodes exactly what the check passed and a browser opens (the raw
+    // text may hold a "\" or a tab that other URL parsers, such as a phone's QR scanner, read differently).
+    dldPermitUrl: z
+      .string()
+      .trim()
+      .max(500)
+      .refine(isDldPermitUrl, t("field.dldPermitUrl"))
+      .transform((u) => new URL(u).href)
+      .optional(),
+    formAExpiresAt: z.iso.date(t("field.date")).optional(),
     images: z.array(z.string().max(500)).max(20),
     // Mapping a seller's "Other" to a listed name (or correcting it). Left out = unchanged.
     developer: z.string().max(80).optional(),
@@ -164,6 +179,9 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       askingPrice: formData.get("askingPrice"),
       adminNotes: formData.get("adminNotes") || undefined,
       dldPermit: formData.get("dldPermit") || undefined,
+      dldPermitExpiresAt: formData.get("dldPermitExpiresAt") || undefined,
+      dldPermitUrl: formData.get("dldPermitUrl") || undefined,
+      formAExpiresAt: formData.get("formAExpiresAt") || undefined,
       developer: formData.get("developer") || undefined,
       community: formData.get("community") || undefined,
       developerOther: formData.get("developerOther") || undefined,
@@ -184,6 +202,10 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
     .where(eq(listings.id, v.listingId))
     .limit(1);
   if (!current) return { error: t("listing.notFound") };
+  // An editor opened before the status changed (say the seller accepted an offer since) would put the old status
+  // back: the unit would go live again with an accepted offer, and its backup bidders be told the deal fell through.
+  const statusWas = formData.get("statusWas");
+  if (typeof statusWas === "string" && statusWas !== current.status) return { error: t("listing.statusChanged") };
   // A listed name, or the one already stored (older rows may hold a name that has since left the list).
   const developer = v.developer ?? current.developer;
   const community = v.community ?? current.community;
@@ -193,11 +215,20 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (!COMMUNITIES.includes(community) && community !== current.community) {
     return { error: t("form.checkFields"), fieldErrors: { community: [t("field.community")] } };
   }
-  if (!current.isSample && PUBLIC_STATUSES.includes(v.status) && !v.dldPermit) {
-    return { error: t("form.checkFields"), fieldErrors: { dldPermit: [t("listing.permitRequired")] } };
+  const blocker = PUBLIC_STATUSES.includes(v.status)
+    ? publishBlocker({
+        isSample: current.isSample,
+        dldPermit: v.dldPermit || null,
+        dldPermitExpiresAt: v.dldPermitExpiresAt ?? null,
+        formAExpiresAt: v.formAExpiresAt ?? null,
+      })
+    : null;
+  if (blocker) {
+    const field = { "listing.permitRequired": "dldPermit", "listing.permitExpiry": "dldPermitExpiresAt", "listing.formAExpired": "formAExpiresAt" }[blocker];
+    return { error: t("form.checkFields"), fieldErrors: { [field]: [t(blocker)] } };
   }
   const now = new Date();
-  await db
+  const [saved] = await db
     .update(listings)
     .set({
       status: v.status,
@@ -208,6 +239,9 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       askingPrice: v.askingPrice,
       adminNotes: v.adminNotes ?? null,
       dldPermit: v.dldPermit || null,
+      dldPermitExpiresAt: v.dldPermitExpiresAt ?? null,
+      dldPermitUrl: v.dldPermitUrl || null,
+      formAExpiresAt: v.formAExpiresAt ?? null,
       developer,
       community,
       // Only an "Other" keeps a typed name; mapping to a listed name clears it. Left out of the form = unchanged.
@@ -218,7 +252,10 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       publishedAt: current.publishedAt ?? (v.status === "live" ? now : null),
       updatedAt: now,
     })
-    .where(eq(listings.id, v.listingId));
+    // …and the same if it changes between the read above and this write.
+    .where(and(eq(listings.id, v.listingId), eq(listings.status, current.status)))
+    .returning({ id: listings.id });
+  if (!saved) return { error: t("listing.statusChanged") };
 
   const statusChanged = v.status !== current.status;
   // Going live for the first time is an approval, whichever control the admin used.

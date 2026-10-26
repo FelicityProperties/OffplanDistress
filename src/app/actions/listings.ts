@@ -1,16 +1,18 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { listings, users } from "@/db/schema";
+import { listings, sellerLeads, users } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { sourceFromForm } from "@/lib/attribution";
 import { getCurrentUser } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS, UNIT_TYPES } from "@/lib/config";
 import { refCode } from "@/lib/format";
 import { notifyAdmins } from "@/lib/notify";
+import { publishBlocker } from "@/lib/permits";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
@@ -163,8 +165,24 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
       motivation: v.motivation,
       description: v.description ?? null,
       paymentPlan: v.paymentPlan,
+      source: sourceFromForm(formData),
     })
     .returning({ id: listings.id, refNo: listings.refNo });
+
+  // Started from the free estimate: the lead becomes this seller's and this listing's (theirs, or not yet claimed).
+  const leadId = z.uuid().safeParse(formData.get("leadId"));
+  if (leadId.success) {
+    await db
+      .update(sellerLeads)
+      .set({ listingId: row.id, userId: user.id, status: "converted", updatedAt: new Date() })
+      .where(
+        and(
+          eq(sellerLeads.id, leadId.data),
+          isNull(sellerLeads.listingId),
+          or(eq(sellerLeads.userId, user.id), isNull(sellerLeads.userId)),
+        ),
+      );
+  }
 
   await notifyAdmins(
     "listing.submitted",
@@ -266,6 +284,8 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
       pausedByAdmin: listings.pausedByAdmin,
       isSample: listings.isSample,
       dldPermit: listings.dldPermit,
+      dldPermitExpiresAt: listings.dldPermitExpiresAt,
+      formAExpiresAt: listings.formAExpiresAt,
       projectName: listings.projectName,
       refNo: listings.refNo,
     })
@@ -277,9 +297,10 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
   let next: (typeof listings.$inferSelect)["status"] | null = null;
   if (action === "pause" && l.status === "live") next = "paused";
   // A pause by our team (e.g. during a document dispute) can only be lifted by our team.
-  // Straight back to live only if it still has its DLD advertising permit (samples need none); otherwise review again.
+  // Straight back to live only if its DLD advertising permit (with an expiry after today) and Form A are still current
+  // (samples need none); otherwise review again.
   if (action === "resume" && l.status === "paused" && !l.pausedByAdmin) {
-    next = l.verified && (l.isSample || l.dldPermit) ? "live" : "pending_review";
+    next = l.verified && !publishBlocker(l) ? "live" : "pending_review";
   }
   if (action === "withdraw" && !["transferred", "noc_in_progress", "withdrawn"].includes(l.status)) next = "withdrawn";
   if (!next) return { error: t("listing.changeUnavailable") };

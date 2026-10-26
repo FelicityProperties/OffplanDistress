@@ -27,7 +27,8 @@ export default async function UsersPage() {
           </TableHeader>
           <TableBody>
             {users.map((u) => (
-              <TableRow key={u.id}>
+              // id: the seller-leads page links straight to a converted lead's account.
+              <TableRow key={u.id} id={`user-${u.id}`} className="scroll-mt-24 target:bg-gold-soft/50">
                 <TableCell>
                   <p className="font-medium">{u.fullName}</p>
                   <p className="text-xs text-muted-foreground">

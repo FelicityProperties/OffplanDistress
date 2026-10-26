@@ -111,7 +111,7 @@ export default defineMessages({
       "Nothing is paid to the seller until the developer has issued the NOC. Payment is made by manager's cheque at the DLD trustee office at the moment ownership moves to you, and your future instalments continue into the project's RERA escrow account.",
     "faq.resale.q": "Can every off-plan unit be resold?",
     "faq.resale.a":
-      "Most developers only allow a resale once a minimum share of the price has been paid — often 30–40%. We check the developer's policy for each unit, and deals marked “NOC eligible” already meet it.",
+      "Most developers only allow a resale once a minimum share of the price has been paid — usually 30–50%, depending on the developer. We check the developer's policy for each unit, and deals marked “NOC eligible” already meet it.",
     "faq.mortgage.q": "Can I get a mortgage?",
     "faq.mortgage.a":
       "Some developers allow financing of the remaining balance close to handover. Tell us when you make an offer and we'll introduce you to partner banks for pre-approval.",
@@ -226,7 +226,7 @@ export default defineMessages({
       "لا يُدفع أي مبلغ للبائع قبل أن يُصدر المطوّر شهادة عدم الممانعة. ويتم الدفع بشيك مدير (شيك مصرفي) في مكتب أمين التسجيل لدى دائرة الأراضي والأملاك لحظة انتقال الملكية إليك، وتُودَع أقساطك المستقبلية في حساب الضمان الخاص بالمشروع والمعتمد لدى ريرا.",
     "faq.resale.q": "هل يمكن إعادة بيع أي وحدة على الخارطة؟",
     "faq.resale.a":
-      "لا يسمح معظم المطوّرين بإعادة البيع إلا بعد سداد حد أدنى من السعر، غالباً ما بين 30 و40%. نتحقق من سياسة المطوّر لكل وحدة، والصفقات التي تحمل علامة «مؤهّلة لشهادة عدم الممانعة» تستوفي هذا الشرط بالفعل.",
+      "لا يسمح معظم المطوّرين بإعادة البيع إلا بعد سداد حد أدنى من السعر، يتراوح غالباً بين 30% و50% بحسب المطوّر. نتحقق من سياسة المطوّر لكل وحدة، والصفقات التي تحمل علامة «مؤهّلة لشهادة عدم الممانعة» تستوفي هذا الشرط بالفعل.",
     "faq.mortgage.q": "هل يمكنني الحصول على تمويل عقاري؟",
     "faq.mortgage.a":
       "يسمح بعض المطوّرين بتمويل الرصيد المتبقي قرب موعد التسليم. أخبرنا عند تقديم عرضك وسنعرّفك على بنوك شريكة للحصول على موافقة مبدئية.",

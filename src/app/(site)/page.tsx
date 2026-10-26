@@ -17,6 +17,7 @@ import { CtaBand } from "@/components/CtaBand";
 import { communityName, DealCard } from "@/components/DealCard";
 import { DealImage } from "@/components/DealImage";
 import { FeeCalculator } from "@/components/FeeCalculator";
+import { SellerEstimateSection } from "@/components/sell/SellerEstimateSection";
 import { StepsFlow } from "@/components/Steps";
 import { SampleBadge, SectionHeading } from "@/components/badges";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -254,6 +255,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Sellers: a free estimate, no account needed */}
+      <SellerEstimateSection signedIn={!!user} />
 
       {/* Pricing */}
       <section className="container-page grid items-center gap-12 overflow-x-clip py-24 reveal lg:grid-cols-2">

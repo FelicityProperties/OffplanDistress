@@ -68,7 +68,8 @@ export default defineMessages({
     "verdict.over80":
       "Above 80% complete the developer doesn't have to cancel. It may keep the contract, keep everything you've paid and claim the {amount} still owed, or ask DLD to sell the unit at public auction to recover what you owe, with the sale costs charged to you. The refund shown applies only if it chooses to cancel.",
     "verdict.over80Short": "Above 80% complete the developer doesn't have to cancel: see Option 2 before you stop paying.",
-    "verdict.nocCaveat": "Check your developer's resale rules first: many only issue a resale NOC once 30–40% of the price is paid, and you've paid {pct}.",
+    "verdict.nocCaveat":
+      "Check your developer's resale rules first: most require 30–50% of the price to be paid before they issue a resale NOC, and you've paid {pct}.",
 
     "opt1.title": "Keep paying to handover",
     "opt1.desc": "You keep the unit and fund every remaining instalment.",
@@ -175,7 +176,7 @@ export default defineMessages({
       "Not straight away. The developer must first notify the Dubai Land Department, which gives you 30 days to pay or settle. Only after that, and DLD's confirmation, can the developer act — and how much it may keep depends on construction progress.",
     "faq.q2": "Can I sell my unit before I've finished paying?",
     "faq.a2":
-      "Usually, yes, through an assignment (a resale before handover). The buyer pays you for what you've paid in and takes over the remaining instalments. The developer has to issue a NOC, and many only do so once 30–40% of the price is paid.",
+      "Usually, yes, through an assignment (a resale before handover). The buyer pays you for what you've paid in and takes over the remaining instalments. The developer has to issue a NOC, and most require 30–50% of the price to be paid first; the rule depends on the developer.",
     "faq.q3": "How do you estimate what my position is worth?",
     "faq.a3":
       "We take what you've paid and add or subtract the difference between today's price for a similar unit and your purchase price. A quick sale usually needs a sharper price: buyers want {low}–{high}% off the whole unit, and that discount comes out of your equity, so we show that range. It's an estimate, not a valuation — we check real comparables when you list.",
@@ -250,7 +251,8 @@ export default defineMessages({
     "verdict.over80":
       "إذا تجاوزت نسبة الإنجاز 80% فلا يُلزم المطوّر بفسخ العقد: يجوز له الإبقاء على العقد والاحتفاظ بكل ما دفعته ومطالبتك بالمبلغ المتبقي البالغ {amount}، أو أن يطلب من دائرة الأراضي والأملاك بيع الوحدة بالمزاد العلني لاستيفاء المستحق له على أن تتحمّل أنت تكاليف البيع. ولا ينطبق المبلغ المعروض للردّ إلا إذا اختار فسخ العقد.",
     "verdict.over80Short": "إذا تجاوزت نسبة الإنجاز 80% فلا يُلزم المطوّر بفسخ العقد: اطّلع على الخيار 2 قبل أن تتوقف عن السداد.",
-    "verdict.nocCaveat": "تحقق أولاً من شروط إعادة البيع لدى مطوّرك: كثير من المطوّرين لا يصدرون شهادة عدم ممانعة لإعادة البيع إلا بعد سداد 30–40% من السعر، وقد سددت {pct}.",
+    "verdict.nocCaveat":
+      "تحقق أولاً من شروط إعادة البيع لدى مطوّرك: يشترط معظم المطوّرين سداد ما بين 30% و50% من السعر قبل إصدار شهادة عدم الممانعة لإعادة البيع، وقد سددت {pct}.",
 
     "opt1.title": "مواصلة السداد حتى التسليم",
     "opt1.desc": "تحتفظ بالوحدة وتسدّد جميع الأقساط المتبقية.",
@@ -357,7 +359,7 @@ export default defineMessages({
       "ليس فوراً. على المطوّر أولاً إخطار دائرة الأراضي والأملاك، التي تمنحك 30 يوماً للسداد أو التسوية. ولا يحق له التصرف إلا بعد ذلك وبعد تأكيد الدائرة، ويتوقف ما يحق له الاحتفاظ به على نسبة إنجاز البناء.",
     "faq.q2": "هل يمكنني بيع وحدتي قبل إكمال السداد؟",
     "faq.a2":
-      "نعم في الغالب، عن طريق التنازل (إعادة البيع قبل التسليم). يدفع لك المشتري ما سددته ويتولى الأقساط المتبقية. ويجب أن يصدر المطوّر شهادة عدم ممانعة، وكثير من المطوّرين لا يصدرونها إلا بعد سداد 30–40% من السعر.",
+      "نعم في الغالب، عن طريق التنازل (إعادة البيع قبل التسليم). يدفع لك المشتري ما سددته ويتولى الأقساط المتبقية. ويجب أن يصدر المطوّر شهادة عدم ممانعة، ويشترط معظم المطوّرين لذلك سداد ما بين 30% و50% من السعر، وتختلف القاعدة من مطوّر إلى آخر.",
     "faq.q3": "كيف تقدّرون قيمة حصتي؟",
     "faq.a3":
       "نبدأ بما دفعته، ثم نضيف أو نطرح الفرق بين السعر الحالي لوحدة مماثلة وسعر شرائك. ولأن البيع السريع يتطلب عادةً سعراً أكثر تنافسية، إذ يطلب المشترون خصماً بنسبة {low}–{high}% من سعر الوحدة كاملةً يُقتطع من حصتك، نعرض هذا النطاق. إنه تقدير وليس تقييماً، ونتحقق من الصفقات المماثلة الفعلية عند عرض وحدتك.",

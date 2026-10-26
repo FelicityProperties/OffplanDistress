@@ -1,3 +1,4 @@
+import { AttributionCapture } from "@/components/Attribution";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -23,6 +24,8 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
       </main>
       <SiteFooter />
       <WhatsAppButton />
+      {/* Remembers how this visit arrived (utm tags, ?ref=, landing page) in sessionStorage, for the seller forms. */}
+      <AttributionCapture />
     </>
   );
 }

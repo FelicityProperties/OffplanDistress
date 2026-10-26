@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { inquiries, listings, offers, savedSearches, users, watchlist } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { sourceFromForm } from "@/lib/attribution";
 import { getCurrentUser } from "@/lib/auth";
 import { PUBLIC_STATUSES } from "@/lib/config";
 import { refCode } from "@/lib/format";
@@ -107,19 +108,23 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
     )
     .limit(1);
 
-  if (open) {
-    await db
-      .update(offers)
-      .set({
-        amount: v.amount,
-        financing: v.financing,
-        message: v.message ?? null,
-        status: "pending",
-        counterAmount: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(offers.id, open.id));
-  } else {
+  // Only while it is still open: if the seller accepted (or anyone closed) it since the read above, the revision is a
+  // new offer rather than putting an accepted offer back to pending under a unit that is already under offer.
+  const revised = open
+    ? await db
+        .update(offers)
+        .set({
+          amount: v.amount,
+          financing: v.financing,
+          message: v.message ?? null,
+          status: "pending",
+          counterAmount: null,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(offers.id, open.id), inArray(offers.status, ["pending", "countered"])))
+        .returning({ id: offers.id })
+    : [];
+  if (!revised.length) {
     await db.insert(offers).values({
       listingId: v.listingId,
       buyerId: user.id,
@@ -239,12 +244,17 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
       .set({ ...set, updatedAt: now })
       .where(and(eq(offers.id, offerId), inArray(offers.status, from)))
       .returning({ id: offers.id });
+    if (!moved) refresh(); // the page this came from is out of date: show the offer as it now is, next to the error
     return Boolean(moved);
   };
-  /** null once accepted; otherwise the error for whoever lost the race. */
+  /** null once accepted; otherwise the error for whoever lost the race (with the page refreshed to the unit's real state). */
   const accept = async (from: "pending" | "countered", amount: number) => {
-    if (row.listingStatus !== "live") return notLive(row.listingStatus);
+    if (row.listingStatus !== "live") {
+      refresh();
+      return notLive(row.listingStatus);
+    }
     if (await acceptOffer(offerId, offer.listingId, from, amount)) return null;
+    refresh();
     const [latest] = await db.select({ status: listings.status }).from(listings).where(eq(listings.id, offer.listingId)).limit(1);
     // Still live: this offer itself changed in the meantime (withdrawn, declined, revised).
     return latest?.status === "live" ? unavailable : notLive(latest?.status);
@@ -313,7 +323,7 @@ export async function createInquiry(_prev: FormState, formData: FormData): Promi
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
   if (!(await hit(`inquiry-ip:${await clientIp()}`, 10, 60 * MINUTE))) return { error: t("tooMany") };
   const v = parsed.data;
-  await db.insert(inquiries).values({ ...v, userId: user?.id ?? null });
+  await db.insert(inquiries).values({ ...v, userId: user?.id ?? null, source: sourceFromForm(formData) });
 
   // Project names and reference codes read the same in both languages, so the deal line can go in as-is.
   let about: string | null = null;

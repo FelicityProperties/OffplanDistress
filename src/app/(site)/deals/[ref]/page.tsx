@@ -44,6 +44,7 @@ import { communityName, developerName } from "@/lib/place-names";
 import { siteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 import { getListingByRef, similarDeals, watchedIds } from "@/lib/listings";
+import { permitQrSvg } from "@/lib/permits";
 
 async function load(ref: string) {
   const refNo = parseRefCode(ref);
@@ -92,15 +93,18 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     after(() => db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, l.id)));
   }
 
-  const [similar, watched, t, tc, td, locale] = await Promise.all([
+  const [similar, watched, t, tc, td, tl, locale] = await Promise.all([
     similarDeals(l),
     watchedIds(user?.id),
     getT("deal"),
     getT("common"),
     getT("deals"),
+    getT("legal"),
     getLocale(),
   ]);
   const a = analyzeDeal(l);
+  // The Trakheesi QR, drawn on our server from the stored dubailand.gov.ae link (samples have no permit).
+  const permitQr = l.isSample ? null : await permitQrSvg(l.dldPermitUrl);
   const community = communityName(tc, l.community, l.communityOther);
   const developer = developerName(tc, l.developer, l.developerOther);
   const discountPct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
@@ -217,13 +221,14 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
         <div className="mt-8 grid gap-y-10 lg:mt-10 lg:grid-cols-[minmax(0,1fr)_23.75rem] lg:gap-x-12">
           {/* Title block (+ sample notice) */}
           <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-            <p className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              <span aria-hidden className="h-px w-7 bg-gold" />
+            {/* wrap-anywhere: a developer or community name the seller typed for "Other" may be one long word. */}
+            <p className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground wrap-anywhere">
+              <span aria-hidden className="h-px w-7 shrink-0 bg-gold" />
               {developer}
             </p>
             <h1 className="mt-3 text-4xl font-semibold leading-[1.05] text-balance sm:text-5xl">{l.projectName}</h1>
             <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-muted-foreground sm:gap-x-3">
-              <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+              <span className="inline-flex items-center gap-1.5 font-medium text-foreground wrap-anywhere">
                 <MapPin className="h-4 w-4 text-gold" aria-hidden />
                 {community}
               </span>
@@ -310,7 +315,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   <p className="mt-1.5 text-xs text-primary-foreground/60 tabular">
                     {t("side.usd", { amount: formatUSDFromAED(l.askingPrice, locale) })}
                   </p>
-                  <p className="mt-3 text-sm text-primary-foreground/75">
+                  <p className="mt-3 text-sm text-primary-foreground/75 wrap-anywhere">
                     {t("side.thenPlan", { amount: formatAED(a.remaining, locale), developer })}
                   </p>
                 </div>
@@ -385,6 +390,29 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   <p className="tabular">
                     {l.isSample ? t("listedBy.sample") : l.dldPermit ? t("listedBy.permit", { permit: l.dldPermit }) : null}
                   </p>
+                  {!l.isSample && l.dldPermitExpiresAt && (
+                    <p className="tabular">{t("listedBy.permitValid", { date: formatDate(l.dldPermitExpiresAt, locale) })}</p>
+                  )}
+                  {permitQr && l.dldPermitUrl && (
+                    <a
+                      href={l.dldPermitUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group mt-3 flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {/* qrcode's SVG is path data only (nothing from the link appears as markup); white so it scans in dark mode too */}
+                      <span
+                        aria-hidden
+                        className="block h-24 w-24 shrink-0 rounded-lg bg-white p-2 shadow-sm ring-1 ring-border [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
+                        dangerouslySetInnerHTML={{ __html: permitQr }}
+                      />
+                      <span className="inline-flex items-center gap-1.5 font-medium text-foreground underline-offset-4 group-hover:underline">
+                        <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-gold-foreground" aria-hidden />
+                        {t("listedBy.verify")}
+                        <span className="sr-only"> {tl("newTab")}</span>
+                      </span>
+                    </a>
+                  )}
                   {BRAND.email && !l.isSample && (
                     <a
                       href={`mailto:${BRAND.email}?subject=${encodeURIComponent(t("listedBy.reportSubject", { ref: refCode(l.refNo) }))}`}

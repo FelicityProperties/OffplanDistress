@@ -94,6 +94,9 @@ type EditProps = {
   communityOther: string | null;
   adminNotes: string | null;
   dldPermit: string | null;
+  dldPermitExpiresAt: string | null;
+  dldPermitUrl: string | null;
+  formAExpiresAt: string | null;
   images: string[];
 };
 
@@ -164,6 +167,8 @@ export function AdminListingForm(p: EditProps) {
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
       <input type="hidden" name="listingId" value={p.listingId} />
+      {/* The status this form was loaded with: saving after it changed (e.g. an offer was accepted) is refused. */}
+      <input type="hidden" name="statusWas" value={p.status} />
       <Field label={t("form.status")} htmlFor="status" error={fe.status}>
         <select id="status" name="status" defaultValue={p.status} className={selectClass}>
           {(Object.keys(LISTING_STATUS) as ListingStatusKey[]).map((k) => (
@@ -206,6 +211,28 @@ export function AdminListingForm(p: EditProps) {
       </Field>
       <Field label={t("form.dldPermit")} htmlFor="dldPermit" error={fe.dldPermit} hint={t("form.dldPermitHint")}>
         <Input id="dldPermit" name="dldPermit" dir="ltr" maxLength={40} defaultValue={p.dldPermit ?? ""} />
+      </Field>
+      <Field
+        label={t("form.dldPermitExpiresAt")}
+        htmlFor="dldPermitExpiresAt"
+        error={fe.dldPermitExpiresAt}
+        hint={t("form.dldPermitExpiresAtHint")}
+      >
+        <Input id="dldPermitExpiresAt" name="dldPermitExpiresAt" type="date" defaultValue={p.dldPermitExpiresAt ?? ""} />
+      </Field>
+      <Field label={t("form.dldPermitUrl")} htmlFor="dldPermitUrl" error={fe.dldPermitUrl} hint={t("form.dldPermitUrlHint")}>
+        <Input
+          id="dldPermitUrl"
+          name="dldPermitUrl"
+          type="url"
+          dir="ltr"
+          maxLength={500}
+          placeholder="https://…dubailand.gov.ae/…"
+          defaultValue={p.dldPermitUrl ?? ""}
+        />
+      </Field>
+      <Field label={t("form.formAExpiresAt")} htmlFor="formAExpiresAt" error={fe.formAExpiresAt} hint={t("form.formAExpiresAtHint")}>
+        <Input id="formAExpiresAt" name="formAExpiresAt" type="date" defaultValue={p.formAExpiresAt ?? ""} />
       </Field>
       <div className="flex flex-col justify-center gap-3 pt-5">
         <label className="flex items-center gap-2 text-sm">

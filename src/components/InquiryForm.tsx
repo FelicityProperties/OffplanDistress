@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { createInquiry } from "@/app/actions/market";
+import { AttributionField } from "@/components/Attribution";
 import { Field, FormMessage, SubmitButton } from "@/components/forms";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -54,6 +55,7 @@ export function InquiryFields({
     <form action={action} className="space-y-4">
       {listingId && <input type="hidden" name="listingId" value={listingId} />}
       <input type="hidden" name="type" value={type} />
+      <AttributionField />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t("inquiry.name")} htmlFor="inq-name" error={fe.name}>
           <Input id="inq-name" name="name" defaultValue={defaults?.name} required autoComplete="name" />

@@ -199,6 +199,9 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           communityOther={l.communityOther}
           adminNotes={l.adminNotes}
           dldPermit={l.dldPermit}
+          dldPermitExpiresAt={l.dldPermitExpiresAt}
+          dldPermitUrl={l.dldPermitUrl}
+          formAExpiresAt={l.formAExpiresAt}
           images={l.images}
         />
       </section>

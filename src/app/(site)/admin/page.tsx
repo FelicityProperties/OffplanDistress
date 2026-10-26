@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileCheck2, FileX2 } from "lucide-react";
+import { CalendarClock, FileCheck2, FileX2 } from "lucide-react";
 import { DeleteSamplesButton, ReviewButtons } from "@/components/admin/AdminControls";
 import { Kpi, PageTitle } from "@/components/Kpi";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,26 +7,62 @@ import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
 import { platformFee } from "@/lib/deal-math";
 import { adminListings, adminStats } from "@/lib/admin";
+import { leadStats } from "@/lib/leads";
 import { formatAED, formatAEDCompact, formatDate, refCode } from "@/lib/format";
+import { listingsWithoutPermitExpiry } from "@/lib/permits";
 import { developerName } from "@/lib/place-names";
+
+/** Listings named in the "no permit expiry" banner; the rest are counted. */
+const NO_EXPIRY_LINKS = 12;
 
 export default async function AdminQueue() {
   await requireAdmin();
-  const [s, queue, t, tc, locale] = await Promise.all([
+  const [s, leads, queue, t, tc, locale] = await Promise.all([
     adminStats(),
+    leadStats(),
     adminListings("pending_review"),
     getT("admin"),
     getT("common"),
     getLocale(),
   ]);
+  const noExpiry = await listingsWithoutPermitExpiry();
 
   return (
     <div className="space-y-6">
       <PageTitle title={t("queue.title")} sub={t("queue.sub")}>
         <DeleteSamplesButton count={s.samples} />
       </PageTitle>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Adverts that went live before permit expiry dates were recorded: the cron can't take them down on time. */}
+      {noExpiry.length > 0 && (
+        <div role="note" className="flex items-start gap-3 rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-foreground">
+          <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <div className="min-w-0">
+            <p className="font-semibold">
+              {noExpiry.length === 1 ? t("permits.noExpiry.one") : t("permits.noExpiry.many", { n: noExpiry.length })}
+            </p>
+            <p className="mt-1">{t("permits.noExpiry.hint")}</p>
+            <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+              {noExpiry.slice(0, NO_EXPIRY_LINKS).map((l) => (
+                <Link key={l.id} href={`/admin/listings/${l.id}`} className="font-medium underline underline-offset-4 hover:no-underline">
+                  <bdi>{refCode(l.refNo)}</bdi>
+                </Link>
+              ))}
+              {noExpiry.length > NO_EXPIRY_LINKS && <span>{t("permits.noExpiry.more", { n: noExpiry.length - NO_EXPIRY_LINKS })}</span>}
+            </p>
+          </div>
+        </div>
+      )}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Kpi label={t("queue.kpi.awaiting")} value={String(s.pending)} />
+        {/* Sellers from the free estimate, waiting for a call */}
+        <Link
+          href="/admin/leads"
+          className="rounded-xl border bg-card p-5 shadow-card transition hover:border-gold/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <p className="text-sm text-muted-foreground">{t("leads.kpi.new")}</p>
+          <p className="mt-2 text-2xl font-semibold tabular">{leads.newLeads}</p>
+          {leads.urgentNew > 0 && <p className="mt-1 text-xs font-medium text-destructive">{t("leads.kpi.urgent", { n: leads.urgentNew })}</p>}
+        </Link>
         <Kpi label={t("queue.kpi.live")} value={String(s.live)} />
         <Kpi
           label={t("queue.kpi.inTransfer")}
