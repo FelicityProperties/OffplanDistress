@@ -30,10 +30,31 @@ const MORE_HREF: Record<FollowUpKey, string> = {
 };
 
 export async function FollowUps() {
-  const [f, t, tl, locale] = await Promise.all([followUps(), getT("admin"), getT("legal"), getLocale()]);
+  const [f, t, tl, locale] = await Promise.all([
+    // A failing query must not take the verification queue above down with it.
+    followUps().catch((err) => {
+      console.error("[admin] follow-ups failed", err);
+      return null;
+    }),
+    getT("admin"),
+    getT("legal"),
+    getLocale(),
+  ]);
+  if (!f) {
+    return (
+      <section id="follow-ups" aria-labelledby="follow-ups-title" className="scroll-mt-24 space-y-2" data-testid="follow-ups">
+        <h2 id="follow-ups-title" className="text-xl font-semibold">
+          {t("followups.title")}
+        </h2>
+        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm">
+          {t("followups.error")}
+        </p>
+      </section>
+    );
+  }
   const { counts, total } = followUpCounts(f);
   // Numbers, amounts and dates keep their own direction inside Arabic sentences.
-  const iso = (s: string) => (locale === "ar" ? `⁨${s}⁩` : s);
+  const iso = (s: string) => (locale === "ar" ? `\u2068${s}\u2069` : s);
   const sep = locale === "ar" ? "، " : ", ";
 
   const meta = (key: FollowUpKey, it: FollowUpItem) => {
@@ -137,7 +158,9 @@ export async function FollowUps() {
           <h2 id="follow-ups-title" className="flex flex-wrap items-center gap-2 text-xl font-semibold">
             {t("followups.title")}
             {total > 0 && (
-              <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-semibold text-gold-foreground tabular">{formatNumber(total)}</span>
+              <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-semibold text-gold-foreground tabular">
+                {formatNumber(total)}
+              </span>
             )}
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{t("followups.sub")}</p>
@@ -145,7 +168,9 @@ export async function FollowUps() {
       </div>
 
       {groups.length === 0 ? (
-        <p className="rounded-xl border border-dashed bg-card px-5 py-6 text-center text-sm text-muted-foreground">{t("followups.empty")}</p>
+        <p className="rounded-xl border border-dashed bg-card px-5 py-6 text-center text-sm text-muted-foreground">
+          {t("followups.empty")}
+        </p>
       ) : (
         <div className="grid gap-4 xl:grid-cols-2 xl:items-start">
           {groups.map((key) => {

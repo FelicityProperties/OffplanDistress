@@ -306,6 +306,7 @@ export default defineMessages({
     "followups.sub":
       "Who is waiting on what right now: the same items the daily digest counts. Sellers and buyers get one reminder each by email and in the app; call the rest.",
     "followups.empty": "Nothing to follow up right now.",
+    "followups.error": "Follow-ups couldn't be loaded. Reload the page in a moment.",
     "followups.more": "+{n} more",
     "followups.noPhone": "No phone number",
     "followups.overdue": "Overdue",
@@ -653,6 +654,7 @@ export default defineMessages({
     "followups.sub":
       "الحالات التي تنتظر إجراءً الآن، وهي العناصر نفسها التي يحتسبها الملخص اليومي. يتلقى البائعون والمشترون تذكيراً واحداً لكل حالة عبر البريد الإلكتروني وداخل المنصة، وتواصل أنت مع البقية هاتفياً.",
     "followups.empty": "لا توجد متابعات في الوقت الحالي.",
+    "followups.error": "تعذّر تحميل المتابعات. أعِد تحميل الصفحة بعد قليل.",
     "followups.more": "و{n} غيرها",
     "followups.noPhone": "لا يوجد رقم هاتف",
     "followups.overdue": "متأخر",

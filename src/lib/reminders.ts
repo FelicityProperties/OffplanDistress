@@ -39,13 +39,28 @@ export const FOLLOW_UP = {
   /** After this, an offer the seller still hasn't answered is flagged for our team to call. */
   offerEscalateHours: 72,
   counterHours: 48,
+  // How stale an item may be and still get its seller's or buyer's own nudge. Older ones stay on our team's list only,
+  // so the first run after release doesn't message people about something that has sat for months.
+  noOffersNudgeDays: 60,
+  offerNudgeDays: 14,
+  counterNudgeDays: 14,
   leadHours: 24,
   reviewHours: 24,
   instalmentDays: 14,
   viewingHours: 4,
 } as const;
 
-export const FOLLOW_UP_KEYS = ["offers", "counters", "viewings", "instalments", "review", "docs", "leads", "signup", "noOffers"] as const;
+export const FOLLOW_UP_KEYS = [
+  "offers",
+  "counters",
+  "viewings",
+  "instalments",
+  "review",
+  "docs",
+  "leads",
+  "signup",
+  "noOffers",
+] as const;
 export type FollowUpKey = (typeof FOLLOW_UP_KEYS)[number];
 
 export type Contact = { name: string; phone: string | null; email: string | null };
@@ -95,7 +110,7 @@ const buyers = alias(users, "buyer");
 const ago = (now: Date, ms: number) => new Date(now.getTime() - ms);
 /** "No password yet" accounts are sellers our team added who haven't claimed their listing: they can't log in. */
 const canLogIn = (passwordHash: AnyColumn) => sql<boolean>`(${passwordHash} is not null)`;
-/** Placeholder addresses (…​.invalid) never receive email and mean nothing to our team either. */
+/** Placeholder addresses (ending in .invalid) never receive email and mean nothing to our team either. */
 const realEmail = (email: string | null) => (email && !email.toLowerCase().endsWith(".invalid") ? email : null);
 
 function hasFile(kinds: string[]) {
@@ -133,7 +148,14 @@ async function signupRule(now: Date): Promise<FollowUpItem[]> {
       href: `/admin/users#user-${u.id}`,
       contact: { name: u.name, phone: u.phone, email: realEmail(u.email) },
       nudge: stage
-        ? { entityType: "user", kind: `finish_listing:${stage}`, userId: u.id, template: "seller.finish_listing", params: { name: u.name }, href: "/sell" }
+        ? {
+            entityType: "user",
+            kind: `finish_listing:${stage}`,
+            userId: u.id,
+            template: "seller.finish_listing",
+            params: { name: u.name },
+            href: "/sell",
+          }
         : null,
     };
   });
@@ -156,10 +178,25 @@ async function docsRule(now: Date): Promise<FollowUpItem[]> {
   const spa = hasFile(["spa", "oqood"]);
   const soa = hasFile(["soa"]);
   const rows = await db
-    .select({ id: listings.id, refNo: listings.refNo, project: listings.projectName, createdAt: listings.createdAt, hasSpa: spa, hasSoa: soa, ...sellerColumns })
+    .select({
+      id: listings.id,
+      refNo: listings.refNo,
+      project: listings.projectName,
+      createdAt: listings.createdAt,
+      hasSpa: spa,
+      hasSoa: soa,
+      ...sellerColumns,
+    })
     .from(listings)
     .innerJoin(sellers, eq(sellers.id, listings.sellerId))
-    .where(and(eq(listings.status, "pending_review"), realListing, lte(listings.createdAt, ago(now, FOLLOW_UP.docsHours * HOUR)), sql`(not ${spa} or not ${soa})`))
+    .where(
+      and(
+        eq(listings.status, "pending_review"),
+        realListing,
+        lte(listings.createdAt, ago(now, FOLLOW_UP.docsHours * HOUR)),
+        sql`(not ${spa} or not ${soa})`,
+      ),
+    )
     .orderBy(asc(listings.createdAt))
     .limit(LIMIT);
   return rows.map((l) => {
@@ -229,16 +266,17 @@ async function noOffersRule(now: Date): Promise<FollowUpItem[]> {
       project: l.project,
       date,
       views: l.views,
-      nudge: l.sellerCanLogIn
-        ? {
-            entityType: "listing",
-            kind: "no_offers",
-            userId: l.sellerId,
-            template: "seller.no_offers",
-            params: { project: l.project, ref, since: { date }, views: l.views },
-            href: `/dashboard/listings/${l.id}`,
-          }
-        : null,
+      nudge:
+        l.sellerCanLogIn && since > ago(now, FOLLOW_UP.noOffersNudgeDays * DAY)
+          ? {
+              entityType: "listing",
+              kind: "no_offers",
+              userId: l.sellerId,
+              template: "seller.no_offers",
+              params: { project: l.project, ref, since: { date }, views: l.views },
+              href: `/dashboard/listings/${l.id}`,
+            }
+          : null,
     };
   });
 }
@@ -299,16 +337,17 @@ async function offersRule(now: Date): Promise<FollowUpItem[]> {
       project: o.project,
       amount: o.amount,
       escalated: o.updatedAt <= ago(now, FOLLOW_UP.offerEscalateHours * HOUR),
-      nudge: o.sellerCanLogIn
-        ? {
-            entityType: "offer",
-            kind: `seller:${o.updatedAt.getTime()}`,
-            userId: o.sellerId,
-            template: "offer.reminder",
-            params: { project: o.project, ref, amount: { aed: o.amount }, date: { date: dubaiToday(o.updatedAt) } },
-            href: "/dashboard/offers?tab=received",
-          }
-        : null,
+      nudge:
+        o.sellerCanLogIn && o.updatedAt > ago(now, FOLLOW_UP.offerNudgeDays * DAY)
+          ? {
+              entityType: "offer",
+              kind: `seller:${o.updatedAt.getTime()}`,
+              userId: o.sellerId,
+              template: "offer.reminder",
+              params: { project: o.project, ref, amount: { aed: o.amount }, date: { date: dubaiToday(o.updatedAt) } },
+              href: "/dashboard/offers?tab=received",
+            }
+          : null,
     };
   });
 }
@@ -325,21 +364,22 @@ async function countersRule(now: Date): Promise<FollowUpItem[]> {
     contact: { name: o.buyerName, phone: o.buyerPhone, email: realEmail(o.buyerEmail) },
     project: o.project,
     amount: o.counterAmount,
-    nudge: o.buyerCanLogIn
-      ? {
-          entityType: "offer",
-          kind: `buyer:${o.updatedAt.getTime()}`,
-          userId: o.buyerId,
-          template: "offer.counter_reminder",
-          params: {
-            project: o.project,
-            amount: { aed: o.counterAmount },
-            original: { aed: o.amount },
-            date: { date: dubaiToday(o.updatedAt) },
-          },
-          href: "/dashboard/offers?tab=sent",
-        }
-      : null,
+    nudge:
+      o.buyerCanLogIn && o.updatedAt > ago(now, FOLLOW_UP.counterNudgeDays * DAY)
+        ? {
+            entityType: "offer",
+            kind: `buyer:${o.updatedAt.getTime()}`,
+            userId: o.buyerId,
+            template: "offer.counter_reminder",
+            params: {
+              project: o.project,
+              amount: { aed: o.counterAmount },
+              original: { aed: o.amount },
+              date: { date: dubaiToday(o.updatedAt) },
+            },
+            href: "/dashboard/offers?tab=sent",
+          }
+        : null,
   }));
 }
 
@@ -392,7 +432,9 @@ async function reviewRule(now: Date): Promise<FollowUpItem[]> {
     })
     .from(listings)
     .innerJoin(sellers, eq(sellers.id, listings.sellerId))
-    .where(and(eq(listings.status, "pending_review"), realListing, lte(listings.updatedAt, ago(now, FOLLOW_UP.reviewHours * HOUR))))
+    .where(
+      and(eq(listings.status, "pending_review"), realListing, lte(listings.updatedAt, ago(now, FOLLOW_UP.reviewHours * HOUR))),
+    )
     .orderBy(asc(listings.updatedAt))
     .limit(LIMIT);
   return rows.map((l) => ({
@@ -521,7 +563,11 @@ export function followUpCounts(f: FollowUps) {
  * (entity_type, entity_id, kind) makes this safe when two runs overlap: only one of them gets true.
  */
 async function claim(entityType: string, entityId: string, kind: string) {
-  const rows = await db.insert(reminders).values({ entityType, entityId, kind }).onConflictDoNothing().returning({ id: reminders.id });
+  const rows = await db
+    .insert(reminders)
+    .values({ entityType, entityId, kind })
+    .onConflictDoNothing()
+    .returning({ id: reminders.id });
   return rows.length > 0;
 }
 
@@ -555,7 +601,8 @@ export async function sendFollowUps(now = new Date()) {
     try {
       const today = dubaiToday(now);
       if (await claim("digest", today, "ops")) {
-        const line = (k: FollowUpKey) => (counts[k] ? { t: "admin" as const, key: `followups.digest.${k}` as const, vars: { n: counts[k] } } : "");
+        const line = (k: FollowUpKey) =>
+          counts[k] ? { t: "admin" as const, key: `followups.digest.${k}` as const, vars: { n: counts[k] } } : "";
         await notifyAdmins(
           "ops.digest",
           {
