@@ -3,11 +3,16 @@ import type { Source } from "@/db/schema";
 // First-touch attribution: the campaign tags, partner ?ref= code, landing page and referring site of the visit that
 // brought someone here. Kept in sessionStorage for the tab's lifetime (not a cookie, so the Cookie Policy stays
 // true), sent with the seller estimate, sign-up, listing and enquiry forms, and stored with each record.
+// The forms also send the tab's anonymous analytics session id (`sid`, see analyticsSessionId below), so
+// /admin/analytics can show which pages a lead viewed before sending the form.
 
 export type { Source };
 
 const KEY = "od_src";
 const FIELDS = ["utm_source", "utm_medium", "utm_campaign", "ref", "landing", "referrer_host"] as const;
+
+/** Shape of an analytics session id (page_views.session_id): what analyticsSessionId makes, checked on the server too. */
+export const SESSION_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
 
 /** Known keys only, trimmed strings up to 200 characters; null when nothing is left. Safe on untrusted input. */
 export function sanitizeSource(v: unknown): Source | null {
@@ -17,7 +22,47 @@ export function sanitizeSource(v: unknown): Source | null {
     const s = (v as Record<string, unknown>)[k];
     if (typeof s === "string" && s.trim()) out[k] = s.trim().slice(0, 200);
   }
+  const sid = (v as Record<string, unknown>).sid;
+  if (typeof sid === "string" && SESSION_ID_RE.test(sid)) out.sid = sid;
   return Object.keys(out).length ? out : null;
+}
+
+const SID_KEY = "od_sid";
+/** A page view after this long without one starts a new analytics session (the usual 30-minute rule). */
+export const SESSION_IDLE_MS = 30 * 60 * 1000;
+
+function randomId() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Browser: this tab's anonymous analytics session id (random, kept in sessionStorage under "od_sid", never a cookie),
+ * created when missing; null when storage is blocked.
+ * - "view" (the page-view tracker, on each page view): starts a new session after SESSION_IDLE_MS without activity.
+ * - "touch" (the tracker, when the visitor leaves a page): marks activity, so a long read keeps its session.
+ * - no mode (the forms): reads the id as it is, so a form that took a long time still belongs to its visit.
+ */
+export function analyticsSessionId(mode?: "view" | "touch"): string | null {
+  try {
+    const now = Date.now();
+    let saved: { id?: unknown; at?: unknown } | null = null;
+    try {
+      saved = JSON.parse(sessionStorage.getItem(SID_KEY) || "null");
+    } catch {}
+    const id = typeof saved?.id === "string" && SESSION_ID_RE.test(saved.id) ? saved.id : null;
+    const idle = typeof saved?.at !== "number" || now - saved.at > SESSION_IDLE_MS;
+    if (id && !(mode === "view" && idle)) {
+      if (mode) sessionStorage.setItem(SID_KEY, JSON.stringify({ id, at: now }));
+      return id;
+    }
+    const fresh = randomId();
+    sessionStorage.setItem(SID_KEY, JSON.stringify({ id: fresh, at: now }));
+    return fresh;
+  } catch {
+    return null;
+  }
 }
 
 /** The hidden `source` form field (JSON) as submitted, for server actions. */
@@ -54,12 +99,13 @@ export function captureAttribution() {
   }
 }
 
-/** Browser: the stored attribution as the JSON the forms send, or "" when there is none. */
+/** Browser: the stored attribution, plus the tab's analytics session id, as the JSON the forms send ("" when none). */
 export function readAttribution(): string {
   // A form's effect runs before the layout's, so on the landing page itself it would otherwise read nothing yet.
   captureAttribution();
   try {
-    const src = sanitizeSource(JSON.parse(sessionStorage.getItem(KEY) || "null"));
+    const stored: unknown = JSON.parse(sessionStorage.getItem(KEY) || "null");
+    const src = sanitizeSource({ ...(stored && typeof stored === "object" ? stored : {}), sid: analyticsSessionId() });
     return src ? JSON.stringify(src) : "";
   } catch {
     return "";
