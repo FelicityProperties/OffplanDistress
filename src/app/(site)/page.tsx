@@ -51,7 +51,7 @@ async function HeroDeal({ deal, locale }: { deal: ListingCard; locale: Locale })
       className="group relative block w-full max-w-sm rounded-3xl bg-card p-3 shadow-lift ring-1 ring-primary-foreground/25 transition-transform duration-300 hover:-translate-y-1 animate-float"
     >
       <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-muted">
-        <DealImage src={deal.images[0]} alt={deal.projectName} className="transition-transform duration-700 group-hover:scale-105" />
+        <DealImage src={deal.images[0]} alt={deal.projectName} priority className="transition-transform duration-700 group-hover:scale-105" />
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent" />
         <div className="absolute start-3 top-3 flex gap-1.5">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-ink/70 px-2.5 py-1 text-[11px] font-semibold text-primary-foreground backdrop-blur">
@@ -68,7 +68,7 @@ async function HeroDeal({ deal, locale }: { deal: ListingCard; locale: Locale })
           <div className="min-w-0">
             <p className="truncate text-base font-semibold">{deal.projectName}</p>
             <p className="truncate text-xs text-primary-foreground/75">
-              {communityName(tc, deal.community)} · {tc(`unit.${deal.unitType}`)}
+              {communityName(tc, deal.community, deal.communityOther)} · {tc(`unit.${deal.unitType}`)}
             </p>
           </div>
           {deal.isSample && <SampleBadge />}

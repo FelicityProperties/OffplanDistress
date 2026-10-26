@@ -120,7 +120,8 @@ export default defineMessages({
     "opt3.takeover": "The buyer also takes over the {amount} still owed to the developer.",
     "opt3.noMarket": "We've assumed today's price equals your purchase price. Add today's price for a sharper estimate.",
     "opt3.underwater": "At today's price the drop wipes out what you've paid, so a buyer would pay little or nothing for the contract.",
-    "opt3.nocWarning": "Many developers only issue a resale NOC after 30–40% is paid. We'll check your developer's policy and tell you your options.",
+    "opt3.nocWarning":
+      "Most developers require 30–50% of the price to be paid before they issue a resale NOC; the rule depends on your developer. We'll check its policy and tell you your options.",
 
     "cta.list": "List my unit",
     "cta.whatsapp": "Ask us on WhatsApp",
@@ -302,7 +303,7 @@ export default defineMessages({
     "opt3.noMarket": "افترضنا أن السعر الحالي يساوي سعر شرائك. أضف السعر الحالي للحصول على تقدير أدق.",
     "opt3.underwater": "بسعر اليوم يمحو انخفاض السعر ما دفعته، لذا قد لا يدفع المشتري شيئاً يُذكر مقابل العقد.",
     "opt3.nocWarning":
-      "كثير من المطوّرين لا يصدرون شهادة عدم ممانعة لإعادة البيع إلا بعد سداد 30–40% من السعر. سنتحقق من سياسة مطوّرك ونوضح لك خياراتك.",
+      "يشترط معظم المطوّرين سداد ما بين 30% و50% من السعر قبل إصدار شهادة عدم الممانعة لإعادة البيع، وتختلف القاعدة من مطوّر إلى آخر. سنتحقق من سياسة مطوّرك ونوضح لك خياراتك.",
 
     "cta.list": "اعرض وحدتي",
     "cta.whatsapp": "تواصل معنا عبر واتساب",

@@ -69,6 +69,27 @@ export const TEMPLATES = {
     en: { title: "An offer on {project} was withdrawn", body: "The buyer withdrew their offer of {amount}.", cta: "Open listing" },
     ar: { title: "تم سحب عرض على {project}", body: "سحب المشتري عرضه البالغ {amount}.", cta: "فتح الإعلان" },
   },
+  // The other bidders on a unit once the seller accepts an offer (see src/lib/offers.ts).
+  "offer.backup": {
+    en: {
+      title: "Your offer on {project} is kept as a backup",
+      body: "The seller accepted another buyer's offer. Your offer of {amount} stays on file as a backup: if that deal doesn't go ahead, the unit returns to the market and your offer becomes active again. You can withdraw it at any time.",
+      cta: "View my offers",
+    },
+    ar: {
+      title: "عرضك على {project} محفوظ كعرض احتياطي",
+      body: "قبل البائع عرض مشترٍ آخر. سيبقى عرضك البالغ {amount} محفوظاً كعرض احتياطي: إذا لم تكتمل تلك الصفقة، تعود الوحدة إلى السوق ويصبح عرضك نشطاً من جديد. يمكنك سحب عرضك في أي وقت.",
+      cta: "عرض عروضي",
+    },
+  },
+  "offer.backup_reopened": {
+    en: { title: "{project} is back on the market", body: "The deal the seller had agreed didn't go ahead, so the unit is available once more and your backup offer of {amount} is active again.", cta: "View my offers" },
+    ar: { title: "عادت الوحدة في {project} إلى السوق", body: "لم تكتمل الصفقة التي وافق عليها البائع، فعادت الوحدة متاحة وأصبح عرضك الاحتياطي البالغ {amount} نشطاً من جديد.", cta: "عرض عروضي" },
+  },
+  "offer.unit_sold": {
+    en: { title: "Your offer on {project} was closed", body: "The seller agreed a sale with another buyer, so the unit is no longer available and your offer of {amount} was closed.", cta: "Browse deals" },
+    ar: { title: "أُغلق عرضك على {project}", body: "اتفق البائع على البيع لمشترٍ آخر، لذلك لم تعد الوحدة متاحة وأُغلق عرضك البالغ {amount}.", cta: "تصفّح الصفقات" },
+  },
   "deal.agreed.admin": {
     en: { title: "Deal agreed on {project} at {amount}", body: "Seller {seller}, buyer {buyer}. Start the developer NOC and move the listing to “NOC in progress”.", cta: "Open listing" },
     ar: { title: "تم الاتفاق على صفقة {project} بمبلغ {amount}", body: "البائع {seller}، المشتري {buyer}. ابدأ إجراءات شهادة عدم الممانعة وانقل الإعلان إلى «قيد إصدار شهادة عدم الممانعة».", cta: "فتح الإعلان" },
@@ -104,6 +125,12 @@ export const TEMPLATES = {
   "password.reset": {
     en: { title: "Reset your password", body: "Someone asked to reset the password for this account. The link works for 1 hour. If it wasn't you, ignore this email.", cta: "Choose a new password" },
     ar: { title: "إعادة تعيين كلمة المرور", body: "طلب أحدهم إعادة تعيين كلمة المرور لهذا الحساب. الرابط صالح لمدة ساعة واحدة. إن لم تطلب ذلك، فتجاهل هذه الرسالة.", cta: "اختيار كلمة مرور جديدة" },
+  },
+  // Admins only. {reason} is one of the errors.ts "notify.cron.*" lines (see src/lib/cron.ts).
+  "ops.cron_failed": {
+    en: { title: "Scheduled job failed: {job}", body: "{reason}\nDetails are in the Vercel function logs for /api/cron/{job}.", cta: "Open admin" },
+    // ‎ keeps the left-to-right path from flipping inside Arabic text.
+    ar: { title: "تعذّر تنفيذ مهمة مجدولة: {job}", body: "{reason}\nتجد التفاصيل في سجلات الدوال على Vercel للمسار ‎/api/cron/{job}.", cta: "فتح لوحة الإدارة" },
   },
 } satisfies Record<string, Template>;
 

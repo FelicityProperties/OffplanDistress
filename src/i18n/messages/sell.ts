@@ -36,9 +36,15 @@ export default defineMessages({
     "step.review": "Review",
 
     "field.developer": "Developer",
-    "field.developer.placeholder": "Select developer",
+    "field.developer.placeholder": "Type to search or pick",
     "field.community": "Community",
-    "field.community.placeholder": "Select community",
+    "field.community.placeholder": "Type to search or pick",
+    "field.developerOther": "Developer's name",
+    "field.developerOther.placeholder": "As written on your SPA",
+    "field.communityOther": "Community name",
+    "field.communityOther.placeholder": "e.g. Dubai Silicon Oasis",
+    "combobox.noMatch": "Not in the list? Choose Other and type the name.",
+    "combobox.results": "{n} matches",
     "field.projectName": "Project name",
     "field.projectName.placeholder": "e.g. Creek Edge Tower 2",
     "field.unitType": "Unit type",
@@ -84,8 +90,12 @@ export default defineMessages({
 
     "docs.tileHint": "PDF or image, up to 4 MB",
     "docs.photos": "Photos or developer renders (optional)",
-    "docs.photosHint": "JPG or PNG, up to 4 MB each",
+    "docs.photosHint": "JPG, PNG or WebP. Large phone photos are resized automatically.",
     "docs.photosSelected": "{n} selected",
+    "docs.preparing": "Preparing photos…",
+    "photo.heic":
+      "{name} couldn't be opened in this browser: HEIC photos only open in Safari. Save them as JPG (most phones and photo apps can) or use Safari, then pick them again.",
+    "photo.unreadable": "{name} couldn't be read as a photo. Pick a JPG, PNG or WebP image.",
     "docs.privacy":
       "Documents are only visible to you and our transactions team. You can also upload them later from your dashboard.",
 
@@ -116,6 +126,9 @@ export default defineMessages({
     "error.photoTooLarge": "{name} is larger than 4 MB",
     "error.invalid": "Invalid",
     "error.checkDetails": "Please check your details",
+    "error.developerOther": "Type the developer's name",
+    "error.communityOther": "Type the community's name",
+    "error.docTooLarge": "{name} is larger than 4 MB. Choose a smaller file, such as a compressed PDF.",
 
     "submit.saving": "Saving your listing…",
     "submit.uploading": "Uploading documents ({i}/{n})…",
@@ -140,7 +153,7 @@ export default defineMessages({
     "numbers.youReceive": "You receive",
     "numbers.feeNote": "Listing is free. The buyer pays our 2% + VAT when the transfer completes.",
     nocWarning:
-      "Many developers only issue a resale NOC after 30–40% is paid. We'll check your developer's policy and tell you your options.",
+      "Most developers require 30–50% of the price to be paid before they issue a resale NOC; the rule depends on your developer. We'll check its policy and tell you your options.",
 
     "next.title": "What happens next",
     "next.1": "We verify your SPA & payments (1–2 working days)",
@@ -152,6 +165,7 @@ export default defineMessages({
     "uploader.kind": "Document type",
     "uploader.button": "Upload",
     "uploader.hint": "PDF, JPG or PNG · up to 4 MB each",
+    "uploader.photoHint": "JPG, PNG or WebP · large photos are resized automatically",
     "uploader.uploaded": "File uploaded",
     "uploader.uploadedMany": "{n} files uploaded",
     "uploader.failed": "Upload failed",
@@ -164,6 +178,7 @@ export default defineMessages({
     "upload.tooLarge": "{name} is larger than 4 MB.",
     "upload.badType": "{name}: upload a PDF, JPG, PNG or WebP.",
     "upload.photoOnly": "Photos must be images.",
+    "upload.photoType": "{name}: photos must be JPG, PNG or WebP.",
     "upload.bodyTooLarge": "Each file must be 4 MB or smaller.",
     "upload.quota": "This listing has reached its upload limit. Contact our team if you need to add more files.",
     "upload.photoLimit": "This listing already has the maximum of 20 photos.",
@@ -201,9 +216,15 @@ export default defineMessages({
     "step.review": "المراجعة",
 
     "field.developer": "المطوّر",
-    "field.developer.placeholder": "اختر المطوّر",
+    "field.developer.placeholder": "اكتب للبحث أو اختر من القائمة",
     "field.community": "المنطقة",
-    "field.community.placeholder": "اختر المنطقة",
+    "field.community.placeholder": "اكتب للبحث أو اختر من القائمة",
+    "field.developerOther": "اسم المطوّر",
+    "field.developerOther.placeholder": "كما هو مكتوب في اتفاقية البيع والشراء",
+    "field.communityOther": "اسم المنطقة",
+    "field.communityOther.placeholder": "مثال: واحة دبي للسيليكون",
+    "combobox.noMatch": "غير موجود في القائمة؟ اختر «أخرى» واكتب الاسم.",
+    "combobox.results": "عدد النتائج: {n}",
     "field.projectName": "اسم المشروع",
     "field.projectName.placeholder": "مثال: Creek Edge Tower 2",
     "field.unitType": "نوع الوحدة",
@@ -248,7 +269,11 @@ export default defineMessages({
     "field.description.placeholder": "تصميم مُحسَّن، وحدة زاوية، سبب البيع…",
 
     "docs.tileHint": "ملف PDF أو صورة، حتى 4 ميغابايت",
-    "docs.photosHint": "JPG أو PNG، حتى 4 ميغابايت لكل صورة",
+    "docs.photosHint": "JPG أو PNG أو WebP. يُصغَّر حجم صور الهاتف الكبيرة تلقائياً.",
+    "docs.preparing": "جارٍ تجهيز الصور…",
+    "photo.heic":
+      "تعذّر فتح ⁨{name}⁩ في هذا المتصفح، إذ لا تُفتح صور HEIC إلا في متصفح Safari. احفظها بصيغة JPG (تتيح ذلك معظم الهواتف وتطبيقات الصور) أو استخدم Safari، ثم اخترها مرة أخرى.",
+    "photo.unreadable": "تعذّرت قراءة ⁨{name}⁩ كصورة. اختر صورة بصيغة JPG أو PNG أو WebP.",
     "docs.photos": "صور أو تصاميم المطوّر (اختياري)",
     "docs.photosSelected": "تم اختيار {n}",
     "docs.privacy": "لا يطّلع على المستندات سواك وفريق المعاملات لدينا. ويمكنك أيضاً رفعها لاحقاً من لوحة التحكم.",
@@ -279,6 +304,9 @@ export default defineMessages({
     "error.photoTooLarge": "حجم ⁨{name}⁩ أكبر من 4 ميغابايت",
     "error.invalid": "قيمة غير صالحة",
     "error.checkDetails": "يرجى مراجعة بياناتك",
+    "error.developerOther": "اكتب اسم المطوّر",
+    "error.communityOther": "اكتب اسم المنطقة",
+    "error.docTooLarge": "حجم ⁨{name}⁩ أكبر من 4 ميغابايت. اختر ملفاً أصغر، مثل ملف PDF مضغوط.",
 
     "submit.saving": "جارٍ حفظ إعلانك…",
     "submit.uploading": "جارٍ رفع المستندات ({i}/{n})…",
@@ -302,7 +330,7 @@ export default defineMessages({
     "numbers.youReceive": "صافي ما تحصل عليه",
     "numbers.feeNote": "الإعلان مجاني. يدفع المشتري رسومنا البالغة 2% + ضريبة القيمة المضافة عند إتمام نقل الملكية.",
     nocWarning:
-      "لا يُصدر كثير من المطوّرين شهادة عدم الممانعة لإعادة البيع إلا بعد سداد ما بين 30% و40% من السعر. سنتحقق من سياسة مطوّرك ونوضح لك الخيارات المتاحة.",
+      "يشترط معظم المطوّرين سداد ما بين 30% و50% من السعر قبل إصدار شهادة عدم الممانعة لإعادة البيع، وتختلف القاعدة من مطوّر إلى آخر. سنتحقق من سياسة مطوّرك ونوضح لك الخيارات المتاحة.",
 
     "next.title": "الخطوات التالية",
     "next.1": "نتحقق من اتفاقية البيع والشراء ومن دفعاتك (خلال يوم أو يومي عمل)",
@@ -314,6 +342,7 @@ export default defineMessages({
     "uploader.kind": "نوع المستند",
     "uploader.button": "رفع",
     "uploader.hint": "PDF أو JPG أو PNG · حتى 4 ميغابايت لكل ملف",
+    "uploader.photoHint": "JPG أو PNG أو WebP · يُصغَّر حجم الصور الكبيرة تلقائياً",
     "uploader.uploaded": "تم رفع الملف",
     "uploader.uploadedMany": "تم رفع الملفات ({n})",
     "uploader.failed": "تعذّر رفع الملف",
@@ -326,6 +355,7 @@ export default defineMessages({
     "upload.tooLarge": "حجم ⁨{name}⁩ أكبر من 4 ميغابايت.",
     "upload.badType": "⁨{name}⁩: ارفع ملف PDF أو JPG أو PNG أو WebP.",
     "upload.photoOnly": "يجب أن تكون الصور ملفات صور، وليس PDF.",
+    "upload.photoType": "⁨{name}⁩: يجب أن تكون الصور بصيغة JPG أو PNG أو WebP.",
     "upload.bodyTooLarge": "يجب ألا يتجاوز حجم كل ملف 4 ميغابايت.",
     "upload.quota": "بلغ هذا الإعلان الحد الأقصى للملفات المرفوعة. تواصل مع فريقنا إذا كنت بحاجة إلى إضافة المزيد.",
     "upload.photoLimit": "يضم هذا الإعلان بالفعل الحد الأقصى وهو 20 صورة.",

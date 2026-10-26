@@ -724,7 +724,7 @@ export function ExitCalculator() {
                   note={a.remaining > 0 ? rich(t("opt3.takeover"), { amount: money(a.remaining) }) : undefined}
                 />
               </dl>
-              {(!a.hasMarket || a.position === 0 || a.paidPct < 0.4) && (
+              {(!a.hasMarket || a.position === 0 || a.belowNocThreshold) && (
                 <ul className="mt-3 space-y-2 text-xs leading-relaxed text-primary-foreground/75">
                   {!a.hasMarket && (
                     <li className="flex items-start gap-2">
@@ -738,7 +738,7 @@ export function ExitCalculator() {
                       {t("opt3.underwater")}
                     </li>
                   )}
-                  {a.paidPct < 0.4 && (
+                  {a.belowNocThreshold && (
                     <li className="flex items-start gap-2">
                       <Info className="mt-px h-3.5 w-3.5 shrink-0 text-gold" aria-hidden />
                       {tx("opt3.nocWarning")}

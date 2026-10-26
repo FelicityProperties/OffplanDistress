@@ -36,11 +36,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { db } from "@/db";
 import { listings } from "@/db/schema";
 import { getLocale, getT } from "@/i18n/server";
-import type { TFn, TKey } from "@/i18n/translator";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND, FEES, PUBLIC_STATUSES } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAED, formatDate, formatPct, formatQuarter, formatUSDFromAED, parseRefCode, refCode } from "@/lib/format";
+import { communityName, developerName } from "@/lib/place-names";
 import { siteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 import { getListingByRef, similarDeals, watchedIds } from "@/lib/listings";
@@ -49,17 +49,6 @@ async function load(ref: string) {
   const refNo = parseRefCode(ref);
   if (!refNo) return null;
   return getListingByRef(refNo);
-}
-
-/** Arabic/English community name; unknown names are shown as entered. */
-function communityName(tc: TFn<"common">, name: string) {
-  const key = `community.${name}` as TKey<"common">;
-  const label = tc(key);
-  return label === key ? name : label;
-}
-
-function developerName(tc: TFn<"common">, name: string) {
-  return name === "Other" ? tc("developer.Other") : name;
 }
 
 export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): Promise<Metadata> {
@@ -74,8 +63,8 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
       ? t("meta.titleDiscount", { ...vars, pct: Math.round(a.discountVsLaunch * 100) })
       : t("meta.title", vars);
   const description = t("meta.description", {
-    developer: developerName(tc, l.developer),
-    community: communityName(tc, l.community),
+    developer: developerName(tc, l.developer, l.developerOther),
+    community: communityName(tc, l.community, l.communityOther),
     paid: formatPct(a.paidPct),
     handover: formatQuarter(l.handoverDate, locale),
     upfront: formatAED(l.askingPrice, locale),
@@ -112,8 +101,8 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     getLocale(),
   ]);
   const a = analyzeDeal(l);
-  const community = communityName(tc, l.community);
-  const developer = developerName(tc, l.developer);
+  const community = communityName(tc, l.community, l.communityOther);
+  const developer = developerName(tc, l.developer, l.developerOther);
   const discountPct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
   const paidWidth = Math.min(100, Math.max(0, Math.round(a.paidPct * 100)));
   const plan = l.paymentPlan ?? [];

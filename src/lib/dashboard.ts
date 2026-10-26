@@ -13,6 +13,7 @@ export async function myListings(userId: string) {
       verified: listings.verified,
       projectName: listings.projectName,
       community: listings.community,
+      communityOther: listings.communityOther,
       unitType: listings.unitType,
       askingPrice: listings.askingPrice,
       images: listings.images,
@@ -69,6 +70,7 @@ export async function offersReceived(userId: string) {
       refNo: listings.refNo,
       projectName: listings.projectName,
       askingPrice: listings.askingPrice,
+      listingStatus: listings.status,
       buyerKyc: users.kycStatus,
     })
     .from(offers)

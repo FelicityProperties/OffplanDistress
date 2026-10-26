@@ -27,7 +27,7 @@ export function Gallery({ images, alt, badge }: { images: string[]; alt: string;
           images.length ? "aspect-[16/10] lg:aspect-[16/9]" : "aspect-[21/9]",
         )}
       >
-        <DealImage key={img} src={images[img]} alt={alt} className="animate-in fade-in duration-500" />
+        <DealImage key={img} src={images[img]} alt={alt} priority={img === 0} className="animate-in fade-in duration-500" />
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/55 via-ink/0 to-ink/25"

@@ -8,11 +8,11 @@ import { Pipeline } from "@/components/Pipeline";
 import { ToneStatus } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
-import type { TKey } from "@/i18n/translator";
 import { requireUser } from "@/lib/auth";
-import { COMMUNITIES, LISTING_STATUS } from "@/lib/config";
+import { LISTING_STATUS } from "@/lib/config";
 import { myListings } from "@/lib/dashboard";
 import { formatAED, formatNumber, refCode } from "@/lib/format";
+import { communityName } from "@/lib/place-names";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("dashboard");
@@ -22,7 +22,6 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function MyListingsPage() {
   const user = await requireUser("/dashboard/listings");
   const [listings, t, tc, locale] = await Promise.all([myListings(user.id), getT("dashboard"), getT("common"), getLocale()]);
-  const community = (c: string) => (COMMUNITIES.includes(c) ? tc(`community.${c}` as TKey<"common">) : c);
 
   return (
     <div className="space-y-6">
@@ -54,7 +53,7 @@ export default async function MyListingsPage() {
                   {l.projectName}
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  <bdi>{refCode(l.refNo)}</bdi> · {tc(`unit.${l.unitType}`)} · {community(l.community)} ·{" "}
+                  <bdi>{refCode(l.refNo)}</bdi> · {tc(`unit.${l.unitType}`)} · {communityName(tc, l.community, l.communityOther)} ·{" "}
                   {formatAED(l.askingPrice, locale)}
                 </p>
               </div>

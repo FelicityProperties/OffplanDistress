@@ -1,8 +1,10 @@
+import { translator } from "@/i18n/translator";
 import { BRAND, PUBLIC_STATUSES, UNIT_TYPES } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, parseRefCode, refCode } from "@/lib/format";
 import { getListingByRef } from "@/lib/listings";
 import { hasArabic, OG, OG_SIZE, OgWordmark, photoDataUrl, renderOg } from "@/lib/og";
+import { communityName, developerName } from "@/lib/place-names";
 
 export const alt = `Distressed off-plan deal on ${BRAND.name}`;
 export const size = OG_SIZE;
@@ -21,8 +23,14 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
   const saving = a.savingVsLaunch != null && a.savingVsLaunch > 0 ? a.savingVsLaunch : null;
   const photo = await photoDataUrl(l.images[0]);
   const unit = UNIT_TYPES[l.unitType as keyof typeof UNIT_TYPES] ?? l.unitType;
-  // Developer and community names are always Latin; an Arabic project name is described instead.
-  const name = hasArabic(l.projectName) ? `${unit} in ${l.community}` : l.projectName;
+  // The card is English, in a Latin font. Listed developer and community names are Latin; a name the seller typed
+  // for "Other" may not be, and neither may the project name, which is then described instead.
+  const tc = translator("common", "en");
+  const typedCommunity = communityName(tc, l.community, l.communityOther);
+  const typedDeveloper = developerName(tc, l.developer, l.developerOther);
+  const community = hasArabic(typedCommunity) ? "Dubai" : typedCommunity;
+  const developer = hasArabic(typedDeveloper) ? "" : typedDeveloper;
+  const name = hasArabic(l.projectName) ? `${unit} in ${community}` : l.projectName;
 
   return renderOg(
     (
@@ -42,12 +50,12 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
                 </div>
               )}
             </div>
-            <div style={{ display: "flex", fontSize: 22, letterSpacing: 3, color: OG.muted, textTransform: "uppercase" }}>{l.developer}</div>
+            <div style={{ display: "flex", fontSize: 22, letterSpacing: 3, color: OG.muted, textTransform: "uppercase" }}>{developer}</div>
             <div style={{ display: "flex", marginTop: 6, fontSize: 52, fontWeight: 700, lineHeight: 1.08, letterSpacing: -1 }}>
               {name.length > 42 ? `${name.slice(0, 40)}…` : name}
             </div>
             <div style={{ display: "flex", marginTop: 10, fontSize: 26, color: OG.muted }}>
-              {l.community} · {unit} · Handover {formatQuarter(l.handoverDate)}
+              {community} · {unit} · Handover {formatQuarter(l.handoverDate)}
             </div>
           </div>
           <div style={{ display: "flex", gap: 40 }}>

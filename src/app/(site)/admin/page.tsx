@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/auth";
 import { platformFee } from "@/lib/deal-math";
 import { adminListings, adminStats } from "@/lib/admin";
 import { formatAED, formatAEDCompact, formatDate, refCode } from "@/lib/format";
+import { developerName } from "@/lib/place-names";
 
 export default async function AdminQueue() {
   await requireAdmin();
@@ -65,7 +66,7 @@ export default async function AdminQueue() {
                     {q.projectName}
                   </Link>
                   <p className="text-xs text-muted-foreground">
-                    <bdi>{refCode(q.refNo)}</bdi> · {q.developer === "Other" ? tc("developer.Other") : q.developer} ·{" "}
+                    <bdi>{refCode(q.refNo)}</bdi> · {developerName(tc, q.developer, q.developerOther)} ·{" "}
                     {tc(`unit.${q.unitType}`)} · {t("queue.submitted", { date: formatDate(q.createdAt, locale) })}
                   </p>
                 </TableCell>

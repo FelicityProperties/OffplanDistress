@@ -124,6 +124,9 @@ export const listings = pgTable(
     projectName: text("project_name").notNull(),
     developer: text("developer").notNull(),
     community: text("community").notNull(),
+    /** The name the seller typed when they picked "Other" (developer / community stay "Other" until our team maps it). */
+    developerOther: text("developer_other"),
+    communityOther: text("community_other"),
     unitType: unitType("unit_type").notNull(),
     sizeSqft: integer("size_sqft").notNull(),
     floor: text("floor"),

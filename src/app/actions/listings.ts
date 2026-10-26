@@ -47,6 +47,10 @@ const listingSchema = (t: T) =>
       projectName: z.string().trim().min(2, t("field.projectName")).max(120),
       developer: z.string().refine((v) => DEVELOPERS.includes(v), t("field.developer")),
       community: z.string().refine((v) => COMMUNITIES.includes(v), t("field.community")),
+      // The name the seller typed when they picked "Other": our team needs the developer for the NOC, and buyers
+      // see it instead of "Other".
+      developerOther: z.string().trim().max(80).optional(),
+      communityOther: z.string().trim().max(80).optional(),
       unitType: z.enum(Object.keys(UNIT_TYPES) as [keyof typeof UNIT_TYPES, ...(keyof typeof UNIT_TYPES)[]], t("field.unitType")),
       sizeSqft: z.coerce.number(t("field.size")).int(t("field.size")).positive(t("field.size")),
       floor: z.string().trim().max(40).optional(),
@@ -64,6 +68,14 @@ const listingSchema = (t: T) =>
     .refine((v) => v.amountPaid <= v.originalPrice, {
       path: ["amountPaid"],
       message: t("field.amountPaidMax"),
+    })
+    .refine((v) => v.developer !== "Other" || (v.developerOther ?? "").length >= 2, {
+      path: ["developerOther"],
+      message: t("field.developerOther"),
+    })
+    .refine((v) => v.community !== "Other" || (v.communityOther ?? "").length >= 2, {
+      path: ["communityOther"],
+      message: t("field.communityOther"),
     });
 
 function readListingForm(formData: FormData) {
@@ -79,6 +91,8 @@ function readListingForm(formData: FormData) {
     projectName: formData.get("projectName"),
     developer: formData.get("developer"),
     community: formData.get("community"),
+    developerOther: opt("developerOther"),
+    communityOther: opt("communityOther"),
     unitType: formData.get("unitType"),
     sizeSqft: formData.get("sizeSqft"),
     floor: opt("floor"),
@@ -134,6 +148,8 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
       projectName: v.projectName,
       developer: v.developer,
       community: v.community,
+      developerOther: v.developer === "Other" ? (v.developerOther ?? null) : null,
+      communityOther: v.community === "Other" ? (v.communityOther ?? null) : null,
       unitType: v.unitType,
       sizeSqft: v.sizeSqft,
       floor: v.floor ?? null,

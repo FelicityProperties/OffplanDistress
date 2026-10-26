@@ -107,6 +107,11 @@ export default defineMessages({
 
     "form.status": "Status",
     "form.askingPrice": "Asking price (AED)",
+    "form.developer": "Developer",
+    "form.community": "Community",
+    "form.developerOther": "Developer name (as typed by the seller)",
+    "form.communityOther": "Community name (as typed by the seller)",
+    "form.otherHint": "Shown to buyers instead of “Other”. To map it, pick the matching name from the list; the typed name is then cleared.",
     "form.launchPrice": "Current developer launch price (AED)",
     "form.launchPriceHint": "For an equivalent new unit today — drives the discount badge",
     "form.dldPermit": "DLD advertising permit No. (Trakheesi)",
@@ -242,6 +247,11 @@ export default defineMessages({
 
     "form.status": "الحالة",
     "form.askingPrice": "السعر المطلوب (درهم)",
+    "form.developer": "المطوّر",
+    "form.community": "المنطقة",
+    "form.developerOther": "اسم المطوّر (كما كتبه البائع)",
+    "form.communityOther": "اسم المنطقة (كما كتبه البائع)",
+    "form.otherHint": "يظهر للمشترين بدلاً من «أخرى». لربطه بالقائمة، اختر الاسم المطابق منها، وعندها يُحذف الاسم المكتوب.",
     "form.launchPrice": "سعر الإطلاق الحالي لدى المطوّر (درهم)",
     "form.launchPriceHint": "لوحدة جديدة مماثلة اليوم، ويُستخدم لاحتساب شارة الخصم",
     "form.dldPermit": "رقم تصريح الإعلان من دائرة الأراضي والأملاك (تراخيصي)",

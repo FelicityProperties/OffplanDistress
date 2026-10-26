@@ -19,6 +19,8 @@ export const cardColumns = {
   projectName: listings.projectName,
   developer: listings.developer,
   community: listings.community,
+  developerOther: listings.developerOther,
+  communityOther: listings.communityOther,
   unitType: listings.unitType,
   sizeSqft: listings.sizeSqft,
   view: listings.view,
@@ -43,6 +45,9 @@ export type ListingCard = {
   projectName: string;
   developer: string;
   community: string;
+  /** The seller's own name when developer / community is "Other". */
+  developerOther: string | null;
+  communityOther: string | null;
   unitType: UnitTypeKey;
   sizeSqft: number;
   view: string | null;
@@ -128,6 +133,8 @@ function dealConditions(f: DealFilters): SQL[] {
         ilike(listings.projectName, like),
         ilike(listings.developer, like),
         ilike(listings.community, like),
+        ilike(listings.developerOther, like),
+        ilike(listings.communityOther, like),
         ilike(listings.view, like),
       )!,
     );
@@ -262,19 +269,35 @@ export async function getListingByRef(refNo: number) {
 }
 
 export async function similarDeals(l: { id: string; community: string; developer: string }, limit = 3) {
+  // "Other" is a bucket, not a place or a developer: two "Other" listings have nothing in common.
+  const same = [
+    l.community !== "Other" ? eq(listings.community, l.community) : undefined,
+    l.developer !== "Other" ? eq(listings.developer, l.developer) : undefined,
+  ].filter((c) => c != null);
+  if (!same.length) return [];
   const rows = await db
     .select(cardColumns)
     .from(listings)
-    .where(
-      and(
-        inArray(listings.status, PUBLIC_STATUSES),
-        ne(listings.id, l.id),
-        or(eq(listings.community, l.community), eq(listings.developer, l.developer)),
-      ),
-    )
+    .where(and(inArray(listings.status, PUBLIC_STATUSES), ne(listings.id, l.id), or(...same)))
     .orderBy(sql`${discount} desc nulls last`)
     .limit(limit);
   return rows as ListingCard[];
+}
+
+/**
+ * Communities and developers from the lists in config.ts that have at least one listing a buyer can see, so the deals
+ * filter panel only offers choices that find something.
+ */
+export async function dealFacets() {
+  const onMarket = inArray(listings.status, PUBLIC_STATUSES);
+  const [communities, developers] = await Promise.all([
+    db.selectDistinct({ name: listings.community }).from(listings).where(onMarket),
+    db.selectDistinct({ name: listings.developer }).from(listings).where(onMarket),
+  ]);
+  return {
+    communities: COMMUNITIES.filter((c) => c !== "Other" && communities.some((r) => r.name === c)),
+    developers: DEVELOPERS.filter((d) => d !== "Other" && developers.some((r) => r.name === d)),
+  };
 }
 
 export async function watchedIds(userId: string | undefined) {

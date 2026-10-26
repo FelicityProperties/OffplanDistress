@@ -142,6 +142,8 @@ export default defineMessages({
     "offerAction.counterAccepted": "Counter accepted — our team will be in touch",
     "offerAction.withdrawn": "Offer withdrawn",
     "offerAction.counterDeclined": "Counter declined",
+    "offerAction.backup": "Backup offer",
+    "offerAction.backupHint": "Another offer was accepted on this unit. This one stays on file in case that deal doesn't go ahead.",
   },
   ar: {
     viewAll: "عرض الكل",
@@ -282,5 +284,7 @@ export default defineMessages({
     "offerAction.counterAccepted": "تم قبول العرض المقابل — سيتواصل معك فريقنا",
     "offerAction.withdrawn": "تم سحب العرض",
     "offerAction.counterDeclined": "تم رفض العرض المقابل",
+    "offerAction.backup": "عرض احتياطي",
+    "offerAction.backupHint": "قُبل عرض آخر على هذه الوحدة. يبقى هذا العرض محفوظاً تحسّباً لعدم اكتمال تلك الصفقة.",
   },
 });

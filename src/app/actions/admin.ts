@@ -9,9 +9,10 @@ import { files, inquiries, listings, offers, sessions, users } from "@/db/schema
 import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
-import { LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
+import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
 import { refCode } from "@/lib/format";
 import { notify, notifyPriceDrop } from "@/lib/notify";
+import { closeOpenOffers, reopenBackups } from "@/lib/offers";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
@@ -143,6 +144,11 @@ const adminEditSchema = (t: T) =>
     adminNotes: z.string().trim().max(4000).optional(),
     dldPermit: z.string().trim().max(40).optional(),
     images: z.array(z.string().max(500)).max(20),
+    // Mapping a seller's "Other" to a listed name (or correcting it). Left out = unchanged.
+    developer: z.string().max(80).optional(),
+    community: z.string().max(80).optional(),
+    developerOther: z.string().trim().max(80).optional(),
+    communityOther: z.string().trim().max(80).optional(),
   });
 
 export async function adminUpdateListing(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -158,6 +164,10 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       askingPrice: formData.get("askingPrice"),
       adminNotes: formData.get("adminNotes") || undefined,
       dldPermit: formData.get("dldPermit") || undefined,
+      developer: formData.get("developer") || undefined,
+      community: formData.get("community") || undefined,
+      developerOther: formData.get("developerOther") || undefined,
+      communityOther: formData.get("communityOther") || undefined,
       images: String(formData.get("images") ?? "")
         .split(/\s+/)
         .map((s) => s.trim())
@@ -168,8 +178,21 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (!parsed.success) return { error: t("form.checkFields"), fieldErrors: z.flattenError(parsed.error).fieldErrors };
   const v = parsed.data;
 
-  const [current] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, v.listingId)).limit(1);
+  const [current] = await db
+    .select({ ...listingNoticeColumns, developer: listings.developer, community: listings.community })
+    .from(listings)
+    .where(eq(listings.id, v.listingId))
+    .limit(1);
   if (!current) return { error: t("listing.notFound") };
+  // A listed name, or the one already stored (older rows may hold a name that has since left the list).
+  const developer = v.developer ?? current.developer;
+  const community = v.community ?? current.community;
+  if (!DEVELOPERS.includes(developer) && developer !== current.developer) {
+    return { error: t("form.checkFields"), fieldErrors: { developer: [t("field.developer")] } };
+  }
+  if (!COMMUNITIES.includes(community) && community !== current.community) {
+    return { error: t("form.checkFields"), fieldErrors: { community: [t("field.community")] } };
+  }
   if (!current.isSample && PUBLIC_STATUSES.includes(v.status) && !v.dldPermit) {
     return { error: t("form.checkFields"), fieldErrors: { dldPermit: [t("listing.permitRequired")] } };
   }
@@ -185,6 +208,11 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       askingPrice: v.askingPrice,
       adminNotes: v.adminNotes ?? null,
       dldPermit: v.dldPermit || null,
+      developer,
+      community,
+      // Only an "Other" keeps a typed name; mapping to a listed name clears it. Left out of the form = unchanged.
+      ...(v.developer ? { developerOther: developer === "Other" ? (v.developerOther ?? null) : null } : {}),
+      ...(v.community ? { communityOther: community === "Other" ? (v.communityOther ?? null) : null } : {}),
       publicPrice: PUBLIC_STATUSES.includes(v.status) ? v.askingPrice : current.publicPrice,
       images: v.images.filter((u) => /^https:\/\//.test(u) || u.startsWith("/api/files/")),
       publishedAt: current.publishedAt ?? (v.status === "live" ? now : null),
@@ -199,6 +227,11 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   }
   if (statusChanged && v.status === "noc_in_progress") await notifyDealStep(current, "deal.noc_in_progress");
   if (statusChanged && v.status === "transferred") await notifyDealStep(current, "deal.transferred");
+  // The other bidders: a sold unit closes their offers; a deal that fell through makes the backups active again.
+  if (statusChanged && v.status === "transferred") await closeOpenOffers(current);
+  if (statusChanged && v.status === "live" && ["under_offer", "noc_in_progress"].includes(current.status)) {
+    await reopenBackups(current);
+  }
   // Watchers only hear about drops on deals they can open (and never on sample listings).
   if (!current.isSample && PUBLIC_STATUSES.includes(v.status)) {
     await notifyPriceDrop(current, current.publicPrice ?? current.askingPrice, v.askingPrice);

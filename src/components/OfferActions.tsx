@@ -8,12 +8,37 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useLocale, useT } from "@/i18n/client";
+import type { ListingStatusKey } from "@/lib/config";
 import { formatAED } from "@/lib/format";
 
 type Status = "pending" | "accepted" | "declined" | "countered" | "withdrawn";
 
+/**
+ * Only a live unit can take an offer. Once a deal is agreed on it, its other open offers are backups: they can be
+ * declined or withdrawn, not accepted.
+ */
+function BackupTag({ listingStatus }: { listingStatus: ListingStatusKey }) {
+  const t = useT("dashboard");
+  if (listingStatus !== "under_offer" && listingStatus !== "noc_in_progress") return null;
+  return (
+    <span className="me-1 text-xs text-muted-foreground" title={t("offerAction.backupHint")}>
+      {t("offerAction.backup")}
+    </span>
+  );
+}
+
 /** Seller-side controls for an offer on their listing. */
-export function SellerOfferActions({ offerId, status, amount }: { offerId: string; status: Status; amount: number }) {
+export function SellerOfferActions({
+  offerId,
+  status,
+  amount,
+  listingStatus,
+}: {
+  offerId: string;
+  status: Status;
+  amount: number;
+  listingStatus: ListingStatusKey;
+}) {
   const t = useT("dashboard");
   const tc = useT("common");
   const locale = useLocale();
@@ -40,18 +65,25 @@ export function SellerOfferActions({ offerId, status, amount }: { offerId: strin
     });
 
   if (status !== "pending") return null;
+  // A counter is an acceptance waiting on the buyer, so it needs a live unit too.
+  const live = listingStatus === "live";
   return (
-    <div className="flex justify-end gap-1">
-      <Button size="sm" variant="success" disabled={pending} onClick={() => run("accept")}>
-        <Check /> {tc("accept")}
-      </Button>
-      <Button size="sm" variant="outline" disabled={pending} onClick={() => setOpen(true)}>
-        {tc("counter")}
-      </Button>
+    <div className="flex items-center justify-end gap-1">
+      <BackupTag listingStatus={listingStatus} />
+      {live && (
+        <>
+          <Button size="sm" variant="success" disabled={pending} onClick={() => run("accept")}>
+            <Check /> {tc("accept")}
+          </Button>
+          <Button size="sm" variant="outline" disabled={pending} onClick={() => setOpen(true)}>
+            {tc("counter")}
+          </Button>
+        </>
+      )}
       <Button size="sm" variant="ghost" disabled={pending} onClick={() => run("decline")}>
         {tc("decline")}
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open && live} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("offerAction.counterTitle")}</DialogTitle>
@@ -79,7 +111,17 @@ export function SellerOfferActions({ offerId, status, amount }: { offerId: strin
 }
 
 /** Buyer-side controls for an offer they made. */
-export function BuyerOfferActions({ offerId, status, counterAmount }: { offerId: string; status: Status; counterAmount: number | null }) {
+export function BuyerOfferActions({
+  offerId,
+  status,
+  counterAmount,
+  listingStatus,
+}: {
+  offerId: string;
+  status: Status;
+  counterAmount: number | null;
+  listingStatus: ListingStatusKey;
+}) {
   const t = useT("dashboard");
   const tc = useT("common");
   const locale = useLocale();
@@ -102,11 +144,14 @@ export function BuyerOfferActions({ offerId, status, counterAmount }: { offerId:
 
   if (status === "countered") {
     return (
-      <div className="flex justify-end gap-1">
-        <Button size="sm" variant="success" disabled={pending} onClick={() => run("accept_counter")}>
-          <Check />{" "}
-          {counterAmount ? t("offerAction.acceptAmount", { amount: formatAED(counterAmount, locale) }) : tc("accept")}
-        </Button>
+      <div className="flex items-center justify-end gap-1">
+        <BackupTag listingStatus={listingStatus} />
+        {listingStatus === "live" && (
+          <Button size="sm" variant="success" disabled={pending} onClick={() => run("accept_counter")}>
+            <Check />{" "}
+            {counterAmount ? t("offerAction.acceptAmount", { amount: formatAED(counterAmount, locale) }) : tc("accept")}
+          </Button>
+        )}
         <Button size="sm" variant="ghost" disabled={pending} onClick={() => run("decline")}>
           {tc("decline")}
         </Button>
@@ -115,7 +160,8 @@ export function BuyerOfferActions({ offerId, status, counterAmount }: { offerId:
   }
   if (status === "pending") {
     return (
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-1">
+        <BackupTag listingStatus={listingStatus} />
         <Button size="sm" variant="ghost" disabled={pending} onClick={() => run("withdraw")}>
           {tc("withdraw")}
         </Button>

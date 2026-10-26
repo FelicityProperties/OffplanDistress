@@ -28,6 +28,8 @@ export default defineMessages({
     "field.projectName": "Project name is required",
     "field.developer": "Pick a developer",
     "field.community": "Pick a community",
+    "field.developerOther": "Type the developer's name",
+    "field.communityOther": "Type the community's name",
     "field.unitType": "Pick a unit type",
     "field.size": "Enter the size in sqft",
     "field.spaPrice": "Enter the SPA price",
@@ -39,6 +41,7 @@ export default defineMessages({
     "offer.own": "You can't make an offer on your own listing.",
     "offer.notFound": "Offer not found.",
     "offer.actionUnavailable": "That action isn't available for this offer.",
+    "offer.unitTaken": "This unit already has an accepted offer.",
     "search.defaultName": "My search",
 
     "listing.notFound": "Listing not found.",
@@ -65,6 +68,10 @@ export default defineMessages({
     "notify.inquiry.viewing": "viewing request",
     "notify.inquiry.contact": "contact message",
     "notify.rejectedFallback": "We couldn't verify this listing yet. Contact us and we'll tell you what's needed to publish it.",
+    // Why a scheduled job failed, in the admin-only "ops.cron_failed" notice.
+    "notify.cron.missingSecret": "CRON_SECRET is not set, so the job refused to run, and it will keep refusing until it is. Add it in Vercel → Settings → Environment Variables, then redeploy.",
+    "notify.cron.threw": "The run stopped with an error: {error}",
+    "notify.cron.partial": "Items that failed in this run: {failed}.",
   },
   ar: {
     "auth.signInAgain": "يرجى تسجيل الدخول مرة أخرى.",
@@ -91,6 +98,8 @@ export default defineMessages({
     "field.projectName": "اسم المشروع مطلوب",
     "field.developer": "اختر المطوّر",
     "field.community": "اختر المنطقة",
+    "field.developerOther": "اكتب اسم المطوّر",
+    "field.communityOther": "اكتب اسم المنطقة",
     "field.unitType": "اختر نوع الوحدة",
     "field.size": "أدخل المساحة بالقدم المربعة",
     "field.spaPrice": "أدخل السعر الوارد في اتفاقية البيع والشراء",
@@ -102,6 +111,7 @@ export default defineMessages({
     "offer.own": "لا يمكنك تقديم عرض على إعلانك.",
     "offer.notFound": "العرض غير موجود.",
     "offer.actionUnavailable": "هذا الإجراء غير متاح لهذا العرض.",
+    "offer.unitTaken": "يوجد بالفعل عرض مقبول على هذه الوحدة.",
     "search.defaultName": "بحثي",
 
     "listing.notFound": "الإعلان غير موجود.",
@@ -127,5 +137,8 @@ export default defineMessages({
     "notify.inquiry.viewing": "طلب معاينة",
     "notify.inquiry.contact": "طلب تواصل",
     "notify.rejectedFallback": "لم نتمكن من التحقق من هذا الإعلان بعد. تواصل معنا وسنوضح لك ما يلزم لنشره.",
+    "notify.cron.missingSecret": "لم يُضبط المتغير CRON_SECRET، لذلك رفضت المهمة التشغيل وستستمر في رفضه إلى أن يُضبط. أضِفه في Vercel من Settings ثم Environment Variables، ثم أعِد النشر.",
+    "notify.cron.threw": "توقّف التشغيل بسبب خطأ: {error}",
+    "notify.cron.partial": "عدد العناصر التي تعذّرت معالجتها في هذا التشغيل: {failed}.",
   },
 });

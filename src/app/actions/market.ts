@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { inquiries, listings, offers, savedSearches, users, watchlist } from "@/db/schema";
@@ -11,6 +11,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { PUBLIC_STATUSES } from "@/lib/config";
 import { refCode } from "@/lib/format";
 import { notify, notifyAdmins, type TemplateParams } from "@/lib/notify";
+import { settleOtherOffers } from "@/lib/offers";
 import { clientIp, hit, MINUTE } from "@/lib/throttle";
 import type { FormState } from "./auth";
 
@@ -145,6 +146,39 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
 }
 
 type OfferAction = "accept" | "decline" | "counter" | "withdraw" | "accept_counter";
+type ListingStatus = (typeof listings.$inferSelect)["status"];
+type OfferStatus = (typeof offers.$inferSelect)["status"];
+
+/** A deal is agreed (or done) on the unit, so no other offer on it can be accepted. */
+const TAKEN_STATUSES: ListingStatus[] = ["under_offer", "noc_in_progress", "transferred"];
+
+/**
+ * Accepts the offer and takes its unit off the market in one SQL statement, which is atomic on both drivers
+ * (neon-http has db.batch but no transactions, node-postgres the reverse). The offer row is locked first and must
+ * still be as the user saw it: in `from`, at `amount` (the offer, or the seller's counter); the listing only moves
+ * from live to under_offer if so; the offer is only accepted if the listing moved. Of two acceptances racing on one
+ * unit, the second finds it no longer live and changes nothing. Returns whether this call accepted the offer.
+ */
+async function acceptOffer(offerId: string, listingId: string, from: "pending" | "countered", amount: number) {
+  // A buyer revising their offer at the same moment must not be accepted at the old amount.
+  const seen = from === "pending" ? sql`amount = ${amount}` : sql`counter_amount = ${amount}`;
+  const { rows } = await db.execute<{ accepted: number }>(sql`
+    with target as (
+      select id from offers
+      where id = ${offerId} and listing_id = ${listingId} and status = ${from} and ${seen}
+      for update
+    ), unit as (
+      update listings set status = 'under_offer', updated_at = now()
+      where id = ${listingId} and status = 'live' and exists (select 1 from target)
+      returning id
+    ), accepted as (
+      update offers set status = 'accepted', amount = ${amount}, updated_at = now()
+      where id in (select id from target) and exists (select 1 from unit)
+      returning id
+    )
+    select count(*)::int as accepted from accepted`);
+  return Number(rows[0]?.accepted) === 1;
+}
 
 export async function respondToOffer(offerId: string, action: OfferAction, counterAmount?: number) {
   const t = await getT("errors");
@@ -192,49 +226,60 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
       { except: [user.id] },
     );
   };
-
-  if ((action === "accept" || action === "decline" || action === "counter") && isSeller && offer.status === "pending") {
-    if (action === "counter") {
-      if (!counterAmount || !Number.isFinite(counterAmount) || counterAmount <= 0) return { error: t("field.counterAmount") };
-      const counter = Math.round(counterAmount);
-      await db
-        .update(offers)
-        .set({ status: "countered", counterAmount: counter, updatedAt: now })
-        .where(eq(offers.id, offerId));
-      await toBuyer("offer.countered", { project, original: { aed: offer.amount }, amount: { aed: counter } });
-    } else {
-      await db
-        .update(offers)
-        .set({ status: action === "accept" ? "accepted" : "declined", updatedAt: now })
-        .where(eq(offers.id, offerId));
-      if (action === "accept" && row.listingStatus === "live") {
-        await db.update(listings).set({ status: "under_offer", updatedAt: now }).where(eq(listings.id, offer.listingId));
-      }
-      if (action === "accept") {
-        await toBuyer("offer.accepted", { project, amount: { aed: offer.amount } });
-        await dealAgreed(offer.amount);
-      } else {
-        await toBuyer("offer.declined", { project, amount: { aed: offer.amount } });
-      }
-    }
-  } else if (action === "accept_counter" && isBuyer && offer.status === "countered" && offer.counterAmount) {
-    await db
+  const unit = { id: offer.listingId, projectName: project };
+  const unavailable = { error: t("offer.actionUnavailable") };
+  // Accepting (or countering) needs a live unit: once a deal is agreed, the other offers are only backups.
+  const notLive = (status: ListingStatus | undefined) => ({
+    error: t(status && TAKEN_STATUSES.includes(status) ? "offer.unitTaken" : "offer.closed"),
+  });
+  /** Moves this offer out of `from`, unless something else (another tab, the other party) moved it first. */
+  const move = async (from: OfferStatus[], set: Partial<typeof offers.$inferInsert>) => {
+    const [moved] = await db
       .update(offers)
-      .set({ status: "accepted", amount: offer.counterAmount, updatedAt: now })
-      .where(eq(offers.id, offerId));
-    if (row.listingStatus === "live") {
-      await db.update(listings).set({ status: "under_offer", updatedAt: now }).where(eq(listings.id, offer.listingId));
-    }
+      .set({ ...set, updatedAt: now })
+      .where(and(eq(offers.id, offerId), inArray(offers.status, from)))
+      .returning({ id: offers.id });
+    return Boolean(moved);
+  };
+  /** null once accepted; otherwise the error for whoever lost the race. */
+  const accept = async (from: "pending" | "countered", amount: number) => {
+    if (row.listingStatus !== "live") return notLive(row.listingStatus);
+    if (await acceptOffer(offerId, offer.listingId, from, amount)) return null;
+    const [latest] = await db.select({ status: listings.status }).from(listings).where(eq(listings.id, offer.listingId)).limit(1);
+    // Still live: this offer itself changed in the meantime (withdrawn, declined, revised).
+    return latest?.status === "live" ? unavailable : notLive(latest?.status);
+  };
+
+  if (action === "accept" && isSeller && offer.status === "pending") {
+    const failed = await accept("pending", offer.amount);
+    if (failed) return failed;
+    await toBuyer("offer.accepted", { project, amount: { aed: offer.amount } });
+    await dealAgreed(offer.amount);
+    await settleOtherOffers(unit, offerId);
+  } else if (action === "counter" && isSeller && offer.status === "pending") {
+    if (!counterAmount || !Number.isFinite(counterAmount) || counterAmount <= 0) return { error: t("field.counterAmount") };
+    // A counter is an acceptance waiting on the buyer, so a backup offer can't be countered either.
+    if (row.listingStatus !== "live") return notLive(row.listingStatus);
+    const counter = Math.round(counterAmount);
+    if (!(await move(["pending"], { status: "countered", counterAmount: counter }))) return unavailable;
+    await toBuyer("offer.countered", { project, original: { aed: offer.amount }, amount: { aed: counter } });
+  } else if (action === "decline" && isSeller && offer.status === "pending") {
+    if (!(await move(["pending"], { status: "declined" }))) return unavailable;
+    await toBuyer("offer.declined", { project, amount: { aed: offer.amount } });
+  } else if (action === "accept_counter" && isBuyer && offer.status === "countered" && offer.counterAmount) {
+    const failed = await accept("countered", offer.counterAmount);
+    if (failed) return failed;
     await toSeller("offer.counter_accepted", { project, amount: { aed: offer.counterAmount } });
     await dealAgreed(offer.counterAmount);
+    await settleOtherOffers(unit, offerId);
   } else if (action === "decline" && isBuyer && offer.status === "countered") {
-    await db.update(offers).set({ status: "declined", updatedAt: now }).where(eq(offers.id, offerId));
+    if (!(await move(["countered"], { status: "declined" }))) return unavailable;
     await toSeller("offer.counter_declined", { project, amount: { aed: offer.counterAmount ?? offer.amount } });
-  } else if (action === "withdraw" && isBuyer && ["pending", "countered"].includes(offer.status)) {
-    await db.update(offers).set({ status: "withdrawn", updatedAt: now }).where(eq(offers.id, offerId));
+  } else if (action === "withdraw" && isBuyer && (offer.status === "pending" || offer.status === "countered")) {
+    if (!(await move(["pending", "countered"], { status: "withdrawn" }))) return unavailable;
     await toSeller("offer.withdrawn", { project, amount: { aed: offer.amount } });
   } else {
-    return { error: t("offer.actionUnavailable") };
+    return unavailable;
   }
 
   refresh();

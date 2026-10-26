@@ -4,28 +4,26 @@ import { DealImage } from "@/components/DealImage";
 import { WatchButton } from "@/components/WatchButton";
 import { MotivationBadge, SampleBadge, StatusPill } from "@/components/badges";
 import { getLocale, getT } from "@/i18n/server";
-import type { TFn, TKey } from "@/i18n/translator";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, refCode } from "@/lib/format";
 import type { ListingCard } from "@/lib/listings";
+import { communityName, developerName } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
 
-/** Arabic/English community name; unknown names are shown as entered. */
-export function communityName(tc: TFn<"common">, name: string) {
-  const key = `community.${name}` as TKey<"common">;
-  const label = tc(key);
-  return label === key ? name : label;
-}
+export { communityName };
 
 /** Server Component — render it from Server Components only. */
 export async function DealCard({
   deal,
   watching = false,
   layout = "grid",
+  priority = false,
 }: {
   deal: ListingCard;
   watching?: boolean;
   layout?: "grid" | "list";
+  /** Load the photo first: for the cards visible without scrolling. */
+  priority?: boolean;
 }) {
   const [tc, locale] = await Promise.all([getT("common"), getLocale()]);
   const list = layout === "list";
@@ -33,8 +31,8 @@ export async function DealCard({
   const a = analyzeDeal(deal);
   const discountPct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
   const saving = a.savingVsLaunch != null && a.savingVsLaunch > 0 ? a.savingVsLaunch : null;
-  const community = communityName(tc, deal.community);
-  const developer = deal.developer === "Other" ? tc("developer.Other") : deal.developer;
+  const community = communityName(tc, deal.community, deal.communityOther);
+  const developer = developerName(tc, deal.developer, deal.developerOther);
 
   return (
     <article
@@ -50,6 +48,7 @@ export async function DealCard({
           <DealImage
             src={deal.images[0]}
             alt={`${deal.projectName}, ${community}`}
+            priority={priority}
             className="transition-transform duration-700 ease-out group-hover:scale-[1.06]"
           />
           <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/5 to-transparent" />

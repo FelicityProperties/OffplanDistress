@@ -7,13 +7,13 @@ import { SellerOfferActions } from "@/components/OfferActions";
 import { ToneStatus } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
-import type { TKey } from "@/i18n/translator";
 import { requireAdmin } from "@/lib/auth";
-import { COMMUNITIES, LISTING_STATUS, OFFER_STATUS } from "@/lib/config";
+import { LISTING_STATUS, OFFER_STATUS } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { adminListing, adminOffers } from "@/lib/admin";
 import { listingFiles } from "@/lib/dashboard";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
+import { communityName, developerName } from "@/lib/place-names";
 
 export default async function AdminListingPage({ params }: PageProps<"/admin/listings/[id]">) {
   await requireAdmin();
@@ -31,8 +31,10 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
   ]);
   const a = analyzeDeal(l);
   // Community and developer are stored as English text; translate the known ones, keep anything else as entered.
-  const community = COMMUNITIES.includes(l.community) ? tc(`community.${l.community}` as TKey<"common">) : l.community;
-  const developer = l.developer === "Other" ? tc("developer.Other") : l.developer;
+  // A name the seller typed for "Other" is flagged, so the team knows it still needs mapping in the form below.
+  const unmapped = (typed: string | null) => (typed ? ` (${tc("developer.Other")})` : "");
+  const community = communityName(tc, l.community, l.communityOther) + unmapped(l.community === "Other" ? l.communityOther : null);
+  const developer = developerName(tc, l.developer, l.developerOther) + unmapped(l.developer === "Other" ? l.developerOther : null);
 
   return (
     <div className="space-y-6">
@@ -172,7 +174,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
                 </div>
                 <div className="flex items-center gap-3">
                   <ToneStatus label={tc(`offer.${o.status}`)} tone={OFFER_STATUS[o.status].tone} />
-                  <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} />
+                  <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} listingStatus={l.status} />
                 </div>
               </li>
             ))}
@@ -191,6 +193,10 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           nocEligible={l.nocEligible}
           launchPrice={l.launchPrice}
           askingPrice={l.askingPrice}
+          developer={l.developer}
+          developerOther={l.developerOther}
+          community={l.community}
+          communityOther={l.communityOther}
           adminNotes={l.adminNotes}
           dldPermit={l.dldPermit}
           images={l.images}

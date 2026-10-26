@@ -3,6 +3,7 @@ import { intlLocale } from "@/i18n/config";
 import type { TFn, TKey } from "@/i18n/translator";
 import { DUBAI_TZ } from "@/lib/market";
 import { formatPct } from "@/lib/format";
+import { developerName } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
 
 /** Arabic/English community name; names outside the list are shown as entered. */
@@ -13,7 +14,7 @@ export function communityLabel(tc: TFn<"common">, name: string) {
 }
 
 export function developerLabel(tc: TFn<"common">, name: string) {
-  return name === "Other" ? tc("developer.Other") : name;
+  return developerName(tc, name);
 }
 
 /** Share of a total, or null when there is nothing to divide by. */

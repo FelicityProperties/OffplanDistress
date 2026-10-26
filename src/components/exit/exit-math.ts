@@ -72,8 +72,8 @@ export const QUICK_SALE_DISCOUNT = { min: 0.05, max: 0.15 } as const;
 /** The assumption as whole percentages, for copy: { low: 5, high: 15 }. */
 export const quickSalePct = { low: Math.round(QUICK_SALE_DISCOUNT.min * 100), high: Math.round(QUICK_SALE_DISCOUNT.max * 100) };
 
-/** Many developers only issue a resale NOC once this share of the price is paid (30–40%, the higher end). */
-export const NOC_THRESHOLD = 0.4;
+/** Most developers only issue a resale NOC once 30–50% of the price is paid; the sell form warns at the same share. */
+export const NOC_THRESHOLD = FEES.nocMinPaidPct;
 
 export function tierFor(progress: number, notStarted: boolean): Tier {
   if (notStarted) return "notStarted";
