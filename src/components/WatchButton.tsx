@@ -6,7 +6,8 @@ import { Heart } from "lucide-react";
 import { toast } from "sonner";
 import { toggleWatch } from "@/app/actions/market";
 import { Button } from "@/components/ui/button";
-import { useT } from "@/i18n/client";
+import { useLocalePath, useT } from "@/i18n/client";
+import { stripLocale } from "@/i18n/paths";
 import { cn } from "@/lib/utils";
 
 export function WatchButton({
@@ -23,6 +24,7 @@ export function WatchButton({
   const tc = useT("common");
   const router = useRouter();
   const pathname = usePathname();
+  const lp = useLocalePath();
   const [pending, startTransition] = useTransition();
   const [optimistic, setOptimistic] = useOptimistic(watching);
 
@@ -34,7 +36,8 @@ export function WatchButton({
       const res = await toggleWatch(listingId);
       if (res.needsAuth) {
         toast(tc("watchlistNeedsAuth"));
-        router.push(`/login?next=${encodeURIComponent(pathname)}`);
+        // Log in in the page's language, then back to this page (the login localises it again).
+        router.push(lp(`/login?next=${encodeURIComponent(stripLocale(pathname))}`));
       } else if (res.error) {
         toast.error(res.error);
       } else if (res.watching) {

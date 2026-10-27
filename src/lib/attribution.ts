@@ -1,4 +1,5 @@
 import type { Source } from "@/db/schema";
+import { stripLocale } from "@/i18n/paths";
 
 // First-touch attribution: the campaign tags, partner ?ref= code, landing page and referring site of the visit that
 // brought someone here. Kept in sessionStorage for the tab's lifetime (not a cookie, so the Cookie Policy stays
@@ -97,8 +98,9 @@ export function captureAttribution() {
       utm_medium: q.get("utm_medium"),
       utm_campaign: q.get("utm_campaign"),
       ref: q.get("ref"),
-      // The path only: query strings can carry tokens (password-reset links).
-      landing: location.pathname,
+      // The path only: query strings can carry tokens (password-reset links). Without the language prefix ("/ar/sell"
+      // is "/sell"), as in the visit statistics: the record keeps its own language.
+      landing: stripLocale(location.pathname),
       referrer_host: referrer,
     });
     sessionStorage.setItem(KEY, JSON.stringify(src ?? {}));

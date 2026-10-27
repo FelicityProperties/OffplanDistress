@@ -19,7 +19,14 @@ export async function GET(request: Request) {
     "ops-daily",
     request,
     async () => {
-      const permits = await enforcePermitExpiry();
+      // Each step fails on its own (counted in "failed", which alerts the admins): a failed permit run mustn't cost the
+      // day's follow-ups and clean-up too. The follow-ups don't count a lapsed advert as live either way.
+      let permits: Awaited<ReturnType<typeof enforcePermitExpiry>> | null = null;
+      try {
+        permits = await enforcePermitExpiry();
+      } catch (err) {
+        console.error("[cron] ops-daily permit run failed", err);
+      }
       // After the permit run, so an advert it just paused isn't counted as live.
       let follow: Awaited<ReturnType<typeof sendFollowUps>> | null = null;
       try {
@@ -34,15 +41,16 @@ export async function GET(request: Request) {
         console.error("[cron] ops-daily retention clean-up failed", err);
       }
       return {
-        paused: permits.paused,
-        flagged: permits.flagged,
-        reminded: permits.reminded,
+        paused: permits?.paused ?? 0,
+        flagged: permits?.flagged ?? 0,
+        reminded: permits?.reminded ?? 0,
         nudged: follow?.nudged ?? 0,
+        nudgesDeferred: follow?.deferred ?? 0,
         digest: follow?.digest ?? false,
         followUps: follow?.followUps ?? 0,
         purgedViews: purged?.views ?? 0,
         purgedLeads: purged?.leads ?? 0,
-        failed: permits.failed + (follow ? follow.failed : 1) + (purged ? 0 : 1),
+        failed: (permits ? permits.failed : 1) + (follow ? follow.failed : 1) + (purged ? 0 : 1),
       };
     },
     { heartbeatUrl: process.env.OPS_HEARTBEAT_URL },

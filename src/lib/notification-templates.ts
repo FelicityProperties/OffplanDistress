@@ -233,12 +233,12 @@ export const TEMPLATES = {
   "seller.finish_listing": {
     en: {
       title: "Finish listing your unit: it's free",
-      body: "Hello {name}, you opened a seller account on OffplanDistress but haven't listed your unit yet. It takes about 10 minutes: the unit, your payment plan and your asking price. If you started the form, it picks up where you left off on the same device. No SPA to hand? List now and upload the documents later, or send them to us on WhatsApp and our team will prepare the listing for you.",
+      body: "Hello {name}, you opened a seller account on OffplanDistress but haven't listed your unit yet. It takes about 10 minutes: the unit, your payment plan and your asking price. If you started the form and haven't signed out since, it picks up where you left off on the same device. No SPA to hand? List now and upload the documents later, or send them to us on WhatsApp and our team will prepare the listing for you.",
       cta: "Continue my listing",
     },
     ar: {
       title: "أكمِل إدراج وحدتك مجاناً",
-      body: "مرحباً {name}، أنشأت حساب بائع على OffplanDistress لكنك لم تُدرج وحدتك بعد. لا يستغرق ذلك أكثر من 10 دقائق تقريباً: بيانات الوحدة وخطة الدفع والسعر المطلوب. وإن كنت قد بدأت تعبئة النموذج، فستكمل من حيث توقفت عند فتحه على الجهاز نفسه. لا تتوفر لديك اتفاقية البيع والشراء الآن؟ أدرِج وحدتك الآن وارفع المستندات لاحقاً، أو أرسلها إلينا عبر واتساب ليُعدّ فريقنا الإعلان نيابةً عنك.",
+      body: "مرحباً {name}، أنشأت حساب بائع على OffplanDistress لكنك لم تُدرج وحدتك بعد. لا يستغرق ذلك سوى 10 دقائق تقريباً: بيانات الوحدة وخطة الدفع والسعر المطلوب. وإن كنت قد بدأت تعبئة النموذج ولم تسجّل الخروج منذ ذلك الحين، فستكمل من حيث توقفت عند فتحه على الجهاز نفسه. لا تتوفر لديك اتفاقية البيع والشراء حالياً؟ أدرِج وحدتك الآن وارفع المستندات لاحقاً، أو أرسلها إلينا عبر واتساب ليُعدّ فريقنا الإعلان نيابةً عنك.",
       cta: "متابعة إدراج وحدتي",
     },
   },
@@ -296,16 +296,16 @@ export const TEMPLATES = {
     },
   },
   // Admins, once a day: how many follow-ups are open. Each {line} is an admin.ts "followups.digest.*" line (empty when
-  // its count is 0), so the counts read the same as the Follow-ups section on /admin.
+  // its count is 0), so the counts read the same as the Follow-ups section on /admin. {partial} says a rule failed today.
   "ops.digest": {
     en: {
       title: "Today's follow-ups ({date}): {total}",
-      body: "{signup}{docs}{noOffers}{offers}{counters}{leads}{review}{instalments}{viewings}{email}Each one is listed under Follow-ups on the admin home page, with call and WhatsApp buttons.",
+      body: "{signup}{docs}{noOffers}{offers}{counters}{leads}{review}{instalments}{viewings}{partial}{email}Each one is listed under Follow-ups on the admin home page, with call and WhatsApp buttons.",
       cta: "Open follow-ups",
     },
     ar: {
       title: "متابعات اليوم ({date}): ⁨{total}⁩",
-      body: "{signup}{docs}{noOffers}{offers}{counters}{leads}{review}{instalments}{viewings}{email}تجد كلاً منها في قسم المتابعات على الصفحة الرئيسية للوحة الإدارة، مع زرّي الاتصال وواتساب.",
+      body: "{signup}{docs}{noOffers}{offers}{counters}{leads}{review}{instalments}{viewings}{partial}{email}تجد كلاً منها في قسم المتابعات على الصفحة الرئيسية للوحة الإدارة، مع زرّي الاتصال وواتساب.",
       cta: "فتح المتابعات",
     },
   },

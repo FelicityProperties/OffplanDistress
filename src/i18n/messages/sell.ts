@@ -70,7 +70,7 @@ export default defineMessages({
     "arrears.note.more": "Seller reports more than one missed instalment.",
     "field.overdue": "Overdue amount (AED, optional)",
     "field.overdue.hint":
-      "The missed instalments still unpaid, from your statement of account. The developer wants them cleared before the NOC, so buyers see them in the cash needed on transfer day; we check the figure first.",
+      "The missed instalments still unpaid, from your statement of account. The developer wants them cleared before the NOC, so buyers see them in the cash needed on transfer day, marked as your figure until we check it with the developer.",
     "error.overdueMax": "This can't be more than the balance still owed to the developer.",
     "review.overdue": "Overdue amount",
 
@@ -345,7 +345,7 @@ export default defineMessages({
     "arrears.note.more": "يُفيد البائع بتأخّر سداد أكثر من قسط.",
     "field.overdue": "المبلغ المتأخر (درهم، اختياري)",
     "field.overdue.hint":
-      "الأقساط الفائتة التي لم تُسدَّد بعد، كما تظهر في كشف حسابك. يشترط المطوّر سدادها قبل إصدار شهادة عدم الممانعة، لذا يراها المشترون ضمن المبلغ النقدي المطلوب يوم نقل الملكية، ونتحقق من المبلغ أولاً.",
+      "الأقساط الفائتة التي لم تُسدَّد بعد، كما تظهر في كشف حسابك. يشترط المطوّر سدادها قبل إصدار شهادة عدم الممانعة، لذا يراها المشترون ضمن المبلغ النقدي المطلوب يوم نقل الملكية، مع الإشارة إلى أنها بحسب إفادتك إلى أن نتحقق منها لدى المطوّر.",
     "error.overdueMax": "لا يمكن أن يتجاوز هذا المبلغ الرصيد المستحق للمطوّر.",
     "review.overdue": "المبلغ المتأخر",
 

@@ -57,14 +57,20 @@ export default defineMessages({
     "claim.submit": "Confirm and create my account",
     "claim.submitExisting": "Confirm my listing",
     "claim.after":
-      "Next, our team checks your documents and publishes the listing once the DLD advertising permit is issued. Your contact details are never shown to buyers.",
+      "Next, our team checks your documents and sends you RERA Form A (our listing agreement) to sign. The listing is published once the DLD advertising permit is issued. Your contact details are never shown to buyers.",
+    // A new account (no password yet) also accepts the Privacy Policy, as at sign-up; otherwise the sell form's line.
+    "claim.confirmNew":
+      "I own this unit or am authorised to sell it, the documents are genuine, and I agree to the {terms} and {privacy}",
+    "claim.privacy": "Privacy Policy",
+    "claim.errors.confirmNew": "Please confirm you can sell this unit and accept the Terms of Use and Privacy Policy",
     "claim.loginTitle": "Log in to confirm your listing",
     "claim.loginBody": "Our team added this listing to your existing account ({email}). Log in with your password, and this page opens again for you to confirm it.",
     "claim.loginCta": "Log in to confirm",
     "claim.otherAccount": "You're logged in to a different account. Log out, then open the link again and log in as {email}.",
     "claim.logout": "Log out",
     "claim.invalidTitle": "This link has expired",
-    "claim.invalidBody": "Confirmation links work once and expire after 7 days. Message our team on WhatsApp and we'll send you a new one.",
+    "claim.invalidBody":
+      "Confirmation links work once and expire after 7 days. Already confirmed? Log in to see your listing. Otherwise, message our team on WhatsApp and we'll send you a new link.",
     "claim.contact": "Message us on WhatsApp",
     "claim.errors.emailTaken":
       "Another account already uses this email. Use a different one, or log in to that account and message us to move this listing to it.",
@@ -127,14 +133,18 @@ export default defineMessages({
     "claim.submit": "التأكيد وإنشاء حسابي",
     "claim.submitExisting": "تأكيد إعلاني",
     "claim.after":
-      "بعد ذلك يتحقق فريقنا من مستنداتك وينشر الإعلان فور صدور تصريح الإعلان من دائرة الأراضي والأملاك. ولا تظهر بيانات التواصل الخاصة بك للمشترين أبداً.",
+      "بعد ذلك يتحقق فريقنا من مستنداتك ويرسل إليك النموذج (A) الصادر عن مؤسسة التنظيم العقاري (اتفاقية الوساطة) لتوقيعه، ثم يُنشر الإعلان فور صدور تصريح الإعلان من دائرة الأراضي والأملاك. ولا تظهر بيانات التواصل الخاصة بك للمشترين أبداً.",
+    "claim.confirmNew": "أُقرّ بأنني مالك هذه الوحدة أو مخوَّل ببيعها، وبأن المستندات أصلية، وأوافق على {terms} و{privacy}",
+    "claim.privacy": "سياسة الخصوصية",
+    "claim.errors.confirmNew": "يرجى تأكيد أحقيتك في بيع هذه الوحدة والموافقة على شروط الاستخدام وسياسة الخصوصية",
     "claim.loginTitle": "سجّل الدخول لتأكيد إعلانك",
     "claim.loginBody": "أضاف فريقنا هذا الإعلان إلى حسابك الحالي (⁦{email}⁩). سجّل الدخول بكلمة المرور، وستُفتح هذه الصفحة مجدداً لتأكيده.",
     "claim.loginCta": "تسجيل الدخول للتأكيد",
     "claim.otherAccount": "أنت مسجّل الدخول بحساب آخر. سجّل الخروج، ثم افتح الرابط مجدداً وسجّل الدخول بالحساب ⁦{email}⁩.",
     "claim.logout": "تسجيل الخروج",
     "claim.invalidTitle": "انتهت صلاحية هذا الرابط",
-    "claim.invalidBody": "تُستخدم روابط التأكيد مرة واحدة وتنتهي صلاحيتها بعد 7 أيام. راسل فريقنا عبر واتساب وسنرسل إليك رابطاً جديداً.",
+    "claim.invalidBody":
+      "تُستخدم روابط التأكيد مرة واحدة وتنتهي صلاحيتها بعد 7 أيام. هل أكّدت إعلانك من قبل؟ سجّل الدخول لمشاهدته. وإلا فراسل فريقنا عبر واتساب وسنرسل إليك رابطاً جديداً.",
     "claim.contact": "راسلنا عبر واتساب",
     "claim.errors.emailTaken":
       "يوجد حساب آخر يستخدم هذا البريد الإلكتروني. استخدم بريداً آخر، أو سجّل الدخول إلى ذلك الحساب وراسلنا لنقل هذا الإعلان إليه.",

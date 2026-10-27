@@ -7,6 +7,8 @@ import bcrypt from "bcryptjs";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
+import { localePath } from "@/i18n/paths";
+import { getLocale } from "@/i18n/server";
 import { OWNER_EMAILS } from "@/lib/config";
 
 const COOKIE = "od_session";
@@ -95,7 +97,8 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
 
 export async function requireUser(next?: string): Promise<SessionUser> {
   const user = await getCurrentUser();
-  if (!user) redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
+  // The login page in the visitor's language (/ar/login for Arabic).
+  if (!user) redirect(localePath(next ? `/login?next=${encodeURIComponent(next)}` : "/login", await getLocale()));
   return user;
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { AlertTriangle, Check, ExternalLink, FileUp, History, Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { createListing } from "@/app/actions/listings";
@@ -258,7 +258,15 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
   }
 
   const set = (k: keyof State) => (v: string) => setS((prev) => ({ ...prev, [k]: v }));
-  const num = (v: string) => Number(v.replace(/[^\d.]/g, "")) || 0;
+  // Arabic-Indic / Persian digits (an Arabic phone keyboard types them) count as digits, "٫" as the decimal point;
+  // otherwise "٩٠٬٠٠٠" would be read, checked and sent as 0.
+  const num = (v: string) =>
+    Number(
+      v
+        .replace(/[٠-٩۰-۹]/g, (d) => String((d.charCodeAt(0) & 0xf) % 10))
+        .replace(/٫/g, ".")
+        .replace(/[^\d.]/g, ""),
+    ) || 0;
   const aed = (v: number | null | undefined) => formatAED(v, locale);
   const unitLabel = (u: string) => (u in UNIT_TYPES ? tc(`unit.${u as UnitTypeKey}`) : "—");
 

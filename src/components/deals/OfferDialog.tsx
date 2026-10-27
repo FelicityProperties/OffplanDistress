@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { makeOffer } from "@/app/actions/market";

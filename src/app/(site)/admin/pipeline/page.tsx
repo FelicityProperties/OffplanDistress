@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Download } from "lucide-react";
 import { PageTitle } from "@/components/Kpi";
 import { SampleBadge } from "@/components/badges";
+import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
 import { type ListingStatusKey } from "@/lib/config";
@@ -15,7 +17,14 @@ export default async function PipelinePage() {
 
   return (
     <div className="space-y-6">
-      <PageTitle title={t("pipeline.title")} sub={t("pipeline.sub")} />
+      <PageTitle title={t("pipeline.title")} sub={t("pipeline.sub")}>
+        {/* Every deal file with both parties, for our records and AML inspections (src/lib/deals.ts). */}
+        <Button asChild size="sm" variant="outline">
+          <a href="/api/admin/export/deals.csv" download>
+            <Download aria-hidden /> {t("dealFile.export")}
+          </a>
+        </Button>
+      </PageTitle>
       <div className="flex gap-4 overflow-x-auto pb-4">
         {COLUMNS.map((stage) => {
           const items = all.filter((l) => l.status === stage);

@@ -15,6 +15,7 @@ import { leadStats } from "@/lib/leads";
 import { formatAED, formatAEDCompact, formatDate, formatNumber, refCode } from "@/lib/format";
 import { listingsWithoutPermitExpiry } from "@/lib/permits";
 import { developerName } from "@/lib/place-names";
+import { contactKinds } from "@/lib/typed-names";
 
 /** Listings named in the "no permit expiry" banner; the rest are counted. */
 const NO_EXPIRY_LINKS = 12;
@@ -87,7 +88,11 @@ export default async function AdminQueue() {
               : undefined
           }
         />
-        <Kpi label={t("queue.kpi.feesEarned")} value={formatAEDCompact(platformFee(s.transferredValue).total, locale)} />
+        <Kpi
+          label={t("queue.kpi.feesEarned")}
+          value={formatAEDCompact(platformFee(s.transferredValue).total, locale)}
+          hint={t("queue.kpi.feesEarnedHint")}
+        />
         {/* Today's visit statistics (your own visits are never counted) */}
         <Link
           href="/admin/analytics?range=today"
@@ -137,6 +142,18 @@ export default async function AdminQueue() {
                   {q.awaitingSeller && (
                     <p className="mt-1">
                       <StatusPill tone="warning">{t("claim.pendingBadge")}</StatusPill>
+                    </p>
+                  )}
+                  {/* "Approve" is in this row too: the warning the listing page shows, so it isn't approved unseen. */}
+                  {[q.description, q.view, q.floor].some((text) => contactKinds(text).length > 0) && (
+                    <p className="mt-1">
+                      <Link
+                        href={`/admin/listings/${q.id}#contact-warning`}
+                        className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        data-testid="queue-contact-warning"
+                      >
+                        <StatusPill tone="destructive">{t("contact.badge")}</StatusPill>
+                      </Link>
                     </p>
                   )}
                 </TableCell>

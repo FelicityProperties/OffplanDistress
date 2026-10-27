@@ -5,10 +5,10 @@ import { db } from "@/db";
 import { files, inquiries, listings, offers, reminders, sellerLeads, users } from "@/db/schema";
 import { emailOffReason } from "./email";
 import { leadCode } from "./estimate";
-import { refCode } from "./format";
+import { formatNumber, refCode } from "./format";
 import { notify, notifyAdmins, type TemplateParams } from "./notify";
 import type { TemplateKey } from "./notification-templates";
-import { addDays, dubaiToday } from "./permits";
+import { addDays, dubaiToday, permitCurrentSql } from "./permits";
 
 // Follow-ups: sellers and buyers who stopped partway, and the deals and requests waiting on someone. Each rule below is
 // one query, used twice so the numbers always agree:
@@ -22,12 +22,16 @@ const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 /** Rows read per rule; the section shows the first few, the counts are of these. */
 const LIMIT = 500;
+/** Nudges sent per cron run (each is a few database round trips); see sendFollowUps. */
+const MAX_NUDGES = 150;
 
 /** The thresholds. The admin copy (admin.ts "followups.*") and the templates name the same numbers. */
 export const FOLLOW_UP = {
   /** A seller account with nothing listed is nudged at 24 h and at 72 h, and listed for our team for 30 days. */
   signupFirstHours: 24,
   signupSecondHours: 72,
+  /** …but never within this many hours of the first (two runs the same day); daily runs are 24 h apart. */
+  signupGapHours: 12,
   signupNudgeDays: 7,
   signupListDays: 30,
   /** Under review without the SPA / Oqood or the statement of account. */
@@ -103,7 +107,8 @@ export type FollowUpItem = {
   nudge: Nudge | null;
 };
 
-export type FollowUps = Record<FollowUpKey, FollowUpItem[]>;
+/** Each rule's items; `failedRules` names the rules whose query failed this time (their lists are empty). */
+export type FollowUps = Record<FollowUpKey, FollowUpItem[]> & { failedRules: FollowUpKey[] };
 
 const sellers = alias(users, "seller");
 const buyers = alias(users, "buyer");
@@ -123,8 +128,22 @@ function hasFile(kinds: string[]) {
 /** Seller accounts (or sellers from the free estimate) with nothing listed, from 24 hours to 30 days after sign-up. */
 async function signupRule(now: Date): Promise<FollowUpItem[]> {
   const rows = await db
-    .select({ id: users.id, name: users.fullName, phone: users.phone, email: users.email, createdAt: users.createdAt })
+    .select({
+      id: users.id,
+      name: users.fullName,
+      phone: users.phone,
+      email: users.email,
+      createdAt: users.createdAt,
+      /** When the 24 h nudge went out, if it did (at most one row: the unique index). */
+      firstNudgeAt: reminders.sentAt,
+    })
     .from(users)
+    // A join, not a subquery in the select list: Drizzle leaves a single table's columns unqualified there, so "id"
+    // would mean reminders.id inside the subquery.
+    .leftJoin(
+      reminders,
+      and(eq(reminders.entityType, "user"), eq(reminders.entityId, sql`${users.id}::text`), eq(reminders.kind, "finish_listing:24h")),
+    )
     .where(
       and(
         eq(users.role, "user"),
@@ -139,7 +158,15 @@ async function signupRule(now: Date): Promise<FollowUpItem[]> {
     .limit(LIMIT);
   return rows.map((u) => {
     const age = now.getTime() - u.createdAt.getTime();
-    const stage = age < FOLLOW_UP.signupSecondHours * HOUR ? "24h" : age < FOLLOW_UP.signupNudgeDays * DAY ? "72h" : null;
+    // The 24 h nudge went out only hours ago (a second run the same day): the 72 h one waits for the next daily run
+    // rather than landing right after it.
+    const firstNudgeRecent = u.firstNudgeAt != null && u.firstNudgeAt.getTime() > now.getTime() - FOLLOW_UP.signupGapHours * HOUR;
+    const stage =
+      age < FOLLOW_UP.signupSecondHours * HOUR
+        ? "24h"
+        : age < FOLLOW_UP.signupNudgeDays * DAY && !firstNudgeRecent
+          ? "72h"
+          : null;
     return {
       id: u.id,
       since: u.createdAt,
@@ -173,7 +200,11 @@ const sellerContact = (r: SellerRow): Contact => ({ name: r.sellerName, phone: r
 /** A real listing of a real seller. */
 const realListing = and(eq(listings.isSample, false), eq(sellers.role, "user"));
 
-/** Under review for 48 hours without the SPA (or Oqood) or without the statement of account. */
+/**
+ * Under review for 48 hours without the SPA (or Oqood) or without the statement of account. Not a listing we already
+ * verified (our team checked documents received another way and ticked it): back in review after a price change, it
+ * needs no documents, and its seller mustn't be told we can't verify it.
+ */
 async function docsRule(now: Date): Promise<FollowUpItem[]> {
   const spa = hasFile(["spa", "oqood"]);
   const soa = hasFile(["soa"]);
@@ -185,6 +216,9 @@ async function docsRule(now: Date): Promise<FollowUpItem[]> {
       createdAt: listings.createdAt,
       hasSpa: spa,
       hasSoa: soa,
+      // Entered by our team and not yet confirmed by its seller: our team uploads its documents, and the account it is
+      // filed under can't see it yet (src/lib/dashboard.ts ownListingSql), so it gets no nudge.
+      awaitingSeller: sql<boolean>`(${listings.createdByStaff} and ${listings.ownershipConfirmedAt} is null)`,
       ...sellerColumns,
     })
     .from(listings)
@@ -193,6 +227,7 @@ async function docsRule(now: Date): Promise<FollowUpItem[]> {
       and(
         eq(listings.status, "pending_review"),
         realListing,
+        eq(listings.verified, false),
         lte(listings.createdAt, ago(now, FOLLOW_UP.docsHours * HOUR)),
         sql`(not ${spa} or not ${soa})`,
       ),
@@ -212,8 +247,10 @@ async function docsRule(now: Date): Promise<FollowUpItem[]> {
       contact: sellerContact(l),
       project: l.project,
       missing,
+      // Shown as "Awaiting seller confirmation" on /admin, so our team sees why this one gets no reminder.
+      awaitingSeller: l.awaitingSeller,
       nudge:
-        l.sellerCanLogIn && l.createdAt > ago(now, FOLLOW_UP.docsNudgeDays * DAY)
+        l.sellerCanLogIn && !l.awaitingSeller && l.createdAt > ago(now, FOLLOW_UP.docsNudgeDays * DAY)
           ? {
               entityType: "listing",
               kind: "upload_docs",
@@ -227,7 +264,10 @@ async function docsRule(now: Date): Promise<FollowUpItem[]> {
   });
 }
 
-/** Live for 21 days without a single offer from a real buyer. */
+/**
+ * Live for 21 days without a single offer from a real buyer. Only while it is an advert: one whose DLD permit or Form A
+ * ran out isn't shown to buyers (src/lib/permits.ts), even before the permit run pauses it, so no price review for it.
+ */
 async function noOffersRule(now: Date): Promise<FollowUpItem[]> {
   const liveSince = sql`coalesce(${listings.publishedAt}, ${listings.createdAt})`;
   const rows = await db
@@ -246,6 +286,7 @@ async function noOffersRule(now: Date): Promise<FollowUpItem[]> {
       and(
         eq(listings.status, "live"),
         realListing,
+        permitCurrentSql(dubaiToday(now)),
         sql`${liveSince} <= ${ago(now, FOLLOW_UP.noOffersDays * DAY).toISOString()}::timestamptz`,
         sql`not exists (select 1 from ${offers} o join ${users} b on b.id = o.buyer_id where o.listing_id = ${listings.id} and b.role = 'user')`,
       ),
@@ -273,7 +314,8 @@ async function noOffersRule(now: Date): Promise<FollowUpItem[]> {
               kind: "no_offers",
               userId: l.sellerId,
               template: "seller.no_offers",
-              params: { project: l.project, ref, since: { date }, views: l.views },
+              // Grouped ("1,250"), as on the admin page: a plain number param is used as-is.
+              params: { project: l.project, ref, since: { date }, views: formatNumber(l.views) },
               href: `/dashboard/listings/${l.id}`,
             }
           : null,
@@ -544,10 +586,21 @@ const RULES: Record<FollowUpKey, (now: Date) => Promise<FollowUpItem[]>> = {
   noOffers: noOffersRule,
 };
 
-/** Every rule's open items right now: the Follow-ups section and the cron both read this. */
+/**
+ * Every rule's open items right now: the Follow-ups section and the cron both read this. A rule whose query fails is
+ * logged and named in `failedRules` (its list left empty), so the other rules are still listed, nudged and counted.
+ */
 export async function followUps(now = new Date()): Promise<FollowUps> {
-  const lists = await Promise.all(FOLLOW_UP_KEYS.map((k) => RULES[k](now)));
-  return Object.fromEntries(FOLLOW_UP_KEYS.map((k, i) => [k, lists[i]])) as FollowUps;
+  const settled = await Promise.allSettled(FOLLOW_UP_KEYS.map((k) => RULES[k](now)));
+  const failedRules: FollowUpKey[] = [];
+  const lists = settled.map((r, i) => {
+    if (r.status === "fulfilled") return r.value;
+    failedRules.push(FOLLOW_UP_KEYS[i]);
+    console.error(`[reminders] the "${FOLLOW_UP_KEYS[i]}" follow-ups failed`, r.reason);
+    return [];
+  });
+  const byKey = Object.fromEntries(FOLLOW_UP_KEYS.map((k, i) => [k, lists[i]])) as Record<FollowUpKey, FollowUpItem[]>;
+  return { ...byKey, failedRules };
 }
 
 /** How many items each rule has, plus the offers our team should call about; the digest's numbers. */
@@ -571,27 +624,61 @@ async function claim(entityType: string, entityId: string, kind: string) {
   return rows.length > 0;
 }
 
+/** Gives a claim back when its notice couldn't be stored, so the next run tries again. */
+async function release(entityType: string, entityId: string, kind: string) {
+  await db
+    .delete(reminders)
+    .where(and(eq(reminders.entityType, entityType), eq(reminders.entityId, entityId), eq(reminders.kind, kind)));
+}
+
+/** The nudges among `due` that already went out, as "type|id|kind", in one read (claim() still decides each send). */
+async function alreadySent(due: { id: string; n: Nudge }[]) {
+  if (!due.length) return new Set<string>();
+  try {
+    const rows = await db
+      .select({ entityType: reminders.entityType, entityId: reminders.entityId, kind: reminders.kind })
+      .from(reminders)
+      .where(inArray(reminders.entityId, [...new Set(due.map((d) => d.id))]));
+    return new Set(rows.map((r) => `${r.entityType}|${r.entityId}|${r.kind}`));
+  } catch (err) {
+    console.error("[reminders] reading the nudges already sent failed", err);
+    return new Set<string>();
+  }
+}
+
 /**
  * The daily follow-up run (src/app/api/cron/ops-daily): each seller's and buyer's nudge that is due and hasn't gone out
  * yet, then, once per Dubai day, the admins' digest of every rule's count (only when there is something to follow up).
- * A failed nudge is counted and the run carries on.
+ * A failed rule or nudge is counted (the cron then alerts the admins) and the run carries on; a nudge or digest whose
+ * notice couldn't be stored isn't recorded as sent, so the next run tries again. At most MAX_NUDGES go out per run, so
+ * the run stays well inside the cron's time limit; the rest are still due tomorrow (they aren't recorded as sent).
+ * Items whose nudge already went out (an item stays open for days after it) cost no round trip.
  */
 export async function sendFollowUps(now = new Date()) {
   const f = await followUps(now);
   let nudged = 0;
-  let failed = 0;
-  for (const key of FOLLOW_UP_KEYS) {
-    for (const item of f[key]) {
-      const n = item.nudge;
-      if (!n) continue;
-      try {
-        if (!(await claim(n.entityType, item.id, n.kind))) continue;
-        await notify([n.userId], n.template, n.params, n.href);
+  let failed = f.failedRules.length;
+  let deferred = 0;
+  const due = FOLLOW_UP_KEYS.flatMap((key) => f[key].flatMap((item) => (item.nudge ? [{ id: item.id, n: item.nudge }] : [])));
+  const sent = await alreadySent(due);
+  for (const { id, n } of due) {
+    if (sent.has(`${n.entityType}|${id}|${n.kind}`)) continue;
+    if (nudged >= MAX_NUDGES) {
+      deferred++;
+      continue;
+    }
+    try {
+      if (!(await claim(n.entityType, id, n.kind))) continue;
+      if (await notify([n.userId], n.template, n.params, n.href)) {
         nudged++;
-      } catch (err) {
+      } else {
+        // Nothing was stored (notify logged why): not sent, so not recorded as sent.
         failed++;
-        console.error(`[reminders] ${n.kind} for ${n.entityType} ${item.id} failed`, err);
+        await release(n.entityType, id, n.kind);
       }
+    } catch (err) {
+      failed++;
+      console.error(`[reminders] ${n.kind} for ${n.entityType} ${id} failed`, err);
     }
   }
 
@@ -603,7 +690,7 @@ export async function sendFollowUps(now = new Date()) {
       if (await claim("digest", today, "ops")) {
         const line = (k: FollowUpKey) =>
           counts[k] ? { t: "admin" as const, key: `followups.digest.${k}` as const, vars: { n: counts[k] } } : "";
-        await notifyAdmins(
+        const stored = await notifyAdmins(
           "ops.digest",
           {
             date: { date: today },
@@ -619,16 +706,24 @@ export async function sendFollowUps(now = new Date()) {
             review: line("review"),
             instalments: line("instalments"),
             viewings: line("viewings"),
+            // A rule that failed this time counts 0 above; say so rather than let the numbers look complete.
+            partial: f.failedRules.length ? { t: "admin", key: "followups.digest.partial" } : "",
             email: emailOffReason() ? { t: "admin", key: "followups.digest.emailOff" } : "",
           },
           "/admin#follow-ups",
         );
-        digest = true;
+        if (stored) digest = true;
+        else {
+          // Not stored: today's digest is still due, so a re-run sends it.
+          failed++;
+          await release("digest", today, "ops");
+        }
       }
     } catch (err) {
       failed++;
       console.error("[reminders] the admins' digest failed", err);
     }
   }
-  return { nudged, digest, followUps: total, failed };
+  if (deferred) console.info(`[reminders] ${deferred} nudge(s) left for the next run (at most ${MAX_NUDGES} per run)`);
+  return { nudged, deferred, digest, followUps: total, failed };
 }

@@ -9,8 +9,10 @@ import { files, inquiries, listings, offers, sellerLeads, sessions, users } from
 import { dirOf, isLocale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { audit, changes } from "@/lib/audit";
 import { findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
 import { claimPath, isPlaceholderEmail, issueClaimToken, placeholderEmail } from "@/lib/claim";
+import { addNote, saveDealFile, stageGate, type DealFileState, type GateNeed } from "@/lib/deals";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
 import { emailEnabled, sendEmail } from "@/lib/email";
 import { formatDate, formatNumber, refCode } from "@/lib/format";
@@ -92,6 +94,13 @@ function awaitsSellerConfirmation(l: { isSample: boolean; createdByStaff: boolea
   return !l.isSample && l.createdByStaff && l.ownershipConfirmedAt == null;
 }
 
+/** "Before “NOC in progress”, the deal file needs the date Form F … and the buyer's KYC verified." */
+function gateMessage(t: T, next: ListingStatusKey, missing: GateNeed[]) {
+  const items = missing.map((k) => t(`deal.need.${k}`));
+  const list = items.length > 1 ? `${items.slice(0, -1).join(t("deal.need.sep"))}${t("deal.need.lastSep")}${items.at(-1)}` : items[0];
+  return t(next === "transferred" ? "deal.gate.transfer" : "deal.gate.noc", { items: list });
+}
+
 /**
  * "Verified" (Terms s.9) means we reviewed the SPA or Oqood plus the statement of account, so approving only sets
  * it when both are on file. Staff who checked documents received another way tick it in the listing editor.
@@ -108,7 +117,7 @@ async function hasVerificationDocs(listingId: string) {
 }
 
 export async function approveListing(listingId: string) {
-  await assertAdmin();
+  const me = await assertAdmin();
   const [before] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, listingId)).limit(1);
   if (!before) return { error: (await getT("errors"))("listing.notFound") };
   if (awaitsSellerConfirmation(before)) return { error: (await getT("errors"))("listing.ownershipUnconfirmed") };
@@ -128,6 +137,13 @@ export async function approveListing(listingId: string) {
       updatedAt: now,
     })
     .where(eq(listings.id, listingId));
+  await audit({
+    actorId: me.id,
+    action: "listing.approve",
+    entityType: "listing",
+    entityId: listingId,
+    diff: changes(before, { status: "live", verified, publicPrice: before.askingPrice }),
+  });
   if (before.status !== "live") {
     await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });
     // Back on the market: no deal agreed earlier stays accepted on it (see reopenUnit).
@@ -140,14 +156,26 @@ export async function approveListing(listingId: string) {
 }
 
 export async function rejectListing(listingId: string, reason: string) {
-  await assertAdmin();
-  const [before] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, listingId)).limit(1);
+  const me = await assertAdmin();
+  const [before] = await db
+    .select({ ...listingNoticeColumns, rejectionReason: listings.rejectionReason })
+    .from(listings)
+    .where(eq(listings.id, listingId))
+    .limit(1);
   const clean = reason.trim().slice(0, 1000);
   await db
     .update(listings)
     .set({ status: "rejected", rejectionReason: clean || null, updatedAt: new Date() })
     .where(eq(listings.id, listingId));
   if (before) {
+    await audit({
+      actorId: me.id,
+      action: "listing.reject",
+      entityType: "listing",
+      entityId: listingId,
+      // The reason as it was before (a listing rejected again keeps its earlier one until now).
+      diff: changes(before, { status: "rejected", rejectionReason: clean || null }),
+    });
     await notifySeller(before, "listing.rejected", {
       project: before.projectName,
       reason: clean || { t: "errors", key: "notify.rejectedFallback" },
@@ -216,7 +244,7 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
 const scrubbedName = (v: string) => scrubTypedName(v).name || undefined;
 
 export async function adminUpdateListing(_prev: FormState, formData: FormData): Promise<FormState> {
-  await assertAdmin();
+  const me = await assertAdmin();
   const [t, locale] = await Promise.all([getT("errors"), getLocale()]);
   const range = expiryDateBounds();
   const rangeMessage = t("field.expiryRange", { from: formatDate(range.min, locale), to: formatDate(range.max, locale) });
@@ -270,6 +298,15 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       overdueAmount: listings.overdueAmount,
       overduePenalty: listings.overduePenalty,
       arrearsCheckedAt: listings.arrearsCheckedAt,
+      // For the audit trail's diff of what this save changed.
+      pausedByAdmin: listings.pausedByAdmin,
+      nocEligible: listings.nocEligible,
+      launchPrice: listings.launchPrice,
+      adminNotes: listings.adminNotes,
+      dldPermitUrl: listings.dldPermitUrl,
+      developerOther: listings.developerOther,
+      communityOther: listings.communityOther,
+      images: listings.images,
     })
     .from(listings)
     .where(eq(listings.id, v.listingId))
@@ -336,36 +373,47 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (PUBLIC_STATUSES.includes(v.status) && awaitsSellerConfirmation(current)) {
     return { error: t("listing.ownershipUnconfirmed"), fieldErrors: { status: [t("listing.ownershipUnconfirmed")] } };
   }
+  // Stage gates (src/lib/deals.ts): moving on to the NOC or the transfer needs the deal file to have what that step
+  // needs. Only a change of status made now is checked, so a deal already in a stage can still be saved as it is.
+  if (v.status !== current.status) {
+    const gate = await stageGate(current, v.status);
+    if (!gate.ok) {
+      const message = gate.noDeal ? t("deal.gate.noDeal") : gateMessage(t, v.status, gate.missing);
+      return { error: message, fieldErrors: { status: [message] } };
+    }
+  }
   const now = new Date();
+  const values = {
+    status: v.status,
+    pausedByAdmin: v.status === "paused",
+    verified: v.verified,
+    nocEligible: v.nocEligible,
+    launchPrice: v.launchPrice ?? null,
+    askingPrice: v.askingPrice,
+    ...(arrearsUpdate ?? {}),
+    adminNotes: v.adminNotes ?? null,
+    dldPermit: v.dldPermit || null,
+    dldPermitExpiresAt: v.dldPermitExpiresAt ?? null,
+    dldPermitUrl: v.dldPermitUrl || null,
+    formAExpiresAt: v.formAExpiresAt ?? null,
+    developer,
+    community,
+    // Only an "Other" keeps a typed name; mapping to a listed name clears it. Left out of the form = unchanged.
+    ...(v.developer ? { developerOther: developer === "Other" ? (v.developerOther ?? null) : null } : {}),
+    ...(v.community ? { communityOther: community === "Other" ? (v.communityOther ?? null) : null } : {}),
+    publicPrice: advertised ? v.askingPrice : current.publicPrice,
+    images: v.images.filter((u) => /^https:\/\//.test(u) || u.startsWith("/api/files/")),
+    publishedAt: current.publishedAt ?? (v.status === "live" ? now : null),
+  };
   const [saved] = await db
     .update(listings)
-    .set({
-      status: v.status,
-      pausedByAdmin: v.status === "paused",
-      verified: v.verified,
-      nocEligible: v.nocEligible,
-      launchPrice: v.launchPrice ?? null,
-      askingPrice: v.askingPrice,
-      ...(arrearsUpdate ?? {}),
-      adminNotes: v.adminNotes ?? null,
-      dldPermit: v.dldPermit || null,
-      dldPermitExpiresAt: v.dldPermitExpiresAt ?? null,
-      dldPermitUrl: v.dldPermitUrl || null,
-      formAExpiresAt: v.formAExpiresAt ?? null,
-      developer,
-      community,
-      // Only an "Other" keeps a typed name; mapping to a listed name clears it. Left out of the form = unchanged.
-      ...(v.developer ? { developerOther: developer === "Other" ? (v.developerOther ?? null) : null } : {}),
-      ...(v.community ? { communityOther: community === "Other" ? (v.communityOther ?? null) : null } : {}),
-      publicPrice: advertised ? v.askingPrice : current.publicPrice,
-      images: v.images.filter((u) => /^https:\/\//.test(u) || u.startsWith("/api/files/")),
-      publishedAt: current.publishedAt ?? (v.status === "live" ? now : null),
-      updatedAt: now,
-    })
+    .set({ ...values, updatedAt: now })
     // …and the same if it changes between the read above and this write.
     .where(and(eq(listings.id, v.listingId), eq(listings.status, current.status)))
     .returning({ id: listings.id });
   if (!saved) return { error: t("listing.statusChanged") };
+  const diff = changes(current, values);
+  if (Object.keys(diff).length) await audit({ actorId: me.id, action: "listing.update", entityType: "listing", entityId: v.listingId, diff });
 
   const statusChanged = v.status !== current.status;
   // Going live for the first time is an approval, whichever control the admin used.
@@ -390,9 +438,20 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
 }
 
 export async function setKycStatus(userId: string, status: "not_started" | "pending" | "verified") {
-  await assertAdmin();
+  const me = await assertAdmin();
   const [before] = await db.select({ kycStatus: users.kycStatus }).from(users).where(eq(users.id, userId)).limit(1);
-  await db.update(users).set({ kycStatus: status }).where(eq(users.id, userId));
+  // Who verified the person, and when (the deal file shows it; the NOC stage needs both parties verified).
+  const verifiedNow = status === "verified" && before?.kycStatus !== "verified";
+  await db
+    .update(users)
+    .set({
+      kycStatus: status,
+      ...(verifiedNow ? { kycVerifiedBy: me.id, kycVerifiedAt: new Date() } : status !== "verified" ? { kycVerifiedBy: null, kycVerifiedAt: null } : {}),
+    })
+    .where(eq(users.id, userId));
+  if (before && before.kycStatus !== status) {
+    await audit({ actorId: me.id, action: "user.kyc", entityType: "user", entityId: userId, diff: { kycStatus: [before.kycStatus, status] } });
+  }
   if (before && status === "verified" && before.kycStatus !== "verified") {
     await notify([userId], "kyc.verified", {}, "/dashboard/profile");
   }
@@ -404,16 +463,19 @@ export async function setUserRole(userId: string, role: "user" | "admin") {
   const me = await assertAdmin();
   const t = await getT("errors");
   if (me.id === userId && role !== "admin") return { error: t("admin.ownAccess") };
-  const [target] = await db.select({ email: users.email }).from(users).where(eq(users.id, userId));
+  const [target] = await db.select({ email: users.email, role: users.role }).from(users).where(eq(users.id, userId));
   if (target && isOwnerEmail(target.email) && role !== "admin") return { error: t("admin.ownerAlwaysAdmin") };
   await db.update(users).set({ role }).where(eq(users.id, userId));
+  if (target && target.role !== role) {
+    await audit({ actorId: me.id, action: "user.role", entityType: "user", entityId: userId, diff: { role: [target.role, role] } });
+  }
   refresh();
   return { ok: true };
 }
 
 /** Admins can hand a temporary password to a user directly (e.g. when email isn't set up). */
 export async function resetUserPassword(userId: string) {
-  await assertAdmin();
+  const me = await assertAdmin();
   const t = await getT("errors");
   const [target] = await db.select({ email: users.email }).from(users).where(eq(users.id, userId));
   if (!target) return { error: t("admin.userNotFound") };
@@ -421,18 +483,24 @@ export async function resetUserPassword(userId: string) {
   const temp = randomBytes(9).toString("base64url");
   await db.update(users).set({ passwordHash: await hashPassword(temp) }).where(eq(users.id, userId));
   await db.delete(sessions).where(eq(sessions.userId, userId));
+  // That it happened, never the password.
+  await audit({ actorId: me.id, action: "user.password_reset", entityType: "user", entityId: userId });
   return { ok: true, password: temp };
 }
 
 export async function setInquiryHandled(id: string, handled: boolean) {
-  await assertAdmin();
+  const me = await assertAdmin();
+  const [before] = await db.select({ handled: inquiries.handled }).from(inquiries).where(eq(inquiries.id, id)).limit(1);
   await db.update(inquiries).set({ handled }).where(eq(inquiries.id, id));
+  if (before && before.handled !== handled) {
+    await audit({ actorId: me.id, action: "inquiry.handled", entityType: "inquiry", entityId: id, diff: { handled: [before.handled, handled] } });
+  }
   refresh();
   return { ok: true };
 }
 
 export async function deleteSampleListings() {
-  await assertAdmin();
+  const me = await assertAdmin();
   // Samples don't take offers, but any open one left on them (from before that rule) is closed and its buyer told
   // before the offers go with the listings.
   const withOpenOffers = await db
@@ -441,7 +509,8 @@ export async function deleteSampleListings() {
     .innerJoin(offers, eq(offers.listingId, listings.id))
     .where(and(eq(listings.isSample, true), inArray(offers.status, ["pending", "countered"])));
   for (const unit of withOpenOffers) await closeOpenOffers(unit, "unavailable");
-  await db.delete(listings).where(eq(listings.isSample, true));
+  const deleted = await db.delete(listings).where(eq(listings.isSample, true)).returning({ id: listings.id });
+  await audit({ actorId: me.id, action: "samples.delete", entityType: "listing", entityId: "samples", diff: { deleted: deleted.length } });
   refresh();
   return { ok: true };
 }
@@ -472,17 +541,30 @@ async function staffListingSeller(email: string | undefined, phoneDigits: string
   if (!phoneDigits) return { user: null };
   // Phones are stored as typed; the last 9 digits narrow it down, then the full number is compared normalised.
   const rows = await db
-    .select({ id: users.id, role: users.role, email: users.email, phone: users.phone })
+    .select({
+      id: users.id,
+      role: users.role,
+      email: users.email,
+      phone: users.phone,
+      hasPassword: sql<boolean>`${users.passwordHash} is not null`,
+    })
     .from(users)
     .where(sql`regexp_replace(${users.phone}, '[^0-9]', '', 'g') like ${`%${phoneDigits.slice(-9)}`}`)
     .limit(50);
   const matches = rows.filter((u) => u.phone && whatsappNumber(u.phone) === phoneDigits);
+  // A staff account is refused by the caller, with its own message.
+  const staff = matches.find((u) => u.role === "admin" || isOwnerEmail(u.email));
+  if (staff) return { user: staff };
   if (matches.length > 1) return { error: "admin.phoneShared" as const };
+  // Nobody verifies the mobile number on an account, so one that someone registered (it has a password) is only used
+  // when staff give the email it logs in with: a typo or a recycled number mustn't hand a seller's listing and
+  // documents to a stranger's account. Accounts our team added (no password) are matched by number.
+  if (matches[0]?.hasPassword) return { error: "admin.phoneHasAccount" as const };
   return { user: matches[0] ?? null };
 }
 
 export async function adminCreateListing(_prev: StaffListingState, formData: FormData): Promise<StaffListingState> {
-  await assertAdmin();
+  const me = await assertAdmin();
   const t = await getT("errors");
   const opt = (k: string) => {
     const v = formData.get(k);
@@ -522,6 +604,10 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
 
   if (s.sellerEmail && isOwnerEmail(s.sellerEmail)) {
     return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("admin.sellerIsStaff")] } };
+  }
+  // .invalid addresses are our own placeholders (phone-only sellers, the sample listings' seller), never a seller's.
+  if (s.sellerEmail && isPlaceholderEmail(s.sellerEmail)) {
+    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("field.email")] } };
   }
   const found = await staffListingSeller(s.sellerEmail, phoneDigits);
   if (found.error) return { error: t("form.checkFields"), fieldErrors: { sellerPhone: [t(found.error)] } };
@@ -594,6 +680,21 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
       })
       .where(and(eq(sellerLeads.id, lead.id), sql`${sellerLeads.listingId} is null`));
   }
+  await audit({
+    actorId: me.id,
+    action: "listing.create",
+    entityType: "listing",
+    entityId: row.id,
+    diff: {
+      status: [null, "pending_review"],
+      projectName: [null, v.projectName],
+      originalPrice: [null, v.originalPrice],
+      amountPaid: [null, v.amountPaid],
+      askingPrice: [null, v.askingPrice],
+      newSellerAccount: [null, !found.user],
+      ...(lead ? { leadRef: [null, lead.id] } : {}),
+    },
+  });
   refresh();
   return { ok: true, listingId: row.id };
 }
@@ -605,7 +706,7 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
  * beyond the admin's screen.
  */
 export async function claimLink(listingId: string, via: "email" | "copy") {
-  await assertAdmin();
+  const me = await assertAdmin();
   const t = await getT("errors");
   if (!z.uuid().safeParse(listingId).success) return { error: t("listing.notFound") };
   const [l] = await db
@@ -636,19 +737,40 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
   const locale = isLocale(l.locale) ? l.locale : "en";
   const msg = renderTemplate("listing.claim", locale, { name: l.fullName, project: l.projectName, ref: refCode(l.refNo) });
   const token = await issueClaimToken(l.sellerId, l.id);
+  // How it was sent, never the link or its token.
+  await audit({ actorId: me.id, action: "listing.claim_link", entityType: "listing", entityId: l.id, diff: { via } });
   if (via === "email") {
     const { sent } = await sendEmail({
       to: l.email,
       subject: msg.title,
       heading: msg.title,
       body: msg.body,
-      cta: { label: msg.cta, href: claimPath(token) },
+      cta: { label: msg.cta, href: claimPath(token, locale) },
       dir: dirOf(locale),
     });
     return sent ? { ok: true as const, emailed: true } : { error: t("admin.claim.emailFailed") };
   }
-  const url = `${siteUrl()}${claimPath(token)}`;
+  // In the seller's language, like the message: /ar/reset-password… for an Arabic seller.
+  const url = `${siteUrl()}${claimPath(token, locale)}`;
   const wa = l.phone ? whatsappNumber(l.phone) : null;
   const text = `${msg.title}\n\n${msg.body}\n\n${url}`;
   return { ok: true as const, url, whatsapp: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(text)}` : null };
+}
+
+// ---- The deal file (src/lib/deals.ts): contracts, NOC and transfer milestones of an agreed deal ----
+
+/** Saves the deal file card on the admin listing page; the change goes in the audit trail. */
+export async function updateDealFile(_prev: DealFileState, formData: FormData): Promise<DealFileState> {
+  const me = await assertAdmin();
+  const res = await saveDealFile(me.id, formData, await getT("errors"));
+  if (res.ok) refresh();
+  return res;
+}
+
+/** One note on the deal file. */
+export async function addDealNote(_prev: DealFileState, formData: FormData): Promise<DealFileState> {
+  const me = await assertAdmin();
+  const res = await addNote(me.id, String(formData.get("dealId") ?? ""), String(formData.get("body") ?? ""), await getT("errors"));
+  if (res.ok) refresh();
+  return res;
 }

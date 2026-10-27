@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { ArrowDown, ArrowRight, CirclePause, Handshake, Info, MessageCircle, Scale, TriangleAlert, Wallet } from "lucide-react";
 import { StatusPill } from "@/components/badges";

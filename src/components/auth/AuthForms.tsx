@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { Building2, ExternalLink, KeyRound, Repeat } from "lucide-react";
 import { login, signup } from "@/app/actions/auth";
 import { AttributionField } from "@/components/Attribution";

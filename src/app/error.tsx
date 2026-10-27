@@ -3,10 +3,11 @@
 import { useEffect } from "react";
 import { TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useT } from "@/i18n/client";
+import { useLocalePath, useT } from "@/i18n/client";
 
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const t = useT("common");
+  const lp = useLocalePath();
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -25,7 +26,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
           </Button>
           <Button asChild variant="outline" className="rounded-full">
             {/* a full page load, in case the error came from client state */}
-            <a href="/">{t("goHome")}</a>
+            <a href={lp("/")}>{t("goHome")}</a>
           </Button>
         </div>
       </div>

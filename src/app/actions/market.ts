@@ -7,8 +7,11 @@ import { db } from "@/db";
 import { inquiries, listings, offers, savedSearches, users, watchlist } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { LEGAL_UPDATED } from "@/content/legal/brand";
 import { sourceFromForm } from "@/lib/attribution";
+import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
+import { startDeal } from "@/lib/deals";
 import { refCode } from "@/lib/format";
 import { notify, notifyAdmins, type TemplateParams } from "@/lib/notify";
 import { settleOtherOffers } from "@/lib/offers";
@@ -135,6 +138,9 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
           message: v.message ?? null,
           status: "pending",
           counterAmount: null,
+          // Sending the offer agrees to the Terms (the line under the form): the version in force now.
+          termsAcceptedAt: new Date(),
+          termsVersion: LEGAL_UPDATED,
           updatedAt: new Date(),
         })
         .where(and(eq(offers.id, open.id), inArray(offers.status, ["pending", "countered"]), advertisedNow(false)))
@@ -142,8 +148,9 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
     : [];
   if (!revised.length) {
     const { rows } = await db.execute<{ id: string }>(sql`
-      insert into ${offers} (listing_id, buyer_id, amount, financing, message)
-      select ${v.listingId}::uuid, ${user.id}::uuid, ${v.amount}::int, ${v.financing}::financing, ${v.message ?? null}::text
+      insert into ${offers} (listing_id, buyer_id, amount, financing, message, terms_accepted_at, terms_version)
+      select ${v.listingId}::uuid, ${user.id}::uuid, ${v.amount}::int, ${v.financing}::financing, ${v.message ?? null}::text,
+        now(), ${LEGAL_UPDATED}::text
       where ${advertisedNow(true)}
       returning id`);
     // As when the check above refuses: the form says so (a refresh would replace the page with a 404 first).
@@ -238,6 +245,8 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
     if (!row.isSample) await notify([row.sellerId], key, params, sellerHref);
   };
   const dealAgreed = async (amount: number) => {
+    // The deal file our team completes from here to the transfer (src/lib/deals.ts), with the accepted amount.
+    await startDeal(offer.listingId, offerId);
     const people = await db
       .select({ id: users.id, fullName: users.fullName })
       .from(users)
@@ -279,9 +288,16 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
     return latest?.status === "live" ? unavailable : notLive(latest?.status);
   };
 
+  // An answer our team gives on the seller's behalf goes in the audit trail (src/lib/audit.ts).
+  const onSellersBehalf = async (diff: Record<string, unknown>) => {
+    if (user.role !== "admin" || row.sellerId === user.id) return;
+    await audit({ actorId: user.id, action: "offer.respond", entityType: "offer", entityId: offerId, diff });
+  };
+
   if (action === "accept" && isSeller && offer.status === "pending") {
     const failed = await accept("pending", offer.amount);
     if (failed) return failed;
+    await onSellersBehalf({ status: ["pending", "accepted"], amount: offer.amount });
     await toBuyer("offer.accepted", { project, amount: { aed: offer.amount } });
     await dealAgreed(offer.amount);
     await settleOtherOffers(unit, offerId);
@@ -291,9 +307,11 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
     if (row.listingStatus !== "live") return notLive(row.listingStatus);
     const counter = Math.round(counterAmount);
     if (!(await move(["pending"], { status: "countered", counterAmount: counter }))) return unavailable;
+    await onSellersBehalf({ status: ["pending", "countered"], amount: offer.amount, counterAmount: [null, counter] });
     await toBuyer("offer.countered", { project, original: { aed: offer.amount }, amount: { aed: counter } });
   } else if (action === "decline" && isSeller && offer.status === "pending") {
     if (!(await move(["pending"], { status: "declined" }))) return unavailable;
+    await onSellersBehalf({ status: ["pending", "declined"], amount: offer.amount });
     await toBuyer("offer.declined", { project, amount: { aed: offer.amount } });
   } else if (action === "accept_counter" && isBuyer && offer.status === "countered" && offer.counterAmount) {
     const failed = await accept("countered", offer.counterAmount);

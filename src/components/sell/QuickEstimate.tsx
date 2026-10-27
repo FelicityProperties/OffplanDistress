@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { ArrowRight, Calculator, Check, Info, Loader2, MessageCircle, TriangleAlert, X } from "lucide-react";
 import { createSellerLead } from "@/app/actions/leads";
 import { Aed, AedRange } from "@/components/exit/Aed";

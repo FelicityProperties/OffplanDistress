@@ -8,14 +8,28 @@ import { offerCountSql, saleValueSql, watchersSql } from "./listings";
 const docFlag = (kind: string) =>
   sql<boolean>`exists(select 1 from ${files} f where f.listing_id = ${listings.id} and f.kind = ${kind})`;
 
+/**
+ * What a deal is worth for our fee: the sale value in its deal file (agreed price + balance owed to the developer,
+ * src/lib/deals.ts); for a deal whose file has none yet, the accepted offer + that balance; the asking price only when
+ * neither exists (a status set by hand before deal files).
+ */
+const LISTING_ID = sql.raw(`"listings"."id"`); // qualified: inside the subqueries "id" would be their own row's
+const dealValueSql = sql<number>`coalesce(
+  (select d.sale_value from deals d where d.listing_id = ${LISTING_ID} and d.cancelled_at is null and d.sale_value is not null limit 1),
+  (select o.amount from offers o where o.listing_id = ${LISTING_ID} and o.status = 'accepted' order by o.updated_at desc limit 1)
+    + greatest(${listings.originalPrice} - ${listings.amountPaid}, 0),
+  ${saleValueSql})`;
+
 export async function adminStats() {
   const [row] = await db
     .select({
       pending: sql<number>`count(*) filter (where ${listings.status} = 'pending_review')::int`,
       live: sql<number>`count(*) filter (where ${listings.status} = 'live')::int`,
-      inTransfer: sql<number>`count(*) filter (where ${listings.status} in ('under_offer', 'noc_in_progress'))::int`,
-      pipelineValue: sql<number>`coalesce(sum(${saleValueSql}) filter (where ${listings.status} in ('under_offer', 'noc_in_progress')), 0)::bigint`,
-      transferredValue: sql<number>`coalesce(sum(${saleValueSql}) filter (where ${listings.status} = 'transferred'), 0)::bigint`,
+      // Real deals only, as the fees shown with it (a sample under offer isn't a deal).
+      inTransfer: sql<number>`count(*) filter (where ${listings.status} in ('under_offer', 'noc_in_progress') and not ${listings.isSample})::int`,
+      // Fees are counted on agreed prices, never on samples (they aren't deals).
+      pipelineValue: sql<number>`coalesce(sum(${dealValueSql}) filter (where ${listings.status} in ('under_offer', 'noc_in_progress') and not ${listings.isSample}), 0)::bigint`,
+      transferredValue: sql<number>`coalesce(sum(${dealValueSql}) filter (where ${listings.status} = 'transferred' and not ${listings.isSample}), 0)::bigint`,
       samples: sql<number>`count(*) filter (where ${listings.isSample})::int`,
     })
     .from(listings);
@@ -64,6 +78,10 @@ export async function adminListings(status?: (typeof listings.$inferSelect)["sta
       idDoc: docFlag("id"),
       // Entered by our team and still waiting for the seller's own confirmation (it can't be approved until then).
       awaitingSeller: sql<boolean>`(${listings.createdByStaff} and ${listings.ownershipConfirmedAt} is null and not ${listings.isSample})`,
+      // The seller's own text, checked for contact details (src/lib/typed-names.ts contactKinds) beside "Approve".
+      description: listings.description,
+      view: listings.view,
+      floor: listings.floor,
     })
     .from(listings)
     .innerJoin(users, eq(users.id, listings.sellerId))

@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { EmptyState, PageTitle } from "@/components/Kpi";
 import { BuyerOfferActions, SellerOfferActions } from "@/components/OfferActions";
+import { DealMilestones } from "@/components/DealMilestones";
+import { Pipeline } from "@/components/Pipeline";
 import { ToneStatus } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getLocale, getT } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
-import { OFFER_STATUS } from "@/lib/config";
+import { LISTING_STATUS, OFFER_STATUS } from "@/lib/config";
 import { offersReceived, offersSent } from "@/lib/dashboard";
+import { buyerDeals } from "@/lib/deals";
 import { formatAED, formatDate, refCode } from "@/lib/format";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,12 +23,14 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function OffersPage({ searchParams }: PageProps<"/dashboard/offers">) {
   const user = await requireUser("/dashboard/offers");
   const { tab } = await searchParams;
-  const [received, sent, t, tc, locale] = await Promise.all([
+  const [received, sent, t, tc, locale, purchases] = await Promise.all([
     offersReceived(user.id),
     offersSent(user.id),
     getT("dashboard"),
     getT("common"),
     getLocale(),
+    // This buyer's accepted offers on units moving to transfer, with the deal file's dates (never the seller).
+    buyerDeals(user.id),
   ]);
   const defaultTab = tab === "sent" || (tab !== "received" && !received.length && sent.length) ? "sent" : "received";
   const offerStatus = (s: keyof typeof OFFER_STATUS) => ({ label: tc(`offer.${s}`), tone: OFFER_STATUS[s].tone });
@@ -33,6 +38,38 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
   return (
     <div className="space-y-6">
       <PageTitle title={t("offers.title")} sub={t("offers.sub")} />
+      {purchases.length > 0 && (
+        <section aria-labelledby="purchases-title" className="space-y-3" data-testid="buyer-deals">
+          <div>
+            <h2 id="purchases-title" className="font-sans text-lg font-semibold">
+              {t("milestones.buyerTitle")}
+            </h2>
+            <p className="text-sm text-muted-foreground">{t("milestones.buyerSub")}</p>
+          </div>
+          {purchases.map((p) => (
+            <div key={p.id} className="space-y-3 rounded-xl border bg-card p-4 shadow-card">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0 wrap-anywhere">
+                  {/* A transferred unit is off the market: its deal page is no longer public (it would 404). */}
+                  {p.status === "transferred" ? (
+                    <p className="font-medium">{p.projectName}</p>
+                  ) : (
+                    <Link href={`/deals/${refCode(p.refNo)}`} className="font-medium hover:underline">
+                      {p.projectName}
+                    </Link>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    <bdi>{refCode(p.refNo)}</bdi>
+                  </p>
+                </div>
+                <ToneStatus label={tc(`listing.${p.status}`)} tone={LISTING_STATUS[p.status].tone} />
+              </div>
+              <Pipeline status={p.status} />
+              <DealMilestones dates={p.milestones} />
+            </div>
+          ))}
+        </section>
+      )}
       <Tabs defaultValue={defaultTab}>
         <TabsList>
           <TabsTrigger value="received">{t("offers.tabReceived", { count: received.length })}</TabsTrigger>

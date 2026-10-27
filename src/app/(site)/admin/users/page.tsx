@@ -72,7 +72,10 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                         {u.phone && (
                           <>
                             {" · "}
-                            <bdi dir="ltr">{u.phone}</bdi>
+                            {/* Never broken across lines: "+971 50 765" / "4321" reads as two numbers. */}
+                            <bdi dir="ltr" className="whitespace-nowrap">
+                              {u.phone}
+                            </bdi>
                           </>
                         )}
                       </p>

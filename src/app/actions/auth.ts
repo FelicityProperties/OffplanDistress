@@ -5,8 +5,10 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { sellerLeads, users } from "@/db/schema";
+import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { LEGAL_UPDATED } from "@/content/legal/brand";
 import { sourceFromForm } from "@/lib/attribution";
 import { clear, clientIp, hit, MINUTE } from "@/lib/throttle";
 import {
@@ -83,6 +85,8 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
       // Notifications and emails go out in the language the account was created in.
       locale: await getLocale(),
       termsAcceptedAt: new Date(),
+      // Which Terms of Use they agreed to (the date the legal pages were last updated).
+      termsVersion: LEGAL_UPDATED,
       source: sourceFromForm(formData),
     })
     .returning({ id: users.id });
@@ -93,7 +97,8 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
 
   await createSession(user.id);
   const fallback = lead ? `/sell?lead=${lead}` : intent === "sell" ? "/sell" : "/dashboard";
-  redirect(safeNext(formData.get("next"), fallback));
+  // A public page in the language of the page they signed up on (/ar/… from /ar/signup).
+  redirect(localePath(safeNext(formData.get("next"), fallback), await getLocale()));
 }
 
 /**
@@ -148,10 +153,10 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
 
   // Admin rights come from the database only — owners get theirs from scripts/migrate.mjs.
   await createSession(user.id);
-  redirect(safeNext(formData.get("next"), lead ? `/sell?lead=${lead}` : user.role === "admin" ? "/admin" : "/dashboard"));
+  redirect(localePath(safeNext(formData.get("next"), lead ? `/sell?lead=${lead}` : user.role === "admin" ? "/admin" : "/dashboard"), locale));
 }
 
 export async function logout() {
   await destroySession();
-  redirect("/");
+  redirect(localePath("/", await getLocale()));
 }

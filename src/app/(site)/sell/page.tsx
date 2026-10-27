@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { BadgeCheck, Calculator, ExternalLink, FileCheck2, FileSignature, Handshake, MessageCircle, Wallet } from "lucide-react";
 import { QuickEstimate } from "@/components/sell/QuickEstimate";
 import { SellForm, type SellPrefill } from "@/components/sell/SellForm";

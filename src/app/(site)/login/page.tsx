@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { redirect } from "next/navigation";
 import { AuthShell } from "@/components/AuthShell";
 import { LoginForm } from "@/components/auth/AuthForms";
-import { getT } from "@/i18n/server";
+import { localePath } from "@/i18n/paths";
+import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser, safeNext } from "@/lib/auth";
 import { BRAND } from "@/lib/config";
 import { authHref, leadFromAuthParams } from "@/lib/leads";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("auth");
-  return { title: t("meta.login.title"), description: t("meta.login.description") };
+  // Not a page for search results (every ?next= variant would be a copy of it); its links are still followed.
+  return { title: t("meta.login.title"), description: t("meta.login.description"), robots: { index: false, follow: true } };
 }
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
@@ -19,7 +21,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   // and the sell form starts from it.
   const leadId = leadFromAuthParams(lead, next);
   const target = safeNext(next, leadId ? `/sell?lead=${leadId}` : "");
-  if (await getCurrentUser()) redirect(target || "/dashboard");
+  if (await getCurrentUser()) redirect(localePath(target || "/dashboard", await getLocale()));
   const t = await getT("auth");
 
   return (

@@ -63,7 +63,8 @@ export default defineMessages({
       "Developers ask for overdue instalments and late fees to be cleared before they issue the NOC, so they are paid on transfer day. Who bears them is agreed in the MOU; we confirm the figure with the developer's statement of account first.",
 
     "timeline.title": "Your cash timeline",
-    "timeline.sub": "When each payment falls due if a deal is agreed today. Every figure except our fee is an estimate.",
+    "timeline.sub":
+      "When each payment falls due if a deal is agreed today. The DLD and developer NOC fees are estimates (≈); the instalments are as listed in the payment plan.",
     "timeline.transfer": "Transfer day",
     "timeline.transferWhen": "Usually between {from} and {to}, 2–5 weeks after the MOU",
     "timeline.transferEquity": "Equity to the seller",
@@ -200,7 +201,8 @@ export default defineMessages({
       "يشترط المطوّرون سداد الأقساط المتأخرة وغرامات التأخير قبل إصدار شهادة عدم الممانعة، لذا تُسدَّد يوم نقل الملكية. ويُتفق في مذكرة التفاهم على الطرف الذي يتحمّلها، ونتحقق من المبلغ مسبقاً من كشف حساب المطوّر.",
 
     "timeline.title": "الجدول الزمني لدفعاتك",
-    "timeline.sub": "مواعيد استحقاق كل دفعة إذا اتُّفق على الصفقة اليوم. جميع المبالغ تقديرية باستثناء رسومنا.",
+    "timeline.sub":
+      "مواعيد استحقاق كل دفعة إذا اتُّفق على الصفقة اليوم. رسوم دائرة الأراضي والأملاك وشهادة عدم الممانعة من المطوّر تقديرية (≈)، والأقساط كما وردت في خطة الدفع المدرجة.",
     "timeline.transfer": "يوم نقل الملكية",
     "timeline.transferWhen": "عادةً بين {from} و{to}، أي بعد أسبوعين إلى خمسة أسابيع من توقيع مذكرة التفاهم",
     "timeline.transferEquity": "حصة البائع",

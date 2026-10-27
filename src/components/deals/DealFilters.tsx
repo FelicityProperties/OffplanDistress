@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useLocale, useT } from "@/i18n/client";
+import { useLocale, useLocalePath, useT } from "@/i18n/client";
 import { COMMUNITIES, DEVELOPERS, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
 import { formatAEDCompact } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
@@ -31,13 +31,15 @@ function useParamsUpdater() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
+  const lp = useLocalePath();
   const [pending, start] = useTransition();
 
   function update(mutate: (p: URLSearchParams) => void) {
     const next = new URLSearchParams(params.toString());
     mutate(next);
     next.delete("page");
-    start(() => router.replace(`${pathname}?${next.toString()}`, { scroll: false }));
+    // Stays on /ar/deals on the Arabic page.
+    start(() => router.replace(lp(`${pathname}?${next.toString()}`), { scroll: false }));
   }
   return { params, update, pending };
 }
@@ -423,6 +425,7 @@ export function SaveSearchButton({ summary, tone = "subtle" }: { summary: string
   const t = useT("deals");
   const router = useRouter();
   const params = useSearchParams();
+  const lp = useLocalePath();
   const [pending, start] = useTransition();
   return (
     <Button
@@ -435,7 +438,7 @@ export function SaveSearchButton({ summary, tone = "subtle" }: { summary: string
           const res = await saveSearch(summary, params.toString());
           if (res.needsAuth) {
             toast(t("saveSearch.needsAuth"));
-            router.push(`/login?next=${encodeURIComponent(`/deals?${params.toString()}`)}`);
+            router.push(lp(`/login?next=${encodeURIComponent(`/deals?${params.toString()}`)}`));
           } else toast.success(t("saveSearch.saved"));
         })
       }

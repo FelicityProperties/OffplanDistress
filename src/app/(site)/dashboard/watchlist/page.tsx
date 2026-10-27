@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { TrendingDown } from "lucide-react";
 import { DealImage } from "@/components/DealImage";
 import { EmptyState, PageTitle } from "@/components/Kpi";

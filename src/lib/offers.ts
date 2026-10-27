@@ -3,6 +3,7 @@ import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { listings, offers } from "@/db/schema";
 import { OFFERS } from "./config";
+import { cancelOpenDeals } from "./deals";
 import { notify } from "./notify";
 import type { TemplateKey } from "./notification-templates";
 
@@ -67,6 +68,9 @@ export async function cancelAcceptedOffers(unit: Unit, whileStatus: "live" | "wi
     // Only while the unit is still in that status: if the seller accepted a new offer in the moment since it went live,
     // that offer is the deal now and stays accepted. ("withdrawn": the seller pulled out of the agreed deal.)
     const stillLive = sql`exists (select 1 from ${listings} where ${listings.id} = ${unit.id} and ${listings.status} = ${whileStatus})`;
+    // Its deal file first, kept with the reason (src/lib/deals.ts): until the accepted offer below is declined no new
+    // offer can be accepted on the unit, so the file of a deal agreed in the meantime is never the one closed here.
+    await cancelOpenDeals(unit.id, whileStatus === "live" ? "relisted" : "seller_withdrew", whileStatus);
     const cancelled = await db
       .update(offers)
       .set({ status: "declined", updatedAt: new Date() })

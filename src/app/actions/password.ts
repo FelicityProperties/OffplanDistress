@@ -8,7 +8,10 @@ import { z } from "zod";
 import { db } from "@/db";
 import { listings, passwordResets, sessions, users } from "@/db/schema";
 import { dirOf, isLocale } from "@/i18n/config";
+import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
+import { LEGAL_UPDATED } from "@/content/legal/brand";
+import { audit } from "@/lib/audit";
 import { createSession, findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail, safeNext } from "@/lib/auth";
 import { claimPath, findClaim, isPlaceholderEmail, issueClaimToken } from "@/lib/claim";
 import { emailEnabled, sendEmail } from "@/lib/email";
@@ -79,7 +82,7 @@ async function issueReset(email: string) {
       subject: claim.title,
       heading: claim.title,
       body: claim.body,
-      cta: { label: claim.cta, href: claimPath(claimToken) },
+      cta: { label: claim.cta, href: claimPath(claimToken, locale) },
       dir: dirOf(locale),
     });
     return;
@@ -94,7 +97,8 @@ async function issueReset(email: string) {
     subject: msg.title,
     heading: msg.title,
     body: msg.body,
-    cta: { label: msg.cta, href: `/reset-password?token=${token}` },
+    // In the account's language (/ar/reset-password…), like the email itself.
+    cta: { label: msg.cta, href: localePath(`/reset-password?token=${token}`, locale) },
     dir: dirOf(locale),
   });
 }
@@ -171,7 +175,7 @@ export async function resetPassword(_prev: PasswordFormState, formData: FormData
   // Sign out everywhere (including whoever may have the old password), then sign this browser in.
   await db.delete(sessions).where(eq(sessions.userId, row.userId));
   await createSession(row.userId);
-  redirect(safeNext(formData.get("next"), "/dashboard"));
+  redirect(localePath(safeNext(formData.get("next"), "/dashboard"), await getLocale()));
 }
 
 /**
@@ -184,13 +188,19 @@ export async function resetPassword(_prev: PasswordFormState, formData: FormData
  */
 export async function claimListing(_prev: PasswordFormState, formData: FormData): Promise<PasswordFormState> {
   const [t, ts] = await Promise.all([getT("password"), getT("sell")]);
+  // Before the token lookup and bcrypt: per IP, as generous as the log-in form's (a seller fixing a field submits a few
+  // times; several people can share one mobile network's address).
+  if (!(await hit(`claim-ip:${await clientIp()}`, 50, 15 * MINUTE))) return { error: (await getT("errors"))("tooMany") };
   const token = formData.get("token");
   const claim = typeof token === "string" ? await findClaim(token) : null;
   if (!claim || claim.role !== "user" || isOwnerEmail(claim.email) || claim.ownershipConfirmedAt) {
     return { error: t("claim.invalidBody"), invalidToken: true };
   }
   const confirmed = formData.get("confirmOwnership") === "on";
-  const ownershipError = confirmed ? {} : { confirmOwnership: [ts("error.confirmOwnership")] };
+  // A new account's confirmation also covers the Privacy Policy (ClaimForm), so its message names it too.
+  const ownershipError = confirmed
+    ? {}
+    : { confirmOwnership: [claim.hasPassword ? ts("error.confirmOwnership") : t("claim.errors.confirmNew")] };
 
   if (claim.hasPassword) {
     const me = await getCurrentUser();
@@ -258,13 +268,31 @@ async function spendClaimToken(tokenId: string) {
 /** The seller's confirmation on the listing (and the Terms on their account), then a heads-up to our team. */
 async function confirmOwnership(claim: NonNullable<Awaited<ReturnType<typeof findClaim>>>) {
   const now = new Date();
-  await db
+  const confirmed = await db
     .update(listings)
-    .set({ ownershipConfirmedAt: now, updatedAt: now })
-    .where(and(eq(listings.id, claim.listingId), eq(listings.sellerId, claim.userId), isNull(listings.ownershipConfirmedAt)));
+    // The Terms version the seller agreed to with this confirmation (LEGAL_UPDATED), as on the sell form.
+    .set({ ownershipConfirmedAt: now, termsVersion: LEGAL_UPDATED, updatedAt: now })
+    .where(and(eq(listings.id, claim.listingId), eq(listings.sellerId, claim.userId), isNull(listings.ownershipConfirmedAt)))
+    .returning({ id: listings.id });
+  // The seller's own confirmation of their authority to sell, in the audit trail (src/lib/audit.ts): the record a
+  // dispute over that authority needs. Never the token, the email or the password.
+  if (confirmed.length) {
+    await audit({
+      actorId: claim.userId,
+      action: "listing.claimed",
+      entityType: "listing",
+      entityId: claim.listingId,
+      diff: { ownershipConfirmedAt: [null, now], termsVersion: [null, LEGAL_UPDATED], newAccount: !claim.hasPassword },
+    });
+  }
   await db
     .update(users)
-    .set({ termsAcceptedAt: sql`coalesce(${users.termsAcceptedAt}, now())` })
+    .set({
+      // terms_accepted_at says when terms_version was agreed to: an agreement to a newer version is dated now, never
+      // with the older sign-up date (which would pair a version with a day before it existed).
+      termsAcceptedAt: sql`case when ${users.termsVersion} is not distinct from ${LEGAL_UPDATED}::text then coalesce(${users.termsAcceptedAt}, now()) else now() end`,
+      termsVersion: LEGAL_UPDATED,
+    })
     .where(eq(users.id, claim.userId));
   await notifyAdmins(
     "listing.claimed",

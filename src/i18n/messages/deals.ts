@@ -28,7 +28,7 @@ export default defineMessages({
     "filters.budgetLabel": "Upfront cash budget",
     "filters.transfer": "Cash at transfer (≈)",
     "filters.transferLabel": "Cash at transfer budget",
-    "filters.transferHint": "Equity to the seller + fees (DLD and NOC estimated) + any overdue instalments.",
+    "filters.transferHint": "Equity to the seller + fees (DLD and NOC estimated) + any overdue instalments and late fees.",
     "filters.any": "Any",
     "filters.community": "Community",
     "filters.developer": "Developer",
@@ -109,7 +109,8 @@ export default defineMessages({
     "filters.budgetLabel": "ميزانية المبلغ المقدّم",
     "filters.transfer": "النقد يوم نقل الملكية (تقريبي)",
     "filters.transferLabel": "ميزانية النقد يوم نقل الملكية",
-    "filters.transferHint": "حصة البائع + الرسوم (رسوم دائرة الأراضي والأملاك وشهادة عدم الممانعة تقديرية) + أي أقساط متأخرة.",
+    "filters.transferHint":
+      "حصة البائع + الرسوم (رسوم دائرة الأراضي والأملاك وشهادة عدم الممانعة تقديرية) + أي أقساط متأخرة وغرامات تأخير.",
     "filters.any": "أي مبلغ",
     "filters.community": "المنطقة",
     "filters.developer": "المطوّر",

@@ -4,6 +4,7 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { notifications, users, watchlist } from "@/db/schema";
 import { dirOf, isLocale, type Locale } from "@/i18n/config";
+import { localePath } from "@/i18n/paths";
 import { OWNER_EMAILS } from "./config";
 import { sendEmail } from "./email";
 import { refCode } from "./format";
@@ -17,17 +18,20 @@ type Ids = (string | null | undefined)[];
  * In-app notification for each user (in their language), plus an email when Resend is configured.
  * Params are rendered per recipient: { aed: n } becomes "AED 1,250,000" / "1,250,000 درهم",
  * { t: "errors", key: "…" } is translated. Emails go out after the response so the triggering action stays fast.
- * Never throws — a failed notification must not break the action that triggered it.
+ * Never throws — a failed notification must not break the action that triggered it. Resolves true once the in-app
+ * notifications are stored (the emails follow), false when nothing was stored (no such user, or a failure, logged), for
+ * callers that record a notice as sent (src/lib/reminders.ts).
  */
-export async function notify(userIds: Ids, key: TemplateKey, params: TemplateParams, href: string | null) {
+export async function notify(userIds: Ids, key: TemplateKey, params: TemplateParams, href: string | null): Promise<boolean> {
   const ids = [...new Set(userIds.filter((id): id is string => Boolean(id)))];
-  if (!ids.length) return;
+  if (!ids.length) return false;
+  let stored = false;
   try {
     const recipients = await db
       .select({ id: users.id, email: users.email, locale: users.locale })
       .from(users)
       .where(inArray(users.id, ids));
-    if (!recipients.length) return;
+    if (!recipients.length) return false;
 
     const rendered = recipients.map((r) => {
       const locale = asLocale(r.locale);
@@ -36,6 +40,7 @@ export async function notify(userIds: Ids, key: TemplateKey, params: TemplatePar
     await db.insert(notifications).values(
       rendered.map(({ r, msg }) => ({ userId: r.id, type: key, title: msg.title, body: msg.body, href })),
     );
+    stored = true;
 
     after(async () => {
       await Promise.all(
@@ -47,7 +52,9 @@ export async function notify(userIds: Ids, key: TemplateKey, params: TemplatePar
               subject: msg.title,
               heading: msg.title,
               body: msg.body,
-              cta: href ? { label: msg.cta, href } : undefined,
+              // A public page (a deal, /sell) in the recipient's language; dashboard links have one address. The
+              // in-app notice keeps the plain path: the bell opens it in the language of the page it is clicked on.
+              cta: href ? { label: msg.cta, href: localePath(href, locale) } : undefined,
               dir: dirOf(locale),
             }),
           ),
@@ -56,13 +63,20 @@ export async function notify(userIds: Ids, key: TemplateKey, params: TemplatePar
   } catch (err) {
     console.error(`[notify] ${key} failed`, err);
   }
+  return stored;
 }
 
 /**
  * Everyone with the admin role, except `except` (usually the admin who triggered the event).
  * Falls back to emailing the owner addresses, in English, if no admin account exists yet.
+ * Resolves false when the notice couldn't be stored or sent (logged), true otherwise.
  */
-export async function notifyAdmins(key: TemplateKey, params: TemplateParams, href: string | null, opts: { except?: Ids } = {}) {
+export async function notifyAdmins(
+  key: TemplateKey,
+  params: TemplateParams,
+  href: string | null,
+  opts: { except?: Ids } = {},
+): Promise<boolean> {
   try {
     const admins = await db.select({ id: users.id }).from(users).where(eq(users.role, "admin"));
     if (admins.length) {
@@ -82,8 +96,10 @@ export async function notifyAdmins(key: TemplateKey, params: TemplateParams, hre
         ),
       ),
     );
+    return true;
   } catch (err) {
     console.error(`[notify] admins ${key} failed`, err);
+    return false;
   }
 }
 

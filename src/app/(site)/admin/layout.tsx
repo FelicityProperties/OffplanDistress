@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { MailWarning } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { getT } from "@/i18n/server";
+import { LocaleGuard } from "@/components/LocaleGuard";
+import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
 import { adminStats } from "@/lib/admin";
 import { emailOffReason } from "@/lib/email";
@@ -43,6 +44,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           </div>
         </div>
       )}
+      {/* Reached in-app from a page in the other language: loaded again, whole, in this one. */}
+      <LocaleGuard locale={await getLocale()} />
       {children}
     </AppShell>
   );

@@ -3,6 +3,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { listings, passwordResets, users } from "@/db/schema";
+import type { Locale } from "@/i18n/config";
+import { localePath } from "@/i18n/paths";
 
 // Staff-assisted intake: our team enters a listing from the documents a seller sent (often on WhatsApp), then sends the
 // seller a claim link. Opening it (no login needed) the seller confirms they own the unit or may sell it, the documents
@@ -29,9 +31,14 @@ export function isPlaceholderEmail(email: string) {
   return email.trim().toLowerCase().endsWith(".invalid");
 }
 
-/** The claim link's path for a raw token (opened on this site; emails add the site's address). */
-export function claimPath(token: string) {
-  return `/reset-password?claim=1&token=${token}`;
+/**
+ * The claim link's path for a raw token (opened on this site; emails add the site's address). With the seller's
+ * language, the link opens in it (/ar/reset-password… for Arabic) whatever the phone's settings; without one (a login
+ * redirect's ?next=) it is the plain path, which the login turns into the page's language.
+ */
+export function claimPath(token: string, locale?: Locale) {
+  const path = `/reset-password?claim=1&token=${token}`;
+  return locale ? localePath(path, locale) : path;
 }
 
 /**
@@ -69,6 +76,8 @@ export async function findClaim(token: string) {
       // Whether the account can already log in: such an account is never given a new password through a claim link.
       hasPassword: sql<boolean>`${users.passwordHash} is not null`,
       termsAcceptedAt: users.termsAcceptedAt,
+      // The language our team chose for this seller (the claim message went out in it), offered on the claim page.
+      locale: users.locale,
       listingId: listings.id,
       refNo: listings.refNo,
       projectName: listings.projectName,
@@ -79,6 +88,10 @@ export async function findClaim(token: string) {
       unitType: listings.unitType,
       sizeSqft: listings.sizeSqft,
       askingPrice: listings.askingPrice,
+      // The figures buyers will see, so the seller confirms what our team entered (as on the sell form's review step).
+      originalPrice: listings.originalPrice,
+      amountPaid: listings.amountPaid,
+      handoverDate: listings.handoverDate,
       createdByStaff: listings.createdByStaff,
       ownershipConfirmedAt: listings.ownershipConfirmedAt,
     })

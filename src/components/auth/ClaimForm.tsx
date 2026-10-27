@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { claimListing } from "@/app/actions/password";
 import { Field, FormMessage } from "@/components/forms";
@@ -93,19 +93,10 @@ export function ClaimForm({ token, existing, email }: { token: string; existing:
             className="mt-0.5 size-4 shrink-0 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
           <span>
-            {richText(ts("confirm.label"), {
-              terms: (
-                <Link
-                  href="/terms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-medium underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {ts("confirm.terms")}
-                  <ExternalLink className="size-3.5 rtl:-scale-x-100" aria-hidden />
-                  <span className="sr-only">{tl("newTab")}</span>
-                </Link>
-              ),
+            {/* A new account also accepts the Privacy Policy, as the sign-up form asks; an existing one already has. */}
+            {richText(existing ? ts("confirm.label") : t("claim.confirmNew"), {
+              terms: <LegalLink href="/terms" label={ts("confirm.terms")} newTab={tl("newTab")} />,
+              privacy: <LegalLink href="/privacy" label={t("claim.privacy")} newTab={tl("newTab")} />,
             })}
           </span>
         </label>
@@ -122,5 +113,21 @@ export function ClaimForm({ token, existing, email }: { token: string; existing:
       </Button>
       <p className="text-center text-xs leading-relaxed text-muted-foreground">{t("claim.after")}</p>
     </form>
+  );
+}
+
+/** Inline (not inline-flex), so the Arabic "و" typed before a link stays on the same line as it. */
+function LegalLink({ href, label, newTab }: { href: string; label: string; newTab: string }) {
+  return (
+    <Link
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {label}
+      <ExternalLink className="ms-1 inline size-3.5 align-[-0.125em] rtl:-scale-x-100" aria-hidden />
+      <span className="sr-only">{newTab}</span>
+    </Link>
   );
 }

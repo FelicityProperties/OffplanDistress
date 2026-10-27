@@ -1,7 +1,7 @@
 "use client";
 
 import { useOptimistic, useTransition } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Bell, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useDir, useLocale, useT } from "@/i18n/client";
+import { useDir, useLocale, useLocalePath, useT } from "@/i18n/client";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -53,8 +53,10 @@ function safeHref(href: string | null | undefined) {
 
 function useGo() {
   const router = useRouter();
+  const lp = useLocalePath();
   return (href: string) => {
-    if (href.startsWith("/")) router.push(href);
+    // A notice about a public page (a deal, /sell) opens it in the page's language.
+    if (href.startsWith("/")) router.push(lp(href));
     else window.location.assign(href);
   };
 }

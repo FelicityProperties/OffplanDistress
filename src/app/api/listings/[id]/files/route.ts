@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { files, listings } from "@/db/schema";
 import { getT } from "@/i18n/server";
+import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
 import { FILE_KINDS, MAX_UPLOAD_BYTES } from "@/lib/config";
 
@@ -78,6 +79,11 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
       data: Buffer.from(await file.arrayBuffer()),
     })
     .returning({ id: files.id });
+  // Our team adding a document or photo to a seller's listing goes in the audit trail (src/lib/audit.ts): the kind and
+  // the file name, never the contents.
+  if (isAdmin && listing.sellerId !== user.id) {
+    await audit({ actorId: user.id, action: "file.upload", entityType: "file", entityId: row.id, diff: { kind, filename: file.name.slice(0, 200) } });
+  }
 
   // Seller photos go into the public gallery while the listing is still in review (our team checks them
   // before approving). Once it's live, new seller photos wait for an admin to add them from the review page.

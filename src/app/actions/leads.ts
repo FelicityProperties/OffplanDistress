@@ -8,6 +8,7 @@ import { sellerLeads } from "@/db/schema";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn, TKey } from "@/i18n/translator";
 import { sourceFromForm } from "@/lib/attribution";
+import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
 import { DEVELOPERS } from "@/lib/config";
 import { leadCode, quarterEndOf, sellerEstimate } from "@/lib/estimate";
@@ -153,21 +154,41 @@ async function assertAdmin() {
 
 const STATUSES = ["new", "contacted", "converted", "lost"] as const;
 
+/** The lead's status and notes before an admin changes them, for the audit trail (src/lib/audit.ts). */
+async function leadBefore(id: string) {
+  const [row] = await db.select({ status: sellerLeads.status, notes: sellerLeads.notes }).from(sellerLeads).where(eq(sellerLeads.id, id)).limit(1);
+  return row;
+}
+
 export async function setLeadStatus(id: string, status: (typeof STATUSES)[number]) {
-  await assertAdmin();
+  const me = await assertAdmin();
   if (!STATUSES.includes(status) || !z.uuid().safeParse(id).success) return { error: (await getT("errors"))("field.invalid") };
+  const before = await leadBefore(id);
   await db.update(sellerLeads).set({ status, updatedAt: new Date() }).where(eq(sellerLeads.id, id));
+  if (before && before.status !== status) {
+    await audit({ actorId: me.id, action: "lead.status", entityType: "lead", entityId: id, diff: { status: [before.status, status] } });
+  }
   refresh();
   return { ok: true };
 }
 
 export async function saveLeadNotes(id: string, notes: string) {
-  await assertAdmin();
+  const me = await assertAdmin();
   if (!z.uuid().safeParse(id).success) return { error: (await getT("errors"))("field.invalid") };
-  await db
-    .update(sellerLeads)
-    .set({ notes: notes.trim().slice(0, 3000) || null, updatedAt: new Date() })
-    .where(eq(sellerLeads.id, id));
+  const before = await leadBefore(id);
+  const next = notes.trim().slice(0, 3000) || null;
+  await db.update(sellerLeads).set({ notes: next, updatedAt: new Date() }).where(eq(sellerLeads.id, id));
+  if (before && (before.notes ?? null) !== next) {
+    // Who edited the notes and when, not what they say: audit rows are kept for good, while a lead that never became an
+    // account or a listing is deleted after 24 months (src/lib/analytics.ts purgeExpiredData), notes included.
+    await audit({
+      actorId: me.id,
+      action: "lead.notes",
+      entityType: "lead",
+      entityId: id,
+      diff: { notesLength: [before.notes?.length ?? 0, next?.length ?? 0] },
+    });
+  }
   refresh();
   return { ok: true };
 }

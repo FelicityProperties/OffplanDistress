@@ -7,7 +7,9 @@ import { db } from "@/db";
 import { listings, sellerLeads, users } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { LEGAL_UPDATED } from "@/content/legal/brand";
 import { sourceFromForm } from "@/lib/attribution";
+import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS, UNIT_TYPES } from "@/lib/config";
 import { formatNumber, refCode } from "@/lib/format";
@@ -193,6 +195,7 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
       source: sourceFromForm(formData),
       // The seller ticked the ownership / authority / Terms confirmation above (checked on the server too).
       ownershipConfirmedAt: new Date(),
+      termsVersion: LEGAL_UPDATED,
     })
     .returning({ id: listings.id, refNo: listings.refNo });
 
@@ -357,6 +360,7 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
     refresh();
     return { error: t("listing.changeUnavailable") };
   }
+  await audit({ actorId: user.id, action: "listing.seller_status", entityType: "listing", entityId: listingId, diff: { status: [l.status, next] } });
   // Off the market: buyers with an open offer on it are told it is no longer available. Withdrawing a unit under
   // offer also ends the agreed deal: that buyer is told it did not go ahead, and our team hears about it.
   if (next === "withdrawn") {

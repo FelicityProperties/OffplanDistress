@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { eq, sql } from "drizzle-orm";
@@ -37,7 +37,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { db } from "@/db";
 import { listings } from "@/db/schema";
+import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
+import { alternatesFor, openGraphBase } from "@/lib/seo";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND, FEES, PUBLIC_STATUSES } from "@/lib/config";
 import { richText } from "@/content/legal/rich-text";
@@ -59,7 +61,7 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
   const { ref } = await params;
   const [row, t, tc, locale] = await Promise.all([load(ref), getT("deal"), getT("common"), getLocale()]);
   // Not an advert (a private status, or a DLD permit / Form A that has run out): never indexed, nothing about the unit.
-  if (!row || !isAdvertised(row.listing)) return { title: t("meta.unavailable"), robots: { index: false } };
+  if (!row || !isAdvertised(row.listing)) return { title: t("meta.unavailable"), robots: { index: false }, alternates: null };
   const l = row.listing;
   const a = analyzeDeal(l);
   const vars = { unit: tc(`unit.${l.unitType}`), project: l.projectName };
@@ -74,13 +76,16 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
     handover: formatQuarter(l.handoverDate, locale),
     upfront: formatAED(l.askingPrice, locale),
   });
+  // One address per deal and language: "/deals/od-1001" and "/deals/OD-1001" are the same page, canonical OD-1001.
+  const alternates = alternatesFor(`/deals/${refCode(l.refNo)}`, locale);
   return {
     title,
     description,
+    alternates,
     // The share image is the generated card in ./opengraph-image.tsx (price, discount, saving).
-    openGraph: { title, description },
+    openGraph: { ...openGraphBase(locale), title, description, url: alternates?.canonical },
     // Sample listings are illustrations, not real adverts: keep them out of search results.
-    ...(l.isSample ? { robots: { index: false } } : {}),
+    ...(l.isSample ? { robots: { index: false }, alternates: null } : {}),
   };
 }
 
@@ -249,9 +254,13 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           "@context": "https://schema.org",
           "@type": "RealEstateListing",
           name: `${l.projectName} — ${tc(`unit.${l.unitType}`)}, ${community}`,
-          url: `${siteUrl()}/deals/${refCode(l.refNo)}`,
+          url: `${siteUrl()}${localePath(`/deals/${refCode(l.refNo)}`, locale)}`,
           datePosted: (l.publishedAt ?? l.createdAt).toISOString(),
-          image: l.images.filter((u) => u.startsWith("http")).slice(0, 4),
+          // Uploaded photos are served from /api/files/… on this site: absolute addresses, which search engines need.
+          image: l.images
+            .filter((u) => u.startsWith("http") || (u.startsWith("/") && !u.startsWith("//")))
+            .slice(0, 4)
+            .map((u) => (u.startsWith("/") ? `${siteUrl()}${u}` : u)),
           description: l.description || undefined,
           offers: { "@type": "Offer", price: a.saleValue, priceCurrency: "AED", availability: "https://schema.org/InStock" },
           provider: { "@id": `${siteUrl()}/#organization` },
@@ -480,7 +489,11 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       {BRAND.whatsapp && (
                         <a
                           href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(
-                            t("side.waMessage", { ref: refCode(l.refNo), project: l.projectName, url: `${siteUrl()}/deals/${refCode(l.refNo)}` }),
+                            t("side.waMessage", {
+                              ref: refCode(l.refNo),
+                              project: l.projectName,
+                              url: `${siteUrl()}${localePath(`/deals/${refCode(l.refNo)}`, locale)}`,
+                            }),
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"

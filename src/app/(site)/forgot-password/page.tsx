@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { AuthShell } from "@/components/AuthShell";
 import { ForgotPasswordForm } from "@/components/auth/PasswordForms";
 import { getT } from "@/i18n/server";

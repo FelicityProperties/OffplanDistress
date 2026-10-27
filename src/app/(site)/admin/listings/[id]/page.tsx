@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { AlertTriangle, ArrowLeft, ExternalLink, FileText, ImageIcon, UserCheck } from "lucide-react";
 import { AdminListingForm, ReviewButtons } from "@/components/admin/AdminControls";
 import { ClaimLinkButtons } from "@/components/admin/ClaimLinkButtons";
+import { DealFileCard } from "@/components/admin/DealFileCard";
+import { HistoryPanel } from "@/components/admin/HistoryPanel";
 import { StatusPill } from "@/components/badges";
 import { isPlaceholderEmail } from "@/lib/claim";
 import { emailEnabled } from "@/lib/email";
@@ -54,7 +56,8 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
   );
 
   // Sellers mustn't give buyers a way around the platform: flag (never strip) contact details in their text.
-  const contactFound = (["description", "view"] as const).flatMap((field) =>
+  // The floor too: like the view, it is free text shown on the deal page.
+  const contactFound = (["description", "view", "floor"] as const).flatMap((field) =>
     contactKinds(l[field]).map((kind) => ({ field, kind })),
   );
   const awaitingSeller = l.createdByStaff && !l.ownershipConfirmedAt && !l.isSample;
@@ -147,7 +150,12 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
               </div>
             ))}
           </dl>
-          {l.description && <p className="mt-4 whitespace-pre-line text-sm text-muted-foreground">{l.description}</p>}
+          {/* dir="auto": an English description stays readable (and its numbers in order) on the Arabic page. */}
+          {l.description && (
+            <p dir="auto" className="mt-4 whitespace-pre-line text-start text-sm text-muted-foreground">
+              {l.description}
+            </p>
+          )}
           {contactFound.length > 0 && (
             <div
               id="contact-warning"
@@ -233,7 +241,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         {docs.length ? (
           <ul className="mt-4 divide-y rounded-lg border">
             {docs.map((d) => (
-              <li key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+              <li key={d.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 text-sm">
                 <span className="flex min-w-0 items-center gap-2">
                   {d.kind === "photo" ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
                   <a href={`/api/files/${d.id}`} target="_blank" rel="noreferrer" className="truncate hover:underline">
@@ -285,6 +293,9 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         )}
       </section>
 
+      {/* The deal file (contracts, NOC, transfer) once an offer is accepted; opened lazily for older deals. */}
+      <DealFileCard listing={l} />
+
       <section className="rounded-xl border bg-card p-6 shadow-card">
         <h2 className="mb-4 font-sans text-lg font-semibold">{t("listing.manage")}</h2>
         <AdminListingForm
@@ -313,6 +324,9 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           }}
         />
       </section>
+
+      {/* The audit trail: who changed what on this listing, its deal file, offers and documents (admins only). */}
+      <HistoryPanel listingId={l.id} />
     </div>
   );
 }

@@ -109,6 +109,15 @@ export const users = pgTable(
     locale: text("locale").notNull().default("en"),
     /** When the user ticked "I agree to the Terms of Use and Privacy Policy" at sign-up; null for older accounts. */
     termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
+    /**
+     * The version of the Terms of Use (LEGAL_UPDATED in src/content/legal/brand.ts, e.g. "2026-10-26") the account last
+     * agreed to: at sign-up, or when the seller confirms a listing our team entered. Null = agreed before consent was
+     * versioned (terms_accepted_at still says when).
+     */
+    termsVersion: text("terms_version"),
+    /** The admin who last set KYC to verified, and when (src/app/actions/admin.ts setKycStatus); null before 2026-10-26. */
+    kycVerifiedBy: uuid("kyc_verified_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
+    kycVerifiedAt: timestamp("kyc_verified_at", { withTimezone: true }),
     /** How the visitor found us when they signed up; null for older accounts. */
     source: jsonb("source").$type<Source>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -213,6 +222,8 @@ export const listings = pgTable(
     ownershipConfirmedAt: timestamp("ownership_confirmed_at", { withTimezone: true }),
     /** The seller lead (free estimate) our team created this listing from, if any. */
     leadId: uuid("lead_id").references((): AnyPgColumn => sellerLeads.id, { onDelete: "set null" }),
+    /** The Terms version (LEGAL_UPDATED) the seller agreed to when confirming ownership; null for older listings. */
+    termsVersion: text("terms_version"),
   },
   (t) => [
     uniqueIndex("listings_ref_idx").on(t.refNo),
@@ -252,6 +263,9 @@ export const offers = pgTable(
     message: text("message"),
     status: offerStatus("status").notNull().default("pending"),
     counterAmount: integer("counter_amount"),
+    /** When the buyer sent (or last revised) the offer, agreeing to the Terms, and which version (LEGAL_UPDATED). */
+    termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
+    termsVersion: text("terms_version"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -470,8 +484,112 @@ export const reminders = pgTable(
   (t) => [uniqueIndex("reminders_entity_kind_idx").on(t.entityType, t.entityId, t.kind)],
 );
 
+/**
+ * The transaction file of one agreed deal (src/lib/deals.ts), from the accepted offer to the DLD transfer: the RERA
+ * contracts (Form A seller–broker, Form B buyer–broker, Form F the MOU, Form I with a co-broker), the deposit, the
+ * developer's NOC, the trustee appointment and our invoice. Opened when an offer is accepted (or lazily, from the
+ * accepted offer, the first time our team opens a deal agreed before this table existed). A unit has at most one open
+ * deal (cancelled_at null); one that falls through is kept with its reason. Dates are Dubai calendar dates; money is
+ * whole AED. Only our team sees it; the parties see their milestone dates on their dashboards, never each other.
+ */
+export const deals = pgTable(
+  "deals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    listingId: uuid("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    offerId: uuid("offer_id").references(() => offers.id, { onDelete: "set null" }),
+    buyerId: uuid("buyer_id").references(() => users.id, { onDelete: "set null" }),
+    sellerId: uuid("seller_id").references(() => users.id, { onDelete: "set null" }),
+    /** What the buyer pays the seller for the equity paid in (as in Form F); prefilled from the accepted offer. */
+    agreedPrice: integer("agreed_price"),
+    /** agreed_price + the balance still owed to the developer (original_price − amount_paid): what our 2% is on. */
+    saleValue: integer("sale_value"),
+    formANo: text("form_a_no"),
+    formASignedAt: date("form_a_signed_at"),
+    formAExpiresAt: date("form_a_expires_at"),
+    formBNo: text("form_b_no"),
+    formBSignedAt: date("form_b_signed_at"),
+    formFNo: text("form_f_no"),
+    formFSignedAt: date("form_f_signed_at"),
+    depositAmount: integer("deposit_amount"),
+    /** "broker" | "seller" | "trustee" | "developer" | "other" */
+    depositHeldBy: text("deposit_held_by"),
+    cobrokerCompany: text("cobroker_company"),
+    cobrokerOrn: text("cobroker_orn"),
+    cobrokerBrn: text("cobroker_brn"),
+    cobrokerFormINo: text("cobroker_form_i_no"),
+    /** The co-broker's share of our commission, in whole percent (0–100). */
+    cobrokerSplitPct: integer("cobroker_split_pct"),
+    nocAppliedAt: date("noc_applied_at"),
+    nocFee: integer("noc_fee"),
+    nocIssuedAt: date("noc_issued_at"),
+    nocValidUntil: date("noc_valid_until"),
+    trusteeOffice: text("trustee_office"),
+    transferBookedFor: date("transfer_booked_for"),
+    transferredAt: date("transferred_at"),
+    invoiceNo: text("invoice_no"),
+    commissionPaidAt: date("commission_paid_at"),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    /** "relisted" (back on the market), "seller_withdrew" or "superseded" (a newer deal on the unit). */
+    cancelReason: text("cancel_reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("deals_open_listing_idx").on(t.listingId).where(sql`cancelled_at is null`),
+    index("deals_listing_idx").on(t.listingId, t.createdAt),
+    index("deals_buyer_idx").on(t.buyerId),
+  ],
+);
+
+/** Our team's running notes on a deal file. */
+export const dealNotes = pgTable(
+  "deal_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    dealId: uuid("deal_id")
+      .notNull()
+      .references(() => deals.id, { onDelete: "cascade" }),
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("deal_notes_deal_idx").on(t.dealId, t.createdAt)],
+);
+
+/**
+ * Who changed what (src/lib/audit.ts): every admin action, a seller's own status changes, answers to offers our team gave
+ * on a seller's behalf, and documents opened by someone other than their uploader. diff holds the changed fields as
+ * { field: [before, after] } (or a few facts about the event), never passwords, tokens or file contents. actor_id has no
+ * foreign key on purpose: the record stays as it was even if the account is deleted. Rows are never updated or deleted.
+ */
+export const auditEvents = pgTable(
+  "audit_events",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    /** The signed-in user who did it; null for the system (cron). */
+    actorId: uuid("actor_id"),
+    /** e.g. "listing.update", "deal.update", "file.view" */
+    action: text("action").notNull(),
+    /** "listing" | "deal" | "offer" | "file" | "user" | "inquiry" | "lead" | "export" */
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    diff: jsonb("diff").$type<Record<string, unknown>>(),
+    /** clientIp() of the request (x-forwarded-for on Vercel). */
+    ip: text("ip"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("audit_events_entity_idx").on(t.entityType, t.entityId, t.createdAt),
+    index("audit_events_actor_idx").on(t.actorId, t.createdAt),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type Listing = typeof listings.$inferSelect;
 export type Offer = typeof offers.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type SellerLead = typeof sellerLeads.$inferSelect;
+export type Deal = typeof deals.$inferSelect;

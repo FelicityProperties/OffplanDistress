@@ -6,7 +6,8 @@ import { SellDraftJanitor } from "@/components/sell/SellDraftJanitor";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import { getT } from "@/i18n/server";
+import { LanguageBar } from "@/components/LanguageBar";
+import { getLocale, getT, offeredLocale, tFor } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 
 // Every page reads the session (header) or live listings, so render per request.
@@ -33,7 +34,9 @@ async function signedOut() {
 }
 
 export default async function SiteLayout({ children }: LayoutProps<"/">) {
-  const [t, staff, anonymous] = await Promise.all([getT("common"), isStaff(), signedOut()]);
+  const [t, staff, anonymous, locale, offer] = await Promise.all([getT("common"), isStaff(), signedOut(), getLocale(), offeredLocale()]);
+  // The language bar speaks the language it offers.
+  const to = offer ? tFor("common", offer) : null;
   return (
     <>
       {/* First stop for keyboard users: jump past the header to the page itself. */}
@@ -43,6 +46,13 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
       >
         {t("skipToContent")}
       </a>
+      {offer && to && (
+        <LanguageBar
+          to={offer}
+          current={locale}
+          copy={{ label: to("langBar.label"), body: to("langBar.body"), cta: to("langBar.cta"), dismiss: to("langBar.dismiss") }}
+        />
+      )}
       <SiteHeader />
       <main id="main" tabIndex={-1} className="flex-1 outline-none">
         {children}

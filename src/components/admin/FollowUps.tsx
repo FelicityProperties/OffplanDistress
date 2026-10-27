@@ -40,7 +40,8 @@ export async function FollowUps() {
     getT("legal"),
     getLocale(),
   ]);
-  if (!f) {
+  // Every rule failed (the database is unreachable, say): the same as the whole lookup failing.
+  if (!f || f.failedRules.length === FOLLOW_UP_KEYS.length) {
     return (
       <section id="follow-ups" aria-labelledby="follow-ups-title" className="scroll-mt-24 space-y-2" data-testid="follow-ups">
         <h2 id="follow-ups-title" className="text-xl font-semibold">
@@ -135,9 +136,10 @@ export async function FollowUps() {
             </Button>
           )}
           {!it.contact.phone && it.contact.email && (
-            <Button asChild size="sm" variant="ghost">
+            // A long address wraps (buttons don't), or the page scrolls sideways on a phone.
+            <Button asChild size="sm" variant="ghost" className="h-auto min-h-8 max-w-full whitespace-normal py-1.5 text-start">
               <a href={`mailto:${it.contact.email}`}>
-                <Mail aria-hidden /> <bdi dir="ltr">{it.contact.email}</bdi>
+                <Mail aria-hidden /> <bdi dir="ltr" className="min-w-0 wrap-anywhere">{it.contact.email}</bdi>
               </a>
             </Button>
           )}
@@ -167,10 +169,19 @@ export async function FollowUps() {
         </div>
       </div>
 
-      {groups.length === 0 ? (
-        <p className="rounded-xl border border-dashed bg-card px-5 py-6 text-center text-sm text-muted-foreground">
-          {t("followups.empty")}
+      {/* Some rules failed: the others are listed, but the lists aren't complete. */}
+      {f.failedRules.length > 0 && (
+        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm" data-testid="follow-ups-partial">
+          {t("followups.partial")}
         </p>
+      )}
+
+      {groups.length === 0 ? (
+        f.failedRules.length === 0 && (
+          <p className="rounded-xl border border-dashed bg-card px-5 py-6 text-center text-sm text-muted-foreground">
+            {t("followups.empty")}
+          </p>
+        )
       ) : (
         <div className="grid gap-4 xl:grid-cols-2 xl:items-start">
           {groups.map((key) => {

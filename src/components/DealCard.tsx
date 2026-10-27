@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { BadgeCheck, BedDouble, CalendarClock, Maximize2, TrendingDown } from "lucide-react";
 import { DealImage } from "@/components/DealImage";
 import { WatchButton } from "@/components/WatchButton";
@@ -112,14 +112,16 @@ export async function DealCard({
             {formatQuarter(deal.handoverDate, locale)}
           </span>
         </div>
-        <div className="mt-auto grid grid-cols-2 gap-3 border-t pt-4">
+        {/* @container: in a narrow card (a phone, the 2- and 3-column grids) both figures step down to text-lg, so
+            "≈ AED 1.25M" stays on one line instead of breaking after "≈ AED". */}
+        <div className="@container mt-auto grid grid-cols-2 gap-3 border-t pt-4">
           {/* Cash at transfer = equity to the seller + fees (DLD and NOC estimated) + any arrears, hence "≈". */}
           <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               {tc("cashAtTransfer")}
               <span className="sr-only"> ({tc("cashAtTransferSr")})</span>
             </p>
-            <p className="mt-0.5 text-xl font-semibold leading-none tabular" data-cash-at-transfer={a.cashToClose}>
+            <p className="mt-0.5 text-xl font-semibold leading-none tabular @max-[20rem]:text-lg" data-cash-at-transfer={a.cashToClose}>
               {tc("approx", { amount: formatAEDCompact(a.cashToClose, locale) })}
             </p>
             <p className="mt-1 truncate text-xs text-muted-foreground tabular" data-to-seller={deal.askingPrice}>
@@ -129,7 +131,7 @@ export async function DealCard({
           <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{tc("remainingPlan")}</p>
             {/* Overdue instalments are paid on transfer day (in the figure opposite), so they leave the plan. */}
-            <p className="mt-0.5 text-xl font-semibold leading-none tabular text-foreground/80">
+            <p className="mt-0.5 text-xl font-semibold leading-none tabular text-foreground/80 @max-[20rem]:text-lg">
               {formatAEDCompact(a.remainingAfterTransfer, locale)}
             </p>
           </div>

@@ -125,6 +125,9 @@ export default defineMessages({
     "whatsapp.prefill.exit": "Hello, I used the exit calculator and would like advice on selling my off-plan unit.",
     "whatsapp.prefill.deal": "Hello, I'm interested in the deal {ref}.",
     "whatsapp.prefill.default": "Hello, I have a question about OffplanDistress.",
+    // The claim page (src/components/auth/ClaimView.tsx): a detail to correct, or a link that no longer works.
+    "whatsapp.prefill.claimFix": "Hello, some details of my listing {ref} need correcting before I confirm it.",
+    "whatsapp.prefill.claimExpired": "Hello, the link to confirm my listing no longer works. Please send me a new one.",
     "contact.submit": "Send message",
     "contact.placeholder": "How can we help?",
     "contact.tile.email": "Email",
@@ -280,6 +283,8 @@ export default defineMessages({
     "whatsapp.prefill.exit": "مرحباً، استخدمتُ حاسبة الخروج وأودّ الحصول على استشارة بشأن بيع وحدتي على الخارطة.",
     "whatsapp.prefill.deal": "مرحباً، أنا مهتم بالصفقة ⁦{ref}⁩.",
     "whatsapp.prefill.default": "مرحباً، لديّ استفسار بخصوص \u2066OffplanDistress\u2069.",
+    "whatsapp.prefill.claimFix": "مرحباً، بعض بيانات إعلاني ⁦{ref}⁩ بحاجة إلى تصحيح قبل أن أؤكده.",
+    "whatsapp.prefill.claimExpired": "مرحباً، رابط تأكيد إعلاني لم يعد يعمل. أرجو إرسال رابط جديد.",
     "contact.submit": "إرسال الرسالة",
     "contact.placeholder": "كيف يمكننا مساعدتك؟",
     "contact.tile.email": "البريد الإلكتروني",
