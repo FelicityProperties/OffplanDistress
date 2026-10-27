@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { ArrowRight, Building2, Heart, Search } from "lucide-react";
 import { EmptyState, Kpi, PageTitle } from "@/components/Kpi";
 import { ToneStatus } from "@/components/badges";

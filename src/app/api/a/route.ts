@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { localeOfPath, stripLocale } from "@/i18n/paths";
 import { getCurrentUser } from "@/lib/auth";
 import { SESSION_ID_RE } from "@/lib/attribution";
 import {
@@ -130,7 +131,13 @@ async function handle(request: Request) {
 
   if (b.t === "l") return recordDuration(b.viewId, b.sessionId, b.durationMs);
   if (b.t !== "v") return;
-  const path = cleanPath(b.path);
+  // The same page in both languages is one page in the report: "/ar/deals" counts as "/deals", in Arabic.
+  let path = cleanPath(b.path);
+  let locale = b.locale ?? null;
+  if (localeOfPath(path) === "ar") {
+    path = stripLocale(path);
+    locale = "ar";
+  }
   if (UNTRACKED_PATH.test(path)) return;
 
   const ownHost = (h.get("host") ?? "").toLowerCase().split(":")[0];
@@ -147,6 +154,6 @@ async function handle(request: Request) {
     ref: b.ref ?? null,
     ...geoFrom(h),
     ...describeDevice(h),
-    locale: b.locale ?? null,
+    locale,
   });
 }

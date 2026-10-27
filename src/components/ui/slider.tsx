@@ -23,6 +23,7 @@ const Slider = React.forwardRef<
         <SliderPrimitive.Thumb
           key={i}
           aria-label={props["aria-label"]}
+          aria-describedby={props["aria-describedby"]}
           className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
         />
       ))}

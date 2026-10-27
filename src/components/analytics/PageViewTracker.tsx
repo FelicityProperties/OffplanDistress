@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useLocale } from "@/i18n/client";
+import { localeOfPath, stripLocale } from "@/i18n/paths";
 import { analyticsSessionId } from "@/lib/attribution";
 
 // Anonymous visit statistics for /admin/analytics, mounted once in the site layout. On each page (a new path, or new
@@ -62,9 +63,12 @@ function externalReferrerHost() {
 }
 
 export function PageViewTracker({ staff }: { staff: boolean }) {
-  const pathname = usePathname();
+  const address = usePathname();
+  // The same page in both languages is one page in the report: "/ar/deals" is recorded as "/deals" with locale "ar".
+  const pathname = address ? stripLocale(address) : address;
   const params = useSearchParams();
-  const locale = useLocale();
+  const pageLocale = useLocale();
+  const locale = (address && localeOfPath(address)) || pageLocale;
   // Read when a view is sent; switching language reloads the page's content but is not a new page view.
   const localeRef = useRef(locale);
   useEffect(() => {

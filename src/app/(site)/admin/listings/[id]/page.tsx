@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, FileText, ImageIcon } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ExternalLink, FileText, ImageIcon, UserCheck } from "lucide-react";
 import { AdminListingForm, ReviewButtons } from "@/components/admin/AdminControls";
+import { ClaimLinkButtons } from "@/components/admin/ClaimLinkButtons";
+import { DealFileCard } from "@/components/admin/DealFileCard";
+import { HistoryPanel } from "@/components/admin/HistoryPanel";
+import { StatusPill } from "@/components/badges";
+import { isPlaceholderEmail } from "@/lib/claim";
+import { emailEnabled } from "@/lib/email";
+import { contactKinds } from "@/lib/typed-names";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { SellerOfferActions } from "@/components/OfferActions";
 import { ToneStatus } from "@/components/badges";
@@ -13,7 +20,7 @@ import { analyzeDeal } from "@/lib/deal-math";
 import { adminListing, adminOffers } from "@/lib/admin";
 import { listingFiles } from "@/lib/dashboard";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
-import { expiryDateBounds } from "@/lib/permits";
+import { dubaiToday, expiryDateBounds } from "@/lib/permits";
 import { communityName, developerName } from "@/lib/place-names";
 
 export default async function AdminListingPage({ params }: PageProps<"/admin/listings/[id]">) {
@@ -48,6 +55,13 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
     </>
   );
 
+  // Sellers mustn't give buyers a way around the platform: flag (never strip) contact details in their text.
+  // The floor too: like the view, it is free text shown on the deal page.
+  const contactFound = (["description", "view", "floor"] as const).flatMap((field) =>
+    contactKinds(l[field]).map((kind) => ({ field, kind })),
+  );
+  const awaitingSeller = l.createdByStaff && !l.ownershipConfirmedAt && !l.isSample;
+
   return (
     <div className="space-y-6">
       <Link href="/admin/pipeline" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -73,6 +87,17 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         </div>
         <div className="flex flex-col items-end gap-2">
           <ToneStatus label={tc(`listing.${l.status}`)} tone={LISTING_STATUS[l.status].tone} />
+          {(l.createdByStaff || contactFound.length > 0) && (
+            <div className="flex flex-wrap justify-end gap-1.5">
+              {l.createdByStaff && <StatusPill tone="muted">{t("claim.staffBadge")}</StatusPill>}
+              {awaitingSeller && <StatusPill tone="warning">{t("claim.pendingBadge")}</StatusPill>}
+              {contactFound.length > 0 && (
+                <a href="#contact-warning" className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <StatusPill tone="destructive">{t("contact.badge")}</StatusPill>
+                </a>
+              )}
+            </div>
+          )}
           <div className="flex gap-2">
             <Button asChild size="sm" variant="outline">
               <Link href={`/deals/${refCode(l.refNo)}`}>
@@ -96,6 +121,15 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
               [t("listing.sellerDiscount"), formatAED(a.sellerDiscount, locale)],
               [t("listing.saleValue"), formatAED(a.saleValue, locale)],
               [t("listing.ourFee"), formatAED(a.commission + a.vat, locale)],
+              [
+                t("listing.arrears"),
+                l.overdueAmount == null && l.overduePenalty == null
+                  ? t("listing.arrearsUnknown")
+                  : l.arrearsCheckedAt
+                    ? t("listing.arrearsChecked", { amount: formatAED(a.arrears, locale), date: formatDate(l.arrearsCheckedAt, locale) })
+                    : t("listing.arrearsSeller", { amount: formatAED(a.arrears, locale) }),
+              ],
+              [t("listing.cashAtTransfer"), tc("approx", { amount: formatAED(a.cashToClose, locale) })],
               [t("listing.launchPrice"), l.launchPrice ? formatAED(l.launchPrice, locale) : t("listing.notSet")],
               [t("listing.discountVsLaunch"), formatPct(a.discountVsLaunch, 1)],
               [tc("handover"), formatQuarter(l.handoverDate, locale)],
@@ -116,16 +150,45 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
               </div>
             ))}
           </dl>
-          {l.description && <p className="mt-4 whitespace-pre-line text-sm text-muted-foreground">{l.description}</p>}
+          {/* dir="auto": an English description stays readable (and its numbers in order) on the Arabic page. */}
+          {l.description && (
+            <p dir="auto" className="mt-4 whitespace-pre-line text-start text-sm text-muted-foreground">
+              {l.description}
+            </p>
+          )}
+          {contactFound.length > 0 && (
+            <div
+              id="contact-warning"
+              role="note"
+              className="mt-4 flex scroll-mt-24 items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
+              <div className="min-w-0">
+                <p className="font-semibold text-destructive">{t("contact.title")}</p>
+                <ul className="mt-1 list-disc ps-5">
+                  {contactFound.map(({ field, kind }) => (
+                    <li key={`${field}-${kind}`}>
+                      {t("contact.found", { kind: t(`contact.kind.${kind}`), field: t(`contact.field.${field}`) })}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1 text-muted-foreground">{t("contact.body")}</p>
+              </div>
+            </div>
+          )}
         </div>
         <div className="rounded-xl border bg-card p-5 shadow-card">
           <h2 className="font-sans font-semibold">{t("listing.seller")}</h2>
           <p className="mt-3 font-medium">{seller.fullName}</p>
-          <p className="text-sm">
-            <a href={`mailto:${seller.email}`} className="hover:underline">
-              <bdi dir="ltr">{seller.email}</bdi>
-            </a>
-          </p>
+          {isPlaceholderEmail(seller.email) ? (
+            <p className="text-sm text-muted-foreground">{t("users.noEmail")}</p>
+          ) : (
+            <p className="text-sm">
+              <a href={`mailto:${seller.email}`} className="hover:underline">
+                <bdi dir="ltr">{seller.email}</bdi>
+              </a>
+            </p>
+          )}
           {seller.phone && (
             <p className="text-sm">
               <a href={`tel:${seller.phone}`} className="hover:underline">
@@ -142,6 +205,34 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         </div>
       </div>
 
+      {/* Staff-created listings: the seller confirms ownership through their claim link before approval. */}
+      {l.createdByStaff && !l.isSample && (
+        <section aria-labelledby="claim-title" className="rounded-xl border bg-card p-6 shadow-card">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 max-w-2xl">
+              <h2 id="claim-title" className="flex items-center gap-2 font-sans text-lg font-semibold">
+                <UserCheck className="h-5 w-5 shrink-0 text-gold-foreground" aria-hidden /> {t("claim.title")}
+              </h2>
+              {l.ownershipConfirmedAt ? (
+                <p className="mt-1 text-sm text-success">{t("claim.confirmed", { date: formatDate(l.ownershipConfirmedAt, locale) })}</p>
+              ) : (
+                <>
+                  <p className="mt-1 text-sm text-muted-foreground">{t("claim.pending")}</p>
+                  {seller.passwordHash && <p className="mt-1 text-xs text-muted-foreground">{t("claim.existingAccount")}</p>}
+                </>
+              )}
+            </div>
+            {!l.ownershipConfirmedAt && (
+              <ClaimLinkButtons
+                listingId={l.id}
+                sellerName={seller.fullName}
+                canEmail={!isPlaceholderEmail(seller.email) && emailEnabled()}
+              />
+            )}
+          </div>
+        </section>
+      )}
+
       <section className="rounded-xl border bg-card p-6 shadow-card">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-sans text-lg font-semibold">{t("listing.documents")}</h2>
@@ -150,7 +241,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         {docs.length ? (
           <ul className="mt-4 divide-y rounded-lg border">
             {docs.map((d) => (
-              <li key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+              <li key={d.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 text-sm">
                 <span className="flex min-w-0 items-center gap-2">
                   {d.kind === "photo" ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
                   <a href={`/api/files/${d.id}`} target="_blank" rel="noreferrer" className="truncate hover:underline">
@@ -202,6 +293,9 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         )}
       </section>
 
+      {/* The deal file (contracts, NOC, transfer) once an offer is accepted; opened lazily for older deals. */}
+      <DealFileCard listing={l} />
+
       <section className="rounded-xl border bg-card p-6 shadow-card">
         <h2 className="mb-4 font-sans text-lg font-semibold">{t("listing.manage")}</h2>
         <AdminListingForm
@@ -211,6 +305,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           nocEligible={l.nocEligible}
           launchPrice={l.launchPrice}
           askingPrice={l.askingPrice}
+          amountPaid={l.amountPaid}
           developer={l.developer}
           developerOther={l.developerOther}
           community={l.community}
@@ -222,8 +317,17 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           formAExpiresAt={l.formAExpiresAt}
           expiryBounds={expiryDateBounds()}
           images={l.images}
+          arrears={{
+            overdueAmount: l.overdueAmount,
+            overduePenalty: l.overduePenalty,
+            checkedAt: l.arrearsCheckedAt,
+            today: dubaiToday(),
+          }}
         />
       </section>
+
+      {/* The audit trail: who changed what on this listing, its deal file, offers and documents (admins only). */}
+      <HistoryPanel listingId={l.id} />
     </div>
   );
 }

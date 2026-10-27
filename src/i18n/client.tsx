@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
 import { DirectionProvider } from "@radix-ui/react-direction";
 import { dirOf, type Locale } from "./config";
 import type { Namespace } from "./messages";
+import { localePath } from "./paths";
 import { translator } from "./translator";
 
 const LocaleContext = createContext<Locale>("en");
@@ -29,4 +30,10 @@ export function useDir() {
 export function useT<N extends Namespace>(ns: N) {
   const locale = useLocale();
   return useMemo(() => translator(ns, locale), [ns, locale]);
+}
+
+/** localePath() in the page's language, for router.push / router.replace in Client Components. */
+export function useLocalePath() {
+  const locale = useLocale();
+  return useCallback((href: string) => localePath(href, locale), [locale]);
 }

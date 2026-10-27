@@ -22,6 +22,7 @@ export function Field({
   error,
   hint,
   className,
+  messageId,
   children,
 }: {
   label: string;
@@ -29,6 +30,8 @@ export function Field({
   error?: string[] | string;
   hint?: string;
   className?: string;
+  /** An id for the error (or hint) line, so the control can name it in aria-describedby. */
+  messageId?: string;
   children: React.ReactNode;
 }) {
   const msg = Array.isArray(error) ? error[0] : error;
@@ -37,9 +40,13 @@ export function Field({
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {msg ? (
-        <p className="text-xs font-medium text-destructive">{msg}</p>
+        <p id={messageId} className="text-xs font-medium text-destructive">
+          {msg}
+        </p>
       ) : hint ? (
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <p id={messageId} className="text-xs text-muted-foreground">
+          {hint}
+        </p>
       ) : null}
     </div>
   );

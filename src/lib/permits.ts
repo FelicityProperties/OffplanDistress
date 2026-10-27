@@ -226,7 +226,7 @@ export async function enforcePermitExpiry(today = dubaiToday()) {
   let reminded = 0;
   let failed = 0;
   /** Sends one admin notice unless it already went out; a failure is counted and the run carries on. */
-  const once = async (l: { id: string }, notice: string, send: () => Promise<void>) => {
+  const once = async (l: { id: string }, notice: string, send: () => Promise<unknown>) => {
     try {
       if (!(await claimNotice(l.id, notice))) return false;
       await send();

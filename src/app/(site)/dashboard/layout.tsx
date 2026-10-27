@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { AppShell } from "@/components/AppShell";
+import { LocaleGuard } from "@/components/LocaleGuard";
 import { db } from "@/db";
 import { listings, notifications, offers } from "@/db/schema";
-import { getT } from "@/i18n/server";
+import { getLocale, getT } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
+import { ownListingSql } from "@/lib/dashboard";
 
 export async function generateMetadata(): Promise<Metadata> {
   const tc = await getT("common");
@@ -21,7 +23,8 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
       })
       .from(listings)
       .leftJoin(offers, eq(offers.listingId, listings.id))
-      .where(and(eq(listings.sellerId, user.id))),
+      // As in the listing pages: one our team entered counts once the seller has confirmed it.
+      .where(ownListingSql(user.id)),
     db
       .select({ unread: sql<number>`count(*)::int` })
       .from(notifications)
@@ -42,6 +45,8 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         { href: "/dashboard/profile", label: t("shell.profile"), icon: "profile" },
       ]}
     >
+      {/* Reached in-app from a page in the other language: loaded again, whole, in this one. */}
+      <LocaleGuard locale={await getLocale()} />
       {children}
     </AppShell>
   );

@@ -16,7 +16,7 @@ export default defineMessages({
 
     "sort.label": "Sort",
     "sort.discount": "Biggest discount",
-    "sort.cash": "Lowest upfront cash",
+    "sort.cash": "Lowest cash at transfer",
     "sort.handover": "Handover soonest",
     "sort.newest": "Newest",
 
@@ -26,6 +26,9 @@ export default defineMessages({
     "filters.title": "Filters",
     "filters.budget": "Upfront cash to seller",
     "filters.budgetLabel": "Upfront cash budget",
+    "filters.transfer": "Cash at transfer (≈)",
+    "filters.transferLabel": "Cash at transfer budget",
+    "filters.transferHint": "Equity to the seller + fees (DLD and NOC estimated) + any overdue instalments and late fees.",
     "filters.any": "Any",
     "filters.community": "Community",
     "filters.developer": "Developer",
@@ -56,6 +59,7 @@ export default defineMessages({
 
     "summary.all": "All deals",
     "summary.maxCash": "≤ {amount} upfront",
+    "summary.maxTransfer": "≤ {amount} at transfer",
     "summary.minDiscount": "{pct}%+ discount",
     "summary.handoverBy": "handover by {year}",
     "summary.query": "“{q}”",
@@ -70,6 +74,8 @@ export default defineMessages({
     "chips.remove": "Remove filter: {label}",
     "chips.cashFrom": "From {amount} upfront",
     "chips.cashRange": "{min} – {max} upfront",
+    "chips.transferFrom": "From {amount} at transfer",
+    "chips.transferRange": "{min} – {max} at transfer",
     "chips.minPaid": "{pct}%+ paid",
     "chips.handoverBy": "Handover by end of {year}",
     "empty.title": "No matches yet",
@@ -91,7 +97,7 @@ export default defineMessages({
 
     "sort.label": "الترتيب",
     "sort.discount": "الأعلى خصماً",
-    "sort.cash": "الأقل مبلغاً مقدّماً",
+    "sort.cash": "الأقل نقداً يوم نقل الملكية",
     "sort.handover": "الأقرب تسليماً",
     "sort.newest": "الأحدث",
 
@@ -101,6 +107,10 @@ export default defineMessages({
     "filters.title": "الفلاتر",
     "filters.budget": "المبلغ المقدّم للبائع",
     "filters.budgetLabel": "ميزانية المبلغ المقدّم",
+    "filters.transfer": "النقد يوم نقل الملكية (تقريبي)",
+    "filters.transferLabel": "ميزانية النقد يوم نقل الملكية",
+    "filters.transferHint":
+      "حصة البائع + الرسوم (رسوم دائرة الأراضي والأملاك وشهادة عدم الممانعة تقديرية) + أي أقساط متأخرة وغرامات تأخير.",
     "filters.any": "أي مبلغ",
     "filters.community": "المنطقة",
     "filters.developer": "المطوّر",
@@ -131,6 +141,7 @@ export default defineMessages({
 
     "summary.all": "جميع الصفقات",
     "summary.maxCash": "≤ {amount} مقدّماً",
+    "summary.maxTransfer": "≤ {amount} يوم نقل الملكية",
     "summary.minDiscount": "خصم {pct}% فأكثر",
     "summary.handoverBy": "التسليم بحلول {year}",
     "summary.query": "«{q}»",
@@ -145,6 +156,8 @@ export default defineMessages({
     "chips.remove": "إزالة الفلتر: {label}",
     "chips.cashFrom": "من {amount} مقدّماً",
     "chips.cashRange": "من {min} إلى {max} مقدّماً",
+    "chips.transferFrom": "من {amount} يوم نقل الملكية",
+    "chips.transferRange": "من {min} إلى {max} يوم نقل الملكية",
     "chips.minPaid": "مدفوع {pct}% فأكثر",
     "chips.handoverBy": "التسليم بحلول نهاية {year}",
     "empty.title": "لا توجد نتائج مطابقة حتى الآن",

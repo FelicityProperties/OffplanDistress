@@ -37,6 +37,33 @@ export const TEMPLATES = {
     en: { title: "Your listing needs attention: {project}", body: "{reason}", cta: "Open listing" },
     ar: { title: "إعلانك بحاجة إلى إجراء منك: {project}", body: "{reason}", cta: "فتح الإعلان" },
   },
+  // Staff-assisted intake (src/lib/claim.ts). The seller, with their claim link (emailed, or the same words sent on
+  // WhatsApp by our team); never sent for sample listings.
+  "listing.claim": {
+    en: {
+      title: "Confirm your listing: {project}",
+      body: "Hello {name}, our team has prepared your listing {ref} from the documents you sent us. Open the link to check the details and confirm that you own the unit or are authorised to sell it. The link works once and expires in 7 days.",
+      cta: "Confirm my listing",
+    },
+    ar: {
+      title: "تأكيد إعلانك: {project}",
+      body: "مرحباً {name}، أعدّ فريقنا إعلانك ⁨{ref}⁩ من المستندات التي أرسلتها إلينا. افتح الرابط لمراجعة البيانات وتأكيد أنك مالك الوحدة أو مخوَّل ببيعها. يُستخدم الرابط مرة واحدة وتنتهي صلاحيته بعد 7 أيام.",
+      cta: "تأكيد إعلاني",
+    },
+  },
+  // Admins, once the seller has confirmed through that link.
+  "listing.claimed": {
+    en: {
+      title: "Seller confirmed ownership: {project}",
+      body: "{seller} confirmed {ref} through their claim link. Check the documents and the DLD permit, then approve it.",
+      cta: "Review listing",
+    },
+    ar: {
+      title: "أكّد البائع ملكيته: {project}",
+      body: "أكّد {seller} الإعلان ⁨{ref}⁩ عبر رابط التأكيد. راجِع المستندات وتصريح دائرة الأراضي والأملاك، ثم وافق عليه.",
+      cta: "مراجعة الإعلان",
+    },
+  },
   // Permit lifecycle, from the daily ops cron (src/lib/permits.ts). {document}, {when}, {then} and {reason} are
   // errors.ts "notify.doc.*", "notify.expiry.*" and "notify.paused.*" lines. Admins only:
   "listing.permit_expiring": {
@@ -199,6 +226,88 @@ export const TEMPLATES = {
     en: { title: "Scheduled job failed: {job}", body: "{reason}\nDetails are in the Vercel function logs for /api/cron/{job}.", cta: "Open admin" },
     // ‎ keeps the left-to-right path from flipping inside Arabic text.
     ar: { title: "تعذّر تنفيذ مهمة مجدولة: {job}", body: "{reason}\nتجد التفاصيل في سجلات الدوال على Vercel للمسار ‎/api/cron/{job}.", cta: "فتح لوحة الإدارة" },
+  },
+  // Follow-up nudges from the daily ops cron (src/lib/reminders.ts), each sent once. Never for sample listings, staff
+  // accounts, or sellers our team added who haven't set a password yet.
+  // A seller account (or a seller from the free estimate) with nothing listed, 24 h and again 72 h after sign-up.
+  "seller.finish_listing": {
+    en: {
+      title: "Finish listing your unit: it's free",
+      body: "Hello {name}, you opened a seller account on OffplanDistress but haven't listed your unit yet. It takes about 10 minutes: the unit, your payment plan and your asking price. If you started the form and haven't signed out since, it picks up where you left off on the same device. No SPA to hand? List now and upload the documents later, or send them to us on WhatsApp and our team will prepare the listing for you.",
+      cta: "Continue my listing",
+    },
+    ar: {
+      title: "أكمِل إدراج وحدتك مجاناً",
+      body: "مرحباً {name}، أنشأت حساب بائع على ⁦OffplanDistress⁩ لكنك لم تُدرج وحدتك بعد. لا يستغرق ذلك سوى 10 دقائق تقريباً: بيانات الوحدة وخطة الدفع والسعر المطلوب. وإن كنت قد بدأت تعبئة النموذج ولم تسجّل الخروج منذ ذلك الحين، فستكمل من حيث توقفت عند فتحه على الجهاز نفسه. لا تتوفر لديك اتفاقية البيع والشراء حالياً؟ أدرِج وحدتك الآن وارفع المستندات لاحقاً، أو أرسلها إلينا عبر واتساب ليُعدّ فريقنا الإعلان نيابةً عنك.",
+      cta: "متابعة إدراج وحدتي",
+    },
+  },
+  // A listing still under review 48 h after it was sent without the SPA/Oqood or the statement. {missing} is an
+  // errors.ts "notify.reminder.missing.*" phrase.
+  "seller.upload_docs": {
+    en: {
+      title: "Add your documents so we can verify {project}",
+      body: "We can't verify {ref} and publish it until we have {missing}. Upload photos or PDFs from your listing page, or send them to us on WhatsApp. Once we've checked them with the developer, your listing goes live.",
+      cta: "Upload documents",
+    },
+    ar: {
+      title: "أضِف مستنداتك لنتحقق من إعلان {project}",
+      body: "لا يمكننا التحقق من الإعلان ⁨{ref}⁩ ونشره قبل استلام {missing}. ارفع صوراً أو ملفات ⁦PDF⁩ من صفحة إعلانك، أو أرسلها إلينا عبر واتساب. وبعد التحقق منها لدى المطوّر، يُنشر إعلانك.",
+      cta: "رفع المستندات",
+    },
+  },
+  // A live listing without a single offer 21 days after it was published.
+  "seller.no_offers": {
+    en: {
+      title: "No offers yet on {project}: review your price?",
+      body: "{ref} has been live since {since} (views so far: {views}), but no buyer has made an offer yet. Buyers compare the cash they need on transfer day with similar units, so a lower asking price often brings the first offer. You can change it from your listing page; our team checks the change before the listing goes live again.",
+      cta: "Review my price",
+    },
+    ar: {
+      title: "لا عروض بعد على {project}: هل تراجع السعر؟",
+      body: "الإعلان ⁨{ref}⁩ منشور منذ {since} (عدد المشاهدات حتى الآن: ⁨{views}⁩)، لكن لم يقدّم أي مشترٍ عرضاً بعد. يقارن المشترون المبلغ النقدي المطلوب منهم يوم نقل الملكية بالوحدات المماثلة، لذا كثيراً ما يجلب السعر المطلوب الأقل العرض الأول. يمكنك تعديل السعر من صفحة إعلانك، ويراجع فريقنا التعديل قبل إعادة نشر الإعلان.",
+      cta: "مراجعة السعر",
+    },
+  },
+  // The seller, about an offer they haven't answered for 48 h (the admins see it in their digest from 3 days).
+  "offer.reminder": {
+    en: {
+      title: "An offer on {project} is waiting for your answer",
+      body: "A buyer offered {amount} for {ref} on {date} and hasn't heard back yet. Accept, counter or decline it from your offers page: buyers often move on to another unit if they don't get an answer within a few days.",
+      cta: "Answer the offer",
+    },
+    ar: {
+      title: "عرض على {project} بانتظار ردّك",
+      body: "قدّم مشترٍ عرضاً بقيمة {amount} على الإعلان ⁨{ref}⁩ بتاريخ {date} ولم يتلقَّ ردّاً بعد. يمكنك قبوله أو تقديم عرض مقابل أو رفضه من صفحة العروض، إذ كثيراً ما ينتقل المشترون إلى وحدة أخرى إن لم يتلقّوا ردّاً خلال أيام قليلة.",
+      cta: "الرد على العرض",
+    },
+  },
+  // The buyer, about the seller's counter-offer they haven't answered for 48 h.
+  "offer.counter_reminder": {
+    en: {
+      title: "The seller's counter-offer on {project} is waiting for you",
+      body: "On {date} the seller answered your offer of {original} with a counter-offer of {amount}. Accept or decline it from your offers page, or make a new offer. The unit stays on the market until a deal is agreed.",
+      cta: "Respond",
+    },
+    ar: {
+      title: "العرض المقابل من البائع على {project} بانتظار ردّك",
+      body: "بتاريخ {date} ردّ البائع على عرضك البالغ {original} بعرض مقابل قدره {amount}. يمكنك قبوله أو رفضه من صفحة عروضك، أو تقديم عرض جديد. تبقى الوحدة معروضة في السوق إلى أن يُتفق على صفقة.",
+      cta: "الرد",
+    },
+  },
+  // Admins, once a day: how many follow-ups are open. Each {line} is an admin.ts "followups.digest.*" line (empty when
+  // its count is 0), so the counts read the same as the Follow-ups section on /admin. {partial} says a rule failed today.
+  "ops.digest": {
+    en: {
+      title: "Today's follow-ups ({date}): {total}",
+      body: "{signup}{docs}{noOffers}{offers}{counters}{leads}{review}{instalments}{viewings}{partial}{email}Each one is listed under Follow-ups on the admin home page, with call and WhatsApp buttons.",
+      cta: "Open follow-ups",
+    },
+    ar: {
+      title: "متابعات اليوم ({date}): ⁨{total}⁩",
+      body: "{signup}{docs}{noOffers}{offers}{counters}{leads}{review}{instalments}{viewings}{partial}{email}تجد كلاً منها في قسم المتابعات على الصفحة الرئيسية للوحة الإدارة، مع زرّي الاتصال وواتساب.",
+      cta: "فتح المتابعات",
+    },
   },
 } satisfies Record<string, Template>;
 

@@ -12,6 +12,8 @@ export function whatsappNumber(phone: string) {
   if (d.startsWith("00")) d = d.slice(2);
   else if (/^05\d{8}$/.test(d)) d = `971${d.slice(1)}`;
   else if (/^5\d{8}$/.test(d)) d = `971${d}`;
+  // "+971 (0)50 123 4567": the local 0 kept after the country code (no UAE number starts with 0 after 971).
+  if (d.startsWith("9710")) d = `971${d.slice(4)}`;
   return d.length >= 8 && d.length <= 15 ? d : null;
 }
 

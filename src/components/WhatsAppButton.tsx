@@ -1,18 +1,52 @@
-import { getT } from "@/i18n/server";
+"use client";
+
+import { usePathname } from "next/navigation";
+import { useT } from "@/i18n/client";
 import { BRAND } from "@/lib/config";
 
+type Prefill = {
+  key: "whatsapp.prefill.sell" | "whatsapp.prefill.exit" | "whatsapp.prefill.deal" | "whatsapp.prefill.default";
+  ref?: string;
+};
+
+/**
+ * The first message the chat opens with, by page: sellers on /sell say they want to sell, the exit calculator asks for
+ * advice, a deal page names the deal. Copy: marketing `whatsapp.prefill.*`. A leading language segment (/ar/…) is
+ * ignored, so localised URLs pick the same message.
+ */
+function whatsappPrefill(pathname: string): Prefill {
+  const path = pathname.replace(/^\/(?:ar|en)(?=\/|$)/, "") || "/";
+  if (path === "/sell" || path.startsWith("/sell/")) return { key: "whatsapp.prefill.sell" };
+  if (path === "/exit-calculator" || path.startsWith("/exit-calculator/")) return { key: "whatsapp.prefill.exit" };
+  const deal = /^\/deals\/([^/]+)\/?$/.exec(path);
+  if (deal) {
+    let segment = deal[1];
+    try {
+      segment = decodeURIComponent(segment);
+    } catch {}
+    // The deal's reference (OD-1234), wherever it sits in the segment.
+    const ref = /OD-\d+/i.exec(segment)?.[0]?.toUpperCase();
+    if (ref) return { key: "whatsapp.prefill.deal", ref };
+  }
+  return { key: "whatsapp.prefill.default" };
+}
+
 /** Floating WhatsApp shortcut to the office number (BRAND.whatsapp; NEXT_PUBLIC_WHATSAPP overrides it). */
-export async function WhatsAppButton() {
+export function WhatsAppButton() {
+  const t = useT("marketing");
+  const pathname = usePathname() ?? "/";
   if (!BRAND.whatsapp) return null;
-  const t = await getT("marketing");
   const label = t("contact.whatsapp");
+  const prefill = whatsappPrefill(pathname);
+  const text = t(prefill.key, { ref: prefill.ref });
   return (
     <a
-      href={`https://wa.me/${BRAND.whatsapp}`}
+      href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(text)}`}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
       title={label}
+      data-prefill={prefill.key}
       className="fixed bottom-5 end-5 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#25D366] text-white shadow-lift ring-4 ring-background/70 transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-ring"
     >
       <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden="true" fill="currentColor">

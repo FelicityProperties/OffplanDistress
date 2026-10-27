@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { ArrowDown, ArrowRight, BellRing, ChevronDown, CirclePause, ExternalLink, FileText, Gavel, Handshake, Hourglass, Lock, Scale, Wallet, Zap } from "lucide-react";
 import { CtaBand } from "@/components/CtaBand";
 import { JsonLd } from "@/components/JsonLd";
@@ -8,8 +8,10 @@ import { ExitCalculator } from "@/components/exit/ExitCalculator";
 import { quickSalePct, RETENTION, TIERS, type Tier } from "@/components/exit/exit-math";
 import { ltr } from "@/components/exit/ltr";
 import { Button } from "@/components/ui/button";
+import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import { BRAND, FEES } from "@/lib/config";
+import { openGraphBase } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 // The law on the Dubai Legislation Portal (Law No. 19 of 2020, which replaced Article 11). Full source list:
@@ -21,10 +23,11 @@ const LAW_URL_AR =
   "https://dlp.dubai.gov.ae/Legislation%20Ar%20Reference/2020/%D9%82%D8%A7%D9%86%D9%88%D9%86%20%D8%B1%D9%82%D9%85%20(19)%20%D9%84%D8%B3%D9%86%D8%A9%202020%20%D8%A8%D8%AA%D8%B9%D8%AF%D9%8A%D9%84%20%D8%A8%D8%B9%D8%B6%20%D8%A3%D8%AD%D9%83%D8%A7%D9%85%20%D8%A7%D9%84%D9%82%D8%A7%D9%86%D9%88%D9%86%20%D8%B1%D9%82%D9%85%20(13)%20%D9%84%D8%B3%D9%86%D8%A9%202008%20%D8%A8%D8%B4%D8%A3%D9%86%20%D8%AA%D9%86%D8%B8%D9%8A%D9%85%20%D8%A7%D9%84%D8%B3%D8%AC%D9%84%20%D8%A7%D9%84%D8%B9%D9%82%D8%A7%D8%B1%D9%8A%20%D8%A7%D9%84%D9%85%D8%A8%D8%AF%D8%A6%D9%8A%20%D9%81%D9%8A%20%D8%A5%D9%85%D8%A7%D8%B1%D8%A9%20%D8%AF%D8%A8%D9%8A.html";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getT("exit");
+  const [t, locale] = await Promise.all([getT("exit"), getLocale()]);
   const title = t("meta.title");
   const description = t("meta.description");
-  return { title, description, openGraph: { title, description } };
+  // Canonical and hreflang come from the root layout; openGraph here replaces the layout's, so it repeats the basics.
+  return { title, description, openGraph: { ...openGraphBase(locale), title, description, url: localePath("/exit-calculator", locale) } };
 }
 
 const TIER_DOT: Record<Tier, string> = {

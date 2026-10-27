@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { getLocale, getT } from "@/i18n/server";

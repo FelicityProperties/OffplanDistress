@@ -4,6 +4,17 @@ import { db } from "@/db";
 import { files, listings, offers, savedSearches, users, watchlist } from "@/db/schema";
 import { cardColumns, offerCountSql, watchersSql, type ListingCard } from "./listings";
 
+/**
+ * The seller's own listings. One our team entered for them (src/lib/claim.ts) only joins their dashboard once they
+ * have confirmed it through the claim link: until then the account it was filed under (matched by an email staff
+ * typed) may not be the seller's, and mustn't see the unit's figures or documents, nor change it.
+ */
+export const ownListingSql = (userId: string) =>
+  and(eq(listings.sellerId, userId), sql`not (${listings.createdByStaff} and ${listings.ownershipConfirmedAt} is null)`);
+
+/** The outer listing's id inside a subquery (qualified, so it can't be read as the subquery's own "id"). */
+const LISTING_ID = sql.raw(`"listings"."id"`);
+
 export async function myListings(userId: string) {
   return db
     .select({
@@ -22,11 +33,11 @@ export async function myListings(userId: string) {
       createdAt: listings.createdAt,
       watchers: watchersSql,
       offers: offerCountSql,
-      pendingOffers: sql<number>`(select count(*)::int from ${offers} o where o.listing_id = ${listings.id} and o.status = 'pending')`,
-      docs: sql<number>`(select count(*)::int from ${files} f where f.listing_id = ${listings.id} and f.kind <> 'photo')`,
+      pendingOffers: sql<number>`(select count(*)::int from ${offers} o where o.listing_id = ${LISTING_ID} and o.status = 'pending')`,
+      docs: sql<number>`(select count(*)::int from ${files} f where f.listing_id = ${LISTING_ID} and f.kind <> 'photo')`,
     })
     .from(listings)
-    .where(eq(listings.sellerId, userId))
+    .where(ownListingSql(userId))
     .orderBy(desc(listings.createdAt));
 }
 
@@ -34,7 +45,7 @@ export async function myListing(userId: string, id: string) {
   const [row] = await db
     .select({ listing: listings, watchers: watchersSql, offers: offerCountSql })
     .from(listings)
-    .where(and(eq(listings.id, id), eq(listings.sellerId, userId)))
+    .where(and(eq(listings.id, id), ownListingSql(userId)))
     .limit(1);
   return row ?? null;
 }

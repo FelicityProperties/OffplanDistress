@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 import { AlertCircle, ArrowLeft, ExternalLink, FileText, ImageIcon } from "lucide-react";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { ListingActions } from "@/components/ListingActions";
 import { SellerOfferActions } from "@/components/OfferActions";
+import { DealMilestones } from "@/components/DealMilestones";
 import { Pipeline } from "@/components/Pipeline";
 import { SellerEditForm } from "@/components/SellerEditForm";
 import { ToneStatus } from "@/components/badges";
@@ -14,6 +15,7 @@ import { requireUser } from "@/lib/auth";
 import { FILE_KINDS, LISTING_STATUS, OFFER_STATUS, PUBLIC_STATUSES } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { listingFiles, myListing, offersReceived } from "@/lib/dashboard";
+import { sellerMilestones } from "@/lib/deals";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
 
@@ -29,12 +31,14 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
   const row = await myListing(user.id, id);
   if (!row) notFound();
   const l = row.listing;
-  const [docs, allOffers, t, tc, locale] = await Promise.all([
+  const [docs, allOffers, t, tc, locale, milestones] = await Promise.all([
     listingFiles(l.id),
     offersReceived(user.id),
     getT("dashboard"),
     getT("common"),
     getLocale(),
+    // The deal file's dates once an offer is accepted (only dates: nothing about the buyer).
+    sellerMilestones(user.id, l.id),
   ]);
   const listingOffers = allOffers.filter((o) => o.listingId === l.id);
   const a = analyzeDeal(l);
@@ -77,6 +81,7 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
 
       <div className="rounded-xl border bg-card p-5 shadow-card">
         <Pipeline status={l.status} />
+        {milestones && <DealMilestones dates={milestones} className="mt-4" />}
         {l.status === "pending_review" && <p className="mt-4 text-sm text-muted-foreground">{t("manage.reviewNote")}</p>}
         {l.status === "rejected" && l.rejectionReason && (
           <p className="mt-4 flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -155,7 +160,7 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
         {docs.length > 0 && (
           <ul className="mt-4 divide-y rounded-lg border">
             {docs.map((d) => (
-              <li key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+              <li key={d.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 text-sm">
                 <span className="flex min-w-0 items-center gap-2">
                   {d.kind === "photo" ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
                   <a href={`/api/files/${d.id}`} className="truncate hover:underline" target="_blank" rel="noreferrer" dir="auto">

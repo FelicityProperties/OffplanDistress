@@ -95,6 +95,8 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
 
 export async function requireUser(next?: string): Promise<SessionUser> {
   const user = await getCurrentUser();
+  // The plain login address: src/proxy.ts sends a visitor who chose Arabic (od_locale) on to /ar/login. A language
+  // guessed from the browser alone must not, or it would become a saved choice for the whole site.
   if (!user) redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
   return user;
 }

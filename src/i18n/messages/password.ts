@@ -39,6 +39,44 @@ export default defineMessages({
     "errors.mismatch": "Passwords don't match",
     "errors.invalidToken": "This reset link is invalid or has expired.",
 
+    // /reset-password?claim=1: the link our team sends a seller whose listing they prepared from the seller's documents.
+    "meta.claim.title": "Confirm your listing",
+    "claim.title": "Confirm your listing",
+    "claim.sub":
+      "Our team prepared this listing from the documents you sent us. Check the details, confirm you can sell the unit and choose a password for your account.",
+    "claim.subExisting": "Our team added this listing to your account. Check the details and confirm you can sell the unit.",
+    "claim.summary": "Your listing",
+    "claim.summary.ref": "Reference",
+    "claim.summary.project": "Project",
+    "claim.summary.unit": "Unit",
+    "claim.summary.asking": "Your asking price",
+    "claim.summaryNote": "Something wrong? Message our team before you confirm and we'll correct it.",
+    "claim.name": "Account name",
+    "claim.email": "Your email",
+    "claim.emailHint": "You'll log in with this email, and we'll send updates about your listing to it.",
+    "claim.submit": "Confirm and create my account",
+    "claim.submitExisting": "Confirm my listing",
+    "claim.after":
+      "Next, our team checks your documents and sends you RERA Form A (our listing agreement) to sign. The listing is published once the DLD advertising permit is issued. Your contact details are never shown to buyers.",
+    // A new account (no password yet) also accepts the Privacy Policy, as at sign-up; otherwise the sell form's line.
+    "claim.confirmNew":
+      "I own this unit or am authorised to sell it, the documents are genuine, and I agree to the {terms} and {privacy}",
+    "claim.privacy": "Privacy Policy",
+    "claim.errors.confirmNew": "Please confirm you can sell this unit and accept the Terms of Use and Privacy Policy",
+    "claim.loginTitle": "Log in to confirm your listing",
+    "claim.loginBody": "Our team added this listing to your existing account ({email}). Log in with your password, and this page opens again for you to confirm it.",
+    "claim.loginCta": "Log in to confirm",
+    "claim.otherAccount": "You're logged in to a different account. Log out, then open the link again and log in as {email}.",
+    "claim.logout": "Log out",
+    "claim.invalidTitle": "This link has expired",
+    "claim.invalidBody":
+      "Confirmation links work once and expire after 7 days. Already confirmed? Log in to see your listing. Otherwise, message our team on WhatsApp and we'll send you a new link.",
+    "claim.contact": "Message us on WhatsApp",
+    "claim.errors.emailTaken":
+      "Another account already uses this email. Use a different one, or log in to that account and message us to move this listing to it.",
+    "claim.errors.emailReserved": "This email can't be used for a seller account. Use a different one.",
+    "claim.errors.signIn": "Log in to the account this listing belongs to, then open the link again.",
+
     backToLogin: "Back to log in",
   },
   ar: {
@@ -77,6 +115,41 @@ export default defineMessages({
     "errors.passwordMin": "استخدم 8 أحرف على الأقل",
     "errors.mismatch": "كلمتا المرور غير متطابقتين",
     "errors.invalidToken": "رابط إعادة التعيين غير صالح أو انتهت صلاحيته.",
+
+    "meta.claim.title": "تأكيد إعلانك",
+    "claim.title": "تأكيد إعلانك",
+    "claim.sub":
+      "أعدّ فريقنا هذا الإعلان من المستندات التي أرسلتها إلينا. راجِع البيانات، وأكّد أحقيتك في بيع الوحدة، واختر كلمة مرور لحسابك.",
+    "claim.subExisting": "أضاف فريقنا هذا الإعلان إلى حسابك. راجِع البيانات وأكّد أحقيتك في بيع الوحدة.",
+    "claim.summary": "إعلانك",
+    "claim.summary.ref": "الرقم المرجعي",
+    "claim.summary.project": "المشروع",
+    "claim.summary.unit": "الوحدة",
+    "claim.summary.asking": "السعر الذي تطلبه",
+    "claim.summaryNote": "هل هناك خطأ ما؟ راسل فريقنا قبل التأكيد وسنصحّحه.",
+    "claim.name": "اسم الحساب",
+    "claim.email": "بريدك الإلكتروني",
+    "claim.emailHint": "ستسجّل الدخول بهذا البريد الإلكتروني، وإليه نرسل المستجدات المتعلقة بإعلانك.",
+    "claim.submit": "التأكيد وإنشاء حسابي",
+    "claim.submitExisting": "تأكيد إعلاني",
+    "claim.after":
+      "بعد ذلك يتحقق فريقنا من مستنداتك ويرسل إليك النموذج (A) الصادر عن مؤسسة التنظيم العقاري (اتفاقية الوساطة) لتوقيعه، ثم يُنشر الإعلان فور صدور تصريح الإعلان من دائرة الأراضي والأملاك. ولا تظهر بيانات التواصل الخاصة بك للمشترين أبداً.",
+    "claim.confirmNew": "أُقرّ بأنني مالك هذه الوحدة أو مخوَّل ببيعها، وبأن المستندات أصلية، وأوافق على {terms} و{privacy}",
+    "claim.privacy": "سياسة الخصوصية",
+    "claim.errors.confirmNew": "يرجى تأكيد أحقيتك في بيع هذه الوحدة والموافقة على شروط الاستخدام وسياسة الخصوصية",
+    "claim.loginTitle": "سجّل الدخول لتأكيد إعلانك",
+    "claim.loginBody": "أضاف فريقنا هذا الإعلان إلى حسابك الحالي (⁦{email}⁩). سجّل الدخول بكلمة المرور، وستُفتح هذه الصفحة مجدداً لتأكيده.",
+    "claim.loginCta": "تسجيل الدخول للتأكيد",
+    "claim.otherAccount": "أنت مسجّل الدخول بحساب آخر. سجّل الخروج، ثم افتح الرابط مجدداً وسجّل الدخول بالحساب ⁦{email}⁩.",
+    "claim.logout": "تسجيل الخروج",
+    "claim.invalidTitle": "انتهت صلاحية هذا الرابط",
+    "claim.invalidBody":
+      "تُستخدم روابط التأكيد مرة واحدة وتنتهي صلاحيتها بعد 7 أيام. هل أكّدت إعلانك من قبل؟ سجّل الدخول لمشاهدته. وإلا فراسل فريقنا عبر واتساب وسنرسل إليك رابطاً جديداً.",
+    "claim.contact": "راسلنا عبر واتساب",
+    "claim.errors.emailTaken":
+      "يوجد حساب آخر يستخدم هذا البريد الإلكتروني. استخدم بريداً آخر، أو سجّل الدخول إلى ذلك الحساب وراسلنا لنقل هذا الإعلان إليه.",
+    "claim.errors.emailReserved": "لا يمكن استخدام هذا البريد الإلكتروني لحساب بائع. استخدم بريداً آخر.",
+    "claim.errors.signIn": "سجّل الدخول إلى الحساب الذي يتبعه هذا الإعلان، ثم افتح الرابط مجدداً.",
 
     backToLogin: "العودة إلى تسجيل الدخول",
   },

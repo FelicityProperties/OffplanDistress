@@ -5,20 +5,24 @@ import { DistressReport } from "@/components/market/DistressReport";
 import { IndexPending } from "@/components/market/IndexPending";
 import { MarketHero } from "@/components/market/MarketHero";
 import { Methodology } from "@/components/market/Methodology";
+import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import { getDistressIndex } from "@/lib/market";
+import { alternatesFor, openGraphBase } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
 
 // Rendered per request (the (site) layout is force-dynamic): every visit recomputes the index from the database,
 // so there is no revalidate window to configure here.
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getT("market");
+  const [t, locale] = await Promise.all([getT("market"), getLocale()]);
+  // One address per language whatever the query string (/market, /ar/market), naming each other.
+  const alternates = alternatesFor("/market", locale);
   return {
     title: t("meta.title"),
     description: t("meta.description"),
-    alternates: { canonical: "/market" },
-    openGraph: { title: t("meta.title"), description: t("meta.description"), url: "/market" },
+    alternates,
+    openGraph: { ...openGraphBase(locale), title: t("meta.title"), description: t("meta.description"), url: alternates?.canonical },
   };
 }
 
@@ -31,7 +35,7 @@ export default async function MarketPage() {
     "@type": "Dataset",
     name: t("meta.title"),
     description: t("meta.description"),
-    url: `${siteUrl()}/market`,
+    url: `${siteUrl()}${localePath("/market", locale)}`,
     inLanguage: locale,
     isAccessibleForFree: true,
     dateModified: index.asOf.toISOString(),

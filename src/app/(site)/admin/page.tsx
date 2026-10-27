@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { CalendarClock, FileCheck2, FileX2 } from "lucide-react";
+import { CalendarClock, FileCheck2, FilePlus2, FileX2 } from "lucide-react";
 import { DeleteSamplesButton, ReviewButtons } from "@/components/admin/AdminControls";
+import { FollowUps } from "@/components/admin/FollowUps";
+import { StatusPill } from "@/components/badges";
 import { Kpi, PageTitle } from "@/components/Kpi";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
@@ -12,6 +15,7 @@ import { leadStats } from "@/lib/leads";
 import { formatAED, formatAEDCompact, formatDate, formatNumber, refCode } from "@/lib/format";
 import { listingsWithoutPermitExpiry } from "@/lib/permits";
 import { developerName } from "@/lib/place-names";
+import { contactKinds } from "@/lib/typed-names";
 
 /** Listings named in the "no permit expiry" banner; the rest are counted. */
 const NO_EXPIRY_LINKS = 12;
@@ -33,7 +37,15 @@ export default async function AdminQueue() {
   return (
     <div className="space-y-6">
       <PageTitle title={t("queue.title")} sub={t("queue.sub")}>
-        <DeleteSamplesButton count={s.samples} />
+        <div className="flex flex-wrap gap-2">
+          {/* Staff-assisted intake: a listing from documents the seller sent on WhatsApp or by email. */}
+          <Button asChild size="sm">
+            <Link href="/admin/listings/new">
+              <FilePlus2 aria-hidden /> {t("create.button")}
+            </Link>
+          </Button>
+          <DeleteSamplesButton count={s.samples} />
+        </div>
       </PageTitle>
       {/* Adverts that went live before permit expiry dates were recorded: the cron can't take them down on time. */}
       {noExpiry.length > 0 && (
@@ -76,7 +88,11 @@ export default async function AdminQueue() {
               : undefined
           }
         />
-        <Kpi label={t("queue.kpi.feesEarned")} value={formatAEDCompact(platformFee(s.transferredValue).total, locale)} />
+        <Kpi
+          label={t("queue.kpi.feesEarned")}
+          value={formatAEDCompact(platformFee(s.transferredValue).total, locale)}
+          hint={t("queue.kpi.feesEarnedHint")}
+        />
         {/* Today's visit statistics (your own visits are never counted) */}
         <Link
           href="/admin/analytics?range=today"
@@ -123,6 +139,23 @@ export default async function AdminQueue() {
                     <bdi>{refCode(q.refNo)}</bdi> · <bdi>{developerName(tc, q.developer, q.developerOther)}</bdi> ·{" "}
                     {tc(`unit.${q.unitType}`)} · {t("queue.submitted", { date: formatDate(q.createdAt, locale) })}
                   </p>
+                  {q.awaitingSeller && (
+                    <p className="mt-1">
+                      <StatusPill tone="warning">{t("claim.pendingBadge")}</StatusPill>
+                    </p>
+                  )}
+                  {/* "Approve" is in this row too: the warning the listing page shows, so it isn't approved unseen. */}
+                  {[q.description, q.view, q.floor].some((text) => contactKinds(text).length > 0) && (
+                    <p className="mt-1">
+                      <Link
+                        href={`/admin/listings/${q.id}#contact-warning`}
+                        className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        data-testid="queue-contact-warning"
+                      >
+                        <StatusPill tone="destructive">{t("contact.badge")}</StatusPill>
+                      </Link>
+                    </p>
+                  )}
                 </TableCell>
                 <TableCell>
                   {q.sellerName}
@@ -162,6 +195,8 @@ export default async function AdminQueue() {
         </Table>
       </div>
       <p className="text-xs text-muted-foreground">{t("queue.tip")}</p>
+      {/* Who is waiting on whom: the same items the admins' daily digest counts (src/lib/reminders.ts). */}
+      <FollowUps />
     </div>
   );
 }

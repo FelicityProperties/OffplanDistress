@@ -1,4 +1,5 @@
-import Link from "next/link";
+// Links follow the page's language (/ar/deals on Arabic pages); /dashboard and /admin keep one address.
+import Link from "@/components/LocaleLink";
 import { unstable_rethrow } from "next/navigation";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { LayoutDashboard, LogOut, Menu, ShieldCheck } from "lucide-react";

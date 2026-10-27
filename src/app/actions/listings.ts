@@ -7,10 +7,13 @@ import { db } from "@/db";
 import { listings, sellerLeads, users } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { LEGAL_UPDATED } from "@/content/legal/brand";
 import { sourceFromForm } from "@/lib/attribution";
+import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS, UNIT_TYPES } from "@/lib/config";
-import { refCode } from "@/lib/format";
+import { ownListingSql } from "@/lib/dashboard";
+import { formatNumber, refCode } from "@/lib/format";
 import { notifyAdmins } from "@/lib/notify";
 import { cancelAcceptedOffers, closeOpenOffers } from "@/lib/offers";
 import { publishBlocker } from "@/lib/permits";
@@ -65,6 +68,9 @@ const listingSchema = (t: T) =>
       handoverDate: optionalDate(t),
       nextInstalmentDate: optionalDate(t),
       nextInstalmentAmount: z.coerce.number().int().nonnegative().optional(),
+      // The seller's own figure for instalments past due and unpaid (sell form, when they report missed ones). Our team
+      // checks it against the statement of account; until then buyers see it as "being checked".
+      overdueAmount: money(t).optional(),
       motivation: z.enum(["urgent", "motivated", "flexible"]),
       description: z.string().trim().max(3000).optional(),
       paymentPlan: z.array(instalment).max(60),
@@ -72,6 +78,13 @@ const listingSchema = (t: T) =>
     .refine((v) => v.amountPaid <= v.originalPrice, {
       path: ["amountPaid"],
       message: t("field.amountPaidMax"),
+    })
+    // Overdue instalments are part of what is still owed to the developer.
+    .superRefine((v, ctx) => {
+      const owed = Math.max(v.originalPrice - v.amountPaid, 0);
+      if (v.overdueAmount != null && v.overdueAmount > owed) {
+        ctx.addIssue({ code: "custom", path: ["overdueAmount"], message: t("field.overdueMax", { amount: formatNumber(owed) }) });
+      }
     })
     // Typed names go public once the listing is approved, so links, emails / handles and phone numbers in them are
     // taken out (the transform below). "Other" needs a name of 2+ characters left after that; a name that was nothing
@@ -117,6 +130,7 @@ function readListingForm(formData: FormData) {
     handoverDate: opt("handoverDate"),
     nextInstalmentDate: opt("nextInstalmentDate"),
     nextInstalmentAmount: opt("nextInstalmentAmount"),
+    overdueAmount: opt("overdueAmount"),
     motivation: formData.get("motivation") || "motivated",
     description: opt("description"),
     paymentPlan: plan,
@@ -174,10 +188,15 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
       handoverDate: v.handoverDate,
       nextInstalmentDate: v.nextInstalmentDate,
       nextInstalmentAmount: v.nextInstalmentAmount ?? null,
+      // The seller's figure, unchecked (arrears_checked_at stays empty until our team checks the statement).
+      overdueAmount: v.overdueAmount ?? null,
       motivation: v.motivation,
       description: v.description ?? null,
       paymentPlan: v.paymentPlan,
       source: sourceFromForm(formData),
+      // The seller ticked the ownership / authority / Terms confirmation above (checked on the server too).
+      ownershipConfirmedAt: new Date(),
+      termsVersion: LEGAL_UPDATED,
     })
     .returning({ id: listings.id, refNo: listings.refNo });
 
@@ -206,6 +225,20 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
   return { ok: true, listingId: row.id, refNo: row.refNo };
 }
 
+/**
+ * Staff-assisted intake (adminCreateListing in ./admin.ts): the sell form's listing fields, checked by the same rules
+ * (listingSchema above), with errors in the request's language. Admins only, and it only validates: nothing is saved.
+ */
+export async function parseListingFields(formData: FormData) {
+  const [user, t] = await Promise.all([getCurrentUser(), getT("errors")]);
+  if (user?.role !== "admin") return { ok: false as const, error: t("auth.notAuthorised") };
+  const parsed = listingSchema(t).safeParse(readListingForm(formData), { error: fallbackErrors(t) });
+  if (!parsed.success) {
+    return { ok: false as const, error: t("form.fixDetails"), fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  }
+  return { ok: true as const, data: parsed.data };
+}
+
 const sellerEditSchema = (t: T) =>
   z.object({
     askingPrice: money(t),
@@ -232,7 +265,8 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
       description: listings.description,
     })
     .from(listings)
-    .where(eq(listings.id, id))
+    // Not one our team entered that its seller hasn't confirmed yet (see ownListingSql).
+    .where(and(eq(listings.id, id), ownListingSql(user.id)))
     .limit(1);
   if (!existing || existing.sellerId !== user.id) return { error: t("listing.notFound") };
   if (existing.status === "transferred") return { error: t("listing.transferred") };
@@ -302,7 +336,8 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
       refNo: listings.refNo,
     })
     .from(listings)
-    .where(eq(listings.id, listingId))
+    // Not one our team entered that its seller hasn't confirmed yet (see ownListingSql).
+    .where(and(eq(listings.id, listingId), ownListingSql(user.id)))
     .limit(1);
   if (!l || l.sellerId !== user.id) return { error: t("listing.notFound") };
 
@@ -328,6 +363,7 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
     refresh();
     return { error: t("listing.changeUnavailable") };
   }
+  await audit({ actorId: user.id, action: "listing.seller_status", entityType: "listing", entityId: listingId, diff: { status: [l.status, next] } });
   // Off the market: buyers with an open offer on it are told it is no longer available. Withdrawing a unit under
   // offer also ends the agreed deal: that buyer is told it did not go ahead, and our team hears about it.
   if (next === "withdrawn") {

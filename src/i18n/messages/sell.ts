@@ -68,6 +68,11 @@ export default defineMessages({
     "arrears.more": "Yes, more than one",
     "arrears.note.one": "Seller reports one missed instalment.",
     "arrears.note.more": "Seller reports more than one missed instalment.",
+    "field.overdue": "Overdue amount (AED, optional)",
+    "field.overdue.hint":
+      "The missed instalments still unpaid, from your statement of account. The developer wants them cleared before the NOC, so buyers see them in the cash needed on transfer day, marked as your figure until we check it with the developer.",
+    "error.overdueMax": "This can't be more than the balance still owed to the developer.",
+    "review.overdue": "Overdue amount",
 
     "plan.title": "Remaining instalments (optional)",
     "plan.add": "Add",
@@ -107,6 +112,19 @@ export default defineMessages({
     "review.paid": "Paid so far",
     "page.calculatorHint": "Not sure yet? Compare keeping the unit, stopping payments and selling.",
     "page.calculatorLink": "Open the exit calculator",
+    // WhatsApp intake card on /sell: our team prepares the listing from the documents; the seller confirms it by link.
+    "whatsapp.title": "Prefer WhatsApp? Send us your SPA and latest statement",
+    "whatsapp.body":
+      "Send photos or PDFs of your SPA (or Oqood) and your latest statement of account. Our team prepares the listing for you, then sends you a link to confirm you own the unit before anything is published.",
+    "whatsapp.cta": "Send on WhatsApp",
+    "whatsapp.note": "Free for sellers. Your contact details are never shown to buyers.",
+    // The sell form's saved draft (src/components/sell/sell-draft.ts), offered back on the next visit.
+    "draft.body":
+      "Your answers are kept on this device (last saved {when}). Documents and photos aren't kept: add them again on the Documents step.",
+    "draft.continue": "Continue where you left off",
+    "draft.startOver": "Start over",
+    "draft.cleared": "The form was cleared.",
+    "draft.undo": "Undo",
     "review.asking": "Your asking price",
     "review.docs": "Documents attached",
     "review.docsCount": "{n} of {total}",
@@ -325,6 +343,11 @@ export default defineMessages({
     "arrears.more": "نعم، أكثر من قسط",
     "arrears.note.one": "يُفيد البائع بتأخّر سداد قسط واحد.",
     "arrears.note.more": "يُفيد البائع بتأخّر سداد أكثر من قسط.",
+    "field.overdue": "المبلغ المتأخر (درهم، اختياري)",
+    "field.overdue.hint":
+      "الأقساط الفائتة التي لم تُسدَّد بعد، كما تظهر في كشف حسابك. يشترط المطوّر سدادها قبل إصدار شهادة عدم الممانعة، لذا يراها المشترون ضمن المبلغ النقدي المطلوب يوم نقل الملكية، مع الإشارة إلى أنها بحسب إفادتك إلى أن نتحقق منها لدى المطوّر.",
+    "error.overdueMax": "لا يمكن أن يتجاوز هذا المبلغ الرصيد المستحق للمطوّر.",
+    "review.overdue": "المبلغ المتأخر",
 
     "plan.title": "الأقساط المتبقية (اختياري)",
     "plan.add": "إضافة",
@@ -362,6 +385,17 @@ export default defineMessages({
     "review.paid": "المدفوع حتى الآن",
     "page.calculatorHint": "لم تحسم قرارك بعد؟ قارن بين الاحتفاظ بالوحدة والتوقف عن السداد والبيع.",
     "page.calculatorLink": "افتح حاسبة الخروج",
+    "whatsapp.title": "تفضّل واتساب؟ أرسل إلينا اتفاقية البيع والشراء وآخر كشف حساب",
+    "whatsapp.body":
+      "أرسل صوراً أو ملفات ⁦PDF⁩ لاتفاقية البيع والشراء (أو شهادة أوقود) وآخر كشف حساب لديك. يُعدّ فريقنا الإعلان نيابةً عنك، ثم يرسل إليك رابطاً لتأكيد ملكيتك للوحدة قبل نشر أي شيء.",
+    "whatsapp.cta": "أرسل عبر واتساب",
+    "whatsapp.note": "الخدمة مجانية للبائعين، ولا تظهر بيانات التواصل الخاصة بك للمشترين أبداً.",
+    "draft.body":
+      "إجاباتك محفوظة على هذا الجهاز (آخر حفظ: {when}). لا تُحفظ المستندات والصور، لذا أضِفها مجدداً في خطوة المستندات.",
+    "draft.continue": "تابِع من حيث توقفت",
+    "draft.startOver": "البدء من جديد",
+    "draft.cleared": "تم مسح النموذج.",
+    "draft.undo": "تراجع",
     "review.asking": "السعر المطلوب",
     "review.docs": "المستندات المرفقة",
     "review.docsCount": "{n} من {total}",

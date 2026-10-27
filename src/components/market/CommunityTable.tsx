@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { getT } from "@/i18n/server";
 import { COMMUNITIES } from "@/lib/config";
 import { formatNumber, formatPct } from "@/lib/format";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { getLocale, getT } from "@/i18n/server";
 import type { TKey } from "@/i18n/translator";
 import { formatAEDCompact, formatNumber, formatPct } from "@/lib/format";

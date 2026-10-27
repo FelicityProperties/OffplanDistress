@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
-import { AlertTriangle, Check, ExternalLink, FileUp, Loader2, Plus, Trash2, Wallet } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "@/components/LocaleLink";
+import { AlertTriangle, Check, ExternalLink, FileUp, History, Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { createListing } from "@/app/actions/listings";
 import { isHeic, preparePhoto, uploadListingFile } from "@/components/DocumentUploader";
@@ -18,9 +18,10 @@ import { useDir, useLocale, useT } from "@/i18n/client";
 import { readAttribution } from "@/lib/attribution";
 import { COMMUNITIES, DEVELOPERS, FEES, FILE_KINDS, MAX_UPLOAD_BYTES, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
-import { formatAED, formatPct, formatQuarter } from "@/lib/format";
+import { formatAED, formatPct, formatQuarter, timeAgo } from "@/lib/format";
 import { communityName, developerName, searchKey } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
+import { readSellDraft, removeSellDraft, writeSellDraft, type SellDraft } from "./sell-draft";
 
 const STEPS = ["step.unit", "step.payment", "step.price", "step.documents", "step.review"] as const;
 const DOCS: (keyof typeof FILE_KINDS)[] = ["spa", "oqood", "soa", "id"];
@@ -42,6 +43,7 @@ const FIELD_STEP: Record<string, number> = {
   nextInstalmentDate: 1,
   nextInstalmentAmount: 1,
   handoverDate: 1,
+  overdueAmount: 1,
   paymentPlan: 1,
   askingPrice: 2,
   phone: 2,
@@ -87,6 +89,8 @@ type State = {
   nextInstalmentAmount: string;
   handoverDate: string;
   arrears: string;
+  /** The missed instalments still unpaid, in AED (only asked, and only sent, when `arrears` isn't "none"). */
+  overdueAmount: string;
   askingPrice: string;
   motivation: string;
   description: string;
@@ -97,6 +101,43 @@ type State = {
 export type SellPrefill = Partial<
   Pick<State, "developer" | "developerOther" | "projectName" | "originalPrice" | "amountPaid" | "handoverDate" | "arrears">
 > & { leadId?: string };
+
+const EMPTY_STATE: State = {
+  developer: "",
+  community: "",
+  developerOther: "",
+  communityOther: "",
+  projectName: "",
+  unitType: "",
+  sizeSqft: "",
+  floor: "",
+  view: "",
+  originalPrice: "",
+  amountPaid: "",
+  nextInstalmentDate: "",
+  nextInstalmentAmount: "",
+  handoverDate: "",
+  arrears: "none",
+  overdueAmount: "",
+  askingPrice: "",
+  motivation: "motivated",
+  description: "",
+  phone: "",
+};
+/** What the saved draft keeps (./sell-draft.ts): every answer but the phone number. */
+const DRAFT_FIELDS = (Object.keys(EMPTY_STATE) as (keyof State)[]).filter((k) => k !== "phone");
+
+/** A saved draft's answers, with choices that no longer exist (a handover quarter now past, a renamed list entry) dropped. */
+function stateFromDraft(saved: Record<string, string>, handoverQuarters: string[]): Partial<State> {
+  const out: Partial<State> = { ...saved };
+  if (out.developer && !DEVELOPERS.includes(out.developer)) out.developer = "";
+  if (out.community && !COMMUNITIES.includes(out.community)) out.community = "";
+  if (out.unitType && !(out.unitType in UNIT_TYPES)) out.unitType = "";
+  if (out.handoverDate && !handoverQuarters.includes(out.handoverDate)) out.handoverDate = "";
+  if (out.arrears && !["none", "one", "more"].includes(out.arrears)) out.arrears = "none";
+  if (out.motivation && !(out.motivation in MOTIVATION)) out.motivation = "motivated";
+  return out;
+}
 
 /** `id` labels the control with that id; its label is `${id}-label` and the error / hint `${id}-msg`. */
 function Field({
@@ -134,7 +175,8 @@ function Field({
   );
 }
 
-export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial?: SellPrefill }) {
+/** `userId`: the signed-in seller, whose answers are saved in this browser as they go (./sell-draft.ts). */
+export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean; initial?: SellPrefill; userId?: string }) {
   const { leadId, ...prefill } = initial ?? {};
   const t = useT("sell");
   const tc = useT("common");
@@ -142,28 +184,7 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
   const locale = useLocale();
   const dir = useDir();
   const [step, setStep] = useState(0);
-  const [s, setS] = useState<State>({
-    developer: "",
-    community: "",
-    developerOther: "",
-    communityOther: "",
-    projectName: "",
-    unitType: "",
-    sizeSqft: "",
-    floor: "",
-    view: "",
-    originalPrice: "",
-    amountPaid: "",
-    nextInstalmentDate: "",
-    nextInstalmentAmount: "",
-    handoverDate: "",
-    arrears: "none",
-    askingPrice: "",
-    motivation: "motivated",
-    description: "",
-    phone: "",
-    ...prefill,
-  });
+  const [s, setS] = useState<State>(() => ({ ...EMPTY_STATE, ...prefill }));
   const [plan, setPlan] = useState<Plan[]>([]);
   const [docs, setDocs] = useState<Partial<Record<keyof typeof FILE_KINDS, File>>>({});
   const [photos, setPhotos] = useState<File[]>([]);
@@ -176,8 +197,81 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
   const [done, setDone] = useState<{ id: string; failed: string[] } | null>(null);
   const qs = useMemo(quarters, []);
 
+  // Saved draft: restored after the first render (the server has no localStorage, so restoring in useState would not
+  // match the server's HTML), saved on every change from then on, removed once the listing is created.
+  const [draftReady, setDraftReady] = useState(false);
+  /** The estimate lead a restored draft was started from, when this visit's link doesn't carry one. */
+  const [draftLeadId, setDraftLeadId] = useState<string>();
+  /** When the restored draft was last saved; shows the "Continue where you left off · Start over" banner. */
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
+  const submitted = useRef(false);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  const applyDraft = (d: SellDraft) => {
+    setS({ ...EMPTY_STATE, ...stateFromDraft(d.state, qs) });
+    setPlan(d.plan);
+    setStep(Math.min(Math.max(d.step, 0), STEPS.length - 1));
+    setDraftLeadId(d.leadId);
+  };
+
+  useEffect(() => {
+    const d = userId ? readSellDraft(userId, DRAFT_FIELDS) : null;
+    if (d) {
+      applyDraft(d);
+      setRestoredAt(d.savedAt);
+    }
+    setDraftReady(true);
+    // Once, on mount: a later change of the props doesn't bring an older draft back over what is being typed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!userId || !draftReady || submitted.current) return;
+    const fresh: State = { ...EMPTY_STATE, ...prefill };
+    const untouched = step === 0 && plan.length === 0 && DRAFT_FIELDS.every((k) => s[k] === fresh[k]);
+    // Nothing typed yet (or the seller started over): nothing to keep.
+    if (untouched) removeSellDraft(userId);
+    else {
+      writeSellDraft(userId, {
+        step,
+        state: Object.fromEntries(DRAFT_FIELDS.map((k) => [k, s[k]])),
+        plan,
+        leadId: leadId ?? draftLeadId,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, draftReady, s, plan, step]);
+
+  const focusForm = () => requestAnimationFrame(() => headingRef.current?.focus());
+
+  function startOver() {
+    if (!userId) return;
+    const kept = readSellDraft(userId, DRAFT_FIELDS);
+    setS({ ...EMPTY_STATE, ...prefill });
+    setPlan([]);
+    // The documents, photos and ownership tick went with the earlier answers: never onto another unit. (Undo brings
+    // back the answers only, as the banner says of documents and photos.)
+    setDocs({});
+    setPhotos([]);
+    setConfirmed(false);
+    setStep(0);
+    setErrors({});
+    setDraftLeadId(undefined);
+    setRestoredAt(null);
+    focusForm();
+    toast(t("draft.cleared"), kept ? { action: { label: t("draft.undo"), onClick: () => applyDraft(kept) } } : undefined);
+  }
+
   const set = (k: keyof State) => (v: string) => setS((prev) => ({ ...prev, [k]: v }));
-  const num = (v: string) => Number(v.replace(/[^\d.]/g, "")) || 0;
+  // Arabic-Indic / Persian digits (an Arabic phone keyboard types them) count as digits, "٫" as the decimal point;
+  // otherwise "٩٠٬٠٠٠" would be read, checked and sent as 0.
+  const num = (v: string) =>
+    Number(
+      v
+        .replace(/[٠-٩۰-۹]/g, (d) => String((d.charCodeAt(0) & 0xf) % 10))
+        .replace(/٫/g, ".")
+        .replace(/[^\d.]/g, ""),
+    ) || 0;
   const aed = (v: number | null | undefined) => formatAED(v, locale);
   const unitLabel = (u: string) => (u in UNIT_TYPES ? tc(`unit.${u as UnitTypeKey}`) : "—");
 
@@ -273,6 +367,9 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
       if (!num(s.originalPrice)) e.originalPrice = t("error.originalPrice");
       if (num(s.amountPaid) > num(s.originalPrice)) e.amountPaid = t("error.amountPaid");
       if (!s.handoverDate) e.handoverDate = t("error.handover");
+      if (s.arrears !== "none" && num(s.overdueAmount) > Math.max(num(s.originalPrice) - num(s.amountPaid), 0)) {
+        e.overdueAmount = t("error.overdueMax");
+      }
     }
     if (i === 2) {
       if (s.askingPrice === "") e.askingPrice = t("error.asking");
@@ -296,14 +393,17 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
     }
     setBusy(t("submit.saving"));
     const fd = new FormData();
-    const numeric = new Set(["sizeSqft", "originalPrice", "amountPaid", "askingPrice", "nextInstalmentAmount"]);
+    const numeric = new Set(["sizeSqft", "originalPrice", "amountPaid", "askingPrice", "nextInstalmentAmount", "overdueAmount"]);
     for (const [k, v] of Object.entries(s)) {
       if (k === "arrears") continue;
+      // Asked only after "Yes, …" to missed instalments; a figure typed before switching back to "No" isn't sent.
+      if (k === "overdueAmount" && s.arrears === "none") continue;
       fd.set(k, numeric.has(k) && v !== "" ? String(Math.round(num(v))) : v);
     }
     fd.set("confirmOwnership", confirmed ? "on" : "");
     // Links the listing to the seller's free estimate, and records how they found us.
-    if (leadId) fd.set("leadId", leadId);
+    const lead = leadId ?? draftLeadId;
+    if (lead) fd.set("leadId", lead);
     fd.set("source", readAttribution());
     const arrearsNote =
       s.arrears === "one" ? t("arrears.note.one") : s.arrears === "more" ? t("arrears.note.more") : "";
@@ -327,6 +427,9 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
       toast.error(res.error ?? t("error.checkDetails"));
       return;
     }
+    // The listing exists now: its draft goes, so a refresh during the uploads can't offer to submit it again.
+    submitted.current = true;
+    if (userId) removeSellDraft(userId);
 
     const failed: string[] = [];
     const uploads: [File, keyof typeof FILE_KINDS][] = [
@@ -373,7 +476,35 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
 
   return (
     <>
-      <ol className="mt-8 flex gap-2 overflow-x-auto pb-2">
+      {restoredAt != null && (
+        <div
+          role="status"
+          data-testid="sell-draft"
+          className="mt-8 flex flex-col gap-3 rounded-2xl border border-gold/40 bg-gold-soft/60 p-4 text-sm sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex min-w-0 items-start gap-3">
+            <History className="mt-0.5 h-4 w-4 shrink-0 text-gold-foreground" aria-hidden />
+            <p className="min-w-0">{t("draft.body", { when: timeAgo(new Date(restoredAt), locale) })}</p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                setRestoredAt(null);
+                focusForm();
+              }}
+            >
+              {t("draft.continue")}
+            </Button>
+            {/* Not while photos are being prepared: they would land in the cleared form once ready. */}
+            <Button type="button" size="sm" variant="outline" onClick={startOver} disabled={preparing}>
+              {t("draft.startOver")}
+            </Button>
+          </div>
+        </div>
+      )}
+      <ol className={cn("flex gap-2 overflow-x-auto pb-2", restoredAt != null ? "mt-5" : "mt-8")}>
         {STEPS.map((key, i) => (
           <li key={key} className="flex min-w-fit items-center gap-2">
             <span
@@ -402,7 +533,9 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
             } else void submit();
           }}
         >
-          <h2 className="text-xl font-semibold">{t(STEPS[step])}</h2>
+          <h2 ref={headingRef} tabIndex={-1} className="text-xl font-semibold outline-none">
+            {t(STEPS[step])}
+          </h2>
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             {step === 0 && (
               <>
@@ -522,6 +655,23 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
                     </SelectContent>
                   </Select>
                 </Field>
+                {s.arrears !== "none" && (
+                  <Field id="overdueAmount" label={t("field.overdue")} error={errors.overdueAmount} hint={t("field.overdue.hint")}>
+                    <Input
+                      id="overdueAmount"
+                      inputMode="numeric"
+                      value={s.overdueAmount}
+                      onChange={(e) => {
+                        set("overdueAmount")(e.target.value);
+                        if (errors.overdueAmount) setErrors(({ overdueAmount: _, ...rest }) => rest);
+                      }}
+                      placeholder="117,500"
+                      aria-invalid={errors.overdueAmount ? true : undefined}
+                      aria-describedby="overdueAmount-msg"
+                      className={cn(errors.overdueAmount && "border-destructive/60")}
+                    />
+                  </Field>
+                )}
                 <div className="space-y-3 sm:col-span-2">
                   <div className="flex items-center justify-between">
                     <Label>{t("plan.title")}</Label>
@@ -646,6 +796,7 @@ export function SellForm({ needsPhone, initial }: { needsPhone: boolean; initial
                     [t("review.purchasePrice"), aed(num(s.originalPrice))],
                     [t("review.paid"), `${aed(num(s.amountPaid))} (\u2066${formatPct(preview.paidPct)}\u2069)`],
                     [t("review.asking"), aed(num(s.askingPrice))],
+                    ...(s.arrears !== "none" && num(s.overdueAmount) > 0 ? [[t("review.overdue"), aed(num(s.overdueAmount))]] : []),
                     [
                       t("review.docs"),
                       `${t("review.docsCount", { n: Object.values(docs).filter(Boolean).length, total: DOCS.length })}${photos.length ? ` · ${t("review.photosCount", { n: photos.length })}` : ""}`,

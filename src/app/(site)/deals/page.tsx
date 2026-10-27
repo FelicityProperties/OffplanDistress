@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { ChevronLeft, ChevronRight, Info, RotateCcw, SearchX, SlidersHorizontal, X } from "lucide-react";
 import { DealCard } from "@/components/DealCard";
 import { DealsToolbar, FilterPanel, SaveSearchButton } from "@/components/deals/DealFilters";
@@ -12,11 +12,26 @@ import type { MOTIVATION } from "@/lib/config";
 import { formatAEDCompact } from "@/lib/format";
 import { dealFacets, PAGE_SIZE, parseFilters, searchDeals, watchedIds, type DealFilters } from "@/lib/listings";
 import { communityName, developerName } from "@/lib/place-names";
+import { alternatesFor, openGraphBase } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getT("deals");
-  return { title: t("meta.title"), description: t("meta.description") };
+/**
+ * Every filter combination is the same page to a search engine: canonical /deals (/ar/deals in Arabic). Searches,
+ * sort orders, the list view and price/percentage ranges are also kept out of the index (their links are followed).
+ */
+const NOINDEX_PARAMS = /^(?:q|sort|view|handoverBy|(?:min|max)[A-Z]\w*)$/;
+
+export async function generateMetadata({ searchParams }: PageProps<"/deals">): Promise<Metadata> {
+  const [t, locale, raw] = await Promise.all([getT("deals"), getLocale(), searchParams]);
+  const alternates = alternatesFor("/deals", locale);
+  const variant = Object.entries(raw).some(([k, v]) => v != null && v !== "" && NOINDEX_PARAMS.test(k));
+  return {
+    title: t("meta.title"),
+    description: t("meta.description"),
+    alternates,
+    openGraph: { ...openGraphBase(locale), title: t("meta.title"), description: t("meta.description"), url: alternates?.canonical },
+    ...(variant ? { robots: { index: false, follow: true } } : {}),
+  };
 }
 
 type RawParams = Awaited<PageProps<"/deals">["searchParams"]>;
@@ -29,6 +44,7 @@ function summarize(f: DealFilters, t: TFn<"deals">, tc: TFn<"common">, locale: L
     ...f.developer.map((d) => developerName(tc, d)),
     ...f.type.map((u) => tc(`unit.${u}`)),
     ...f.motivation.map((m) => tc(`motivation.${m as keyof typeof MOTIVATION}`)),
+    f.maxTransfer ? t("summary.maxTransfer", { amount: formatAEDCompact(f.maxTransfer, locale) }) : "",
     f.maxCash ? t("summary.maxCash", { amount: formatAEDCompact(f.maxCash, locale) }) : "",
     f.minDiscount ? t("summary.minDiscount", { pct: f.minDiscount }) : "",
     f.handoverBy ? t("summary.handoverBy", { year: f.handoverBy }) : "",
@@ -70,6 +86,23 @@ function activeChips(raw: RawParams, f: DealFilters, t: TFn<"deals">, tc: TFn<"c
 
   const chips: Chip[] = [];
   if (f.q) chips.push({ key: "q", label: t("summary.query", { q: f.q }), href: without("q") });
+  if (f.minTransfer || f.maxTransfer) {
+    const min = f.minTransfer ? formatAEDCompact(f.minTransfer, locale) : null;
+    const max = f.maxTransfer ? formatAEDCompact(f.maxTransfer, locale) : null;
+    chips.push({
+      key: "transfer",
+      label:
+        min && max
+          ? t("chips.transferRange", { min, max })
+          : max
+            ? t("summary.maxTransfer", { amount: max })
+            : t("chips.transferFrom", { amount: min }),
+      href: href((p) => {
+        p.delete("minTransfer");
+        p.delete("maxTransfer");
+      }),
+    });
+  }
   if (f.minCash || f.maxCash) {
     const min = f.minCash ? formatAEDCompact(f.minCash, locale) : null;
     const max = f.maxCash ? formatAEDCompact(f.maxCash, locale) : null;

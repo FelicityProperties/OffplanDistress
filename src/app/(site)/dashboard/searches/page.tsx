@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { AlertToggle } from "@/components/AlertToggle";
 import { DeleteSearchButton } from "@/components/DeleteSearchButton";
 import { EmptyState, PageTitle } from "@/components/Kpi";
