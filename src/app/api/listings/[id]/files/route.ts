@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { files, listings } from "@/db/schema";
+import { files, listings, notifications } from "@/db/schema";
 import { isLocale } from "@/i18n/config";
 import { getT } from "@/i18n/server";
 import { translator } from "@/i18n/translator";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
 import { FILE_KINDS, MAX_UPLOAD_BYTES } from "@/lib/config";
+import { refCode } from "@/lib/format";
+import { notifyAdmins } from "@/lib/notify";
+import { isUuid } from "@/lib/utils";
 
 const ALLOWED = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 // Photos go into the public gallery, so only formats every browser can show (the sell form converts phone photos to
@@ -25,6 +28,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
   const asked = new URL(request.url).searchParams.get("locale");
   const [user, t] = await Promise.all([getCurrentUser(), isLocale(asked) ? translator("sell", asked) : getT("sell")]);
   if (!user) return NextResponse.json({ error: t("upload.signIn") }, { status: 401 });
+  // Not an id at all: the same answer as a listing that isn't theirs (the database would throw on it).
+  if (!isUuid(id)) return NextResponse.json({ error: t("upload.notFound") }, { status: 404 });
 
   // Reject oversized bodies before buffering them.
   if (Number(request.headers.get("content-length") ?? 0) > MAX_UPLOAD_BYTES + 64 * 1024) {
@@ -36,6 +41,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
       sellerId: listings.sellerId,
       images: listings.images,
       status: listings.status,
+      projectName: listings.projectName,
+      refNo: listings.refNo,
       // A listing our team entered whose seller hasn't confirmed it yet (src/lib/claim.ts): the account it was filed
       // under isn't its owner until then (as in src/app/api/files/[id]/route.ts).
       awaitingSeller: sql<boolean>`coalesce(${listings.createdByStaff} and ${listings.ownershipConfirmedAt} is null, false)`,
@@ -101,13 +108,26 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
   }
 
   // Seller photos go into the public gallery while the listing is still in review (our team checks them
-  // before approving). Once it's live, new seller photos wait for an admin to add them from the review page.
+  // before approving). Once it's live, new seller photos wait for an admin to add them from the review page, and our
+  // team is told: one notice per listing until an admin has read it, however many photos follow.
   if (kind === "photo" && (isAdmin || listing.status === "pending_review")) {
     await db
       .update(listings)
       .set({ images: sql`array_append(${listings.images}, ${`/api/files/${row.id}`})` })
       .where(eq(listings.id, id));
+  } else if (kind === "photo" && listing.status !== "withdrawn" && listing.status !== "transferred") {
+    const href = `/admin/listings/${id}`;
+    const [waiting] = await db
+      .select({ id: notifications.id })
+      .from(notifications)
+      .where(and(eq(notifications.type, "listing.photos"), eq(notifications.href, href), isNull(notifications.readAt)))
+      .limit(1);
+    if (!waiting) {
+      await notifyAdmins("listing.photos", { project: listing.projectName, seller: user.fullName, ref: refCode(listing.refNo) }, href, {
+        except: [user.id],
+      });
+    }
   }
 
-  return NextResponse.json({ id: row.id });
+  return NextResponse.json({ id: row.id, ...(kind === "photo" && !isAdmin && listing.status !== "pending_review" ? { review: true } : {}) });
 }

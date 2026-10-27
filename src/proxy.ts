@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { LOCALE_COOKIE, type Locale } from "@/i18n/config";
-import { AR_PREFIX, isLocalizedPath, LOCALE_HEADER, PATH_HEADER, SAVED_HEADER, stripLocale } from "@/i18n/paths";
+import { AR_PREFIX, isLocalizedPath, LOCALE_HEADER, PATH_HEADER, QUERY_HEADER, SAVED_HEADER, stripLocale } from "@/i18n/paths";
 import { configuredSiteUrl } from "@/lib/site-url";
 
 // Runs before every page (not the API, Next's files or static files; see `config` below).
@@ -71,7 +71,9 @@ export function proxy(request: NextRequest) {
   const headers = new Headers(request.headers);
   headers.delete(LOCALE_HEADER);
   headers.delete(PATH_HEADER);
+  headers.delete(QUERY_HEADER);
   headers.delete(SAVED_HEADER);
+  headers.set(QUERY_HEADER, request.nextUrl.search);
   const saved = request.cookies.get(LOCALE_COOKIE)?.value;
 
   const prefix = /^\/(ar|en)(?=\/|$)/.exec(pathname)?.[1] as Locale | undefined;

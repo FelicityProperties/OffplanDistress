@@ -133,6 +133,7 @@ function RangeFilter({
         onValueChange={(v) => setValue(v[0] ?? 0)}
         onValueCommit={(v) => update((p) => (v[0] ? p.set(name, String(v[0])) : p.delete(name)))}
         aria-label={label}
+        valueText={format}
         className="py-1.5"
       />
     </FilterSection>
@@ -193,6 +194,8 @@ function BudgetFilter({
           })
         }
         aria-label={label}
+        thumbLabels={[t("filters.rangeMin", { label }), t("filters.rangeMax", { label })]}
+        valueText={(v) => (v >= ceiling ? t("filters.any") : formatAEDCompact(v, locale))}
         aria-describedby={hintId}
         className="py-1.5"
       />
@@ -439,7 +442,8 @@ export function SaveSearchButton({ summary, tone = "subtle" }: { summary: string
           if (res.needsAuth) {
             toast(t("saveSearch.needsAuth"));
             router.push(lp(`/login?next=${encodeURIComponent(`/deals?${params.toString()}`)}`));
-          } else toast.success(t("saveSearch.saved"));
+          } else if (res.error) toast.error(res.error);
+          else toast.success(t("saveSearch.saved"));
         })
       }
     >

@@ -27,6 +27,22 @@ export async function hit(key: string, limit: number, windowMs: number): Promise
   return n <= limit;
 }
 
+/** The attempts recorded for `key` within `windowMs` (records nothing itself). */
+export async function attempts(key: string, windowMs: number): Promise<number> {
+  const since = new Date(Date.now() - windowMs);
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(authAttempts)
+    .where(and(eq(authAttempts.key, key), gt(authAttempts.createdAt, since)));
+  return n;
+}
+
+/** Records one attempt for `key` without checking a limit (e.g. a wrong password, counted only once it is wrong). */
+export async function record(key: string) {
+  await db.insert(authAttempts).values({ key });
+  after(purgeOldAttempts);
+}
+
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Delete attempt records older than a day (also run from the daily cron, in case nobody logs in for a while). */

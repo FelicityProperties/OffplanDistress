@@ -1,11 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useId, useState, useTransition } from "react";
 import Link from "@/components/LocaleLink";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { makeOffer } from "@/app/actions/market";
-import { Field, FormMessage, SubmitButton } from "@/components/forms";
+import { Field, FormMessage } from "@/components/forms";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,6 +45,9 @@ export function OfferDialog({
   const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [state, action] = useActionState(makeOffer, {});
+  const [pending, start] = useTransition();
+  // Names the financing radio group.
+  const financingLabel = useId();
 
   useEffect(() => {
     if (state.ok) {
@@ -84,14 +87,23 @@ export function OfferDialog({
           <DialogTitle>{t("offer.title")}</DialogTitle>
           <DialogDescription>{t("offer.description", { project, amount: formatAED(asking, locale) })}</DialogDescription>
         </DialogHeader>
-        <form action={action} className="space-y-4">
+        {/* Submitted from onSubmit (not the form's action), so a field that needs fixing doesn't clear what was typed. */}
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            start(() => action(fd));
+          }}
+        >
           <input type="hidden" name="listingId" value={listingId} />
           <Field label={t("offer.amount")} htmlFor="amount" error={fe.amount} hint={t("offer.amountHint")}>
-            <Input id="amount" name="amount" type="number" min={0} step={1000} defaultValue={Math.round((asking * 0.95) / 1000) * 1000} required />
+            {/* Any whole dirham (step 1): the asking price itself needn't be a round thousand. 95% is only a suggestion. */}
+            <Input id="amount" name="amount" type="number" min={0} step={1} defaultValue={Math.round((asking * 0.95) / 1000) * 1000} required />
           </Field>
           <div className="space-y-2">
-            <Label>{t("offer.financing")}</Label>
-            <RadioGroup name="financing" defaultValue="cash" className="grid grid-cols-2 gap-2">
+            <Label id={financingLabel}>{t("offer.financing")}</Label>
+            <RadioGroup name="financing" defaultValue="cash" aria-labelledby={financingLabel} className="grid grid-cols-2 gap-2">
               {(
                 [
                   ["cash", tc("financing.cash")],
@@ -108,14 +120,15 @@ export function OfferDialog({
               ))}
             </RadioGroup>
           </div>
-          <Field label={t("offer.message")} htmlFor="message" error={fe.message}>
+          <Field label={t("offer.message")} htmlFor="message" error={fe.message} hint={t("offer.messageHint")}>
             <Textarea id="message" name="message" placeholder={t("offer.placeholder")} />
           </Field>
           <FormMessage state={state} />
           <DialogFooter>
-            <SubmitButton className="w-full" pendingText={tc("sending")}>
-              {t("offer.submit")}
-            </SubmitButton>
+            <Button type="submit" className="w-full" disabled={pending}>
+              {pending && <Loader2 className="animate-spin" />}
+              {pending ? tc("sending") : t("offer.submit")}
+            </Button>
           </DialogFooter>
           <p className="text-center text-xs leading-relaxed text-muted-foreground">
             {richText(t("offer.legal"), {

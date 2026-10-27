@@ -2,11 +2,14 @@ import "server-only";
 import { and, desc, eq, gte, ilike, inArray, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { listings, offers, users, watchlist } from "@/db/schema";
+import { messages } from "@/i18n/messages";
+import { cleanText } from "./clean-text";
 import { COMMUNITIES, DEVELOPERS, FEES, UNIT_TYPES, type UnitTypeKey } from "./config";
 import { FEE_BP, FIXED_FEES_ESTIMATE } from "./deal-math";
 // Every list and figure here shows adverts only: a public status, and for a real listing a permit and Form A that
 // haven't run out (advertisedSql), whether or not the daily job has paused it yet.
 import { advertisedSql } from "./permits";
+import { searchKey } from "./place-names";
 
 const remaining = sql<number>`(${listings.originalPrice} - ${listings.amountPaid})`;
 const saleValue = sql<number>`(${listings.askingPrice} + ${listings.originalPrice} - ${listings.amountPaid})`;
@@ -139,7 +142,8 @@ export function parseFilters(params: RawParams): DealFilters {
   const maxTransfer = num(params.maxTransfer, 0, Number.MAX_SAFE_INTEGER);
   const handoverBy = num(params.handoverBy, 1900, 2200);
   return {
-    q: q?.trim() || undefined,
+    // Hand-edited links can hold anything: a NUL byte in the search would make Postgres refuse the query (a 500).
+    q: (q == null ? "" : cleanText(q)).trim().slice(0, 100) || undefined,
     community: list(params.community).filter((c) => COMMUNITIES.includes(c)),
     developer: list(params.developer).filter((d) => DEVELOPERS.includes(d)),
     type: list(params.type).filter((t): t is UnitTypeKey => t in UNIT_TYPES),
@@ -159,11 +163,28 @@ export function parseFilters(params: RawParams): DealFilters {
 
 export const PAGE_SIZE = 12;
 
+/**
+ * The listed developers or communities (stored by their English name, config.ts) whose name in either language
+ * contains the search text, matched as the pickers match (searchKey: case, accents, Arabic letter variants). Arabic
+ * visitors see "إعمار" and "مرسى خور دبي" on every card, so that is what they type.
+ */
+function namedMatching(prefix: "developer" | "community", names: string[], q: string) {
+  const needle = searchKey(q);
+  if (!needle) return [];
+  const en = messages.common.en as Record<string, string>;
+  const ar = messages.common.ar as Record<string, string>;
+  return names.filter(
+    (name) => name !== "Other" && [name, en[`${prefix}.${name}`], ar[`${prefix}.${name}`]].some((label) => label && searchKey(label).includes(needle)),
+  );
+}
+
 /** WHERE conditions for a set of deal filters: public listings matching every filter (sort/page ignored). */
 function dealConditions(f: DealFilters): SQL[] {
   const where: SQL[] = [advertisedSql()];
   if (f.q) {
     const like = `%${f.q.replace(/[%_\\]/g, (m) => `\\${m}`)}%`;
+    const developers = namedMatching("developer", DEVELOPERS, f.q);
+    const communities = namedMatching("community", COMMUNITIES, f.q);
     where.push(
       or(
         ilike(listings.projectName, like),
@@ -172,6 +193,8 @@ function dealConditions(f: DealFilters): SQL[] {
         ilike(listings.developerOther, like),
         ilike(listings.communityOther, like),
         ilike(listings.view, like),
+        developers.length ? inArray(listings.developer, developers) : undefined,
+        communities.length ? inArray(listings.community, communities) : undefined,
       )!,
     );
   }

@@ -13,8 +13,9 @@ export default defineMessages({
     "empty.sub":
       "Set your filters on the Browse deals page and tap “Save search” to keep them here. We'll alert you when new deals match.",
 
-    "matches.one": "{count} live match",
-    "matches.other": "{count} live matches",
+    // What "Open" shows on /deals: units on the market, including those under offer (the alerts only send new live ones).
+    "matches.one": "{count} match on the market",
+    "matches.other": "{count} matches on the market",
     savedOn: "saved {date}",
     fresh: "{count} new",
 
@@ -42,8 +43,8 @@ export default defineMessages({
     "empty.sub":
       "حدّد معايير البحث في صفحة تصفّح الصفقات واضغط «حفظ البحث» لتجدها هنا، وسننبّهك عند ظهور صفقات جديدة مطابقة.",
 
-    "matches.one": "الصفقات المتاحة: {count}",
-    "matches.other": "الصفقات المتاحة: {count}",
+    "matches.one": "الصفقات المطابقة المعروضة: {count}",
+    "matches.other": "الصفقات المطابقة المعروضة: {count}",
     savedOn: "تاريخ الحفظ: {date}",
     fresh: "جديدة: {count}",
 

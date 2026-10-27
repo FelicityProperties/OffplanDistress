@@ -3,6 +3,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { files, listings, offers, savedSearches, users, watchlist } from "@/db/schema";
 import { cardColumns, offerCountSql, watchersSql, type ListingCard } from "./listings";
+import { isAdvertised } from "./permits";
 
 /**
  * The seller's own listings. One our team entered for them (src/lib/claim.ts) only joins their dashboard once they
@@ -91,8 +92,17 @@ export async function offersReceived(userId: string) {
     .orderBy(desc(offers.updatedAt));
 }
 
+/**
+ * The price a buyer may see: the asking price while the unit is an advert, otherwise the last one our team approved
+ * for the advert (public_price). A seller's new price waits for review off the market (updateMyListing), and the
+ * public must not see it until it is approved (RERA: the permit covers the advertised price).
+ */
+function buyerFacingPrice(l: Parameters<typeof isAdvertised>[0] & { askingPrice: number; publicPrice: number | null }) {
+  return isAdvertised(l) ? l.askingPrice : (l.publicPrice ?? l.askingPrice);
+}
+
 export async function offersSent(userId: string) {
-  return db
+  const rows = await db
     .select({
       id: offers.id,
       amount: offers.amount,
@@ -104,12 +114,21 @@ export async function offersSent(userId: string) {
       refNo: listings.refNo,
       projectName: listings.projectName,
       askingPrice: listings.askingPrice,
+      publicPrice: listings.publicPrice,
       listingStatus: listings.status,
+      // whether its deal page is still public (isAdvertised), so the dashboard only links to one that is
+      isSample: listings.isSample,
+      dldPermitExpiresAt: listings.dldPermitExpiresAt,
+      formAExpiresAt: listings.formAExpiresAt,
     })
     .from(offers)
     .innerJoin(listings, eq(listings.id, offers.listingId))
     .where(eq(offers.buyerId, userId))
     .orderBy(desc(offers.updatedAt));
+  return rows.map((o) => {
+    const unit = { status: o.listingStatus, isSample: o.isSample, dldPermitExpiresAt: o.dldPermitExpiresAt, formAExpiresAt: o.formAExpiresAt };
+    return { ...o, askingPrice: buyerFacingPrice({ ...unit, askingPrice: o.askingPrice, publicPrice: o.publicPrice }), advertised: isAdvertised(unit) };
+  });
 }
 
 export async function myWatchlist(userId: string) {
@@ -119,6 +138,7 @@ export async function myWatchlist(userId: string) {
       // the permit dates decide whether the deal is still an advert (isAdvertised in src/lib/permits.ts)
       dldPermitExpiresAt: listings.dldPermitExpiresAt,
       formAExpiresAt: listings.formAExpiresAt,
+      publicPrice: listings.publicPrice,
       savedPrice: watchlist.savedPrice,
       savedAt: watchlist.createdAt,
     })
@@ -126,7 +146,13 @@ export async function myWatchlist(userId: string) {
     .innerJoin(listings, eq(listings.id, watchlist.listingId))
     .where(eq(watchlist.userId, userId))
     .orderBy(desc(watchlist.createdAt));
-  return rows as (ListingCard & { dldPermitExpiresAt: string | null; formAExpiresAt: string | null; savedPrice: number; savedAt: Date })[];
+  // askingPrice is the price shown and compared with the saved one: never a cut still waiting for our review.
+  return rows.map((r) => ({ ...r, askingPrice: buyerFacingPrice(r) })) as (ListingCard & {
+    dldPermitExpiresAt: string | null;
+    formAExpiresAt: string | null;
+    savedPrice: number;
+    savedAt: Date;
+  })[];
 }
 
 export async function mySearches(userId: string) {

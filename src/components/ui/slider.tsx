@@ -5,11 +5,16 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * `thumbLabels`: one name per thumb (a range's "minimum" and "maximum"), else every thumb takes `aria-label`.
+ * `valueText`: what a screen reader says for a thumb's value (aria-valuetext), as the screen shows it.
+ */
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(({ className, ...props }, ref) => {
-  const thumbs = (props.value ?? props.defaultValue ?? [0]).length;
+  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> & { thumbLabels?: string[]; valueText?: (value: number) => string }
+>(({ className, thumbLabels, valueText, ...props }, ref) => {
+  const values = props.value ?? props.defaultValue ?? [0];
+  const thumbs = values.length;
   return (
     <SliderPrimitive.Root
       ref={ref}
@@ -22,7 +27,8 @@ const Slider = React.forwardRef<
       {Array.from({ length: thumbs }, (_, i) => (
         <SliderPrimitive.Thumb
           key={i}
-          aria-label={props["aria-label"]}
+          aria-label={thumbLabels?.[i] ?? props["aria-label"]}
+          aria-valuetext={valueText && values[i] != null ? valueText(values[i]) : undefined}
           aria-describedby={props["aria-describedby"]}
           className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
         />

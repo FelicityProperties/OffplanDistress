@@ -30,6 +30,9 @@ export default defineMessages({
     "filters.transferLabel": "Cash at transfer budget",
     "filters.transferHint": "Equity to the seller + fees (DLD and NOC estimated) + any overdue instalments and late fees.",
     "filters.any": "Any",
+    // The two handles of a budget range, for screen readers.
+    "filters.rangeMin": "{label} (minimum)",
+    "filters.rangeMax": "{label} (maximum)",
     "filters.community": "Community",
     "filters.developer": "Developer",
     "filters.unitType": "Unit type",
@@ -112,6 +115,8 @@ export default defineMessages({
     "filters.transferHint":
       "حصة البائع + الرسوم (رسوم دائرة الأراضي والأملاك وشهادة عدم الممانعة تقديرية) + أي أقساط متأخرة وغرامات تأخير.",
     "filters.any": "أي مبلغ",
+    "filters.rangeMin": "{label} (الحد الأدنى)",
+    "filters.rangeMax": "{label} (الحد الأقصى)",
     "filters.community": "المنطقة",
     "filters.developer": "المطوّر",
     "filters.unitType": "نوع الوحدة",

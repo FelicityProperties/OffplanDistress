@@ -4,15 +4,26 @@ import { files, listings } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
+import { isUuid } from "@/lib/utils";
 
 async function notFound() {
   const t = await getT("common");
   return new Response(t("notFoundTitle"), { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }
 
+/**
+ * The download's name (RFC 6266): the real one, Arabic or accented, as UTF-8 in filename*, and an ASCII stand-in with
+ * the same extension for clients that only read filename. A bare encoded filename="%D8…" is saved as "download".
+ */
+function disposition(type: "inline" | "attachment", name: string) {
+  const ascii = name.replace(/[^\x20-\x7e]|["\\%;]/g, "_") || "file";
+  const utf8 = encodeURIComponent(name).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+  return `${type}; filename="${ascii}"; filename*=UTF-8''${utf8}`;
+}
+
 export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]">) {
   const { id } = await ctx.params;
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return notFound();
+  if (!isUuid(id)) return notFound();
 
   const [row] = await db
     .select({
@@ -49,7 +60,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]"
     headers: {
       "Content-Type": file.mimeType,
       "Content-Length": String(file.size),
-      "Content-Disposition": `${file.kind === "photo" ? "inline" : "attachment"}; filename="${encodeURIComponent(file.filename)}"`,
+      "Content-Disposition": disposition(file.kind === "photo" ? "inline" : "attachment", file.filename),
       "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, no-store",
       "X-Content-Type-Options": "nosniff",
     },

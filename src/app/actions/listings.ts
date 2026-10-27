@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { listings, sellerLeads, users } from "@/db/schema";
+import { listings, offers, sellerLeads, users } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { LEGAL_UPDATED } from "@/content/legal/brand";
@@ -12,11 +12,13 @@ import { sourceFromForm } from "@/lib/attribution";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
 import { ownListingSql } from "@/lib/dashboard";
+import { openDeal } from "@/lib/deals";
 import { refCode } from "@/lib/format";
 import { fallbackErrors, listingSchema, money, optionalDate } from "@/lib/listing-schema";
 import { notifyAdmins } from "@/lib/notify";
 import { cancelAcceptedOffers, closeOpenOffers } from "@/lib/offers";
 import { publishBlocker } from "@/lib/permits";
+import { isUuid } from "@/lib/utils";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
@@ -156,13 +158,29 @@ export async function parseListingFields(formData: FormData) {
   return { ok: true as const, data: parsed.data };
 }
 
+/** Text with each line break as one "\n": a textarea submits "\r\n", and imported text may have either. */
+function lineBreaks(v: FormDataEntryValue | string | null | undefined) {
+  return typeof v === "string" ? v.replace(/\r\n?/g, "\n") : "";
+}
+
+/** A deal is agreed on the unit: an accepted offer, or its open deal file. */
+async function hasAgreedDeal(listingId: string) {
+  const [accepted] = await db
+    .select({ id: offers.id })
+    .from(offers)
+    .where(and(eq(offers.listingId, listingId), eq(offers.status, "accepted")))
+    .limit(1);
+  return !!accepted || (await openDeal(listingId)) != null;
+}
+
 const sellerEditSchema = (t: T) =>
   z.object({
     askingPrice: money(t),
     motivation: z.enum(["urgent", "motivated", "flexible"]),
     description: z.string().trim().max(3000).optional(),
     nextInstalmentDate: optionalDate(t),
-    nextInstalmentAmount: z.coerce.number().int().nonnegative().optional(),
+    // An int4 column, as money() (src/lib/listing-schema.ts): extra zeros get a field error, not a server error.
+    nextInstalmentAmount: z.coerce.number().int().nonnegative().max(2_147_483_647).optional(),
   });
 
 export async function updateMyListing(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -170,6 +188,7 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
   const user = await getCurrentUser();
   if (!user) return { error: t("auth.signInAgain") };
   const id = String(formData.get("listingId") ?? "");
+  if (!isUuid(id)) return { error: t("listing.notFound") };
 
   const [existing] = await db
     .select({
@@ -180,6 +199,7 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
       refNo: listings.refNo,
       isSample: listings.isSample,
       description: listings.description,
+      pausedByAdmin: listings.pausedByAdmin,
     })
     .from(listings)
     // Not one our team entered that its seller hasn't confirmed yet (see ownListingSql).
@@ -192,7 +212,9 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
     {
       askingPrice: formData.get("askingPrice"),
       motivation: formData.get("motivation"),
-      description: formData.get("description") || undefined,
+      // Line breaks as stored (one "\n"), not as the browser sends a textarea ("\r\n"), so the 3,000 characters are the
+      // ones the box counts and an unchanged text compares equal.
+      description: lineBreaks(formData.get("description")) || undefined,
       nextInstalmentDate: formData.get("nextInstalmentDate") || undefined,
       nextInstalmentAmount: formData.get("nextInstalmentAmount") || undefined,
     },
@@ -203,11 +225,20 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
   // The advertised price and text are what the DLD permit and our review cover (RERA). Changing them on a real
   // listing takes it back to review; with an accepted offer they are fixed. Price-drop alerts go out on re-approval.
   const description = parsed.data.description ?? null;
-  const advertChanged = parsed.data.askingPrice !== existing.askingPrice || (description ?? "") !== (existing.description ?? "");
-  if (!existing.isSample && advertChanged && (existing.status === "under_offer" || existing.status === "noc_in_progress")) {
+  const advertChanged =
+    parsed.data.askingPrice !== existing.askingPrice || (description ?? "") !== lineBreaks(existing.description).trim();
+  // Fixed whatever the status says: our team may have paused a unit under offer, which keeps its accepted offer.
+  if (
+    !existing.isSample &&
+    advertChanged &&
+    (existing.status === "under_offer" || existing.status === "noc_in_progress" || (await hasAgreedDeal(id)))
+  ) {
     return { error: t("listing.lockedUnderOffer") };
   }
-  const backToReview = !existing.isSample && advertChanged && (existing.status === "live" || existing.status === "paused");
+  // A pause by our team stays until our team lifts it: the change is saved and goes to them, the listing stays paused.
+  const heldByTeam = existing.status === "paused" && existing.pausedByAdmin;
+  const backToReview = !existing.isSample && advertChanged && !heldByTeam && (existing.status === "live" || existing.status === "paused");
+  const tellTeam = backToReview || (!existing.isSample && advertChanged && heldByTeam);
 
   await db
     .update(listings)
@@ -222,7 +253,7 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
     })
     .where(and(eq(listings.id, id), eq(listings.sellerId, user.id)));
 
-  if (backToReview) {
+  if (tellTeam) {
     await notifyAdmins(
       "listing.changed",
       { project: existing.projectName, seller: user.fullName, ref: refCode(existing.refNo) },
@@ -231,7 +262,7 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
     );
   }
   refresh();
-  return { ok: true, review: backToReview };
+  return { ok: true, review: tellTeam };
 }
 
 /** Seller-side status changes: pause, resume, withdraw. Everything else is done by our team. */
@@ -239,6 +270,7 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
   const t = await getT("errors");
   const user = await getCurrentUser();
   if (!user) return { error: t("auth.signInAgain") };
+  if (!isUuid(listingId)) return { error: t("listing.notFound") };
   const [l] = await db
     .select({
       status: listings.status,
@@ -281,12 +313,13 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
     return { error: t("listing.changeUnavailable") };
   }
   await audit({ actorId: user.id, action: "listing.seller_status", entityType: "listing", entityId: listingId, diff: { status: [l.status, next] } });
-  // Off the market: buyers with an open offer on it are told it is no longer available. Withdrawing a unit under
-  // offer also ends the agreed deal: that buyer is told it did not go ahead, and our team hears about it.
+  // Off the market: buyers with an open offer on it are told it is no longer available. Withdrawing a unit with an
+  // agreed deal (under offer, or paused by our team while under offer, which keeps its accepted offer) also ends the
+  // deal: its file is closed, that buyer is told it did not go ahead, and our team hears about it.
   if (next === "withdrawn") {
     const unit = { id: listingId, projectName: l.projectName };
     await closeOpenOffers(unit, "unavailable");
-    if (l.status === "under_offer" && (await cancelAcceptedOffers(unit, "withdrawn")) > 0) {
+    if ((await cancelAcceptedOffers(unit, "withdrawn")) > 0) {
       await notifyAdmins(
         "deal.withdrawn.admin",
         { project: l.projectName, seller: user.fullName, ref: refCode(l.refNo) },

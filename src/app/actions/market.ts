@@ -11,15 +11,21 @@ import { LEGAL_UPDATED } from "@/content/legal/brand";
 import { sourceFromForm } from "@/lib/attribution";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
+import { cleanText, formText } from "@/lib/clean-text";
 import { startDeal } from "@/lib/deals";
 import { refCode } from "@/lib/format";
 import { notify, notifyAdmins, type TemplateParams } from "@/lib/notify";
 import { settleOtherOffers } from "@/lib/offers";
 import { advertisedSql, isAdvertised } from "@/lib/permits";
 import { clientIp, hit, MINUTE } from "@/lib/throttle";
+import { contactKinds } from "@/lib/typed-names";
+import { isUuid } from "@/lib/utils";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
+
+/** Offers and counters are int4 columns: a figure past that is a typo (extra zeros), answered with a field error. */
+const INT4_MAX = 2_147_483_647;
 
 /** Messages for checks that don't carry their own, in the request's language. */
 function fallbackErrors(t: T): z.core.$ZodErrorMap {
@@ -34,6 +40,7 @@ function fallbackErrors(t: T): z.core.$ZodErrorMap {
 export async function toggleWatch(listingId: string): Promise<{ watching?: boolean; needsAuth?: boolean; error?: string }> {
   const user = await getCurrentUser();
   if (!user) return { needsAuth: true };
+  if (!isUuid(listingId)) return { error: (await getT("errors"))("watch.unavailable") };
 
   const [existing] = await db
     .select({ id: watchlist.listingId })
@@ -67,9 +74,20 @@ export async function toggleWatch(listingId: string): Promise<{ watching?: boole
 const offerSchema = (t: T) =>
   z.object({
     listingId: z.uuid(),
-    amount: z.coerce.number(t("field.offerAmount")).int(t("field.wholeDirhams")).positive(t("field.offerAmount")),
+    amount: z.coerce
+      .number(t("field.offerAmount"))
+      .int(t("field.wholeDirhams"))
+      .positive(t("field.offerAmount"))
+      .max(INT4_MAX, t("field.amountTooLarge")),
     financing: z.enum(["cash", "mortgage"]),
-    message: z.string().trim().max(1000).optional(),
+    // The seller reads it as written. Buyers stay anonymous until the MOU and our team brokers every negotiation, so a
+    // phone number, email address, link or handle in it is refused (the form says why and keeps the text to edit).
+    message: z
+      .string()
+      .trim()
+      .max(1000)
+      .refine((m) => contactKinds(m).length === 0, t("field.offerMessageContact"))
+      .optional(),
   });
 
 export async function makeOffer(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -82,11 +100,13 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
       listingId: formData.get("listingId"),
       amount: formData.get("amount"),
       financing: formData.get("financing") || "cash",
-      message: formData.get("message") || undefined,
+      message: formText(formData.get("message"), { multiline: true }) || undefined,
     },
     { error: fallbackErrors(t) },
   );
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  // Each offer (or revision) notifies the seller and our team: a loop mustn't flood them, nor the email quota.
+  if (!(await hit(`offer:${user.id}`, 10, 60 * MINUTE))) return { error: t("tooMany") };
   const v = parsed.data;
 
   const [l] = await db
@@ -107,18 +127,20 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
   if (!l || !isAdvertised(l) || l.isSample) return { error: t("offer.closed") };
   if (l.sellerId === user.id) return { error: t("offer.own") };
 
-  // One open offer per buyer per listing: a new offer replaces the open one.
-  const [open] = await db
-    .select({ id: offers.id })
+  // One open offer per buyer per listing: a new offer replaces the open one. A buyer whose offer the seller accepted
+  // has the deal: a "backup" from them would compete with their own agreed deal.
+  const mine = await db
+    .select({ id: offers.id, status: offers.status, amount: offers.amount, financing: offers.financing, message: offers.message })
     .from(offers)
     .where(
       and(
         eq(offers.listingId, v.listingId),
         eq(offers.buyerId, user.id),
-        inArray(offers.status, ["pending", "countered"]),
+        inArray(offers.status, ["pending", "countered", "accepted"]),
       ),
-    )
-    .limit(1);
+    );
+  if (mine.some((o) => o.status === "accepted")) return { error: t("offer.alreadyAccepted") };
+  const open = mine.find((o) => o.status === "pending" || o.status === "countered");
 
   // The write only goes through while the unit is still an advert, checked in the same statement: if it was withdrawn,
   // rejected or sold since the check above, its open offers were (or are being) closed, and this one mustn't be left
@@ -155,6 +177,18 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
       returning id`);
     // As when the check above refuses: the form says so (a refresh would replace the page with a 404 first).
     if (!rows.length) return { error: t("offer.closed") };
+  }
+  // The same offer sent again (a double click, a second tab) changes nothing the seller hasn't heard: no new notices.
+  // A revision of a countered offer does: the seller's counter is set aside.
+  const unchanged =
+    revised.length > 0 &&
+    open?.status === "pending" &&
+    open.amount === v.amount &&
+    open.financing === v.financing &&
+    (open.message ?? null) === (v.message ?? null);
+  if (unchanged) {
+    refresh();
+    return { ok: true };
   }
 
   const params: TemplateParams = {
@@ -215,6 +249,7 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
   const t = await getT("errors");
   const user = await getCurrentUser();
   if (!user) return { error: t("auth.signInAgain") };
+  if (!isUuid(offerId)) return { error: t("offer.notFound") };
 
   const [row] = await db
     .select({
@@ -303,6 +338,7 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
     await settleOtherOffers(unit, offerId);
   } else if (action === "counter" && isSeller && offer.status === "pending") {
     if (!counterAmount || !Number.isFinite(counterAmount) || counterAmount <= 0) return { error: t("field.counterAmount") };
+    if (Math.round(counterAmount) > INT4_MAX) return { error: t("field.amountTooLarge") };
     // A counter is an acceptance waiting on the buyer, so a backup offer can't be countered either.
     if (row.listingStatus !== "live") return notLive(row.listingStatus);
     const counter = Math.round(counterAmount);
@@ -350,28 +386,34 @@ export async function createInquiry(_prev: FormState, formData: FormData): Promi
     {
       listingId: formData.get("listingId") || undefined,
       type: formData.get("type") || "info",
-      name: formData.get("name") || user?.fullName,
-      email: formData.get("email") || user?.email,
-      phone: formData.get("phone") || user?.phone || undefined,
-      message: formData.get("message") || undefined,
+      // Without the control characters Postgres can't store (a NUL byte would be a server error).
+      name: formText(formData.get("name")) || user?.fullName,
+      email: formText(formData.get("email")) || user?.email,
+      phone: formText(formData.get("phone")) || user?.phone || undefined,
+      message: formText(formData.get("message"), { multiline: true }) || undefined,
     },
     { error: fallbackErrors(t) },
   );
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
   if (!(await hit(`inquiry-ip:${await clientIp()}`, 10, 60 * MINUTE))) return { error: t("tooMany") };
   const v = parsed.data;
-  await db.insert(inquiries).values({ ...v, userId: user?.id ?? null, source: sourceFromForm(formData) });
 
-  // Project names and reference codes read the same in both languages, so the deal line can go in as-is.
+  // Project names and reference codes read the same in both languages, so the deal line can go in as-is. A listing
+  // deleted while its page was open is no longer linked: the message itself is kept.
   let about: string | null = null;
+  let listingId: string | undefined;
   if (v.listingId) {
     const [l] = await db
       .select({ projectName: listings.projectName, refNo: listings.refNo })
       .from(listings)
       .where(eq(listings.id, v.listingId))
       .limit(1);
-    if (l) about = `${l.projectName} · ${refCode(l.refNo)}`;
+    if (l) {
+      about = `${l.projectName} · ${refCode(l.refNo)}`;
+      listingId = v.listingId;
+    }
   }
+  await db.insert(inquiries).values({ ...v, listingId, userId: user?.id ?? null, source: sourceFromForm(formData) });
   await notifyAdmins(
     "inquiry.received",
     {
@@ -386,15 +428,42 @@ export async function createInquiry(_prev: FormState, formData: FormData): Promi
   return { ok: true };
 }
 
-export async function saveSearch(name: string, query: string) {
+/** The /deals query parameters a saved search keeps (parseFilters reads them); anything else is dropped. */
+const SEARCH_PARAMS = new Set([
+  "q",
+  "community",
+  "developer",
+  "type",
+  "motivation",
+  "minCash",
+  "maxCash",
+  "minTransfer",
+  "maxTransfer",
+  "minPaid",
+  "handoverBy",
+  "minDiscount",
+  "verified",
+  "sort",
+  "view",
+]);
+const MAX_SAVED_SEARCHES = 50;
+
+export async function saveSearch(name: unknown, query: unknown) {
   const user = await getCurrentUser();
   if (!user) return { needsAuth: true };
   const t = await getT("errors");
-  const clean = new URLSearchParams(query);
-  clean.delete("page");
+  // Called from the page, but any signed-in user can call it with anything: the daily alerts job runs every saved query,
+  // so one Postgres can't run (a NUL byte in the search text) would fail that job on every run.
+  const clean = new URLSearchParams();
+  for (const [k, v] of new URLSearchParams(typeof query === "string" ? query.slice(0, 2000) : "")) {
+    const value = cleanText(v).trim().slice(0, 200);
+    if (SEARCH_PARAMS.has(k) && value) clean.append(k, value);
+  }
+  const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(savedSearches).where(eq(savedSearches.userId, user.id));
+  if (n >= MAX_SAVED_SEARCHES) return { error: t("search.tooMany", { max: MAX_SAVED_SEARCHES }) };
   await db.insert(savedSearches).values({
     userId: user.id,
-    name: name.trim().slice(0, 80) || t("search.defaultName"),
+    name: cleanText(typeof name === "string" ? name : "").trim().slice(0, 80) || t("search.defaultName"),
     query: clean.toString(),
   });
   refresh();
@@ -404,6 +473,8 @@ export async function saveSearch(name: string, query: string) {
 export async function deleteSearch(id: string) {
   const user = await getCurrentUser();
   if (!user) return { error: (await getT("errors"))("auth.signInAgain") };
+  // Not an id: nothing of theirs to delete (as for an id that isn't theirs), not a database error.
+  if (!isUuid(id)) return { ok: true };
   await db.delete(savedSearches).where(and(eq(savedSearches.id, id), eq(savedSearches.userId, user.id)));
   refresh();
   return { ok: true };
@@ -422,8 +493,8 @@ export async function updateProfile(_prev: FormState, formData: FormData): Promi
   if (!user) return { error: t("auth.signInAgain") };
   const parsed = profileSchema(t).safeParse(
     {
-      fullName: formData.get("fullName"),
-      phone: formData.get("phone") || undefined,
+      fullName: formText(formData.get("fullName")),
+      phone: formText(formData.get("phone")) || undefined,
       intent: formData.get("intent"),
     },
     { error: fallbackErrors(t) },

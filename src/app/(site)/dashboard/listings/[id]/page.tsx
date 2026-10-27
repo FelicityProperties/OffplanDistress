@@ -18,6 +18,7 @@ import { listingFiles, myListing, offersReceived } from "@/lib/dashboard";
 import { sellerMilestones } from "@/lib/deals";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
+import { isUuid } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("dashboard");
@@ -27,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ManageListingPage({ params }: PageProps<"/dashboard/listings/[id]">) {
   const { id } = await params;
   const user = await requireUser(`/dashboard/listings/${id}`);
-  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  if (!isUuid(id)) notFound();
   const row = await myListing(user.id, id);
   if (!row) notFound();
   const l = row.listing;
@@ -64,9 +65,10 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
             {tc(`unit.${l.unitType}`)} · {tc("sqft", { n: formatNumber(l.sizeSqft) })} · <bdi>{community}</bdi>
           </p>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        {/* Wraps on small phones (320–360px), where the three buttons don't fit on one line. */}
+        <div className="flex max-w-full flex-col items-end gap-2">
           <ToneStatus label={tc(`listing.${l.status}`)} tone={LISTING_STATUS[l.status].tone} />
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             {PUBLIC_STATUSES.includes(l.status) && (
               <Button asChild size="sm" variant="outline">
                 <Link href={`/deals/${refCode(l.refNo)}`}>
@@ -74,7 +76,13 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
                 </Link>
               </Button>
             )}
-            <ListingActions id={l.id} status={l.status} />
+            <ListingActions
+              id={l.id}
+              status={l.status}
+              pausedByAdmin={l.pausedByAdmin}
+              // An agreed deal: an accepted offer (also on a unit our team paused while under offer) or its open file.
+              hasDeal={l.status === "under_offer" || listingOffers.some((o) => o.status === "accepted") || milestones != null}
+            />
           </div>
         </div>
       </div>
@@ -134,7 +142,13 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
                 </div>
                 <div className="flex items-center gap-3">
                   <ToneStatus label={tc(`offer.${o.status}`)} tone={OFFER_STATUS[o.status].tone} />
-                  <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} listingStatus={l.status} />
+                  <SellerOfferActions
+                    offerId={o.id}
+                    status={o.status}
+                    amount={o.amount}
+                    askingPrice={l.askingPrice}
+                    listingStatus={l.status}
+                  />
                 </div>
               </li>
             ))}
@@ -150,7 +164,12 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
             <h2 className="font-sans text-lg font-semibold">{t("manage.docsTitle")}</h2>
             <p className="text-sm text-muted-foreground">{t("manage.docsSub")}</p>
           </div>
-          <DocumentUploader listingId={l.id} kinds={["spa", "soa", "oqood", "id", "photo", "other"]} />
+          {/* Photos join the public gallery while the listing is in review; afterwards our team adds them. */}
+          <DocumentUploader
+            listingId={l.id}
+            kinds={["spa", "soa", "oqood", "id", "photo", "other"]}
+            photosReviewed={l.status !== "pending_review"}
+          />
         </div>
         {missing.length > 0 && (
           <p className="mt-4 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning">
@@ -167,7 +186,8 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
                     {d.filename}
                   </a>
                 </span>
-                <span className="shrink-0 text-xs text-muted-foreground">
+                {/* May wrap: "Sales & Purchase Agreement (SPA) · 27 Oct 2026" is wider than a 320px phone's row. */}
+                <span className="min-w-0 text-xs text-muted-foreground">
                   {tc(`file.${d.kind}`)} · {formatDate(d.createdAt, locale)}
                 </span>
               </li>

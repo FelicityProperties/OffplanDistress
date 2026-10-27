@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { TFn, TKey } from "@/i18n/translator";
 import { fallbackErrors, listingSchema, type ListingFields } from "./listing-schema";
 
@@ -117,10 +116,17 @@ const FIELD_LABELS: Record<string, TKey<"intake">> = {
   paymentPlan: "field.paymentPlan",
 };
 
+/** Fields whose value must be on our lists, and where the typed name goes with "Other". */
+const LIST_FIELDS: Record<string, string> = { developer: "developerOther", community: "communityOther" };
+const DATE_FIELDS = ["handoverDate", "nextInstalmentDate"];
+const isBadDay = (x: unknown) => typeof x === "string" && x.trim() !== "" && !isCalendarDay(x.trim());
+
 /**
  * The unit's listing fields, by the sell form's rules (listingSchema: developer and community from our lists, or
- * "Other" with the typed name), with a reason naming each field that fails. The file writes "none" as null, the form
- * as an empty field, so nulls are read as left out. Dates must also be real days (the form's date inputs see to that).
+ * "Other" with the typed name), with a reason naming each field that fails — in the file's terms, for whoever prepares
+ * it: a value off our lists is quoted, a missing field said so, dates and payment-plan rows named. The file writes
+ * "none" as null, the form as an empty field, so nulls are read as left out. Dates must also be real days (the form's
+ * date inputs see to that).
  */
 export function checkListing(v: unknown, ti: TI, te: TE): { ok: true; data: ListingFields } | { ok: false; error: string } {
   if (!isObject(v)) return { ok: false, error: ti("unit.listing") };
@@ -128,20 +134,29 @@ export function checkListing(v: unknown, ti: TI, te: TE): { ok: true; data: List
   input.motivation ??= "motivated";
   input.paymentPlan ??= [];
   const parsed = listingSchema(te).safeParse(input, { error: fallbackErrors(te) });
-  const issues: Record<string, string[] | undefined> = parsed.success ? {} : z.flattenError(parsed.error).fieldErrors;
-  if (parsed.success) {
-    const d = parsed.data;
-    for (const k of ["handoverDate", "nextInstalmentDate"] as const) if (d[k] != null && !isCalendarDay(d[k])) issues[k] = [te("field.date")];
-    if (d.paymentPlan.some((p) => p.dueDate != null && !isCalendarDay(p.dueDate))) issues.paymentPlan = [te("field.date")];
+  // The first reason per field (or per payment-plan row), in the order found.
+  const reasons = new Map<string, string>();
+  const add = (k: string, message: string) => void (reasons.has(k) || reasons.set(k, message));
+  const planRow = (i: number, message: string) => add(`paymentPlan.${i}`, ti("unit.planRow", { n: i + 1, message }));
+  for (const iss of parsed.success ? [] : parsed.error.issues) {
+    const [k, i, sub] = iss.path.map(String);
+    if (k === "paymentPlan" && i != null) {
+      planRow(Number(i), sub === "dueDate" ? ti("unit.date") : sub === "label" ? ti("unit.planLabel") : iss.message);
+    } else if (LIST_FIELDS[k] && typeof input[k] === "string" && input[k] !== "Other") {
+      add(k, ti("unit.notOnList", { value: input[k] as string, other: LIST_FIELDS[k] }));
+    } else if (input[k] === undefined && iss.code === "invalid_type") add(k, ti("unit.missing"));
+    else add(k, DATE_FIELDS.includes(k) ? ti("unit.date") : iss.message);
   }
-  const keys = Object.keys(issues).filter((k) => issues[k]?.length);
-  if (!parsed.success || keys.length) {
-    const reason = keys
-      .map((k) => ti("unit.issue", { field: FIELD_LABELS[k] ? ti(FIELD_LABELS[k]) : k, message: issues[k]![0] }))
+  // Real days (checked on the file's values, so these are named even when another field fails).
+  for (const k of DATE_FIELDS) if (isBadDay(input[k])) add(k, ti("unit.date"));
+  if (Array.isArray(input.paymentPlan)) input.paymentPlan.forEach((p, i) => isObject(p) && isBadDay(p.dueDate) && planRow(i, ti("unit.date")));
+  if (!parsed.success || reasons.size) {
+    const reason = [...reasons]
+      .map(([k, message]) => (k.startsWith("paymentPlan.") ? message : ti("unit.issue", { field: FIELD_LABELS[k] ? ti(FIELD_LABELS[k]) : k, message })))
       .join(ti("unit.sep"));
     return { ok: false, error: reason || te("form.fixDetails") };
   }
-  return { ok: true, data: parsed.data! };
+  return { ok: true, data: parsed.data };
 }
 
 export type ImportPhoto = { filename: string; type: string; data: string; bytes: number };
@@ -166,10 +181,20 @@ export function checkPhotos(v: unknown, ti: TI): { ok: true; photos: ImportPhoto
     const b64 = typeof p.data === "string" ? base64Bytes(p.data) : null;
     if (!b64) return { ok: false, error: ti("unit.photoData", { n }) };
     if (b64.bytes > IMPORT_MAX_PHOTO_BYTES) return { ok: false, error: ti("unit.photoSize", { n, max: IMPORT_MAX_PHOTO_BYTES / 1024 / 1024 }) };
-    photos.push({ filename: p.filename.trim().slice(0, 200), type: p.type, data: b64.clean, bytes: b64.bytes });
+    // Short enough to be stored whole once re-encoded ("<name>.jpg", 200 characters at most), so it is recognised later.
+    const name = p.filename.trim();
+    const ext = /\.[^.]{1,10}$/.exec(name)?.[0] ?? "";
+    const filename = name.slice(0, name.length - ext.length).slice(0, 120) + ext;
+    // Which photos a listing already has goes by name (stored as JPEG): "a.jpg" and "a.png" would be taken for one.
+    const same = photos.findIndex((q) => photoStem(q.filename) === photoStem(filename));
+    if (same >= 0) return { ok: false, error: ti("unit.photoSame", { n, m: same + 1 }) };
+    photos.push({ filename, type: p.type, data: b64.clean, bytes: b64.bytes });
   }
   return { ok: true, photos };
 }
 
-/** A photo's name without its extension: the upload re-encodes photos as JPEG, so "a.png" is stored as "a.jpg". */
-export const photoStem = (filename: string) => filename.replace(/\.[^.]+$/, "").toLowerCase();
+/**
+ * A photo's name without its extension, as the upload stores it: re-encoded as JPEG, so "a.png" is stored as "a.jpg"
+ * (and a name that is only an extension as "photo.jpg", src/components/DocumentUploader.tsx preparePhoto).
+ */
+export const photoStem = (filename: string) => (filename.replace(/\.[^.]+$/, "") || "photo").toLowerCase();

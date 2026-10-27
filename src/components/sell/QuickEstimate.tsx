@@ -545,7 +545,8 @@ export function QuickEstimate({
                   {tc("back")}
                 </Button>
               )}
-              <Button type="submit" size="lg" disabled={busy} className="flex-1 sm:flex-none">
+              {/* The label may wrap: the Arabic one is wider than a 320px phone. */}
+              <Button type="submit" size="lg" disabled={busy} className="h-auto min-h-12 flex-1 whitespace-normal py-2 text-balance sm:flex-none">
                 {busy ? (
                   <>
                     <Loader2 className="animate-spin" aria-hidden /> {t("estimate.submitting")}

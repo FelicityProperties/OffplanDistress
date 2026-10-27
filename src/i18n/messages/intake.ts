@@ -26,6 +26,8 @@ export default defineMessages({
     "import.startOne": "Import 1 listing",
     "import.photosOnly": "Upload {n} missing photos",
     "import.photosOnlyOne": "Upload 1 missing photo",
+    "import.alsoPhotos": "Also uploads {n} missing photos of units already imported.",
+    "import.alsoPhotoOne": "Also uploads 1 missing photo of a unit already imported.",
     "import.stop": "Stop after this unit",
     "import.running": "Importing {i} / {n}…",
     "import.stopped": "Stopped after {done} / {n}. Press Import to carry on.",
@@ -83,8 +85,14 @@ export default defineMessages({
     "unit.photoType": "Photo {n}: JPEG, PNG or WebP only.",
     "unit.photoData": "Photo {n}: the data isn't valid base64.",
     "unit.photoSize": "Photo {n}: larger than {max} MB.",
+    "unit.photoSame": "Photo {n}: same name as photo {m} (photos are stored as JPEG, so names must differ before the extension).",
     "unit.sep": "; ",
     "unit.issue": "{field}: {message}",
+    "unit.missing": "Missing.",
+    "unit.date": "Write a real date as YYYY-MM-DD (or null).",
+    "unit.notOnList": "“{value}” isn't on our list. Use a name from the list, or “Other” with the name in {other}.",
+    "unit.planRow": "Payment plan row {n}: {message}",
+    "unit.planLabel": "The label is missing.",
 
     "field.projectName": "Project",
     "field.developer": "Developer",
@@ -107,7 +115,7 @@ export default defineMessages({
     "field.paymentPlan": "Payment plan",
 
     "error.ownerTaken":
-      "The placeholder owner address for this source belongs to an account that can sign in, so nothing was imported. Ask the developer to check it.",
+      "The placeholder owner address for this source belongs to an account that can sign in, so nothing was imported. Ask whoever maintains the site to check it.",
     "error.failed": "Couldn't save this unit. Try again.",
     "error.status": "Couldn't check which units are already imported. Choose the files again.",
     "error.uploadFailed": "Upload failed. Try again.",
@@ -149,6 +157,8 @@ export default defineMessages({
 
     "claim.setOwnerFirst": "Set the owner first: the claim link goes to the owner, and this listing is still filed under a placeholder.",
     "claim.confirmedFormA": "Ownership confirmed on {date} from the owner's signed Form A.",
+    "approve.setOwnerFirst":
+      "Set the owner first: this listing is still filed under a placeholder. Then confirm ownership (claim link or the owner's signed Form A) and enter the permit before approving.",
 
     "formA.title": "Or confirm with the owner's signed Form A",
     "formA.hint":
@@ -185,6 +195,8 @@ export default defineMessages({
     "import.startOne": "استيراد إعلان واحد",
     "import.photosOnly": "رفع الصور الناقصة (⁨{n}⁩)",
     "import.photosOnlyOne": "رفع الصورة الناقصة",
+    "import.alsoPhotos": "وتُرفع أيضاً الصور الناقصة لوحدات مستوردة سابقاً (⁨{n}⁩).",
+    "import.alsoPhotoOne": "وتُرفع أيضاً صورة ناقصة لوحدة مستوردة سابقاً.",
     "import.stop": "التوقف بعد هذه الوحدة",
     "import.running": "جارٍ الاستيراد ⁨{i} / {n}⁩…",
     "import.stopped": "توقّف الاستيراد بعد ⁨{done} / {n}⁩. اضغط «استيراد» للمتابعة.",
@@ -242,8 +254,14 @@ export default defineMessages({
     "unit.photoType": "الصورة ⁨{n}⁩: يُقبل ⁦JPEG⁩ أو ⁦PNG⁩ أو ⁦WebP⁩ فقط.",
     "unit.photoData": "الصورة ⁨{n}⁩: البيانات ليست بترميز ⁦base64⁩ صالح.",
     "unit.photoSize": "الصورة ⁨{n}⁩: حجمها أكبر من ⁨{max}⁩ ميغابايت.",
+    "unit.photoSame": "الصورة ⁨{n}⁩: اسمها مطابق لاسم الصورة ⁨{m}⁩ (تُحفظ الصور بصيغة ⁦JPEG⁩، لذا يجب أن تختلف الأسماء بغضّ النظر عن الامتداد).",
     "unit.sep": "؛ ",
     "unit.issue": "{field}: {message}",
+    "unit.missing": "غير موجود.",
+    "unit.date": "اكتب تاريخاً صحيحاً بصيغة ⁦YYYY-MM-DD⁩ (أو ⁦null⁩).",
+    "unit.notOnList": "«⁨{value}⁩» ليس ضمن قائمتنا. استخدم اسماً من القائمة، أو «⁦Other⁩» مع كتابة الاسم في ⁦{other}⁩.",
+    "unit.planRow": "خطة الدفع، القسط ⁨{n}⁩: {message}",
+    "unit.planLabel": "اسم القسط غير موجود.",
 
     "field.projectName": "المشروع",
     "field.developer": "المطوّر",
@@ -266,14 +284,14 @@ export default defineMessages({
     "field.paymentPlan": "خطة الدفع",
 
     "error.ownerTaken":
-      "عنوان المالك المؤقت لهذا المصدر يعود إلى حساب يمكن تسجيل الدخول إليه، لذا لم يُستورد أي شيء. اطلب من المطوّر التحقق منه.",
+      "عنوان المالك المؤقت لهذا المصدر يعود إلى حساب يمكن تسجيل الدخول إليه، لذا لم يُستورد أي شيء. اطلب من المسؤول التقني عن الموقع التحقق منه.",
     "error.failed": "تعذّر حفظ هذه الوحدة. حاول مرة أخرى.",
     "error.status": "تعذّر التحقق من الوحدات المستوردة سابقاً. اختر الملفات مرة أخرى.",
     "error.uploadFailed": "تعذّر الرفع. حاول مرة أخرى.",
 
     "queue.tabs": "الإعلانات قيد المراجعة",
     "queue.tab.review": "بانتظار المراجعة",
-    "queue.tab.imported": "مستوردة — يُضاف المالك",
+    "queue.tab.imported": "مستوردة — بانتظار تحديد المالك",
     "imported.sub":
       "إعلانات مستوردة من شبكة شريكة ومسجّلة باسم مالك مؤقت. افتح كلاً منها، وحدّد مالكه، وأكّد الملكية (برابط التأكيد أو بالنموذج (A) الموقّع من المالك)، وأدخل تصريح تراخيصي، ثم وافق عليه.",
     "imported.empty": "لا توجد إعلانات مستوردة بانتظار تحديد مالكها.",
@@ -286,7 +304,7 @@ export default defineMessages({
     "note.notes": "ملاحظات الفريق",
     "note.private": "لا يرى هذه الملاحظة إلا فريقنا، ولا تظهر على الموقع أبداً.",
 
-    "owner.badge": "يُضاف المالك",
+    "owner.badge": "بانتظار تحديد المالك",
     "owner.placeholderName": "مالك يُضاف لاحقاً (⁨{source}⁩)",
     "owner.title": "المالك",
     "owner.pendingHint":
@@ -307,6 +325,8 @@ export default defineMessages({
 
     "claim.setOwnerFirst": "حدّد المالك أولاً: يُرسَل رابط التأكيد إلى المالك، وهذا الإعلان ما زال مسجّلاً باسم مالك مؤقت.",
     "claim.confirmedFormA": "أُكّدت الملكية في ⁨{date}⁩ بالنموذج (A) الموقّع من المالك.",
+    "approve.setOwnerFirst":
+      "حدّد المالك أولاً: ما زال هذا الإعلان مسجّلاً باسم مالك مؤقت. ثم أكّد الملكية (برابط التأكيد أو بالنموذج (A) الموقّع من المالك) وأدخل التصريح قبل الموافقة عليه.",
 
     "formA.title": "أو أكّد الملكية بالنموذج (A) الموقّع من المالك",
     "formA.hint":

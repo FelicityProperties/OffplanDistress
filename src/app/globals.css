@@ -86,7 +86,7 @@
   --success: oklch(0.5 0.14 160); /* ≥ 4.5:1 for small text on card, cream and success-soft */
   --success-foreground: oklch(0.99 0 0);
   --success-soft: oklch(0.95 0.045 160);
-  --warning: oklch(0.65 0.17 45);
+  --warning: oklch(0.53 0.16 45); /* ≥ 4.5:1 for small text on warning-soft (4.8), card (5.6), cream and muted (5.0) */
   --warning-soft: oklch(0.95 0.04 55);
   --destructive: oklch(0.58 0.22 27);
   --destructive-foreground: oklch(0.98 0 0);

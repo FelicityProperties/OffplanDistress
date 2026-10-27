@@ -49,6 +49,8 @@ type Row = {
   uploaded: string[];
   /** Imported before this page was opened. */
   existed: boolean;
+  /** Its listing was created by this page (not found already there). */
+  createdHere: boolean;
   phase: Phase | null;
   error: string | null;
   photoErrors: { name: string; error: string }[];
@@ -154,6 +156,7 @@ export function ImportListings() {
           refNo: null,
           uploaded: [],
           existed: false,
+          createdHere: false,
           phase: null,
           error: null,
           photoErrors: [],
@@ -205,14 +208,14 @@ export function ImportListings() {
       }
       listingId = res.listingId;
       outcome = res.created ? "created" : "skipped";
-      let uploaded = current(key).uploaded;
-      // Imported meanwhile (another tab): find out which photos it already has.
-      if (!res.created) {
-        const status = await adminImportStatus(r.source.key, [r.meta!.ref]).catch(() => null);
-        const known = status && "imported" in status ? status.imported[r.meta!.ref] : undefined;
-        uploaded = known ? known.photos.map(photoStem) : uploaded;
-      }
-      patch(key, { listingId, refNo: res.refNo, uploaded });
+      patch(key, { listingId, refNo: res.refNo, createdHere: res.created });
+    }
+    // A listing this call didn't just create: which photos it has now decides what is missing (another tab, or an
+    // upload whose answer was lost on the way back, may have added some), so a retry doesn't store a photo twice.
+    if (outcome !== "created" && r.photos.length) {
+      const status = await adminImportStatus(r.source.key, [r.meta!.ref]).catch(() => null);
+      const known = status && "imported" in status ? status.imported[r.meta!.ref] : undefined;
+      if (known) patch(key, { uploaded: known.photos.map(photoStem) });
     }
     const todo = missingPhotos(current(key));
     const photoErrors: Row["photoErrors"] = [];
@@ -225,7 +228,8 @@ export function ImportListings() {
         photoErrors.push({ name: p.filename, error: e instanceof Error && e.message ? e.message : ti("error.uploadFailed") });
       }
     }
-    patch(key, { phase: outcome, photoErrors, photoProgress: null });
+    // A row created earlier on this page (its photos retried now) still reads "Created"; the run's tally counts it skipped.
+    patch(key, { phase: current(key).createdHere ? "created" : outcome, photoErrors, photoProgress: null });
     return outcome;
   }
 
@@ -436,6 +440,12 @@ export function ImportListings() {
                 </Button>
               )}
             </div>
+            {/* The button names the new listings; photos still missing from units imported before go too. */}
+            {!running && newCount > 0 && photoCount > 0 && (
+              <p className="text-sm text-muted-foreground" data-testid="import-also">
+                {photoCount === 1 ? ti("import.alsoPhotoOne") : ti("import.alsoPhotos", { n: photoCount })}
+              </p>
+            )}
             {progress && (
               <div className="space-y-1" aria-live="polite">
                 <p className="text-sm font-medium" data-testid="import-progress">

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "@/components/LocaleLink";
 import { ChevronLeft, ChevronRight, Info, RotateCcw, SearchX, SlidersHorizontal, X } from "lucide-react";
 import { DealCard } from "@/components/DealCard";
 import { DealsToolbar, FilterPanel, SaveSearchButton } from "@/components/deals/DealFilters";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/i18n/config";
+import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { getCurrentUser } from "@/lib/auth";
@@ -37,6 +39,16 @@ export async function generateMetadata({ searchParams }: PageProps<"/deals">): P
 type RawParams = Awaited<PageProps<"/deals">["searchParams"]>;
 type Chip = { key: string; label: string; href: string };
 
+/** The chip label for a cash-at-transfer or upfront range: "From AED 300K at transfer", "≤ AED 1M upfront", "A – B …". */
+function rangeLabel(kind: "transfer" | "cash", min: number | undefined, max: number | undefined, t: TFn<"deals">, locale: Locale) {
+  const lo = min ? formatAEDCompact(min, locale) : null;
+  const hi = max ? formatAEDCompact(max, locale) : null;
+  if (lo && hi) return t(kind === "transfer" ? "chips.transferRange" : "chips.cashRange", { min: lo, max: hi });
+  if (hi) return t(kind === "transfer" ? "summary.maxTransfer" : "summary.maxCash", { amount: hi });
+  if (lo) return t(kind === "transfer" ? "chips.transferFrom" : "chips.cashFrom", { amount: lo });
+  return "";
+}
+
 /** Short human name for the current filters, used as the saved search's name (in the visitor's language). */
 function summarize(f: DealFilters, t: TFn<"deals">, tc: TFn<"common">, locale: Locale) {
   const parts = [
@@ -44,10 +56,13 @@ function summarize(f: DealFilters, t: TFn<"deals">, tc: TFn<"common">, locale: L
     ...f.developer.map((d) => developerName(tc, d)),
     ...f.type.map((u) => tc(`unit.${u}`)),
     ...f.motivation.map((m) => tc(`motivation.${m as keyof typeof MOTIVATION}`)),
-    f.maxTransfer ? t("summary.maxTransfer", { amount: formatAEDCompact(f.maxTransfer, locale) }) : "",
-    f.maxCash ? t("summary.maxCash", { amount: formatAEDCompact(f.maxCash, locale) }) : "",
+    // The same words as the filter chips, so two searches that differ only in these don't share a name.
+    rangeLabel("transfer", f.minTransfer, f.maxTransfer, t, locale),
+    rangeLabel("cash", f.minCash, f.maxCash, t, locale),
+    f.minPaid ? t("chips.minPaid", { pct: f.minPaid }) : "",
     f.minDiscount ? t("summary.minDiscount", { pct: f.minDiscount }) : "",
     f.handoverBy ? t("summary.handoverBy", { year: f.handoverBy }) : "",
+    f.verified ? t("filters.verifiedOnly") : "",
     f.q ? t("summary.query", { q: f.q }) : "",
   ].filter(Boolean);
   return parts.length ? parts.slice(0, 4).join(" · ") : t("summary.all");
@@ -87,16 +102,9 @@ function activeChips(raw: RawParams, f: DealFilters, t: TFn<"deals">, tc: TFn<"c
   const chips: Chip[] = [];
   if (f.q) chips.push({ key: "q", label: t("summary.query", { q: f.q }), href: without("q") });
   if (f.minTransfer || f.maxTransfer) {
-    const min = f.minTransfer ? formatAEDCompact(f.minTransfer, locale) : null;
-    const max = f.maxTransfer ? formatAEDCompact(f.maxTransfer, locale) : null;
     chips.push({
       key: "transfer",
-      label:
-        min && max
-          ? t("chips.transferRange", { min, max })
-          : max
-            ? t("summary.maxTransfer", { amount: max })
-            : t("chips.transferFrom", { amount: min }),
+      label: rangeLabel("transfer", f.minTransfer, f.maxTransfer, t, locale),
       href: href((p) => {
         p.delete("minTransfer");
         p.delete("maxTransfer");
@@ -104,16 +112,9 @@ function activeChips(raw: RawParams, f: DealFilters, t: TFn<"deals">, tc: TFn<"c
     });
   }
   if (f.minCash || f.maxCash) {
-    const min = f.minCash ? formatAEDCompact(f.minCash, locale) : null;
-    const max = f.maxCash ? formatAEDCompact(f.maxCash, locale) : null;
     chips.push({
       key: "cash",
-      label:
-        min && max
-          ? t("chips.cashRange", { min, max })
-          : max
-            ? t("summary.maxCash", { amount: max })
-            : t("chips.cashFrom", { amount: min }),
+      label: rangeLabel("cash", f.minCash, f.maxCash, t, locale),
       href: href((p) => {
         p.delete("minCash");
         p.delete("maxCash");
@@ -167,6 +168,13 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
   ]);
   const layout = raw.view === "list" ? "list" : "grid";
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // A page past the end (an old "page 9" link after units left the market, a hand-edited one): its last page, rather
+  // than "no deals match those filters" under a count of deals found.
+  if (total > 0 && filters.page > pages) {
+    const p = baseParams(raw);
+    if (pages > 1) p.set("page", String(pages));
+    redirect(localePath(dealsHref(p), locale));
+  }
   // Keep the count bold inside the translated sentence: split the template around {count}.
   const [countBefore, countAfter = ""] = t(total === 1 ? "results.one" : "results.many").split("{count}");
   const { chips, clearHref } = activeChips(raw, filters, t, tc, locale);

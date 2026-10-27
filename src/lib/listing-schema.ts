@@ -15,13 +15,18 @@ export function fallbackErrors(t: T): z.core.$ZodErrorMap {
   return (iss) => {
     if (iss.code === "too_big" && iss.origin === "string") return t("field.tooLong", { max: Number(iss.maximum) });
     if (iss.code === "too_big" && iss.origin === "array") return t("field.tooMany", { max: Number(iss.maximum) });
+    // A figure past what the column holds (INT4_MAX below): extra zeros typed by mistake.
+    if (iss.code === "too_big" && iss.origin === "number") return t("field.amountTooLarge");
     if (iss.code === "too_small" && iss.origin === "number") return t("field.notNegative");
     if (iss.code === "invalid_type" && iss.expected === "number") return t("field.number");
     return t("field.invalid");
   };
 }
 
-export const money = (t: T) => z.coerce.number().int(t("field.wholeDirhams")).nonnegative();
+/** The largest whole number the listing's columns (Postgres integer) hold: more is a typing mistake, not a refused save. */
+const INT4_MAX = 2_147_483_647;
+
+export const money = (t: T) => z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX);
 export const optionalDate = (t: T) =>
   z
     .string()
@@ -33,7 +38,7 @@ export const optionalDate = (t: T) =>
 const instalment = z.object({
   label: z.string().trim().min(1).max(80),
   dueDate: z.string().nullable(),
-  amount: z.number().int().nonnegative(),
+  amount: z.number().int().nonnegative().max(INT4_MAX),
 });
 
 export const listingSchema = (t: T) =>
@@ -47,7 +52,7 @@ export const listingSchema = (t: T) =>
       developerOther: z.string().trim().max(80).optional(),
       communityOther: z.string().trim().max(80).optional(),
       unitType: z.enum(Object.keys(UNIT_TYPES) as [keyof typeof UNIT_TYPES, ...(keyof typeof UNIT_TYPES)[]], t("field.unitType")),
-      sizeSqft: z.coerce.number(t("field.size")).int(t("field.size")).positive(t("field.size")),
+      sizeSqft: z.coerce.number(t("field.size")).int(t("field.size")).positive(t("field.size")).max(INT4_MAX, t("field.size")),
       floor: z.string().trim().max(40).optional(),
       view: z.string().trim().max(80).optional(),
       originalPrice: money(t).positive(t("field.spaPrice")),
@@ -55,7 +60,7 @@ export const listingSchema = (t: T) =>
       askingPrice: money(t),
       handoverDate: optionalDate(t),
       nextInstalmentDate: optionalDate(t),
-      nextInstalmentAmount: z.coerce.number().int().nonnegative().optional(),
+      nextInstalmentAmount: z.coerce.number().int().nonnegative().max(INT4_MAX).optional(),
       // The seller's own figure for instalments past due and unpaid (sell form, when they report missed ones). Our team
       // checks it against the statement of account; until then buyers see it as "being checked".
       overdueAmount: money(t).optional(),

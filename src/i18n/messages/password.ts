@@ -43,7 +43,7 @@ export default defineMessages({
     "meta.claim.title": "Confirm your listing",
     "claim.title": "Confirm your listing",
     "claim.sub":
-      "Our team prepared this listing from the documents you sent us. Check the details, confirm you can sell the unit and choose a password for your account.",
+      "Our team prepared this listing from the details and documents we received. Check the details, confirm you can sell the unit and choose a password for your account.",
     "claim.subExisting": "Our team added this listing to your account. Check the details and confirm you can sell the unit.",
     "claim.summary": "Your listing",
     "claim.summary.ref": "Reference",
@@ -119,7 +119,7 @@ export default defineMessages({
     "meta.claim.title": "تأكيد إعلانك",
     "claim.title": "تأكيد إعلانك",
     "claim.sub":
-      "أعدّ فريقنا هذا الإعلان من المستندات التي أرسلتها إلينا. راجِع البيانات، وأكّد أحقيتك في بيع الوحدة، واختر كلمة مرور لحسابك.",
+      "أعدّ فريقنا هذا الإعلان من البيانات والمستندات التي وصلتنا. راجِع البيانات، وأكّد أحقيتك في بيع الوحدة، واختر كلمة مرور لحسابك.",
     "claim.subExisting": "أضاف فريقنا هذا الإعلان إلى حسابك. راجِع البيانات وأكّد أحقيتك في بيع الوحدة.",
     "claim.summary": "إعلانك",
     "claim.summary.ref": "الرقم المرجعي",

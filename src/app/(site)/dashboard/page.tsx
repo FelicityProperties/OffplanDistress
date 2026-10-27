@@ -9,6 +9,7 @@ import { requireUser } from "@/lib/auth";
 import { OFFER_STATUS } from "@/lib/config";
 import { myListings, myWatchlist, offersReceived, offersSent } from "@/lib/dashboard";
 import { formatAED, formatAEDCompact, formatNumber, refCode, timeAgo } from "@/lib/format";
+import { isAdvertised } from "@/lib/permits";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("dashboard");
@@ -32,7 +33,8 @@ export default async function DashboardOverview() {
   const views = listings.reduce((s, l) => s + l.views, 0);
   const pending = received.filter((o) => o.status === "pending");
   const best = pending.reduce((m, o) => Math.max(m, o.amount), 0);
-  const drops = watch.filter((w) => w.savedPrice > w.askingPrice);
+  // Only on deals still on the market (a price waiting for our review isn't advertised: myWatchlist shows the last one).
+  const drops = watch.filter((w) => isAdvertised(w) && w.savedPrice > w.askingPrice);
   const dropTotal = drops.reduce((s, w) => s + (w.savedPrice - w.askingPrice), 0);
   const fresh = !listings.length && !sent.length && !watch.length;
   const offerStatus = (s: keyof typeof OFFER_STATUS) => ({ label: tc(`offer.${s}`), tone: OFFER_STATUS[s].tone });
@@ -133,17 +135,29 @@ export default async function DashboardOverview() {
               </div>
               {watch.length ? (
                 <ul className="mt-2 divide-y">
-                  {watch.slice(0, 4).map((w) => (
-                    <li key={w.id}>
-                      <Link
-                        href={`/deals/${refCode(w.refNo)}`}
-                        className="flex items-center justify-between gap-3 py-3 text-sm hover:text-foreground"
-                      >
+                  {watch.slice(0, 4).map((w) => {
+                    const row = (
+                      <>
                         <span className="min-w-0 truncate font-medium">{w.projectName}</span>
                         <span className="font-semibold tabular">{formatAED(w.askingPrice, locale)}</span>
-                      </Link>
-                    </li>
-                  ))}
+                      </>
+                    );
+                    return (
+                      <li key={w.id}>
+                        {/* Off the market, its deal page is no longer public (it would 404): no link. */}
+                        {isAdvertised(w) ? (
+                          <Link
+                            href={`/deals/${refCode(w.refNo)}`}
+                            className="flex items-center justify-between gap-3 py-3 text-sm hover:text-foreground"
+                          >
+                            {row}
+                          </Link>
+                        ) : (
+                          <div className="flex items-center justify-between gap-3 py-3 text-sm text-muted-foreground">{row}</div>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
@@ -161,9 +175,13 @@ export default async function DashboardOverview() {
           <ul className="mt-2 divide-y">
             {sent.slice(0, 4).map((o) => (
               <li key={o.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                <Link href={`/deals/${refCode(o.refNo)}`} className="min-w-0 truncate font-medium hover:underline">
-                  {o.projectName}
-                </Link>
+                {o.advertised ? (
+                  <Link href={`/deals/${refCode(o.refNo)}`} className="min-w-0 truncate font-medium hover:underline">
+                    {o.projectName}
+                  </Link>
+                ) : (
+                  <span className="min-w-0 truncate font-medium">{o.projectName}</span>
+                )}
                 <span className="flex items-center gap-3">
                   <ToneStatus {...offerStatus(o.status)} />
                   <span className="font-semibold tabular">{formatAED(o.amount, locale)}</span>

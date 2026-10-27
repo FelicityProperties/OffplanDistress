@@ -126,6 +126,10 @@ export default defineMessages({
     "edit.savedReview": "Saved. A new price or description goes back to our team for review (and the DLD permit) before it is public again.",
 
     "listingAction.confirmWithdraw": "Withdraw this listing? Buyers will no longer see it.",
+    "listingAction.confirmWithdrawDeal":
+      "Withdraw this listing and end the deal you agreed with the buyer? They will be told it did not go ahead, and this can't be undone. If you're unsure, contact our team first.",
+    "listingAction.pausedByTeam": "Our team paused this listing, so only our team can put it back on the market.",
+    "listingAction.contactTeam": "Contact us",
     "listingAction.paused": "Listing paused",
     "listingAction.resumed": "Listing resumed",
     "listingAction.resumedReview": "Sent to our team: it goes live again once the documents and DLD permit are in place",
@@ -144,6 +148,7 @@ export default defineMessages({
     "offerAction.counterDeclined": "Counter declined",
     "offerAction.backup": "Backup offer",
     "offerAction.backupHint": "Another offer was accepted on this unit. This one stays on file in case that deal doesn't go ahead.",
+    "offerAction.counterAboveAsking": "This is more than your asking price of {amount}.",
 
     // Transfer milestones under the status pipeline (src/components/DealMilestones.tsx): dates only, for the two parties
     "milestones.title": "Transfer milestones",
@@ -284,6 +289,10 @@ export default defineMessages({
     "edit.savedReview": "تم الحفظ. يعود السعر أو الوصف الجديد إلى فريقنا للمراجعة (ولتصريح دائرة الأراضي والأملاك) قبل أن يُنشر مجدداً.",
 
     "listingAction.confirmWithdraw": "هل تريد سحب هذا الإعلان؟ لن يتمكن المشترون من رؤيته بعد الآن.",
+    "listingAction.confirmWithdrawDeal":
+      "هل تريد سحب هذا الإعلان وإنهاء الصفقة التي اتفقت عليها مع المشتري؟ سنُبلغه بأن الصفقة لم تتم، ولا يمكن التراجع عن ذلك. إن لم تكن متأكداً، فتواصل مع فريقنا أولاً.",
+    "listingAction.pausedByTeam": "أوقف فريقنا هذا الإعلان مؤقتاً، ولا يمكن إعادته إلى السوق إلا من خلال فريقنا.",
+    "listingAction.contactTeam": "تواصل معنا",
     "listingAction.paused": "تم إيقاف الإعلان مؤقتاً",
     "listingAction.resumed": "تم استئناف نشر الإعلان",
     "listingAction.resumedReview": "أُرسل إلى فريقنا: يُنشر مجدداً متى اكتملت المستندات وتصريح دائرة الأراضي والأملاك",
@@ -302,6 +311,7 @@ export default defineMessages({
     "offerAction.counterDeclined": "تم رفض العرض المقابل",
     "offerAction.backup": "عرض احتياطي",
     "offerAction.backupHint": "قُبل عرض آخر على هذه الوحدة. يبقى هذا العرض محفوظاً تحسّباً لعدم اكتمال تلك الصفقة.",
+    "offerAction.counterAboveAsking": "هذا المبلغ أعلى من السعر الذي تطلبه لحصتك (⁨{amount}⁩).",
 
     "milestones.title": "مراحل نقل الملكية",
     "milestones.note": "يضيف فريقنا تاريخ كل مرحلة عند إتمامها.",

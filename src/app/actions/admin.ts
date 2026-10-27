@@ -108,6 +108,12 @@ function awaitsSellerConfirmation(l: { isSample: boolean; createdByStaff: boolea
   return !l.isSample && l.createdByStaff && l.ownershipConfirmedAt == null;
 }
 
+/** Why such a listing can't be published yet: still under an import's placeholder (set the owner first), or unconfirmed. */
+async function unconfirmedMessage(sellerId: string) {
+  const [seller] = await db.select({ email: users.email, passwordHash: users.passwordHash }).from(users).where(eq(users.id, sellerId)).limit(1);
+  return seller && isImportOwner(seller) ? (await getT("intake"))("approve.setOwnerFirst") : (await getT("errors"))("listing.ownershipUnconfirmed");
+}
+
 /** "Before “NOC in progress”, the deal file needs the date Form F … and the buyer's KYC verified." */
 function gateMessage(t: T, next: ListingStatusKey, missing: GateNeed[]) {
   const items = missing.map((k) => t(`deal.need.${k}`));
@@ -134,7 +140,7 @@ export async function approveListing(listingId: string) {
   const me = await assertAdmin();
   const [before] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, listingId)).limit(1);
   if (!before) return { error: (await getT("errors"))("listing.notFound") };
-  if (awaitsSellerConfirmation(before)) return { error: (await getT("errors"))("listing.ownershipUnconfirmed") };
+  if (awaitsSellerConfirmation(before)) return { error: await unconfirmedMessage(before.sellerId) };
   // RERA: no property advert without a current DLD (Trakheesi) permit and Form A. Sample listings aren't adverts.
   const blocker = publishBlocker(before);
   if (blocker) return { error: (await getT("errors"))(blocker) };
@@ -396,7 +402,8 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   }
   // Publishing from the editor is an approval too: not before the seller has confirmed a listing our team entered.
   if (PUBLIC_STATUSES.includes(v.status) && awaitsSellerConfirmation(current)) {
-    return { error: t("listing.ownershipUnconfirmed"), fieldErrors: { status: [t("listing.ownershipUnconfirmed")] } };
+    const message = await unconfirmedMessage(current.sellerId);
+    return { error: message, fieldErrors: { status: [message] } };
   }
   // Stage gates (src/lib/deals.ts): moving on to the NOC or the transfer needs the deal file to have what that step
   // needs. Only a change of status made now is checked, so a deal already in a stage can still be saved as it is.

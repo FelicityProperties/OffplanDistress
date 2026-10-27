@@ -27,10 +27,11 @@ export function formatAEDCompact(value: number | null | undefined, locale: Local
   const ar = locale === "ar";
   let n: string;
   let unit: string;
-  if (abs >= 1_000_000_000) {
+  // The unit follows the rounded figure: 999,999 is "1M", not "1000K" (and 999,995,000 is "1B", not "1000M").
+  if (abs >= 1_000_000_000 || Number((abs / 1_000_000).toFixed(2)) >= 1000) {
     n = (value / 1_000_000_000).toFixed(1).replace(/\.0$/, "");
     unit = ar ? " مليار" : "B";
-  } else if (abs >= 1_000_000) {
+  } else if (abs >= 1_000_000 || Math.round(abs / 1_000) >= 1000) {
     n = (value / 1_000_000).toFixed(2).replace(/\.?0+$/, "");
     unit = ar ? " مليون" : "M";
   } else if (abs >= 1_000) {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { PageTitle } from "@/components/Kpi";
-import { SampleBadge } from "@/components/badges";
+import { SampleBadge, StatusPill } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
@@ -13,7 +13,7 @@ const COLUMNS: ListingStatusKey[] = ["pending_review", "live", "under_offer", "n
 
 export default async function PipelinePage() {
   await requireAdmin();
-  const [all, t, tc, locale] = await Promise.all([adminListings(), getT("admin"), getT("common"), getLocale()]);
+  const [all, t, tc, ti, locale] = await Promise.all([adminListings(), getT("admin"), getT("common"), getT("intake"), getLocale()]);
 
   return (
     <div className="space-y-6">
@@ -45,6 +45,12 @@ export default async function PipelinePage() {
                       {t("pipeline.counts", { offers: l.offers, watchers: l.watchers })}
                       {l.isSample && <SampleBadge />}
                     </p>
+                    {/* Imported, still under its network's placeholder owner: nobody to review it with yet. */}
+                    {l.awaitingOwner && (
+                      <p className="mt-1">
+                        <StatusPill tone="warning">{ti("owner.badge")}</StatusPill>
+                      </p>
+                    )}
                   </Link>
                 ))}
                 {items.length === 0 && <p className="px-1 text-xs text-muted-foreground">{t("pipeline.empty")}</p>}
