@@ -14,11 +14,11 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Marketing | Home, How it works, Fees (with calculator), Contact |
 | Market tools | Distress Index (`/market`: live stats on real listings — discounts, cash needed, developers, communities), seller exit calculator (`/exit-calculator`: keep paying vs stop paying vs sell here) |
 | Legal | Terms of Use, Privacy Policy, Cookie Policy (`/terms`, `/privacy`, `/cookies`) |
-| Marketplace | Browse deals (filters, sort, search, saved searches), deal page (payment plan, true-cost breakdown, offer, watchlist, viewing request) |
-| Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; 5-step "Sell my unit" form (type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline) |
+| Marketplace | Browse deals (filters incl. cash at transfer, sort, search, saved searches), deal page (cash needed on transfer day, arrears with the developer, dated cash timeline, payment plan, true-cost breakdown, offer, watchlist, viewing request) |
+| Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; "Prefer WhatsApp?" card; 5-step "Sell my unit" form (saved on the device between sittings, type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline), deal milestones |
 | Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts |
 | Everyone | Notification bell + notifications page, email notifications, self-service password reset, English / العربية (full right-to-left layout) |
-| Admin (`/admin`) | Verification queue (approve / reject with reason), seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline, per-listing review with documents, permit details and both parties' contacts, all offers, inquiries, users (KYC, roles, password reset), remove sample data |
+| Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), remove sample data |
 
 Buyers stay anonymous to sellers in the app — every negotiation goes through our team, so neither side can
 bypass the platform.
@@ -58,6 +58,52 @@ sitemap, share image); the daily `ops-daily` job then pauses live ones, tells th
 days and 1 day before expiry. Deals already under offer or in NOC keep their status; admins are told to renew.
 Listings that were live before expiry dates existed keep running until a date is entered (admin banner).
 
+### Staff intake (WhatsApp)
+
+Sellers who send their SPA and statement on WhatsApp don't have to fill in the form: Admin → Verification queue →
+"New listing" (or "Create listing from this lead" on `/admin/leads`) takes the seller's name and mobile (with country
+code) and/or email plus the unit figures, and creates the seller's account without a password if there isn't one;
+upload the documents on the listing page. "Copy link for WhatsApp" opens a chat to the seller with a confirmation
+link in their language ("Email claim link" when they have an email and email is on). The link works once, for 7
+days, and a new one cancels the old. The seller opens it without logging in, ticks the same ownership / authority /
+Terms confirmation as the sell form and chooses an email and password. Until then a staff-created listing can't be
+approved (the Trakheesi permit is still required too); `/admin/users` → "Pending claim" lists those sellers. A link
+never sets a password on an account that already has one. The admin listing page flags descriptions that seem to
+contain a phone number, email, link or WhatsApp handle ("Contact details in text"); the text is never changed
+automatically.
+
+### Cash at transfer
+
+Cards, the deal page, the "Cash at transfer" filter (`minTransfer` / `maxTransfer`) and `sort=cash` show what the
+buyer needs on transfer day: the asking price (equity to the seller) + our fee and VAT + the DLD fee + DLD
+registration / trustee and NOC estimates + arrears with the developer. It is always marked "≈"; the one definition is
+`analyzeDeal` in `src/lib/deal-math.ts`, mirrored in SQL by `cashToCloseSql`. Enter arrears from the developer's
+statement under "Arrears with the developer" in `/admin/listings/{id}` (0 and 0 when the seller is up to date; empty
+when not checked). The deal page also shows a dated cash timeline and warns when an instalment falls due within 45
+days. `minCash` / `maxCash`, saved searches and the Distress Index keep their meaning: equity to the seller.
+
+### Follow-ups and reminders
+
+The daily `ops-daily` job (07:00 Dubai) sends each nudge once (table `reminders`), in the app and by email: sellers
+who signed up to sell but listed nothing (24 h and 72 h), listings missing their SPA / Oqood or statement (48 h), live
+listings with no offers after 21 days, offers the seller hasn't answered (48 h) and counter-offers the buyer hasn't
+answered (48 h). Admins get one "Today's follow-ups" digest — those items plus new leads not called, listings waiting
+for review, instalments due within 14 days and viewing requests not handled — and the same list, with call and
+WhatsApp buttons, is under Follow-ups at the bottom of `/admin`. Samples, staff and sellers who haven't claimed a
+staff-created listing are never nudged.
+
+### Deal file and audit trail
+
+Once an offer is accepted, the Deal file card on the admin listing page records Forms A, B, F and I, the deposit,
+any co-broker, the NOC, the trustee office, the transfer and the invoice, with the agreed price as written in Form F
+(sale value, our fee and the buyer's ≈ cash at transfer update as you type). Stage gates in "Manage listing": "NOC in
+progress" needs Form F signed and both parties' KYC verified (Admin → Users); "Transferred" needs the NOC issue date,
+the DLD transfer date and the agreed price. Deals that were already under offer get their deal file the first time
+it is opened, a gate is checked or the CSV is exported. The admin KPIs count fees on the agreed sale value. Every admin action, a seller's claim and every
+document (not photos) opened by someone other than its uploader is logged (actor, before → after, IP; never passwords or tokens)
+in the listing's History panel. Pipeline → "Export all deals (CSV)" opens in Excel, Arabic included. Consent is
+versioned: sign-ups, listings and offers store the Terms version (`LEGAL_UPDATED`) they accepted.
+
 ### Offers
 
 One accepted offer per unit, enforced in a single database statement, so a double click or two tabs can't accept
@@ -95,19 +141,45 @@ listing or account are deleted 24 months after the last update.
 | Listing paused because its permit or Form A expired | Seller |
 | A scheduled job failed or `CRON_SECRET` is missing | Admins (at most once per 12 h per job) |
 | New deals matching a saved search (daily, 09:00 Dubai) | Search owner |
+| Staff created a listing for you | Seller — confirmation (claim) link |
+| Seller confirmed a staff-created listing | Admins — approve it |
+| Nothing listed yet, documents missing, no offers after 21 days | Seller |
+| Offer waiting for your answer (48 h) / counter-offer waiting (48 h) | Seller / buyer |
+| Today's follow-ups (daily, 07:00 Dubai) | Admins |
 
 In-app notifications always work. Emails go out through [Resend](https://resend.com) once `RESEND_API_KEY` and
-`EMAIL_FROM` are set; each user gets them in the language they last used on the site.
+`EMAIL_FROM` are set; each user gets them in the language they last used on the site. In production, sellers and
+buyers only get emails when `EMAIL_FROM` is a sender on a domain verified in Resend (Resend's `onboarding@resend.dev`
+reaches only the Resend account owner); until then only the owner logins get theirs and the admin console shows
+"Email is off".
+
+### Arabic addresses and SEO
+
+Every public page has an Arabic address (`/ar`, `/ar/deals`, `/ar/deals/OD-…`), linked to the English one by
+hreflang and listed in `/sitemap.xml`; `src/proxy.ts` serves them. Visitors who chose Arabic are sent from plain links
+to the `/ar` address; the browser's language never redirects anyone (it only shows a "عرض بالعربية / View in English"
+bar). `/dashboard` and `/admin` keep one address and follow the visitor's chosen language. Filtered `/deals` views,
+login and sign-up are `noindex`; `robots.txt` names the sitemap and lets search engines see listing photos. With
+`NEXT_PUBLIC_SITE_URL` set, production sends every other host name to it (308). After deploying, submit
+`/sitemap.xml` in Google Search Console.
+
+### Visit statistics
+
+`/admin/analytics` shows visitors, visits, page views, time per visit, bounce rate, leads and conversion (today / 7 /
+30 / 90 Dubai days), live visitors, top and entry pages, sources, campaigns and partner codes, countries, devices,
+languages and each lead's journey. A small beacon records page views without cookies; IP addresses and user agents
+are never stored (a daily-rotating anonymous id instead). Signed-in admins are never counted; "Ignore this device" on
+the page covers a browser you use signed out. Page views are deleted after 13 months.
 
 ## Stack
 
 - Next.js 16 (App Router, server actions) + Tailwind CSS 4 + shadcn/ui
 - Neon Postgres via Drizzle ORM (`@neondatabase/serverless` HTTP driver on Vercel, `pg` for any other Postgres)
 - Email + password auth with database sessions (httpOnly cookie, no extra secret needed)
-- i18n: typed English/Arabic dictionaries per area in `src/i18n/messages/`, language from a cookie or the
-  browser's `Accept-Language`
+- i18n: typed English/Arabic dictionaries per area in `src/i18n/messages/`; public pages take the language from
+  the address (`/ar/…`), the dashboard and admin console from a cookie or the browser's `Accept-Language`
 - Documents and photos stored in Postgres (`files` table, 4 MB per file)
-- Vercel Cron for saved-search alerts (`vercel.json`)
+- Vercel Cron for saved-search alerts and the daily ops job (`vercel.json`)
 
 ## Deploying on Vercel
 
@@ -125,8 +197,10 @@ In-app notifications always work. Emails go out through [Resend](https://resend.
      when the app and database are up.
    - Previews: preview builds skip migrations and sample data (they may share the production database). Once
      each preview has its own Neon branch, set `PREVIEW_DB_ISOLATED=true` for Preview.
-   - Optional: `RESEND_API_KEY` + `EMAIL_FROM` for email, `NEXT_PUBLIC_SITE_URL` (e.g. `https://offplandistress.com`;
-     defaults to the Vercel production URL) for links in emails.
+   - `RESEND_API_KEY` + `EMAIL_FROM` for email: `EMAIL_FROM` must be a sender on a domain you verified in Resend
+     (e.g. `OffplanDistress <deals@felicitypro.com>`), or sellers and buyers get no emails in production.
+   - Optional: `NEXT_PUBLIC_SITE_URL` (e.g. `https://offplandistress.com`; defaults to the Vercel production URL) for
+     links in emails, canonical URLs and the redirect of other host names; `ANALYTICS_SALT` for the visit statistics.
    - Company details (trade licence 1145910, RERA ORN 33951, broker BRN 59244, phone/WhatsApp +971 56 352 0611,
      office address in Bay Square) are built in (`BRAND` in `src/lib/config.ts`). Each can be overridden with its
      `NEXT_PUBLIC_*` variable (see `.env.example`); an empty variable keeps the built-in value.

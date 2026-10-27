@@ -1,6 +1,6 @@
 import "server-only";
 import { translator } from "@/i18n/translator";
-import { BRAND } from "./config";
+import { BRAND, OWNER_EMAILS } from "./config";
 import { siteUrl } from "./site-url";
 
 /** Resend's shared test sender: it only delivers to the Resend account owner's own address, never to our users. */
@@ -37,6 +37,15 @@ export function emailEnabled() {
 export function emailOffReason(): "key" | "sender" | null {
   if (!process.env.RESEND_API_KEY) return "key";
   return hasOwnSender() ? null : "sender";
+}
+
+/**
+ * Whether an email to `to` goes out: always when emailEnabled(); otherwise, with a key, only to the owner logins
+ * (ADMIN_EMAILS), from Resend's test sender. That sender still reaches the Resend account owner, so the owner's
+ * alerts keep arriving while emails to sellers and buyers are off.
+ */
+export function canEmail(to: string) {
+  return emailEnabled() || (Boolean(process.env.RESEND_API_KEY) && OWNER_EMAILS.includes(to.trim().toLowerCase()));
 }
 
 let warnedSender = false;
@@ -93,9 +102,9 @@ export function sendEmail(email: Email): Promise<{ sent: boolean }> {
     console.info(`[email] RESEND_API_KEY not set — skipped "${email.subject}" to ${email.to}`);
     return Promise.resolve({ sent: false });
   }
-  if (!emailEnabled()) {
-    // Production without a sender on our own domain: nothing is sent (the admin console shows a banner). Logged once
-    // per instance, without the recipient.
+  if (!canEmail(email.to)) {
+    // Production without a sender on our own domain: nothing reaches users (the admin console shows a banner). Logged
+    // once per instance, without the recipient.
     if (!warnedSender) {
       warnedSender = true;
       console.error("[email] EMAIL_FROM is not a sender on a domain verified in Resend — emails are off; users only get in-app notices");
@@ -106,8 +115,9 @@ export function sendEmail(email: Email): Promise<{ sent: boolean }> {
   try {
     const { html, text } = render(email);
     payload = {
-      // Production always has its own sender here (emailEnabled); development may fall back to Resend's test sender.
-      from: process.env.EMAIL_FROM?.trim() || `${BRAND.name} <${TEST_SENDER}>`,
+      // Our own sender when EMAIL_FROM is a usable address; otherwise Resend's test sender (development, or the
+      // owner's alerts in production — see canEmail).
+      from: senderAddress() ? process.env.EMAIL_FROM!.trim() : `${BRAND.name} <${TEST_SENDER}>`,
       to: [email.to],
       reply_to: BRAND.email || undefined,
       subject: email.subject,

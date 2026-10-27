@@ -14,7 +14,7 @@ import { LEGAL_UPDATED } from "@/content/legal/brand";
 import { audit } from "@/lib/audit";
 import { createSession, findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail, safeNext } from "@/lib/auth";
 import { claimPath, findClaim, isPlaceholderEmail, issueClaimToken } from "@/lib/claim";
-import { emailEnabled, sendEmail } from "@/lib/email";
+import { canEmail, sendEmail } from "@/lib/email";
 import { refCode } from "@/lib/format";
 import { renderTemplate } from "@/lib/notification-templates";
 import { notifyAdmins } from "@/lib/notify";
@@ -112,7 +112,7 @@ export async function requestPasswordReset(_prev: PasswordFormState, formData: F
   const { email } = parsed.data;
   if (!(await hit(`reset-ip:${await clientIp()}`, 10, 60 * MINUTE))) return { error: (await getT("errors"))("tooMany") };
 
-  if (!emailEnabled()) return { ok: true, noEmail: true, email };
+  if (!canEmail(email)) return { ok: true, noEmail: true, email };
 
   // The lookup, token and email run after the response, so the reply is identical — content and
   // timing — whether or not an account exists for this address.
