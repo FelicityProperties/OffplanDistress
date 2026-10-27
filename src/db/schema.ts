@@ -73,7 +73,9 @@ export const offerStatus = pgEnum("offer_status", [
 
 export const financing = pgEnum("financing", ["cash", "mortgage"]);
 
-export const fileKind = pgEnum("file_kind", ["spa", "oqood", "soa", "id", "photo", "other"]);
+// form_a: the owner's RERA Form A signed with us (often through their own broker), uploaded by our team; it can stand in
+// for the claim link as the owner's confirmation of a listing our team entered (adminConfirmFormA).
+export const fileKind = pgEnum("file_kind", ["spa", "oqood", "soa", "id", "photo", "other", "form_a"]);
 
 export const inquiryType = pgEnum("inquiry_type", ["info", "viewing", "contact"]);
 
@@ -93,6 +95,22 @@ export type Source = {
   referrer_host?: string;
   /** The tab's anonymous analytics session (page_views.session_id), so /admin/analytics can show the pages viewed first. */
   sid?: string;
+};
+
+/**
+ * A listing imported from a partner network's file (/admin/listings/import, src/lib/import-format.ts): which network
+ * (`import`, its key) and the unit's own reference there (`ref`, unique per network), its page and posting date, and our
+ * team's notes. Kept in listings.source instead of attribution; never shown publicly.
+ */
+export type ImportProvenance = {
+  import: string;
+  sourceName: string;
+  ref: string;
+  url: string | null;
+  posted: string | null;
+  notes: string | null;
+  importedAt: string;
+  importedBy: string;
 };
 
 export const users = pgTable(
@@ -208,8 +226,8 @@ export const listings = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     publishedAt: timestamp("published_at", { withTimezone: true }),
-    /** Attribution of the session the listing was submitted in. */
-    source: jsonb("source").$type<Source>(),
+    /** Attribution of the session the listing was submitted in; for an imported listing, where it came from instead. */
+    source: jsonb("source").$type<Source & Partial<ImportProvenance>>(),
     /**
      * Entered by our team from documents the seller sent (WhatsApp intake, /admin/listings/new) rather than through the
      * sell form. Such a listing can't be approved until the seller confirms ownership through their claim link.
@@ -229,6 +247,10 @@ export const listings = pgTable(
     uniqueIndex("listings_ref_idx").on(t.refNo),
     index("listings_status_idx").on(t.status),
     index("listings_seller_idx").on(t.sellerId),
+    // A unit of an imported file becomes one listing, however often (or from how many tabs) the file is imported.
+    uniqueIndex("listings_import_ref_idx")
+      .on(sql`(${t.source}->>'import')`, sql`(${t.source}->>'ref')`)
+      .where(sql`${t.source}->>'import' is not null`),
   ],
 );
 

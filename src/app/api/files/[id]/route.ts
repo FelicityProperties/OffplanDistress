@@ -28,7 +28,9 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]"
   if (!row) return notFound();
 
   const { file } = row;
-  const isPublic = file.kind === "photo";
+  // Photos are published with the listing, so anyone with the address may load them, except those of a listing our team
+  // entered that its owner hasn't confirmed yet (an imported unit, say): until then they are our team's only.
+  const isPublic = file.kind === "photo" && !row.awaitingSeller;
   if (!isPublic) {
     // SPA, Oqood, statements and IDs: only the owner and our team. On a listing our team entered, the account it was
     // filed under only becomes its owner once its holder confirms through the claim link: until then a mistyped email
@@ -38,7 +40,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]"
     const allowed = user && (user.role === "admin" || user.id === file.uploaderId || owner);
     if (!allowed) return notFound();
     // Who opened someone else's SPA, statement or ID, and when (the audit trail; never the file's contents).
-    if (user.id !== file.uploaderId) {
+    if (user.id !== file.uploaderId && file.kind !== "photo") {
       await audit({ actorId: user.id, action: "file.view", entityType: "file", entityId: file.id, diff: { kind: file.kind, filename: file.filename } });
     }
   }
@@ -47,7 +49,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]"
     headers: {
       "Content-Type": file.mimeType,
       "Content-Length": String(file.size),
-      "Content-Disposition": `${isPublic ? "inline" : "attachment"}; filename="${encodeURIComponent(file.filename)}"`,
+      "Content-Disposition": `${file.kind === "photo" ? "inline" : "attachment"}; filename="${encodeURIComponent(file.filename)}"`,
       "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, no-store",
       "X-Content-Type-Options": "nosniff",
     },

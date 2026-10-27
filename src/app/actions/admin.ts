@@ -2,10 +2,10 @@
 
 import { randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { files, inquiries, listings, offers, sellerLeads, sessions, users } from "@/db/schema";
+import { files, inquiries, listings, offers, passwordResets, sellerLeads, sessions, users, type Source } from "@/db/schema";
 import { dirOf, isLocale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
@@ -15,6 +15,7 @@ import { claimPath, isPlaceholderEmail, issueClaimToken, placeholderEmail } from
 import { addNote, saveDealFile, stageGate, syncSaleValue, type DealFileState, type GateNeed } from "@/lib/deals";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
 import { emailEnabled, sendEmail } from "@/lib/email";
+import { isImportOwner } from "@/lib/import";
 import { formatDate, formatNumber, refCode } from "@/lib/format";
 import { whatsappNumber } from "@/lib/leads";
 import { renderTemplate } from "@/lib/notification-templates";
@@ -560,6 +561,38 @@ const staffSellerSchema = (t: T) =>
 
 export type StaffListingState = FormState & { listingId?: string };
 
+type StaffSeller = z.output<ReturnType<typeof staffSellerSchema>>;
+type FieldErrors = Record<string, string[] | undefined>;
+
+/**
+ * The seller fields of a staff form (adminCreateListing, adminSetListingOwner): who the seller is, and a way to reach
+ * them for the claim link — a mobile number, an email, or both.
+ */
+function readStaffSeller(formData: FormData, t: T) {
+  const opt = (k: string) => {
+    const v = formData.get(k);
+    return typeof v === "string" && v.trim() ? v : undefined;
+  };
+  const seller = staffSellerSchema(t).safeParse(
+    {
+      sellerName: formData.get("sellerName") ?? "",
+      sellerEmail: opt("sellerEmail"),
+      sellerPhone: opt("sellerPhone"),
+      sellerLocale: formData.get("sellerLocale"),
+      leadId: opt("leadId"),
+    },
+    { error: fallbackErrors(t) },
+  );
+  const fieldErrors: FieldErrors = seller.success ? {} : z.flattenError(seller.error).fieldErrors;
+  const typedPhone = opt("sellerPhone")?.trim();
+  const phoneDigits = typedPhone ? whatsappNumber(typedPhone) : null;
+  if (!fieldErrors.sellerPhone) {
+    if (!typedPhone && !opt("sellerEmail")) fieldErrors.sellerPhone = [t("admin.sellerContact")];
+    else if (typedPhone && !phoneDigits) fieldErrors.sellerPhone = [t("admin.sellerPhone")];
+  }
+  return { seller: seller.success ? seller.data : null, fieldErrors, phoneDigits };
+}
+
 /**
  * The seller's account for a staff-created listing. With an email: the account with that email, if any. Without one:
  * the only account whose mobile number is this one (several → staff must give the email). Staff accounts never sell.
@@ -595,38 +628,65 @@ async function staffListingSeller(email: string | undefined, phoneDigits: string
   return { user: matches[0] ?? null };
 }
 
+/**
+ * The account a staff-created listing is filed under: the seller's (staffListingSeller), or a new one without a
+ * password. Staff accounts and our own placeholder addresses are refused, as field errors. `created` when none matched.
+ */
+async function staffSellerAccount(
+  t: T,
+  s: StaffSeller,
+  phoneDigits: string | null,
+  source: Source | null,
+): Promise<{ id: string; created: boolean } | { error: string; fieldErrors?: FieldErrors }> {
+  if (s.sellerEmail && isOwnerEmail(s.sellerEmail)) {
+    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("admin.sellerIsStaff")] } };
+  }
+  // .invalid addresses are our own placeholders (phone-only sellers, imports' placeholder owners, the sample listings'
+  // seller), never a seller's.
+  if (s.sellerEmail && isPlaceholderEmail(s.sellerEmail)) {
+    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("field.email")] } };
+  }
+  const found = await staffListingSeller(s.sellerEmail, phoneDigits);
+  if (found.error) return { error: t("form.checkFields"), fieldErrors: { sellerPhone: [t(found.error)] } };
+  if (found.user && (found.user.role === "admin" || isOwnerEmail(found.user.email))) {
+    return { error: t("form.checkFields"), fieldErrors: { [s.sellerEmail ? "sellerEmail" : "sellerPhone"]: [t("admin.sellerIsStaff")] } };
+  }
+  if (found.user) {
+    if (!found.user.phone && s.sellerPhone) {
+      await db.update(users).set({ phone: s.sellerPhone }).where(eq(users.id, found.user.id));
+    }
+    return { id: found.user.id, created: false };
+  }
+  // No password: the seller sets one (and their email, if we only have a phone number) with the claim link.
+  const email = s.sellerEmail?.toLowerCase() ?? placeholderEmail(phoneDigits!);
+  const [created] = await db
+    .insert(users)
+    .values({
+      email,
+      fullName: s.sellerName,
+      phone: s.sellerPhone ?? null,
+      passwordHash: null,
+      intent: "sell",
+      locale: s.sellerLocale,
+      source,
+    })
+    .onConflictDoNothing()
+    .returning({ id: users.id });
+  // Created at the same moment by someone else (a sign-up with this email): use that account.
+  const id = created?.id ?? (await findUserByEmail(email))?.id;
+  if (!id) return { error: t("form.fixDetails") };
+  return { id, created: true };
+}
+
 export async function adminCreateListing(_prev: StaffListingState, formData: FormData): Promise<StaffListingState> {
   const me = await assertAdmin();
   const t = await getT("errors");
-  const opt = (k: string) => {
-    const v = formData.get(k);
-    return typeof v === "string" && v.trim() ? v : undefined;
-  };
-  const seller = staffSellerSchema(t).safeParse(
-    {
-      sellerName: formData.get("sellerName") ?? "",
-      sellerEmail: opt("sellerEmail"),
-      sellerPhone: opt("sellerPhone"),
-      sellerLocale: formData.get("sellerLocale"),
-      leadId: opt("leadId"),
-    },
-    { error: fallbackErrors(t) },
-  );
+  const { seller, fieldErrors: sellerErrors, phoneDigits } = readStaffSeller(formData, t);
   const fields = await parseListingFields(formData);
-  const fieldErrors: Record<string, string[] | undefined> = {
-    ...(fields.ok ? {} : fields.fieldErrors),
-    ...(seller.success ? {} : z.flattenError(seller.error).fieldErrors),
-  };
-  const typedPhone = opt("sellerPhone")?.trim();
-  const phoneDigits = typedPhone ? whatsappNumber(typedPhone) : null;
-  // A way to reach the seller (for the claim link): a mobile number, an email, or both.
-  if (!fieldErrors.sellerPhone) {
-    if (!typedPhone && !opt("sellerEmail")) fieldErrors.sellerPhone = [t("admin.sellerContact")];
-    else if (typedPhone && !phoneDigits) fieldErrors.sellerPhone = [t("admin.sellerPhone")];
-  }
+  const fieldErrors: FieldErrors = { ...(fields.ok ? {} : fields.fieldErrors), ...sellerErrors };
   if (!fields.ok && !("fieldErrors" in fields)) return { error: fields.error };
-  if (!seller.success || !fields.ok || Object.keys(fieldErrors).length) return { error: t("form.checkFields"), fieldErrors };
-  const s = seller.data;
+  if (!seller || !fields.ok || Object.keys(fieldErrors).length) return { error: t("form.checkFields"), fieldErrors };
+  const s = seller;
   const v = fields.data;
 
   const lead = s.leadId
@@ -634,42 +694,9 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
     : undefined;
   if (s.leadId && !lead) return { error: t("admin.leadNotFound") };
 
-  if (s.sellerEmail && isOwnerEmail(s.sellerEmail)) {
-    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("admin.sellerIsStaff")] } };
-  }
-  // .invalid addresses are our own placeholders (phone-only sellers, the sample listings' seller), never a seller's.
-  if (s.sellerEmail && isPlaceholderEmail(s.sellerEmail)) {
-    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("field.email")] } };
-  }
-  const found = await staffListingSeller(s.sellerEmail, phoneDigits);
-  if (found.error) return { error: t("form.checkFields"), fieldErrors: { sellerPhone: [t(found.error)] } };
-  let sellerId = found.user?.id;
-  if (found.user && (found.user.role === "admin" || isOwnerEmail(found.user.email))) {
-    return { error: t("form.checkFields"), fieldErrors: { [s.sellerEmail ? "sellerEmail" : "sellerPhone"]: [t("admin.sellerIsStaff")] } };
-  }
-  if (found.user && !found.user.phone && s.sellerPhone) {
-    await db.update(users).set({ phone: s.sellerPhone }).where(eq(users.id, found.user.id));
-  }
-  if (!sellerId) {
-    // No password: the seller sets one (and their email, if we only have a phone number) with the claim link.
-    const email = s.sellerEmail?.toLowerCase() ?? placeholderEmail(phoneDigits!);
-    const [created] = await db
-      .insert(users)
-      .values({
-        email,
-        fullName: s.sellerName,
-        phone: s.sellerPhone ?? null,
-        passwordHash: null,
-        intent: "sell",
-        locale: s.sellerLocale,
-        source: lead?.source ?? null,
-      })
-      .onConflictDoNothing()
-      .returning({ id: users.id });
-    // Created at the same moment by someone else (a sign-up with this email): use that account.
-    sellerId = created?.id ?? (await findUserByEmail(email))?.id;
-    if (!sellerId) return { error: t("form.fixDetails") };
-  }
+  const account = await staffSellerAccount(t, s, phoneDigits, lead?.source ?? null);
+  if ("error" in account) return account;
+  const sellerId = account.id;
 
   const [row] = await db
     .insert(listings)
@@ -723,7 +750,7 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
       originalPrice: [null, v.originalPrice],
       amountPaid: [null, v.amountPaid],
       askingPrice: [null, v.askingPrice],
-      newSellerAccount: [null, !found.user],
+      newSellerAccount: [null, account.created],
       ...(lead ? { leadRef: [null, lead.id] } : {}),
     },
   });
@@ -755,6 +782,7 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
       phone: users.phone,
       locale: users.locale,
       role: users.role,
+      passwordHash: users.passwordHash,
     })
     .from(listings)
     .innerJoin(users, eq(users.id, listings.sellerId))
@@ -763,6 +791,8 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
   if (!l) return { error: t("listing.notFound") };
   if (!awaitsSellerConfirmation(l)) return { error: t("admin.claim.notNeeded") };
   if (l.role === "admin" || isOwnerEmail(l.email)) return { error: t("admin.sellerIsStaff") };
+  // Imported and still filed under the network's placeholder owner: nobody to send it to yet.
+  if (isImportOwner(l)) return { error: (await getT("intake"))("claim.setOwnerFirst") };
   if (via === "email" && isPlaceholderEmail(l.email)) return { error: t("admin.claim.noEmail") };
   if (via === "email" && !emailEnabled()) return { error: t("admin.claim.emailOff") };
 
@@ -787,6 +817,123 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
   const wa = l.phone ? whatsappNumber(l.phone) : null;
   const text = `${msg.title}\n\n${msg.body}\n\n${url}`;
   return { ok: true as const, url, whatsapp: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(text)}` : null };
+}
+
+/** Unused claim links of a listing: they went to the account it was filed under, or are no longer needed. */
+async function cancelClaimLinks(listingId: string) {
+  const gone = await db
+    .delete(passwordResets)
+    .where(and(eq(passwordResets.listingId, listingId), eq(passwordResets.purpose, "claim"), isNull(passwordResets.usedAt)))
+    .returning({ id: passwordResets.id });
+  return gone.length;
+}
+
+/**
+ * The Owner card of a listing our team entered (an imported one under its placeholder owner, or one filed under the
+ * wrong account): files it under the owner staff give, by the intake form's rules (staffSellerAccount). Only until
+ * ownership is confirmed; any claim link already sent stops working, and the change is audited (account ids only).
+ */
+export async function adminSetListingOwner(_prev: StaffListingState, formData: FormData): Promise<StaffListingState> {
+  const me = await assertAdmin();
+  const [t, ti] = await Promise.all([getT("errors"), getT("intake")]);
+  const id = z.uuid().safeParse(formData.get("listingId"));
+  if (!id.success) return { error: t("listing.notFound") };
+  const { seller, fieldErrors, phoneDigits } = readStaffSeller(formData, t);
+  if (!seller || Object.keys(fieldErrors).length) return { error: t("form.checkFields"), fieldErrors };
+  const [l] = await db
+    .select({
+      id: listings.id,
+      sellerId: listings.sellerId,
+      isSample: listings.isSample,
+      createdByStaff: listings.createdByStaff,
+      ownershipConfirmedAt: listings.ownershipConfirmedAt,
+    })
+    .from(listings)
+    .where(eq(listings.id, id.data))
+    .limit(1);
+  if (!l) return { error: t("listing.notFound") };
+  if (!l.createdByStaff || l.isSample) return { error: ti("owner.notStaff") };
+  if (l.ownershipConfirmedAt) return { error: ti("owner.locked") };
+  const account = await staffSellerAccount(t, seller, phoneDigits, null);
+  if ("error" in account) return account;
+  if (account.id === l.sellerId) return { error: ti("owner.same"), fieldErrors: { sellerName: [ti("owner.same")] } };
+  const [moved] = await db
+    .update(listings)
+    .set({ sellerId: account.id, updatedAt: new Date() })
+    // Not if it was confirmed, or re-filed by someone else, in the meantime.
+    .where(and(eq(listings.id, l.id), eq(listings.sellerId, l.sellerId), isNull(listings.ownershipConfirmedAt)))
+    .returning({ id: listings.id });
+  if (!moved) return { error: ti("owner.locked") };
+  const cancelled = await cancelClaimLinks(l.id);
+  await audit({
+    actorId: me.id,
+    action: "listing.owner",
+    entityType: "listing",
+    entityId: l.id,
+    // claimsCancelled: the unused claim links that stopped working (scrubDiff drops any key with "link" in it).
+    diff: { sellerId: [l.sellerId, account.id], newSellerAccount: account.created, claimsCancelled: cancelled },
+  });
+  refresh();
+  return { ok: true, listingId: l.id };
+}
+
+/**
+ * Ownership confirmed by the owner's RERA Form A signed with us (co-broker stock: signed through the owner's broker),
+ * instead of the claim link: staff tick that the signed Form A is uploaded (kind form_a) and checked. Only for a listing
+ * our team entered that is filed under its real owner (not an import's placeholder). The approval gates stay as they
+ * are: the Trakheesi permit is still required.
+ */
+export async function adminConfirmFormA(_prev: FormState, formData: FormData): Promise<FormState> {
+  const me = await assertAdmin();
+  const [t, ti] = await Promise.all([getT("errors"), getT("intake")]);
+  const id = z.uuid().safeParse(formData.get("listingId"));
+  if (!id.success) return { error: t("listing.notFound") };
+  if (formData.get("formAChecked") !== "on") return { error: ti("formA.needCheck"), fieldErrors: { formAChecked: [ti("formA.needCheck")] } };
+  const [l] = await db
+    .select({
+      id: listings.id,
+      sellerId: listings.sellerId,
+      isSample: listings.isSample,
+      createdByStaff: listings.createdByStaff,
+      ownershipConfirmedAt: listings.ownershipConfirmedAt,
+      email: users.email,
+      passwordHash: users.passwordHash,
+      role: users.role,
+    })
+    .from(listings)
+    .innerJoin(users, eq(users.id, listings.sellerId))
+    .where(eq(listings.id, id.data))
+    .limit(1);
+  if (!l) return { error: t("listing.notFound") };
+  if (!awaitsSellerConfirmation(l)) return { error: ti("formA.notNeeded") };
+  if (isImportOwner(l)) return { error: ti("formA.needOwner") };
+  if (l.role === "admin" || isOwnerEmail(l.email)) return { error: t("admin.sellerIsStaff") };
+  const [doc] = await db
+    .select({ id: files.id, filename: files.filename })
+    .from(files)
+    .where(and(eq(files.listingId, l.id), eq(files.kind, "form_a")))
+    .orderBy(desc(files.createdAt))
+    .limit(1);
+  if (!doc) return { error: ti("formA.needDoc") };
+  const now = new Date();
+  const [confirmed] = await db
+    .update(listings)
+    .set({ ownershipConfirmedAt: now, updatedAt: now })
+    .where(and(eq(listings.id, l.id), eq(listings.sellerId, l.sellerId), isNull(listings.ownershipConfirmedAt)))
+    .returning({ id: listings.id });
+  if (!confirmed) return { error: ti("formA.notNeeded") };
+  // The claim link isn't needed any more (it would refuse a confirmed listing anyway).
+  await cancelClaimLinks(l.id);
+  // Which document it rests on, and who checked it (the actor): the record a dispute over the owner's authority needs.
+  await audit({
+    actorId: me.id,
+    action: "listing.form_a_confirmed",
+    entityType: "listing",
+    entityId: l.id,
+    diff: { ownershipConfirmedAt: [null, now], via: "form_a", fileId: doc.id, filename: doc.filename },
+  });
+  refresh();
+  return { ok: true };
 }
 
 // ---- The deal file (src/lib/deals.ts): contracts, NOC and transfer milestones of an agreed deal ----

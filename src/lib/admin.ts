@@ -1,8 +1,9 @@
 import "server-only";
 import { alias } from "drizzle-orm/pg-core";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { files, inquiries, listings, offers, users } from "@/db/schema";
+import { auditEvents, files, inquiries, listings, offers, users } from "@/db/schema";
+import { awaitingOwnerSql } from "./import";
 import { offerCountSql, saleValueSql, watchersSql } from "./listings";
 
 const docFlag = (kind: string) =>
@@ -31,7 +32,10 @@ const ourValueSql = sql<number>`(${dealValueSql}::bigint * ${ourSharePctSql} / 1
 export async function adminStats() {
   const [row] = await db
     .select({
-      pending: sql<number>`count(*) filter (where ${listings.status} = 'pending_review')::int`,
+      // Imported listings still under their network's placeholder owner are counted apart (their own tab on /admin):
+      // nobody can review them before their owner is entered.
+      pending: sql<number>`count(*) filter (where ${listings.status} = 'pending_review' and not ${awaitingOwnerSql})::int`,
+      importedAwaitingOwner: sql<number>`count(*) filter (where ${listings.status} = 'pending_review' and ${awaitingOwnerSql})::int`,
       live: sql<number>`count(*) filter (where ${listings.status} = 'live')::int`,
       // Real deals only, as the fees shown with it (a sample under offer isn't a deal).
       inTransfer: sql<number>`count(*) filter (where ${listings.status} in ('under_offer', 'noc_in_progress') and not ${listings.isSample})::int`,
@@ -87,6 +91,9 @@ export async function adminListings(status?: (typeof listings.$inferSelect)["sta
       idDoc: docFlag("id"),
       // Entered by our team and still waiting for the seller's own confirmation (it can't be approved until then).
       awaitingSeller: sql<boolean>`(${listings.createdByStaff} and ${listings.ownershipConfirmedAt} is null and not ${listings.isSample})`,
+      // Imported and still filed under the network's placeholder owner (src/lib/import.ts); `source` says from where.
+      awaitingOwner: awaitingOwnerSql,
+      source: listings.source,
       // The seller's own text, checked for contact details (src/lib/typed-names.ts contactKinds) beside "Approve".
       description: listings.description,
       view: listings.view,
@@ -96,6 +103,16 @@ export async function adminListings(status?: (typeof listings.$inferSelect)["sta
     .innerJoin(users, eq(users.id, listings.sellerId))
     .where(status ? eq(listings.status, status) : undefined)
     .orderBy(desc(listings.updatedAt));
+}
+
+/** Whether ownership of a listing our team entered was confirmed from the owner's signed Form A (adminConfirmFormA). */
+export async function confirmedByFormA(listingId: string) {
+  const [row] = await db
+    .select({ id: auditEvents.id })
+    .from(auditEvents)
+    .where(and(eq(auditEvents.entityType, "listing"), eq(auditEvents.entityId, listingId), eq(auditEvents.action, "listing.form_a_confirmed")))
+    .limit(1);
+  return Boolean(row);
 }
 
 export async function adminListing(id: string) {
@@ -163,7 +180,8 @@ const USER_ID = sql.raw(`"users"."id"`);
  * No password yet, and a real listing our team entered still waiting for its seller's confirmation: a seller our team
  * added who hasn't claimed it. (Not a buyer our team added to a deal, who has no password either but no such listing.)
  */
-const pendingClaimSql = sql`${users.passwordHash} is null and ${users.role} = 'user' and exists (select 1 from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and l.ownership_confirmed_at is null and not l.is_sample)`;
+const pendingClaimSql = sql`${users.passwordHash} is null and ${users.role} = 'user' and exists (select 1 from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and l.ownership_confirmed_at is null and not l.is_sample)
+  and lower(${users.email}) not like 'owner-pending.%@offplandistress.invalid'`;
 
 /** Accounts that can log in, and buyers our team added to a deal file (no password yet), whose KYC is checked here. */
 const registeredSql = sql`(${users.passwordHash} is not null or exists (select 1 from deals d where d.buyer_id = ${USER_ID}))`;
@@ -172,7 +190,7 @@ const registeredSql = sql`(${users.passwordHash} is not null or exists (select 1
  * "registered": accounts that can log in, and buyers found off the platform that our team added to a deal
  * (saveDealFile in src/lib/deals.ts) until they set a password. "pending": sellers our team added (staff-assisted
  * intake, src/lib/claim.ts) who haven't set a password through their claim link yet (the sample seller, which has no
- * password either, owns only samples).
+ * password either, owns only samples; an import's placeholder owner, src/lib/import.ts, is nobody's account).
  */
 export async function adminUsers(tab: "registered" | "pending" = "registered") {
   return db

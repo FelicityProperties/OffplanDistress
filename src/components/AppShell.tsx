@@ -8,6 +8,7 @@ import {
   Building2,
   ChartColumn,
   ClipboardCheck,
+  FileUp,
   Gavel,
   Heart,
   Inbox,
@@ -35,6 +36,7 @@ const ICONS = {
   verified: BadgeCheck,
   inbox: Inbox,
   analytics: ChartColumn,
+  upload: FileUp,
 } satisfies Record<string, LucideIcon>;
 
 export type ShellItem = { href: string; label: string; icon: keyof typeof ICONS; count?: number; exact?: boolean };

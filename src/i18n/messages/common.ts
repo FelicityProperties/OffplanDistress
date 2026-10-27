@@ -42,6 +42,7 @@ export default defineMessages({
     "file.id": "Passport / Emirates ID",
     "file.photo": "Photo / render",
     "file.other": "Other document",
+    "file.form_a": "Form A (signed by the owner)",
 
     "kyc.not_started": "Not started",
     "kyc.pending": "In review",
@@ -258,6 +259,7 @@ export default defineMessages({
     "file.id": "جواز السفر / الهوية الإماراتية",
     "file.photo": "صورة / تصميم",
     "file.other": "مستند آخر",
+    "file.form_a": "النموذج (A) موقّعاً من المالك",
 
     "kyc.not_started": "لم يبدأ",
     "kyc.pending": "قيد المراجعة",

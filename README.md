@@ -18,7 +18,7 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; "Prefer WhatsApp?" card; 5-step "Sell my unit" form (saved on the device between sittings, type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline), deal milestones |
 | Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts |
 | Everyone | Notification bell + notifications page, email notifications, self-service password reset, English / العربية (full right-to-left layout) |
-| Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), remove sample data |
+| Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, bulk import of a partner network's units (`/admin/listings/import`, owner set later, claim link or signed Form A), daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), remove sample data |
 
 Buyers stay anonymous to sellers in the app — every negotiation goes through our team, so neither side can
 bypass the platform.
@@ -71,6 +71,19 @@ approved (the Trakheesi permit is still required too); `/admin/users` → "Pendi
 never sets a password on an account that already has one. The admin listing page flags descriptions that seem to
 contain a phone number, email, link or WhatsApp handle ("Contact details in text"); the text is never changed
 automatically.
+
+**Bulk import.** Units a partner network shared with the owners' written permission come as one or more JSON files we
+prepare (`offplandistress-import/1`, documented in `src/lib/import-format.ts`: the source, then per unit its ref, link,
+posting date, the sell form's listing fields, up to 6 photos of 1.5 MB as base64 and team-only notes). Admin →
+"Import listings" (`/admin/listings/import`) checks every unit in the browser with the sell form's rules, shows a
+preview (New / Already imported / Invalid with the reason), then imports one unit per request and uploads its photos
+one by one; failed rows and photos can be retried, and choosing the files again after a reload skips what is done (a
+unit is imported once per source + ref, enforced by a unique index). **Nothing goes public:** each listing is in
+review, filed under one placeholder owner per source ("Owner to be added (…)", no password, never emailed or
+nudged), under "Imported — owner to add" on `/admin`, its photos private. On its page, enter the owner in the Owner
+card (same matching as "New listing"; changing it cancels any claim link), then confirm ownership with the claim link
+or, for co-broker stock, upload the owner's signed Form A ("Form A (signed by the owner)") and tick "The owner's
+signed Form A is uploaded and checked"; enter the Trakheesi permit, then approve.
 
 ### Cash at transfer
 

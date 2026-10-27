@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   await requireAdmin();
-  const [s, leads, t] = await Promise.all([adminStats(), leadStats(), getT("admin")]);
+  const [s, leads, t, ti] = await Promise.all([adminStats(), leadStats(), getT("admin"), getT("intake")]);
   // Without a key, or without a sender on our own domain, no email reaches sellers or buyers (src/lib/email.ts).
   const emailOff = emailOffReason();
   return (
@@ -29,6 +29,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         { href: "/admin/leads", label: t("nav.leads"), icon: "inbox", count: leads.newLeads },
         { href: "/admin/users", label: t("nav.users"), icon: "users" },
         { href: "/admin/analytics", label: t("nav.analytics"), icon: "analytics" },
+        // Bulk import of a partner network's file (also linked from the verification queue).
+        { href: "/admin/listings/import", label: ti("nav.import"), icon: "upload" },
       ]}
     >
       {emailOff && (

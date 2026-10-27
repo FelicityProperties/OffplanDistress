@@ -51,7 +51,10 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
   const file = form.get("file");
   const kind = String(form.get("kind") ?? "other");
   if (!(file instanceof File)) return NextResponse.json({ error: t("upload.noFile") }, { status: 400 });
-  if (!(kind in FILE_KINDS)) return NextResponse.json({ error: t("upload.unknownKind") }, { status: 400 });
+  // The owner's signed Form A can confirm ownership of a listing our team entered (adminConfirmFormA): our team files it.
+  if (!(kind in FILE_KINDS) || (kind === "form_a" && user.role !== "admin")) {
+    return NextResponse.json({ error: t("upload.unknownKind") }, { status: 400 });
+  }
   if (file.size > MAX_UPLOAD_BYTES) {
     return NextResponse.json({ error: t("upload.tooLarge", { name: file.name }) }, { status: 413 });
   }
