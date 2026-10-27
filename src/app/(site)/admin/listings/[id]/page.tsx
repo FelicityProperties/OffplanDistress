@@ -22,13 +22,14 @@ import { analyzeDeal } from "@/lib/deal-math";
 import { adminListing, adminOffers, confirmedByFormA } from "@/lib/admin";
 import { listingFiles } from "@/lib/dashboard";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
+import { isUuid } from "@/lib/utils";
 import { dubaiToday, expiryDateBounds } from "@/lib/permits";
 import { communityName, developerName } from "@/lib/place-names";
 
 export default async function AdminListingPage({ params }: PageProps<"/admin/listings/[id]">) {
   await requireAdmin();
   const { id } = await params;
-  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  if (!isUuid(id)) notFound();
   const row = await adminListing(id);
   if (!row) notFound();
   const { listing: l, seller } = row;
@@ -360,7 +361,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
                 </div>
                 <div className="flex items-center gap-3">
                   <ToneStatus label={tc(`offer.${o.status}`)} tone={OFFER_STATUS[o.status].tone} />
-                  <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} listingStatus={l.status} />
+                  <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} listingStatus={l.status} askingPrice={l.askingPrice} />
                 </div>
               </li>
             ))}

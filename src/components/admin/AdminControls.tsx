@@ -28,6 +28,7 @@ export function ReviewButtons({ listingId }: { listingId: string }) {
   const t = useT("admin");
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
+  const rejectButton = useRef<HTMLButtonElement>(null);
   const [reason, setReason] = useState("");
   return (
     <div className="flex justify-end gap-1">
@@ -45,11 +46,17 @@ export function ReviewButtons({ listingId }: { listingId: string }) {
       >
         <Check /> {t("review.approve")}
       </Button>
-      <Button size="sm" variant="ghost" disabled={pending} onClick={() => setOpen(true)}>
+      <Button ref={rejectButton} size="sm" variant="ghost" disabled={pending} onClick={() => setOpen(true)}>
         <X /> {t("review.reject")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        {/* Opened from a button outside it (not a DialogTrigger): closed, focus goes back to that button. */}
+        <DialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            rejectButton.current?.focus();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t("review.rejectTitle")}</DialogTitle>
             <DialogDescription>{t("review.rejectDesc")}</DialogDescription>
@@ -515,9 +522,11 @@ export function ResetPasswordButton({ userId, name }: { userId: string; name: st
   const t = useT("admin");
   const [pending, start] = useTransition();
   const [temp, setTemp] = useState<string | null>(null);
+  const resetButton = useRef<HTMLButtonElement>(null);
   return (
     <>
       <Button
+        ref={resetButton}
         size="sm"
         variant="ghost"
         disabled={pending}
@@ -534,7 +543,12 @@ export function ResetPasswordButton({ userId, name }: { userId: string; name: st
         <KeyRound /> {t("reset.button")}
       </Button>
       <Dialog open={!!temp} onOpenChange={(o) => !o && setTemp(null)}>
-        <DialogContent>
+        <DialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            resetButton.current?.focus();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t("reset.dialogTitle")}</DialogTitle>
             <DialogDescription>{t("reset.dialogDesc", { name })}</DialogDescription>
