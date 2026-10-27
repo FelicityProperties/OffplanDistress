@@ -510,8 +510,9 @@ async function reviewRule(now: Date): Promise<FollowUpItem[]> {
 }
 
 /**
- * Live or under-offer units whose next instalment falls due within 14 days or is already past: developers won't issue
- * the NOC while instalments are overdue, so our team agrees with the seller who pays it. For our team only.
+ * Live, under-offer and NOC-in-progress units whose next instalment falls due within 14 days or is already past:
+ * developers won't issue the NOC while instalments are overdue (so it matters most for a unit waiting for its NOC), so
+ * our team agrees with the seller who pays it. For our team only.
  */
 async function instalmentsRule(now: Date): Promise<FollowUpItem[]> {
   const today = dubaiToday(now);
@@ -529,7 +530,7 @@ async function instalmentsRule(now: Date): Promise<FollowUpItem[]> {
     .innerJoin(sellers, eq(sellers.id, listings.sellerId))
     .where(
       and(
-        inArray(listings.status, ["live", "under_offer"]),
+        inArray(listings.status, ["live", "under_offer", "noc_in_progress"]),
         realListing,
         isNotNull(listings.nextInstalmentDate),
         lte(listings.nextInstalmentDate, addDays(today, FOLLOW_UP.instalmentDays)),

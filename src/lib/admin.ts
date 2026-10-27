@@ -20,7 +20,7 @@ const LISTING_ID = sql.raw(`"listings"."id"`); // qualified: inside the subqueri
 const dealValueSql = sql<number>`coalesce(
   (select d.sale_value from deals d where d.listing_id = ${LISTING_ID} and d.cancelled_at is null and d.sale_value is not null
      and d.agreed_price is not null limit 1),
-  (select o.amount from offers o where o.listing_id = ${LISTING_ID} and o.status = 'accepted' order by o.updated_at desc limit 1)
+  (select o.amount::bigint from offers o where o.listing_id = ${LISTING_ID} and o.status = 'accepted' order by o.updated_at desc limit 1)
     + greatest(${listings.originalPrice} - ${listings.amountPaid}, 0),
   ${saleValueSql})`;
 /**

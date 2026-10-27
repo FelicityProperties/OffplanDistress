@@ -117,14 +117,16 @@ Once an offer is accepted, the Deal file card on the admin listing page records 
 any co-broker, the NOC, the trustee office, the transfer and the invoice, with the agreed price as written in Form F
 (sale value, our fee and the buyer's ≈ cash at transfer update as you type). Stage gates in "Manage listing": "NOC in
 progress" needs Form F signed and both parties' KYC verified (Admin → Users); "Transferred" needs the NOC issue date,
-the DLD transfer date and the agreed price. Deals that were already under offer get their deal file the first time
+the DLD transfer date and the agreed price. A transferred unit stays sold: it can be taken down (Withdrawn, its deal
+file kept) and shown as transferred again, never put back on the market or into an earlier stage. Deals that were already under offer get their deal file the first time
 it is opened, a gate is checked or the CSV is exported. A deal set to under offer by hand (a buyer found off the
 platform) links the buyer by their account email; without an account, enter their full name (and mobile) there and one
 is created without a password (they set it with "Forgot password"; verify their KYC on Admin → Users). Correct "Paid
 to the developer to date" in "Manage listing" from the statement of account and the deal's sale value follows. The
 admin KPIs count our share of the fees (after any co-broker's) on the agreed sale value. Every admin action, a seller's claim and every
 document (not photos) opened by someone other than its uploader is logged (actor, before → after, IP; never passwords or tokens)
-in the listing's History panel. Pipeline → "Export all deals (CSV)" opens in Excel, Arabic included. Consent is
+in the listing's History panel. The pipeline shows each stage's newest 50 cards (withdrawn included), "Show all" for
+the rest and a search by OD-ref or project. Pipeline → "Export all deals (CSV)" opens in Excel, Arabic included. Consent is
 versioned: sign-ups, listings and offers store the Terms version (`LEGAL_UPDATED`) they accepted.
 
 ### Offers

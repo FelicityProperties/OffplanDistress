@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { AlertCircle, ExternalLink, FileUp, Loader2, RotateCcw, Square } from "lucide-react";
 import { adminImportListing, adminImportStatus, type ImportedUnit, type ImportResult } from "@/app/actions/import";
@@ -57,7 +57,16 @@ type Row = {
   photoProgress: { i: number; n: number } | null;
 };
 
-const STATUS_COL = "min-w-48 max-w-64 bg-card md:sticky md:end-0 md:z-10 md:border-s md:shadow-[-6px_0_8px_-8px_rgb(0_0_0/0.25)] rtl:md:shadow-[6px_0_8px_-8px_rgb(0_0_0/0.25)]";
+const STATUS_COL =
+  "bg-card md:min-w-48 md:max-w-64 md:sticky md:end-0 md:z-10 md:border-s md:shadow-[-6px_0_8px_-8px_rgb(0_0_0/0.25)] rtl:md:shadow-[6px_0_8px_-8px_rgb(0_0_0/0.25)]";
+
+// Below tablet width each unit is a card instead of a table row: ref and project, then its status (what the import did
+// with it), then the figures two to a line, each with its column's name (the header row is only read out by screen
+// readers there). The roles keep the table's semantics while it is laid out as blocks.
+const CARD_TABLE = "max-md:block";
+const CARD_ROW = "max-md:grid max-md:grid-cols-2 max-md:gap-x-4 max-md:gap-y-2 max-md:px-4 max-md:py-3";
+const CARD_CELL = "max-md:block max-md:p-0 max-md:text-start";
+const CARD_WIDE = "max-md:col-span-2";
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const missingPhotos = (r: Row) => r.photos.filter((p) => !r.uploaded.includes(photoStem(p.filename)));
@@ -474,32 +483,45 @@ export function ImportListings() {
 
       {rows.length > 0 && (
         <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
-          <Table className="min-w-[1000px]" aria-label={ti("table.label")}>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{ti("col.ref")}</TableHead>
-                <TableHead>{ti("col.project")}</TableHead>
-                <TableHead>{ti("col.type")}</TableHead>
-                <TableHead className="text-end">{ti("col.size")}</TableHead>
-                <TableHead className="text-end">{ti("col.spa")}</TableHead>
-                <TableHead className="text-end">{ti("col.paid")}</TableHead>
-                <TableHead className="text-end">{ti("col.toSeller")}</TableHead>
-                <TableHead className="text-end">{ti("col.saleValue")}</TableHead>
-                <TableHead className="text-end">{ti("col.plan")}</TableHead>
-                <TableHead className="text-end">{ti("col.photos")}</TableHead>
+          <Table className={`md:min-w-[1000px] ${CARD_TABLE}`} role="table" aria-label={ti("table.label")}>
+            <TableHeader className="max-md:sr-only" role="rowgroup">
+              <TableRow role="row">
+                <TableHead role="columnheader">{ti("col.ref")}</TableHead>
+                <TableHead role="columnheader">{ti("col.project")}</TableHead>
+                <TableHead role="columnheader">{ti("col.type")}</TableHead>
+                <TableHead role="columnheader" className="text-end">{ti("col.size")}</TableHead>
+                <TableHead role="columnheader" className="text-end">{ti("col.spa")}</TableHead>
+                <TableHead role="columnheader" className="text-end">{ti("col.paid")}</TableHead>
+                <TableHead role="columnheader" className="text-end">{ti("col.toSeller")}</TableHead>
+                <TableHead role="columnheader" className="text-end">{ti("col.saleValue")}</TableHead>
+                <TableHead role="columnheader" className="text-end">{ti("col.plan")}</TableHead>
+                <TableHead role="columnheader" className="text-end">{ti("col.photos")}</TableHead>
                 {/* Pinned to the end from tablet width up: the figures scroll under it, the status stays in view. */}
-                <TableHead className={STATUS_COL}>{ti("col.status")}</TableHead>
+                <TableHead role="columnheader" className={STATUS_COL}>{ti("col.status")}</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody role="rowgroup" className="max-md:block">
               {rows.map((r) => {
                 const f = r.fields;
                 const project = f?.projectName ?? (typeof r.listing?.projectName === "string" ? r.listing.projectName : null);
                 const remaining = f ? Math.max(f.originalPrice - f.amountPaid, 0) : null;
                 const url = r.meta?.url;
+                // A figure's cell, with its column's name above it on a card (phones), where a unit that couldn't be
+                // read (no figures, only dashes) shows just its reason.
+                const figure = (label: string, children: ReactNode, { start = false, nowrap = true, always = false } = {}) => (
+                  <TableCell
+                    role="cell"
+                    className={`${start ? "" : "text-end tabular"} ${nowrap ? "whitespace-nowrap" : ""} ${CARD_CELL} ${!f && !always ? "max-md:hidden" : ""}`}
+                  >
+                    <span className="block text-xs font-normal text-muted-foreground md:hidden" aria-hidden>
+                      {label}
+                    </span>
+                    {children}
+                  </TableCell>
+                );
                 return (
-                  <TableRow key={r.key} data-ref={r.ref ?? ""} data-key={r.key} className="align-top">
-                    <TableCell className="whitespace-nowrap">
+                  <TableRow key={r.key} role="row" data-ref={r.ref ?? ""} data-key={r.key} className={`align-top ${CARD_ROW}`}>
+                    <TableCell role="cell" className={`whitespace-nowrap ${CARD_CELL} ${CARD_WIDE} max-md:order-[-2]`}>
                       {r.ref ? (
                         url ? (
                           <a
@@ -524,7 +546,7 @@ export function ImportListings() {
                         <bdi>{r.source.name}</bdi>
                       </p>
                     </TableCell>
-                    <TableCell className="min-w-48 wrap-anywhere">
+                    <TableCell role="cell" className={`min-w-48 wrap-anywhere max-md:min-w-0 ${CARD_CELL} ${CARD_WIDE} max-md:order-[-2]`}>
                       <p className="font-medium">
                         <bdi>{project ?? "—"}</bdi>
                       </p>
@@ -535,22 +557,31 @@ export function ImportListings() {
                         </p>
                       )}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">{f ? tc(`unit.${f.unitType}`) : "—"}</TableCell>
-                    <TableCell className="whitespace-nowrap text-end tabular">{f ? tc("sqft", { n: formatNumber(f.sizeSqft) }) : "—"}</TableCell>
-                    <TableCell className="whitespace-nowrap text-end tabular">{money(f?.originalPrice)}</TableCell>
-                    <TableCell className="whitespace-nowrap text-end tabular">
-                      {money(f?.amountPaid)}
-                      {f && (
-                        <p className="text-xs text-muted-foreground">
-                          {ti("table.paidPct", { pct: formatPct(f.originalPrice ? f.amountPaid / f.originalPrice : null) })}
-                        </p>
-                      )}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-end tabular">{money(f?.askingPrice)}</TableCell>
-                    <TableCell className="whitespace-nowrap text-end tabular">{f && remaining != null ? money(f.askingPrice + remaining) : "—"}</TableCell>
-                    <TableCell className="text-end tabular">{f ? f.paymentPlan.length : "—"}</TableCell>
-                    <TableCell className="text-end tabular">{r.photos.length}</TableCell>
-                    <TableCell data-testid="import-status" className={STATUS_COL}>
+                    {figure(ti("col.type"), f ? tc(`unit.${f.unitType}`) : "—", { start: true })}
+                    {figure(ti("col.size"), f ? tc("sqft", { n: formatNumber(f.sizeSqft) }) : "—")}
+                    {figure(ti("col.spa"), money(f?.originalPrice))}
+                    {figure(
+                      ti("col.paid"),
+                      <>
+                        {money(f?.amountPaid)}
+                        {f && (
+                          <p className="text-xs text-muted-foreground">
+                            {ti("table.paidPct", { pct: formatPct(f.originalPrice ? f.amountPaid / f.originalPrice : null) })}
+                          </p>
+                        )}
+                      </>,
+                    )}
+                    {figure(ti("col.toSeller"), money(f?.askingPrice))}
+                    {figure(ti("col.saleValue"), f && remaining != null ? money(f.askingPrice + remaining) : "—")}
+                    {figure(ti("col.plan"), f ? f.paymentPlan.length : "—", { nowrap: false })}
+                    {figure(ti("col.photos"), r.photos.length, { nowrap: false, always: true })}
+                    {/* The last column (pinned from tablet width up); on a card it comes right after the unit it is
+                        about (order), across the card. */}
+                    <TableCell
+                      role="cell"
+                      data-testid="import-status"
+                      className={`${STATUS_COL} ${CARD_CELL} ${CARD_WIDE} max-md:order-[-1] max-md:border-y max-md:py-2`}
+                    >
                       {status(r)}
                     </TableCell>
                   </TableRow>

@@ -154,6 +154,14 @@ export default defineMessages({
     "owner.same": "This listing is already filed under that owner.",
     "owner.locked": "Ownership is already confirmed, so the owner can't be changed here.",
     "owner.notStaff": "Only a listing our team entered can be filed under another owner.",
+    // The Owner card's checks (adminSetListingOwner), worded for the owner rather than the intake form's seller.
+    "owner.error.name": "Enter the owner's full name.",
+    "owner.error.contact": "Enter the owner's mobile number or email.",
+    "owner.error.phone": "Enter the owner's mobile number with its country code, e.g. +971 50 123 4567.",
+    "owner.error.isStaff": "That email or number belongs to a staff account. A listing must be filed under the owner's own account.",
+    "owner.error.phoneShared": "More than one account uses this mobile number. Enter the owner's email so the right account is used.",
+    "owner.error.phoneHasAccount":
+      "This mobile number is on an account someone registered on the site, and numbers aren't verified. Ask the owner for the email they log in with and enter it, so the listing goes to their own account.",
 
     "claim.setOwnerFirst": "Set the owner first: the claim link goes to the owner, and this listing is still filed under a placeholder.",
     "claim.confirmedFormA": "Ownership confirmed on {date} from the owner's signed Form A.",
@@ -322,6 +330,13 @@ export default defineMessages({
     "owner.same": "هذا الإعلان مسجّل باسم هذا المالك أصلاً.",
     "owner.locked": "الملكية مؤكَّدة، لذا لا يمكن تغيير المالك من هنا.",
     "owner.notStaff": "لا يمكن تسجيل إعلان باسم مالك آخر إلا إذا كان فريقنا هو من أدخله.",
+    "owner.error.name": "أدخل الاسم الكامل للمالك.",
+    "owner.error.contact": "أدخل رقم جوال المالك أو بريده الإلكتروني.",
+    "owner.error.phone": "أدخل رقم جوال المالك مع رمز الدولة، مثل ⁦+971 50 123 4567⁩.",
+    "owner.error.isStaff": "هذا البريد الإلكتروني أو الرقم يخص حساباً لأحد أعضاء الفريق، ويجب أن يُسجَّل الإعلان في حساب المالك نفسه.",
+    "owner.error.phoneShared": "يستخدم أكثر من حساب رقم الجوال هذا. أدخل البريد الإلكتروني للمالك ليُستخدم الحساب الصحيح.",
+    "owner.error.phoneHasAccount":
+      "رقم الجوال هذا مسجَّل في حساب أنشأه أحد المستخدمين على الموقع، ولا يجري التحقق من أرقام الجوال. اطلب من المالك البريد الإلكتروني الذي يسجّل به الدخول وأدخله، ليُضاف الإعلان إلى حسابه هو.",
 
     "claim.setOwnerFirst": "حدّد المالك أولاً: يُرسَل رابط التأكيد إلى المالك، وهذا الإعلان ما زال مسجّلاً باسم مالك مؤقت.",
     "claim.confirmedFormA": "أُكّدت الملكية في ⁨{date}⁩ بالنموذج (A) الموقّع من المالك.",

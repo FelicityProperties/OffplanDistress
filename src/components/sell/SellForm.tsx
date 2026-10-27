@@ -662,9 +662,9 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                 <Field id="nextInstalmentDate" label={t("field.nextDate")}>
                   <Input id="nextInstalmentDate" type="date" value={s.nextInstalmentDate} onChange={(e) => set("nextInstalmentDate")(e.target.value)} />
                 </Field>
-                <Field id="nextInstalmentAmount" label={t("field.nextAmount")}>
+                <Field id="nextInstalmentAmount" label={t("field.nextAmount")} error={errors.nextInstalmentAmount}>
                   <Input
-                    id="nextInstalmentAmount"
+                    {...control("nextInstalmentAmount", errors.nextInstalmentAmount)}
                     inputMode="numeric"
                     value={s.nextInstalmentAmount}
                     onChange={(e) => set("nextInstalmentAmount")(e.target.value)}
@@ -728,6 +728,12 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                   </div>
                   {plan.length === 0 && (
                     <p className="text-xs text-muted-foreground">{t("plan.empty")}</p>
+                  )}
+                  {/* The server's answer for the rows (an amount past what it can store, say): shown here, not just a toast. */}
+                  {errors.paymentPlan && (
+                    <p id="paymentPlan-msg" className="text-xs font-medium text-destructive">
+                      {errors.paymentPlan}
+                    </p>
                   )}
                   {plan.map((p, i) => (
                     // Phones: the milestone on its own line, then date, amount and remove (one line is wider than a phone).

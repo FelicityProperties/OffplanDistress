@@ -183,11 +183,9 @@ export async function approveListing(listingId: string) {
     entityId: listingId,
     diff: changes(before, { status: "live", verified, publicPrice: before.askingPrice }),
   });
-  if (before.status !== "live") {
-    await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });
-    // Back on the market: no deal agreed earlier stays accepted on it (see reopenUnit).
-    await reopenUnit(before, before.status);
-  }
+  await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });
+  // Back on the market: no deal agreed earlier stays accepted on it (see reopenUnit).
+  await reopenUnit(before, before.status);
   // A seller's price cut waits for re-approval; watchers hear about it once it is public again.
   if (!before.isSample && before.publicPrice != null) await notifyPriceDrop(before, before.publicPrice, before.askingPrice);
   refresh();
@@ -619,9 +617,38 @@ export async function deleteSampleListings() {
 
 // ---- Staff-assisted intake: a listing entered by our team from the documents a seller sent (src/lib/claim.ts) ----
 
-const staffSellerSchema = (t: T) =>
+/**
+ * What the staff forms' person checks say, worded for the form: the intake form's seller, or the Owner card's owner
+ * (an imported unit's owner may not be the one selling it to the buyer, and staff are entering someone else's name).
+ */
+type PersonMessages = { name: string; contact: string; phone: string; isStaff: string; phoneShared: string; phoneHasAccount: string };
+
+function sellerMessages(t: T): PersonMessages {
+  return {
+    name: t("field.fullName"),
+    contact: t("admin.sellerContact"),
+    phone: t("admin.sellerPhone"),
+    isStaff: t("admin.sellerIsStaff"),
+    phoneShared: t("admin.phoneShared"),
+    phoneHasAccount: t("admin.phoneHasAccount"),
+  };
+}
+
+async function ownerMessages(): Promise<PersonMessages> {
+  const ti = await getT("intake");
+  return {
+    name: ti("owner.error.name"),
+    contact: ti("owner.error.contact"),
+    phone: ti("owner.error.phone"),
+    isStaff: ti("owner.error.isStaff"),
+    phoneShared: ti("owner.error.phoneShared"),
+    phoneHasAccount: ti("owner.error.phoneHasAccount"),
+  };
+}
+
+const staffSellerSchema = (t: T, m: PersonMessages = sellerMessages(t)) =>
   z.object({
-    sellerName: z.string().trim().min(2, t("field.fullName")).max(120),
+    sellerName: z.string().trim().min(2, m.name).max(120),
     sellerEmail: z.string().trim().max(200).pipe(z.email(t("field.email"))).optional(),
     sellerPhone: z.string().trim().max(30).optional(),
     sellerLocale: z.enum(["en", "ar"]).catch("en"),
@@ -637,12 +664,12 @@ type FieldErrors = Record<string, string[] | undefined>;
  * The seller fields of a staff form (adminCreateListing, adminSetListingOwner): who the seller is, and a way to reach
  * them for the claim link — a mobile number, an email, or both.
  */
-function readStaffSeller(formData: FormData, t: T) {
+function readStaffSeller(formData: FormData, t: T, m: PersonMessages = sellerMessages(t)) {
   const opt = (k: string) => {
     const v = formData.get(k);
     return typeof v === "string" && v.trim() ? v : undefined;
   };
-  const seller = staffSellerSchema(t).safeParse(
+  const seller = staffSellerSchema(t, m).safeParse(
     {
       sellerName: formData.get("sellerName") ?? "",
       sellerEmail: opt("sellerEmail"),
@@ -656,8 +683,8 @@ function readStaffSeller(formData: FormData, t: T) {
   const typedPhone = opt("sellerPhone")?.trim();
   const phoneDigits = typedPhone ? whatsappNumber(typedPhone) : null;
   if (!fieldErrors.sellerPhone) {
-    if (!typedPhone && !opt("sellerEmail")) fieldErrors.sellerPhone = [t("admin.sellerContact")];
-    else if (typedPhone && !phoneDigits) fieldErrors.sellerPhone = [t("admin.sellerPhone")];
+    if (!typedPhone && !opt("sellerEmail")) fieldErrors.sellerPhone = [m.contact];
+    else if (typedPhone && !phoneDigits) fieldErrors.sellerPhone = [m.phone];
   }
   return { seller: seller.success ? seller.data : null, fieldErrors, phoneDigits };
 }
@@ -706,9 +733,10 @@ async function staffSellerAccount(
   s: StaffSeller,
   phoneDigits: string | null,
   source: Source | null,
+  m: PersonMessages = sellerMessages(t),
 ): Promise<{ id: string; created: boolean } | { error: string; fieldErrors?: FieldErrors }> {
   if (s.sellerEmail && isOwnerEmail(s.sellerEmail)) {
-    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("admin.sellerIsStaff")] } };
+    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [m.isStaff] } };
   }
   // .invalid addresses are our own placeholders (phone-only sellers, imports' placeholder owners, the sample listings'
   // seller), never a seller's.
@@ -716,9 +744,11 @@ async function staffSellerAccount(
     return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("field.email")] } };
   }
   const found = await staffListingSeller(s.sellerEmail, phoneDigits);
-  if (found.error) return { error: t("form.checkFields"), fieldErrors: { sellerPhone: [t(found.error)] } };
+  if (found.error) {
+    return { error: t("form.checkFields"), fieldErrors: { sellerPhone: [found.error === "admin.phoneShared" ? m.phoneShared : m.phoneHasAccount] } };
+  }
   if (found.user && (found.user.role === "admin" || isOwnerEmail(found.user.email))) {
-    return { error: t("form.checkFields"), fieldErrors: { [s.sellerEmail ? "sellerEmail" : "sellerPhone"]: [t("admin.sellerIsStaff")] } };
+    return { error: t("form.checkFields"), fieldErrors: { [s.sellerEmail ? "sellerEmail" : "sellerPhone"]: [m.isStaff] } };
   }
   if (found.user) {
     if (!found.user.phone && s.sellerPhone) {
@@ -744,7 +774,7 @@ async function staffSellerAccount(
   // Created at the same moment by someone else (a sign-up with this email): use that account.
   const id = created?.id ?? (await findUserByEmail(email))?.id;
   if (!id) return { error: t("form.fixDetails") };
-  return { id, created: true };
+  return { id, created: Boolean(created) };
 }
 
 export async function adminCreateListing(_prev: StaffListingState, formData: FormData): Promise<StaffListingState> {
@@ -767,7 +797,9 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
   if ("error" in account) return account;
   const sellerId = account.id;
 
-  const [row] = await db
+  // The account is made just before the listing (no transactions over Neon's HTTP driver): if the listing can't be
+  // stored, the account made for it goes too, rather than being left behind with no listing, in neither Users tab.
+  const insertListing = () => db
     .insert(listings)
     .values({
       sellerId,
@@ -795,6 +827,19 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
       leadId: lead?.id ?? null,
     })
     .returning({ id: listings.id, refNo: listings.refNo });
+  let row: Awaited<ReturnType<typeof insertListing>>[number];
+  try {
+    [row] = await insertListing();
+  } catch (err) {
+    console.error("[admin] staff listing insert failed", err);
+    if (account.created) {
+      await db
+        .delete(users)
+        .where(and(eq(users.id, sellerId), isNull(users.passwordHash), sql`not exists (select 1 from ${listings} l where l.seller_id = ${sellerId}::uuid)`))
+        .catch(() => {});
+    }
+    return { error: t("form.fixDetails") };
+  }
 
   // From a seller lead: the lead becomes this listing's (unless it already has one) and this seller's.
   if (lead) {
@@ -907,7 +952,8 @@ export async function adminSetListingOwner(_prev: StaffListingState, formData: F
   const [t, ti] = await Promise.all([getT("errors"), getT("intake")]);
   const id = z.uuid().safeParse(formData.get("listingId"));
   if (!id.success) return { error: t("listing.notFound") };
-  const { seller, fieldErrors, phoneDigits } = readStaffSeller(formData, t);
+  const m = await ownerMessages();
+  const { seller, fieldErrors, phoneDigits } = readStaffSeller(formData, t, m);
   if (!seller || Object.keys(fieldErrors).length) return { error: t("form.checkFields"), fieldErrors };
   const [l] = await db
     .select({
@@ -923,7 +969,7 @@ export async function adminSetListingOwner(_prev: StaffListingState, formData: F
   if (!l) return { error: t("listing.notFound") };
   if (!l.createdByStaff || l.isSample) return { error: ti("owner.notStaff") };
   if (l.ownershipConfirmedAt) return { error: ti("owner.locked") };
-  const account = await staffSellerAccount(t, seller, phoneDigits, null);
+  const account = await staffSellerAccount(t, seller, phoneDigits, null, m);
   if ("error" in account) return account;
   if (account.id === l.sellerId) return { error: ti("owner.same"), fieldErrors: { sellerName: [ti("owner.same")] } };
   const [moved] = await db

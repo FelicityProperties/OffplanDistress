@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { Check, KeyRound, Loader2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -180,12 +180,15 @@ export function AdminListingForm(p: EditProps) {
   return (
     // noValidate: the server checks every field and answers in the page's language, next to the field (the browser's
     // own bubbles follow the browser's language); min/max on the dates still limit the date picker.
-    // Submitted from onSubmit, not `action`: React resets a form after its action, putting the selects and checkboxes
-    // back to the values the page was first loaded with (a save after that would write them back) and clearing what
-    // was typed when a save is refused. Keyed on the listing as saved, so once a save (here or in another card, such as
-    // an accepted offer) changes it, the fields show what is stored, never an older status to be saved back.
+    // Submitted from onSubmit once the page is interactive: React resets a form after its `action`, putting the selects
+    // and checkboxes back to the values the page was first loaded with (a save after that would write them back) and
+    // clearing what was typed when a save is refused; a submit React sees prevented runs no reset. (`action` stays for
+    // a Save clicked before the scripts have loaded: the browser posts it to the server action.) Keyed on the listing
+    // as saved, so once a save (here or in another card, such as an accepted offer) changes it, the fields show what is
+    // stored, never an older status to be saved back.
     <form
       key={p.savedAt}
+      action={action}
       noValidate
       className="grid gap-4 sm:grid-cols-2"
       aria-label={t("listing.manage")}
@@ -361,79 +364,118 @@ export function AdminListingForm(p: EditProps) {
 }
 
 /**
- * A select that shows the value as saved: the choice while it is being saved, the one before it when the save is
- * refused (or fails), and the stored value again whenever the page brings a new one.
+ * A select whose every change is saved straight away (`save` answers an error message, or null). It shows the value as
+ * saved: the choice while it is being saved, the one before it when the save is refused (or fails), and the stored
+ * value again whenever the page brings a new one. A choice made before the page's scripts had loaded (a big table on a
+ * slow connection) never reached onChange: it is saved once they have, rather than left on screen unsaved.
  */
-function useSavedValue<V>(value: V) {
+function SavedSelect<V extends string>({
+  value,
+  label,
+  options,
+  save,
+}: {
+  value: V;
+  label: string;
+  options: [V, string][];
+  save: (next: V) => Promise<string | null>;
+}) {
+  const [pending, start] = useTransition();
   const [shown, setShown] = useState(value);
   const [stored, setStored] = useState(value);
   if (stored !== value) {
     setStored(value);
     setShown(value);
   }
-  return [shown, setShown] as const;
+  const ref = useRef<HTMLSelectElement>(null);
+  const checked = useRef(false);
+  // The choice being saved: the same choice seen twice (React replaying the early change event, and the check below)
+  // is saved once.
+  const saving = useRef<V | null>(null);
+  const change = (next: V) => {
+    if (next === saving.current) return;
+    saving.current = next;
+    setShown(next);
+    start(async () => {
+      const error = await save(next);
+      if (saving.current === next) saving.current = null;
+      // Refused: back to what is saved (the value the page was given when the choice was made).
+      if (error) setShown(value);
+    });
+  };
+  useEffect(() => {
+    if (checked.current) return;
+    checked.current = true;
+    const el = ref.current;
+    if (el && el.value !== value && options.some(([v]) => v === el.value)) change(el.value as V);
+    // Once, on the first render in the browser.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <select
+      ref={ref}
+      aria-label={label}
+      value={shown}
+      // Never refilled by the browser: on Back (or Firefox's reload) it would put an earlier choice back in the select,
+      // which the check above would then save over what is stored now (a KYC or role someone has changed since).
+      autoComplete="off"
+      disabled={pending}
+      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+      onChange={(e) => change(e.target.value as V)}
+    >
+      {options.map(([v, text]) => (
+        <option key={v} value={v}>
+          {text}
+        </option>
+      ))}
+    </select>
+  );
 }
 
 export function KycSelect({ userId, value }: { userId: string; value: "not_started" | "pending" | "verified" }) {
   const t = useT("admin");
   const tc = useT("common");
-  const [pending, start] = useTransition();
-  const [shown, setShown] = useSavedValue(value);
   return (
-    <select
-      aria-label={t("kyc.label")}
-      value={shown}
-      disabled={pending}
-      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-      onChange={(e) => {
-        const before = shown;
-        const next = e.target.value as typeof value;
-        setShown(next);
-        start(async () => {
-          try {
-            await setKycStatus(userId, next);
-            toast.success(t("kyc.updated"));
-          } catch {
-            setShown(before);
-            toast.error(t("kyc.failed"));
-          }
-        });
+    <SavedSelect
+      value={value}
+      label={t("kyc.label")}
+      options={[
+        ["not_started", tc("kyc.not_started")],
+        ["pending", tc("kyc.pending")],
+        ["verified", tc("kyc.verified")],
+      ]}
+      save={async (next) => {
+        try {
+          await setKycStatus(userId, next);
+          toast.success(t("kyc.updated"));
+          return null;
+        } catch {
+          toast.error(t("kyc.failed"));
+          return t("kyc.failed");
+        }
       }}
-    >
-      <option value="not_started">{tc("kyc.not_started")}</option>
-      <option value="pending">{tc("kyc.pending")}</option>
-      <option value="verified">{tc("kyc.verified")}</option>
-    </select>
+    />
   );
 }
 
 export function RoleSelect({ userId, value }: { userId: string; value: "user" | "admin" }) {
   const t = useT("admin");
-  const [pending, start] = useTransition();
-  const [shown, setShown] = useSavedValue(value);
   return (
-    <select
-      aria-label={t("role.label")}
-      value={shown}
-      disabled={pending}
-      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-      onChange={(e) => {
-        const before = shown;
-        const next = e.target.value as typeof value;
-        setShown(next);
-        start(async () => {
-          // A refused change (your own access, an owner account) leaves the role as it was, so the select shows it.
-          const res = await setUserRole(userId, next).catch(() => ({ error: t("role.failed") }));
-          if (res.error) {
-            setShown(before);
-            toast.error(res.error);
-          } else toast.success(t("role.updated"));
-        });
+    <SavedSelect
+      value={value}
+      label={t("role.label")}
+      options={[
+        ["user", t("role.user")],
+        ["admin", t("role.admin")],
+      ]}
+      // A refused change (your own access, an owner account) leaves the role as it was, and the select shows it.
+      save={async (next) => {
+        const res = await setUserRole(userId, next).catch(() => ({ error: t("role.failed") }));
+        if (res.error) toast.error(res.error);
+        else toast.success(t("role.updated"));
+        return res.error ?? null;
       }}
-    >
-      <option value="user">{t("role.user")}</option>
-      <option value="admin">{t("role.admin")}</option>
-    </select>
+    />
   );
 }
 

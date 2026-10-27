@@ -12,7 +12,8 @@ import { advertisedSql } from "./permits";
 import { searchKey } from "./place-names";
 
 const remaining = sql<number>`(${listings.originalPrice} - ${listings.amountPaid})`;
-const saleValue = sql<number>`(${listings.askingPrice} + ${listings.originalPrice} - ${listings.amountPaid})`;
+// bigint, as transferSaleValue below: asking + SPA price can pass the int4 limit (each fits) and would fail the query.
+const saleValue = sql<number>`(${listings.askingPrice}::bigint + ${listings.originalPrice} - ${listings.amountPaid})`;
 
 /**
  * Cash at transfer: the same definition as analyzeDeal's cashToClose in src/lib/deal-math.ts (see the comment there),
