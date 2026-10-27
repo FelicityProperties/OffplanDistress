@@ -59,7 +59,8 @@ export async function GET() {
     [t("export.col.saleValue"), (r) => r.deal.saleValue],
     [t("export.col.commission"), (r) => (r.deal.saleValue == null ? null : platformFee(r.deal.saleValue).commission)],
     [t("export.col.vat"), (r) => (r.deal.saleValue == null ? null : platformFee(r.deal.saleValue).vat)],
-    // The deal page's "cash at transfer" at the agreed price instead of the asking price (an estimate: DLD, NOC fees).
+    // The deal page's "cash at transfer" at the agreed price instead of the asking price (an estimate: DLD fees, and the
+    // NOC fee until the developer's invoiced one is in the deal file).
     [
       t("export.col.cashAtTransfer"),
       (r) =>
@@ -72,6 +73,7 @@ export async function GET() {
               launchPrice: null,
               overdueAmount: r.overdueAmount,
               overduePenalty: r.overduePenalty,
+              nocFee: r.deal.nocFee,
             }).cashToClose,
     ],
     [t("dealFile.field.depositAmount"), (r) => r.deal.depositAmount],

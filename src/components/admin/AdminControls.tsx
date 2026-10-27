@@ -88,6 +88,8 @@ type EditProps = {
   nocEligible: boolean;
   launchPrice: number | null;
   askingPrice: number;
+  /** Paid to the developer so far: corrected here from its statement of account (only shown, and saved, when given). */
+  amountPaid?: number;
   developer: string;
   developerOther: string | null;
   community: string;
@@ -218,6 +220,18 @@ export function AdminListingForm(p: EditProps) {
       >
         <Input id="launchPrice" name="launchPrice" type="number" min={0} defaultValue={p.launchPrice ?? ""} />
       </Field>
+      {p.amountPaid != null && (
+        <Field label={t("form.amountPaid")} htmlFor="amountPaid" error={fe.amountPaid} hint={t("form.amountPaidHint")}>
+          <Input
+            id="amountPaid"
+            name="amountPaid"
+            type="number"
+            min={0}
+            aria-invalid={fe.amountPaid ? true : undefined}
+            defaultValue={p.amountPaid}
+          />
+        </Field>
+      )}
       {p.arrears && (
         <fieldset className="grid gap-4 rounded-xl border border-border/80 p-4 sm:col-span-2 sm:grid-cols-3">
           <legend className="px-1 text-sm font-semibold">{t("form.arrears")}</legend>

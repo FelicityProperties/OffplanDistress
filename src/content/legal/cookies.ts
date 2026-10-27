@@ -1,8 +1,8 @@
 import { contactBulletsAr, contactBulletsEn, iso, LEGAL_UPDATED, OP } from "./brand";
 import type { LegalContent } from "./types";
 
-// Cookie Policy. The two cookies are set in src/lib/auth.ts (od_session) and src/i18n/actions.ts (od_locale);
-// update this text if either changes.
+// Cookie Policy. The two cookies are set in src/lib/auth.ts (od_session) and src/i18n/actions.ts + src/proxy.ts
+// (od_locale); update this text (and LEGAL_UPDATED) if either changes.
 
 export const cookiePolicy: LegalContent = {
   en: {
@@ -24,7 +24,7 @@ export const cookiePolicy: LegalContent = {
         paragraphs: [`${OP.site} sets only two first-party cookies, both necessary for the Platform to work as you expect:`],
         bullets: [
           "od_session: keeps you signed in after you log in. It holds a random token, of which we store only a hashed copy. Type: strictly necessary, first-party and httpOnly, so scripts on the page cannot read it. Duration: 30 days, or until you log out.",
-          "od_locale: remembers whether you chose English or Arabic. It holds only “en” or “ar” and is set when you pick a language or open one of our pages in Arabic. Type: strictly necessary (preference), first-party. Duration: 1 year.",
+          "od_locale: remembers whether you chose English or Arabic. It holds only “en” or “ar” and is set when you pick a language, log in or sign up (to the language of that page), or open one of our pages in Arabic. Type: strictly necessary (preference), first-party. Duration: 1 year.",
         ],
       },
       {
@@ -78,7 +78,7 @@ export const cookiePolicy: LegalContent = {
         paragraphs: [`لا تضع منصة ${iso(OP.site)} سوى ملفَّي تعريف ارتباط من الطرف الأول، وكلاهما لازم لعمل المنصة على النحو الذي تتوقعه:`],
         bullets: [
           `${iso("od_session")}: يُبقيك مسجّلاً الدخول بعد تسجيلك، ويحمل رمزاً عشوائياً لا نحتفظ منه إلا بنسخة مجزّأة. النوع: ضروري تماماً، من الطرف الأول، ومن نوع ${iso("httpOnly")} فلا يمكن للنصوص البرمجية في الصفحة قراءته. المدة: 30 يوماً، أو حتى تسجيل الخروج.`,
-          `${iso("od_locale")}: يتذكّر اختيارك للغة العربية أو الإنجليزية، ولا يحمل سوى القيمة «${iso("ar")}» أو «${iso("en")}»، ويُضبط عند اختيارك اللغة أو عند فتح إحدى صفحاتنا باللغة العربية. النوع: ضروري تماماً (للتفضيلات)، من الطرف الأول. المدة: سنة واحدة.`,
+          `${iso("od_locale")}: يتذكّر اختيارك للغة العربية أو الإنجليزية، ولا يحمل سوى القيمة «${iso("ar")}» أو «${iso("en")}»، ويُضبط عند اختيارك اللغة، أو عند تسجيل الدخول أو إنشاء حساب (على لغة تلك الصفحة)، أو عند فتح إحدى صفحاتنا باللغة العربية. النوع: ضروري تماماً (للتفضيلات)، من الطرف الأول. المدة: سنة واحدة.`,
         ],
       },
       {

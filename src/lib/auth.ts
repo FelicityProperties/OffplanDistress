@@ -7,8 +7,6 @@ import bcrypt from "bcryptjs";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
-import { localePath } from "@/i18n/paths";
-import { getLocale } from "@/i18n/server";
 import { OWNER_EMAILS } from "@/lib/config";
 
 const COOKIE = "od_session";
@@ -97,8 +95,9 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
 
 export async function requireUser(next?: string): Promise<SessionUser> {
   const user = await getCurrentUser();
-  // The login page in the visitor's language (/ar/login for Arabic).
-  if (!user) redirect(localePath(next ? `/login?next=${encodeURIComponent(next)}` : "/login", await getLocale()));
+  // The plain login address: src/proxy.ts sends a visitor who chose Arabic (od_locale) on to /ar/login. A language
+  // guessed from the browser alone must not, or it would become a saved choice for the whole site.
+  if (!user) redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
   return user;
 }
 

@@ -12,6 +12,9 @@ import { cardColumns, offerCountSql, watchersSql, type ListingCard } from "./lis
 export const ownListingSql = (userId: string) =>
   and(eq(listings.sellerId, userId), sql`not (${listings.createdByStaff} and ${listings.ownershipConfirmedAt} is null)`);
 
+/** The outer listing's id inside a subquery (qualified, so it can't be read as the subquery's own "id"). */
+const LISTING_ID = sql.raw(`"listings"."id"`);
+
 export async function myListings(userId: string) {
   return db
     .select({
@@ -30,8 +33,8 @@ export async function myListings(userId: string) {
       createdAt: listings.createdAt,
       watchers: watchersSql,
       offers: offerCountSql,
-      pendingOffers: sql<number>`(select count(*)::int from ${offers} o where o.listing_id = ${listings.id} and o.status = 'pending')`,
-      docs: sql<number>`(select count(*)::int from ${files} f where f.listing_id = ${listings.id} and f.kind <> 'photo')`,
+      pendingOffers: sql<number>`(select count(*)::int from ${offers} o where o.listing_id = ${LISTING_ID} and o.status = 'pending')`,
+      docs: sql<number>`(select count(*)::int from ${files} f where f.listing_id = ${LISTING_ID} and f.kind <> 'photo')`,
     })
     .from(listings)
     .where(ownListingSql(userId))

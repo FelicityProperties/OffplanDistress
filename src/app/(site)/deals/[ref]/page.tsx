@@ -94,7 +94,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const [row, user] = await Promise.all([load(ref), getCurrentUser()]);
   if (!row) notFound();
   const l = row.listing;
-  const isOwner = user?.id === l.sellerId;
+  // A listing our team entered has no seller-side owner until its seller confirms it (ownListingSql in
+  // src/lib/dashboard.ts): the account it was filed under may not be theirs.
+  const isOwner = user?.id === l.sellerId && !(l.createdByStaff && !l.ownershipConfirmedAt);
   const isAdmin = user?.role === "admin";
   // Only an advert is public. Anything else (including a live listing whose DLD permit or Form A ran out before the
   // daily job paused it) is a private page for its seller and our team: no offers, no listing markup.

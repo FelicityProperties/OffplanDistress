@@ -12,14 +12,14 @@ import type { TFn } from "@/i18n/translator";
 import { audit, changes } from "@/lib/audit";
 import { findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
 import { claimPath, isPlaceholderEmail, issueClaimToken, placeholderEmail } from "@/lib/claim";
-import { addNote, saveDealFile, stageGate, type DealFileState, type GateNeed } from "@/lib/deals";
+import { addNote, saveDealFile, stageGate, syncSaleValue, type DealFileState, type GateNeed } from "@/lib/deals";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
 import { emailEnabled, sendEmail } from "@/lib/email";
 import { formatDate, formatNumber, refCode } from "@/lib/format";
 import { whatsappNumber } from "@/lib/leads";
 import { renderTemplate } from "@/lib/notification-templates";
 import { notify, notifyPriceDrop } from "@/lib/notify";
-import { closeOpenOffers, DEAL_STATUSES, reopenUnit } from "@/lib/offers";
+import { cancelAcceptedOffers, closeOpenOffers, DEAL_STATUSES, reopenUnit } from "@/lib/offers";
 import { dubaiToday, expiryDateBounds, isAdvertised, isDldPermitUrl, publishBlocker } from "@/lib/permits";
 import { siteUrl } from "@/lib/site-url";
 import { scrubTypedName } from "@/lib/typed-names";
@@ -45,13 +45,26 @@ async function assertAdmin() {
   return user;
 }
 
-type ListingForNotice = { id: string; sellerId: string; projectName: string; refNo: number; isSample: boolean };
+type ListingForNotice = {
+  id: string;
+  sellerId: string;
+  projectName: string;
+  refNo: number;
+  isSample: boolean;
+  createdByStaff: boolean;
+  ownershipConfirmedAt: Date | null;
+};
 
 const sellerHref = (id: string) => `/dashboard/listings/${id}`;
 
-/** Sample listings belong to placeholder sellers, so their "seller" never gets in-app rows or emails. */
+/**
+ * Sample listings belong to placeholder sellers, so their "seller" never gets in-app rows or emails. Nor does the
+ * account a listing our team entered is filed under, until its seller has confirmed it (awaitsSellerConfirmation): it
+ * may not be the seller's, and the listing isn't on its dashboard yet. Our team reaches that seller through the claim
+ * link or WhatsApp.
+ */
 async function notifySeller(l: ListingForNotice, key: Parameters<typeof notify>[1], params: Parameters<typeof notify>[2]) {
-  if (!l.isSample) await notify([l.sellerId], key, params, sellerHref(l.id));
+  if (!l.isSample && !awaitsSellerConfirmation(l)) await notify([l.sellerId], key, params, sellerHref(l.id));
 }
 
 /** Seller and the buyer whose offer was accepted hear about each step of the transfer. */
@@ -180,8 +193,10 @@ export async function rejectListing(listingId: string, reason: string) {
       project: before.projectName,
       reason: clean || { t: "errors", key: "notify.rejectedFallback" },
     });
-    // Off the market: buyers with an open offer on it are told it is no longer available.
+    // Off the market: buyers with an open offer on it are told it is no longer available, and a deal agreed on it ends
+    // (as in the listing editor below).
     await closeOpenOffers(before, "unavailable");
+    if (before.status !== "transferred") await cancelAcceptedOffers(before, "rejected", "withdrawn_by_team");
   }
   refresh();
   return { ok: true };
@@ -210,6 +225,9 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
     nocEligible: z.boolean(),
     launchPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
     askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative(),
+    // Paid to the developer to date, corrected from its statement of account (at most the SPA price, checked below).
+    // Empty or left out = unchanged.
+    amountPaid: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
     // Arrears from the developer's statement of account; both empty = not known. See arrearsUpdate below.
     overdueAmount: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
     // An int4 column: a typo with extra zeros is a field error, not a failed save. (The overdue amount is capped by
@@ -266,6 +284,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       nocEligible: formData.get("nocEligible") === "on",
       launchPrice: formData.get("launchPrice") || undefined,
       askingPrice: formData.get("askingPrice"),
+      amountPaid: formData.get("amountPaid") || undefined,
       overdueAmount: formData.get("overdueAmount") || undefined,
       overduePenalty: formData.get("overduePenalty") || undefined,
       arrearsCheckedAt: formData.get("arrearsCheckedAt") || undefined,
@@ -312,8 +331,13 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
     .where(eq(listings.id, v.listingId))
     .limit(1);
   if (!current) return { error: t("listing.notFound") };
+  // The amount paid as corrected here (the seller paid an instalment since listing, say), or as it was.
+  const amountPaid = v.amountPaid ?? current.amountPaid;
+  if (amountPaid > current.originalPrice) {
+    return { error: t("form.checkFields"), fieldErrors: { amountPaid: [t("field.amountPaidMax")] } };
+  }
   // Overdue instalments are part of the balance still owed to the developer, so they can't be more than it.
-  const remainingBalance = Math.max(current.originalPrice - current.amountPaid, 0);
+  const remainingBalance = Math.max(current.originalPrice - amountPaid, 0);
   if (v.overdueAmount != null && v.overdueAmount > remainingBalance) {
     return {
       error: t("form.checkFields"),
@@ -390,6 +414,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
     nocEligible: v.nocEligible,
     launchPrice: v.launchPrice ?? null,
     askingPrice: v.askingPrice,
+    amountPaid,
     ...(arrearsUpdate ?? {}),
     adminNotes: v.adminNotes ?? null,
     dldPermit: v.dldPermit || null,
@@ -414,6 +439,8 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (!saved) return { error: t("listing.statusChanged") };
   const diff = changes(current, values);
   if (Object.keys(diff).length) await audit({ actorId: me.id, action: "listing.update", entityType: "listing", entityId: v.listingId, diff });
+  // The balance owed to the developer changed, so the open deal's sale value (and our fee on it) follows.
+  if (amountPaid !== current.amountPaid) await syncSaleValue(me.id, v.listingId);
 
   const statusChanged = v.status !== current.status;
   // Going live for the first time is an approval, whichever control the admin used.
@@ -423,9 +450,14 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (statusChanged && v.status === "noc_in_progress") await notifyDealStep(current, "deal.noc_in_progress");
   if (statusChanged && v.status === "transferred") await notifyDealStep(current, "deal.transferred");
   // The bidders: a sold unit closes the open offers, and so does one taken off the market. A unit back on the market
-  // has no deal any more: the accepted offer is closed (that buyer told) and the backups are active again.
+  // has no deal any more: the accepted offer is closed (that buyer told) and the backups are active again. So has one
+  // our team takes off the market while in a deal (as when the seller withdraws): its file is closed with the reason
+  // and the accepted offer declined. Never a transferred unit's: that deal completed.
   if (statusChanged && v.status === "transferred") await closeOpenOffers(current, "sold");
-  if (statusChanged && (v.status === "withdrawn" || v.status === "rejected")) await closeOpenOffers(current, "unavailable");
+  if (statusChanged && (v.status === "withdrawn" || v.status === "rejected")) {
+    await closeOpenOffers(current, "unavailable");
+    if (current.status !== "transferred") await cancelAcceptedOffers(current, v.status, "withdrawn_by_team");
+  }
   if (statusChanged && v.status === "live") await reopenUnit(current, current.status);
   // Watchers only hear about drops on deals they can open (and never on sample listings): not while the permit or
   // Form A of a unit in a deal has run out, and the drop is announced from the last public price once it is renewed.

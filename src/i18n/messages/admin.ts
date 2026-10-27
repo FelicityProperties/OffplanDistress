@@ -34,9 +34,10 @@ export default defineMessages({
     "queue.kpi.awaiting": "Awaiting verification",
     "queue.kpi.live": "Live listings",
     "queue.kpi.inTransfer": "In NOC / transfer",
-    "queue.kpi.pipelineFees": "{amount} fees in pipeline, on agreed prices",
+    "queue.kpi.pipelineFees": "{amount} fees in pipeline, on agreed prices (our share after any co-broker's)",
     "queue.kpi.feesEarned": "Fees earned (all time)",
-    "queue.kpi.feesEarnedHint": "On agreed prices (the asking price where none is recorded), VAT included",
+    "queue.kpi.feesEarnedHint":
+      "Our share after any co-broker's, on agreed prices (the asking price where none is recorded), VAT included",
     "queue.empty": "Queue clear — nothing waiting for verification.",
     "queue.submitted": "submitted {date}",
     "queue.doc.spa": "SPA",
@@ -128,6 +129,9 @@ export default defineMessages({
     "form.otherHint": "Shown to buyers instead of “Other”. To map it, pick the matching name from the list; the typed name is then cleared.",
     "form.launchPrice": "Current developer launch price (AED)",
     "form.launchPriceHint": "For an equivalent new unit today — drives the discount badge",
+    "form.amountPaid": "Paid to the developer to date (AED)",
+    "form.amountPaidHint":
+      "As on the developer's statement of account: correct it when the seller has paid another instalment. The balance still owed follows it, and so do the deal file's sale value, our fee and the deal page's figures.",
     "form.arrears": "Arrears with the developer",
     "form.arrearsHint":
       "From the developer's statement of account. Buyers see them in the cash needed on transfer day, with the check date. Leave both amounts empty if not checked; enter 0 when the seller is up to date.",
@@ -293,6 +297,7 @@ export default defineMessages({
     "users.pendingSub": "{count} sellers our team added who haven't confirmed a listing yet.",
     "users.pendingEmpty": "No sellers waiting to confirm a listing.",
     "users.noEmail": "No email yet",
+    "users.addedBuyer": "Buyer added by our team to a deal file · no password yet (they set one with “Forgot password”)",
     "users.openListing": "Open listing {ref}",
 
     // Banner across the admin console when emails can't reach users (src/lib/email.ts emailOffReason).
@@ -382,6 +387,7 @@ export default defineMessages({
     "dealFile.cancel.relisted": "the unit went back on the market",
     "dealFile.cancel.seller_withdrew": "the seller withdrew",
     "dealFile.cancel.superseded": "replaced by a newer deal",
+    "dealFile.cancel.withdrawn_by_team": "our team took the unit off the market",
     "dealFile.earlier": "Earlier deals on this unit that fell through",
     "dealFile.earlierItem": "{date} · {reason}",
     "dealFile.checklist": "Checklist",
@@ -417,7 +423,7 @@ export default defineMessages({
     "dealFile.fee": "Our fee ({rate} + VAT): {amount}",
     "dealFile.feeShare": "Our share after the co-broker's {pct}%: {amount}",
     "dealFile.cashAtTransfer":
-      "Buyer's cash on transfer day at this price: {amount} (estimated: the agreed price, our fee + VAT, the DLD fee, registration and NOC fees, and any arrears with the developer)",
+      "Buyer's cash on transfer day at this price: {amount} (estimated: the agreed price, our fee + VAT, the DLD fee, registration fees, the developer's NOC fee (as invoiced once entered below) and any arrears with the developer)",
     "dealFile.field.depositAmount": "Deposit (AED)",
     "dealFile.field.depositHeldBy": "Deposit held by",
     "dealFile.held.none": "Not recorded",
@@ -454,6 +460,10 @@ export default defineMessages({
     "dealFile.field.buyerEmail": "Buyer's account email",
     "dealFile.field.buyerEmailHint":
       "Links the buyer's account to this deal, so their KYC can be checked. Only for a deal without an accepted offer.",
+    "dealFile.field.buyerName": "Buyer's full name",
+    "dealFile.field.buyerNewHint":
+      "Only for a buyer without an account (found off the platform): we create one with this name, email and mobile. It has no password until they set one with “Forgot password”; verify their KYC on the Users page.",
+    "dealFile.field.buyerPhone": "Buyer's mobile (optional)",
     "dealFile.save": "Save deal file",
     "dealFile.saved": "Deal file saved",
     "dealFile.notes": "Notes",
@@ -498,6 +508,7 @@ export default defineMessages({
     "history.field.amount": "Offer",
     "history.field.counterAmount": "Counter-offer",
     "history.field.buyerAccount": "Buyer's account",
+    "history.field.newBuyerAccount": "New buyer account",
     "history.field.newSellerAccount": "New seller account",
     "history.field.leadRef": "Seller lead",
     "history.field.ownershipConfirmedAt": "Ownership confirmed",
@@ -574,9 +585,10 @@ export default defineMessages({
     "queue.kpi.awaiting": "بانتظار التحقق",
     "queue.kpi.live": "الإعلانات المنشورة",
     "queue.kpi.inTransfer": "قيد إصدار شهادة عدم الممانعة / نقل الملكية",
-    "queue.kpi.pipelineFees": "رسوم قيد الإنجاز على الأسعار المتفق عليها: {amount}",
+    "queue.kpi.pipelineFees": "رسوم قيد الإنجاز على الأسعار المتفق عليها (حصتنا بعد حصة أي وسيط مشارك): {amount}",
     "queue.kpi.feesEarned": "إجمالي الرسوم المكتسبة",
-    "queue.kpi.feesEarnedHint": "على الأسعار المتفق عليها (أو السعر المطلوب إن لم يُسجَّل)، شاملةً ضريبة القيمة المضافة",
+    "queue.kpi.feesEarnedHint":
+      "حصتنا بعد حصة أي وسيط مشارك، على الأسعار المتفق عليها (أو السعر المطلوب إن لم يُسجَّل)، شاملةً ضريبة القيمة المضافة",
     "queue.empty": "لا توجد إعلانات بانتظار التحقق.",
     "queue.submitted": "قُدِّم في {date}",
     "queue.doc.spa": "الاتفاقية",
@@ -667,6 +679,9 @@ export default defineMessages({
     "form.otherHint": "يظهر للمشترين بدلاً من «أخرى». لربطه بالقائمة، اختر الاسم المطابق منها، وعندها يُحذف الاسم المكتوب.",
     "form.launchPrice": "سعر الإطلاق الحالي لدى المطوّر (درهم)",
     "form.launchPriceHint": "لوحدة جديدة مماثلة اليوم، ويُستخدم لاحتساب شارة الخصم",
+    "form.amountPaid": "المدفوع للمطوّر حتى تاريخه (درهم)",
+    "form.amountPaidHint":
+      "كما يرد في كشف حساب المطوّر، ويُصحَّح إذا سدّد البائع قسطاً آخر. يتبعه الرصيد المستحق للمطوّر، وكذلك قيمة البيع في ملف الصفقة ورسومنا والأرقام المعروضة في صفحة الصفقة.",
     "form.arrears": "المتأخرات المستحقة للمطوّر",
     "form.arrearsHint":
       "من كشف حساب المطوّر. يراها المشترون ضمن المبلغ النقدي المطلوب يوم نقل الملكية مع تاريخ التحقق. اترك الحقلين فارغين إذا لم يتم التحقق، وأدخل 0 إذا كانت أقساط البائع مسدّدة.",
@@ -827,6 +842,7 @@ export default defineMessages({
     "users.pendingSub": "عدد البائعين الذين أضافهم فريقنا ولم يؤكدوا إعلاناً بعد: {count}.",
     "users.pendingEmpty": "لا يوجد بائعون بانتظار تأكيد إعلان.",
     "users.noEmail": "لا يوجد بريد إلكتروني بعد",
+    "users.addedBuyer": "مشترٍ أضافه فريقنا إلى ملف صفقة · لا توجد كلمة مرور بعد (يعيّنها من خلال «نسيت كلمة المرور»)",
     "users.openListing": "فتح الإعلان ⁨{ref}⁩",
 
     "emailOff.title": "البريد الإلكتروني متوقف — لا يتلقى المستخدمون إلا الإشعارات داخل المنصة",
@@ -910,6 +926,7 @@ export default defineMessages({
     "dealFile.cancel.relisted": "أُعيدت الوحدة إلى السوق",
     "dealFile.cancel.seller_withdrew": "انسحب البائع",
     "dealFile.cancel.superseded": "حلّت محلها صفقة أحدث",
+    "dealFile.cancel.withdrawn_by_team": "سحب فريقنا الوحدة من السوق",
     "dealFile.earlier": "صفقات سابقة على هذه الوحدة لم تكتمل",
     "dealFile.earlierItem": "{date} · {reason}",
     "dealFile.checklist": "قائمة التحقق",
@@ -945,7 +962,7 @@ export default defineMessages({
     "dealFile.fee": "رسومنا ({rate} + ضريبة القيمة المضافة): {amount}",
     "dealFile.feeShare": "حصتنا بعد نسبة الوسيط المشارك البالغة {pct}%: {amount}",
     "dealFile.cashAtTransfer":
-      "المبلغ النقدي المطلوب من المشتري يوم نقل الملكية بهذا السعر: ⁨{amount}⁩ (تقديري: السعر المتفق عليه ورسومنا مع ضريبة القيمة المضافة ورسم دائرة الأراضي والأملاك ورسوم التسجيل وشهادة عدم الممانعة، وأي متأخرات لدى المطوّر)",
+      "المبلغ النقدي المطلوب من المشتري يوم نقل الملكية بهذا السعر: ⁨{amount}⁩ (تقديري: السعر المتفق عليه ورسومنا مع ضريبة القيمة المضافة ورسم دائرة الأراضي والأملاك ورسوم التسجيل ورسوم شهادة عدم الممانعة لدى المطوّر (كما في فاتورته بعد إدخالها أدناه)، وأي متأخرات لدى المطوّر)",
     "dealFile.field.depositAmount": "العربون (بالدرهم)",
     "dealFile.field.depositHeldBy": "الجهة المحتفظة بالعربون",
     "dealFile.held.none": "غير مسجّل",
@@ -981,6 +998,10 @@ export default defineMessages({
     "dealFile.field.commissionPaidAt": "تاريخ استلام العمولة",
     "dealFile.field.buyerEmail": "البريد الإلكتروني لحساب المشتري",
     "dealFile.field.buyerEmailHint": "يربط حساب المشتري بهذه الصفقة ليتسنى التحقق من هويته. يُستخدم فقط لصفقة ليس لها عرض مقبول.",
+    "dealFile.field.buyerName": "الاسم الكامل للمشتري",
+    "dealFile.field.buyerNewHint":
+      "فقط لمشترٍ ليس لديه حساب (تعرّفنا إليه خارج المنصة): ننشئ له حساباً بهذا الاسم والبريد الإلكتروني ورقم الجوال، ويبقى دون كلمة مرور حتى يعيّنها من خلال «نسيت كلمة المرور». تحقّق من هويته في صفحة المستخدمين.",
+    "dealFile.field.buyerPhone": "رقم جوال المشتري (اختياري)",
     "dealFile.save": "حفظ ملف الصفقة",
     "dealFile.saved": "تم حفظ ملف الصفقة",
     "dealFile.notes": "الملاحظات",
@@ -1024,6 +1045,7 @@ export default defineMessages({
     "history.field.amount": "العرض",
     "history.field.counterAmount": "العرض المقابل",
     "history.field.buyerAccount": "حساب المشتري",
+    "history.field.newBuyerAccount": "حساب مشترٍ جديد",
     "history.field.newSellerAccount": "حساب بائع جديد",
     "history.field.leadRef": "طلب البائع",
     "history.field.ownershipConfirmedAt": "تأكيد الملكية",

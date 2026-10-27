@@ -29,7 +29,9 @@ const cashToClose = sql<number>`(${listings.askingPrice}::numeric${
 const discount = sql<number | null>`case when ${listings.launchPrice} > 0 then 1 - (${saleValue})::float / ${listings.launchPrice} end`;
 const paidPct = sql<number>`case when ${listings.originalPrice} > 0 then ${listings.amountPaid}::float / ${listings.originalPrice} else 0 end`;
 const watchers = sql<number>`(select count(*)::int from ${watchlist} w where w.listing_id = ${listings.id})`;
-const offerCount = sql<number>`(select count(*)::int from ${offers} o where o.listing_id = ${listings.id})`;
+// Qualified: in a select from listings alone Drizzle writes ${listings.id} as a bare "id", which inside the subquery
+// would be the offer's own id (and the count always 0).
+const offerCount = sql<number>`(select count(*)::int from ${offers} o where o.listing_id = ${sql.raw(`"listings"."id"`)})`;
 
 export const cardColumns = {
   id: listings.id,

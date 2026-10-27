@@ -7,6 +7,8 @@ import { dealNotes, deals, listings, offers, users, type Deal } from "@/db/schem
 import type { TFn } from "@/i18n/translator";
 import { audit, changes } from "./audit";
 import { isOwnerEmail } from "./auth";
+import { isPlaceholderEmail } from "./claim";
+import { whatsappNumber } from "./leads";
 import { dubaiToday } from "./permits";
 
 // The deal file (deals table, see schema.ts): from the accepted offer to the DLD transfer. Opened when an offer is
@@ -20,7 +22,8 @@ type FileStatus = (typeof FILE_STATUSES)[number];
 const FILE_STATUS_SQL = sql.raw(FILE_STATUSES.map((s) => `'${s}'`).join(", "));
 
 export const DEPOSIT_HOLDERS = ["broker", "seller", "trustee", "developer", "other"] as const;
-export const CANCEL_REASONS = ["relisted", "seller_withdrew", "superseded"] as const;
+/** "withdrawn_by_team": our team withdrew or rejected the unit (listing editor, review queue) while it was in a deal. */
+export const CANCEL_REASONS = ["relisted", "seller_withdrew", "superseded", "withdrawn_by_team"] as const;
 export type CancelReason = (typeof CANCEL_REASONS)[number];
 
 const INT_MAX = 2_147_483_647;
@@ -96,8 +99,9 @@ export async function startDeal(listingId: string, offerId: string) {
 }
 
 /**
- * The deal on the unit is off (it went back on the market, or the seller withdrew): its file is closed with the
- * reason and kept. With `whileStatus`, only while the unit is still in that status, checked in the same statement.
+ * The deal on the unit is off (it went back on the market, the seller withdrew or our team took it off the market):
+ * its file is closed with the reason and kept. With `whileStatus`, only while the unit is still in that status, checked
+ * in the same statement.
  */
 export async function cancelOpenDeals(listingId: string, reason: CancelReason, whileStatus?: string) {
   const now = new Date();
@@ -287,6 +291,14 @@ function dealFileSchema(t: T, today: string) {
       nocValidUntil: date,
       transferBookedFor: date,
       buyerEmail: z.string().trim().max(200).pipe(z.email(t("field.email"))).optional(),
+      // Only for a buyer without an account (found off the platform): their account is created with these.
+      buyerName: z.string().trim().min(2, t("deal.field.buyerName")).max(120, t("field.tooLong", { max: 120 })).optional(),
+      buyerPhone: z
+        .string()
+        .trim()
+        .max(30, t("field.tooLong", { max: 30 }))
+        .refine((p) => whatsappNumber(p) != null, t("admin.sellerPhone"))
+        .optional(),
     })
     .superRefine((v, ctx) => {
       if (v.nocValidUntil && v.nocIssuedAt && v.nocValidUntil < v.nocIssuedAt) {
@@ -322,6 +334,8 @@ const FORM_KEYS = [
   ...DEAL_PAST_DATES,
   ...DEAL_ANY_DATES,
   "buyerEmail",
+  "buyerName",
+  "buyerPhone",
 ] as const;
 
 /**
@@ -359,16 +373,52 @@ export async function saveDealFile(actorId: string, formData: FormData, t: T): P
     return { error: t("form.checkFields"), fieldErrors: { agreedPrice: [t("field.amountTooLarge")] } };
   }
 
-  // Linking the buyer's account: only for a deal without one (a status set by hand, with no accepted offer).
+  // Linking the buyer's account: only for a deal without one (a status set by hand, with no accepted offer). A buyer
+  // found off the platform (through a co-broker, say) may have none: given their name, our team creates it here, with
+  // no password (they set one with "Forgot password") and never a staff role; their KYC is then verified on Admin →
+  // Users as anyone's, and the stage gates are unchanged.
   let buyerId = current.buyerId;
+  let newBuyerId: string | null = null;
   if (!current.buyerId && v.buyerEmail) {
-    const [buyer] = await db
-      .select({ id: users.id, role: users.role, email: users.email })
-      .from(users)
-      .where(sql`lower(${users.email}) = ${v.buyerEmail.toLowerCase()}`)
-      .limit(1);
-    if (!buyer) return { error: t("form.checkFields"), fieldErrors: { buyerEmail: [t("deal.field.buyerNotFound")] } };
-    if (buyer.role === "admin" || isOwnerEmail(buyer.email) || buyer.id === row.sellerId) {
+    const email = v.buyerEmail.toLowerCase();
+    const findBuyer = async () =>
+      (
+        await db
+          .select({ id: users.id, role: users.role, email: users.email })
+          .from(users)
+          .where(sql`lower(${users.email}) = ${email}`)
+          .limit(1)
+      )[0];
+    // .invalid addresses are our own placeholders, never a buyer's.
+    if (isPlaceholderEmail(email)) return { error: t("form.checkFields"), fieldErrors: { buyerEmail: [t("field.email")] } };
+    let buyer = await findBuyer();
+    // The owners' addresses are kept for their own (staff) accounts, even before those exist.
+    if (!buyer && v.buyerName && !isOwnerEmail(email)) {
+      const [created] = await db
+        .insert(users)
+        .values({ email, fullName: v.buyerName, phone: v.buyerPhone ?? null, passwordHash: null, intent: "buy" })
+        .onConflictDoNothing()
+        .returning({ id: users.id, role: users.role, email: users.email });
+      // Signed up with this email at the same moment: that account is the one checked and linked below.
+      buyer = created ?? (await findBuyer());
+      if (created) {
+        newBuyerId = created.id;
+        await audit({
+          actorId,
+          action: "user.create",
+          entityType: "user",
+          entityId: created.id,
+          diff: { email: [null, email], fullName: [null, v.buyerName], phone: [null, v.buyerPhone ?? null], dealId: current.id },
+        });
+      }
+    }
+    if (!buyer && !isOwnerEmail(email)) {
+      return {
+        error: t("form.checkFields"),
+        fieldErrors: { buyerEmail: [t("deal.field.buyerNotFound")], buyerName: v.buyerName ? undefined : [t("deal.field.buyerName")] },
+      };
+    }
+    if (!buyer || buyer.role === "admin" || isOwnerEmail(buyer.email) || buyer.id === row.sellerId) {
       return { error: t("form.checkFields"), fieldErrors: { buyerEmail: [t("deal.field.buyerInvalid")] } };
     }
     buyerId = buyer.id;
@@ -391,6 +441,7 @@ export async function saveDealFile(actorId: string, formData: FormData, t: T): P
   if (diff.buyerId) {
     delete diff.buyerId;
     diff.buyerAccount = [null, v.buyerEmail?.toLowerCase() ?? null];
+    if (newBuyerId) diff.newBuyerAccount = [null, true];
   }
 
   const [saved] = await db
@@ -402,6 +453,34 @@ export async function saveDealFile(actorId: string, formData: FormData, t: T): P
   if (!saved) return { error: t("deal.cancelled") };
   await audit({ actorId, action: "deal.update", entityType: "deal", entityId: current.id, diff });
   return { ok: true };
+}
+
+/**
+ * The open deal's sale value worked out again from the listing, after our team corrected the amount paid to the
+ * developer in the listing editor: the agreed price + the balance still owed, as saveDealFile stores it (so the deal
+ * file, our fee, the CSV and the fee KPIs follow). Recorded in the audit trail; nothing for a deal without an agreed
+ * price.
+ */
+export async function syncSaleValue(actorId: string, listingId: string) {
+  const [row] = await db
+    .select({ deal: deals, originalPrice: listings.originalPrice, amountPaid: listings.amountPaid })
+    .from(deals)
+    .innerJoin(listings, eq(listings.id, deals.listingId))
+    .where(and(eq(deals.listingId, listingId), isNull(deals.cancelledAt)))
+    .limit(1);
+  const agreedPrice = row?.deal.agreedPrice;
+  if (!row || agreedPrice == null) return;
+  const saleValue = Math.min(agreedPrice + Math.max(row.originalPrice - row.amountPaid, 0), INT_MAX);
+  if (saleValue === row.deal.saleValue) return;
+  const [saved] = await db
+    .update(deals)
+    .set({ saleValue, updatedAt: new Date() })
+    // Only while open and at the agreed price it was worked out from (a deal-file save may have changed it since).
+    .where(and(eq(deals.id, row.deal.id), isNull(deals.cancelledAt), eq(deals.agreedPrice, agreedPrice)))
+    .returning({ id: deals.id });
+  if (saved) {
+    await audit({ actorId, action: "deal.update", entityType: "deal", entityId: row.deal.id, diff: { saleValue: [row.deal.saleValue, saleValue] } });
+  }
 }
 
 /** Adds one note to the deal file (admins only, checked by the caller). */

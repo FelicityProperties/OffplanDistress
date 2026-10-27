@@ -305,6 +305,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           nocEligible={l.nocEligible}
           launchPrice={l.launchPrice}
           askingPrice={l.askingPrice}
+          amountPaid={l.amountPaid}
           developer={l.developer}
           developerOther={l.developerOther}
           community={l.community}

@@ -136,7 +136,7 @@ export async function preparePhoto(file: File, locale: Locale = "en"): Promise<F
   return out;
 }
 
-/** Uploads one listing file. Errors carry a message in `locale` (the route answers in the request's language). */
+/** Uploads one listing file. Errors carry a message in `locale` (sent to the route, which answers in it). */
 export async function uploadListingFile(listingId: string, file: File, kind: keyof typeof FILE_KINDS, locale: Locale = "en") {
   const t = translator("sell", locale);
   if (kind === "photo") file = await preparePhoto(file, locale);
@@ -146,7 +146,7 @@ export async function uploadListingFile(listingId: string, file: File, kind: key
   body.append("kind", kind);
   let res: Response;
   try {
-    res = await fetch(`/api/listings/${listingId}/files`, { method: "POST", body });
+    res = await fetch(`/api/listings/${listingId}/files?locale=${locale}`, { method: "POST", body });
   } catch {
     // Network failure: the browser's TypeError message is English-only.
     throw new Error(t("uploader.failed"));

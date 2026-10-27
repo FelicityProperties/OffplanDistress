@@ -14,6 +14,11 @@ export type DealNumbers = {
   overdueAmount?: number | null;
   /** Late-payment fees the developer has charged on those instalments: an extra cost, outside the sale value. */
   overduePenalty?: number | null;
+  /**
+   * The developer's NOC fee as invoiced, once our team has recorded it in the deal file; null/absent = not known, and
+   * the FEES.nocEstimate is used.
+   */
+  nocFee?: number | null;
 };
 
 /** A rate as whole basis points (0.02 → 200), so every fee below is integer arithmetic, in JS and in SQL alike. */
@@ -39,8 +44,8 @@ export const FIXED_FEES_ESTIMATE = FEES.dldAdminEstimate + FEES.nocEstimate;
  * /deals minTransfer/maxTransfer filters and the "cash" sort use; change both together:
  *   asking price (equity to the seller)
  *   + buyer fees: our commission + VAT on it (when FEES.payer is the buyer), the DLD transfer fee (FEES.dldRate of the
- *     sale value), DLD registration/trustee and developer NOC fees (FIXED_FEES_ESTIMATE). Everything but our fee is an
- *     estimate, so the figure is always shown as "≈".
+ *     sale value), DLD registration/trustee and developer NOC fees (FIXED_FEES_ESTIMATE; in a deal file, the NOC fee
+ *     invoiced once recorded). Everything but our fee is an estimate, so the figure is always shown as "≈".
  *   + arrears: overdue instalments + late fees (null counts as 0), which the developer wants cleared before the NOC.
  * The overdue instalments are already inside the remaining balance, so the all-in total (totalCost) adds only the
  * late fees; they move from the plan to transfer day, and the plan still to pay after transfer is remaining − overdue.
@@ -52,7 +57,8 @@ export function analyzeDeal(d: DealNumbers) {
   const commission = applyBp(saleValue, FEE_BP.commission);
   const vat = applyBp(commission, FEE_BP.vat);
   const dld = applyBp(saleValue, FEE_BP.dld);
-  const buyerFees = (FEES.payer === "buyer" ? commission + vat : 0) + dld + FIXED_FEES_ESTIMATE;
+  const noc = d.nocFee != null ? Math.max(d.nocFee, 0) : FEES.nocEstimate;
+  const buyerFees = (FEES.payer === "buyer" ? commission + vat : 0) + dld + FEES.dldAdminEstimate + noc;
   const overdue = Math.max(d.overdueAmount ?? 0, 0);
   const penalty = Math.max(d.overduePenalty ?? 0, 0);
   const arrears = overdue + penalty;
@@ -75,7 +81,7 @@ export function analyzeDeal(d: DealNumbers) {
     vat,
     dld,
     dldAdmin: FEES.dldAdminEstimate,
-    noc: FEES.nocEstimate,
+    noc,
     buyerFees,
     overdue,
     penalty,

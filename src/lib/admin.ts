@@ -19,6 +19,14 @@ const dealValueSql = sql<number>`coalesce(
   (select o.amount from offers o where o.listing_id = ${LISTING_ID} and o.status = 'accepted' order by o.updated_at desc limit 1)
     + greatest(${listings.originalPrice} - ${listings.amountPaid}, 0),
   ${saleValueSql})`;
+/**
+ * Our share of the fee on that deal, in percent: 100 less the co-broker's share recorded in its open deal file (Form
+ * I), as the deal file's "Our share after the co-broker's …%". Our fee is a flat rate, so weighting each deal's value
+ * by it before the sum gives our share of the fees (to the dirham's rounding).
+ */
+const ourSharePctSql = sql<number>`(100 - coalesce(
+  (select d.cobroker_split_pct from deals d where d.listing_id = ${LISTING_ID} and d.cancelled_at is null limit 1), 0))`;
+const ourValueSql = sql<number>`(${dealValueSql}::bigint * ${ourSharePctSql} / 100.0)`;
 
 export async function adminStats() {
   const [row] = await db
@@ -27,9 +35,10 @@ export async function adminStats() {
       live: sql<number>`count(*) filter (where ${listings.status} = 'live')::int`,
       // Real deals only, as the fees shown with it (a sample under offer isn't a deal).
       inTransfer: sql<number>`count(*) filter (where ${listings.status} in ('under_offer', 'noc_in_progress') and not ${listings.isSample})::int`,
-      // Fees are counted on agreed prices, never on samples (they aren't deals).
-      pipelineValue: sql<number>`coalesce(sum(${dealValueSql}) filter (where ${listings.status} in ('under_offer', 'noc_in_progress') and not ${listings.isSample}), 0)::bigint`,
-      transferredValue: sql<number>`coalesce(sum(${dealValueSql}) filter (where ${listings.status} = 'transferred' and not ${listings.isSample}), 0)::bigint`,
+      // Fees are counted on agreed prices, never on samples (they aren't deals), and only our share of them when a
+      // co-broker takes part (the deal values are weighted by it, see ourValueSql).
+      pipelineValue: sql<number>`coalesce(round(sum(${ourValueSql}) filter (where ${listings.status} in ('under_offer', 'noc_in_progress') and not ${listings.isSample})), 0)::bigint`,
+      transferredValue: sql<number>`coalesce(round(sum(${ourValueSql}) filter (where ${listings.status} = 'transferred' and not ${listings.isSample})), 0)::bigint`,
       samples: sql<number>`count(*) filter (where ${listings.isSample})::int`,
     })
     .from(listings);
@@ -150,13 +159,20 @@ export async function adminInquiries() {
 /** The outer query's user id inside a subquery (qualified, so it can't be read as the subquery's own "id"). */
 const USER_ID = sql.raw(`"users"."id"`);
 
-/** No password yet, and a real listing: a seller our team added who hasn't claimed it. */
-const pendingClaimSql = sql`${users.passwordHash} is null and ${users.role} = 'user' and exists (select 1 from ${listings} l where l.seller_id = ${USER_ID} and not l.is_sample)`;
+/**
+ * No password yet, and a real listing our team entered still waiting for its seller's confirmation: a seller our team
+ * added who hasn't claimed it. (Not a buyer our team added to a deal, who has no password either but no such listing.)
+ */
+const pendingClaimSql = sql`${users.passwordHash} is null and ${users.role} = 'user' and exists (select 1 from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and l.ownership_confirmed_at is null and not l.is_sample)`;
+
+/** Accounts that can log in, and buyers our team added to a deal file (no password yet), whose KYC is checked here. */
+const registeredSql = sql`(${users.passwordHash} is not null or exists (select 1 from deals d where d.buyer_id = ${USER_ID}))`;
 
 /**
- * "registered": accounts that can log in. "pending": sellers our team added (staff-assisted intake, src/lib/claim.ts)
- * who haven't set a password through their claim link yet: no password and at least one real listing (the sample
- * seller, which has no password either, owns only samples).
+ * "registered": accounts that can log in, and buyers found off the platform that our team added to a deal
+ * (saveDealFile in src/lib/deals.ts) until they set a password. "pending": sellers our team added (staff-assisted
+ * intake, src/lib/claim.ts) who haven't set a password through their claim link yet (the sample seller, which has no
+ * password either, owns only samples).
  */
 export async function adminUsers(tab: "registered" | "pending" = "registered") {
   return db
@@ -169,6 +185,7 @@ export async function adminUsers(tab: "registered" | "pending" = "registered") {
       intent: users.intent,
       kycStatus: users.kycStatus,
       createdAt: users.createdAt,
+      hasPassword: sql<boolean>`${users.passwordHash} is not null`,
       // USER_ID, not ${users.id}: in a select list Drizzle writes the column unqualified ("id"), which inside these
       // subqueries would mean the listing's / offer's own id (the counts were always 0).
       listings: sql<number>`(select count(*)::int from ${listings} l where l.seller_id = ${USER_ID})`,
@@ -178,7 +195,7 @@ export async function adminUsers(tab: "registered" | "pending" = "registered") {
       pendingListingRef: sql<number | null>`(select l.ref_no from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and l.ownership_confirmed_at is null and not l.is_sample order by l.created_at desc limit 1)`,
     })
     .from(users)
-    .where(tab === "pending" ? pendingClaimSql : sql`${users.passwordHash} is not null`)
+    .where(tab === "pending" ? pendingClaimSql : registeredSql)
     .orderBy(desc(users.createdAt))
     .limit(1000);
 }

@@ -12,6 +12,7 @@ import { sourceFromForm } from "@/lib/attribution";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS, UNIT_TYPES } from "@/lib/config";
+import { ownListingSql } from "@/lib/dashboard";
 import { formatNumber, refCode } from "@/lib/format";
 import { notifyAdmins } from "@/lib/notify";
 import { cancelAcceptedOffers, closeOpenOffers } from "@/lib/offers";
@@ -264,7 +265,8 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
       description: listings.description,
     })
     .from(listings)
-    .where(eq(listings.id, id))
+    // Not one our team entered that its seller hasn't confirmed yet (see ownListingSql).
+    .where(and(eq(listings.id, id), ownListingSql(user.id)))
     .limit(1);
   if (!existing || existing.sellerId !== user.id) return { error: t("listing.notFound") };
   if (existing.status === "transferred") return { error: t("listing.transferred") };
@@ -334,7 +336,8 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
       refNo: listings.refNo,
     })
     .from(listings)
-    .where(eq(listings.id, listingId))
+    // Not one our team entered that its seller hasn't confirmed yet (see ownListingSql).
+    .where(and(eq(listings.id, listingId), ownListingSql(user.id)))
     .limit(1);
   if (!l || l.sellerId !== user.id) return { error: t("listing.notFound") };
 

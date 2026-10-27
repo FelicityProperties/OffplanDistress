@@ -1,10 +1,12 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { sellerLeads, users } from "@/db/schema";
+import { LOCALE_COOKIE, type Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
@@ -37,6 +39,15 @@ function fallbackErrors(t: T): z.core.$ZodErrorMap {
     if (iss.code === "too_big" && iss.origin === "string") return t("field.tooLong", { max: Number(iss.maximum) });
     return t("field.invalid");
   };
+}
+
+/**
+ * Logging in or signing up on a page in one language chooses it (od_locale, as src/i18n/actions.ts setLocale): the
+ * dashboard, which has one address, then opens in the language the account's emails go out in, not the browser's.
+ * Described in the Cookie Policy (src/content/legal/cookies.ts).
+ */
+async function rememberLocale(locale: Locale) {
+  (await cookies()).set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
 }
 
 const signupSchema = (t: T, ta: TFn<"auth">) =>
@@ -96,6 +107,7 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
   const lead = await claimLead(formData.get("lead"), user.id, email);
 
   await createSession(user.id);
+  await rememberLocale(await getLocale());
   const fallback = lead ? `/sell?lead=${lead}` : intent === "sell" ? "/sell" : "/dashboard";
   // A public page in the language of the page they signed up on (/ar/… from /ar/signup).
   redirect(localePath(safeNext(formData.get("next"), fallback), await getLocale()));
@@ -153,6 +165,7 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
 
   // Admin rights come from the database only — owners get theirs from scripts/migrate.mjs.
   await createSession(user.id);
+  await rememberLocale(locale);
   redirect(localePath(safeNext(formData.get("next"), lead ? `/sell?lead=${lead}` : user.role === "admin" ? "/admin" : "/dashboard"), locale));
 }
 

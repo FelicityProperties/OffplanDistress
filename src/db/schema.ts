@@ -532,7 +532,10 @@ export const deals = pgTable(
     invoiceNo: text("invoice_no"),
     commissionPaidAt: date("commission_paid_at"),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
-    /** "relisted" (back on the market), "seller_withdrew" or "superseded" (a newer deal on the unit). */
+    /**
+     * "relisted" (back on the market), "seller_withdrew", "withdrawn_by_team" (withdrawn or rejected by our team) or
+     * "superseded" (a newer deal on the unit).
+     */
     cancelReason: text("cancel_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

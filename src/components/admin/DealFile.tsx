@@ -86,13 +86,16 @@ export function DealFileForm(p: Props) {
   // The sale value and our fee follow the agreed price as it is typed.
   const [agreed, setAgreed] = useState(v.agreedPrice == null ? "" : String(v.agreedPrice));
   const [split, setSplit] = useState(v.cobrokerSplitPct == null ? "" : String(v.cobrokerSplitPct));
+  const [nocFee, setNocFee] = useState(v.nocFee == null ? "" : String(v.nocFee));
   const agreedNum = /^\d+$/.test(agreed.trim()) ? Number(agreed.trim()) : null;
+  const nocFeeNum = /^\d+$/.test(nocFee.trim()) ? Number(nocFee.trim()) : null;
   const saleValue = agreedNum == null ? null : agreedNum + p.remaining;
   const fee = saleValue == null ? null : platformFee(saleValue);
   // What the buyer brings on transfer day at this price: the deal page's "cash at transfer", at the agreed price
-  // rather than the asking price (an estimate, like everything built on FEES).
+  // rather than the asking price, with the developer's NOC fee as invoiced once it is entered (an estimate otherwise,
+  // like everything built on FEES).
   const cashAtTransfer =
-    agreedNum == null ? null : analyzeDeal({ ...p.deal, askingPrice: agreedNum, launchPrice: null }).cashToClose;
+    agreedNum == null ? null : analyzeDeal({ ...p.deal, askingPrice: agreedNum, launchPrice: null, nocFee: nocFeeNum }).cashToClose;
   const splitNum = /^\d+$/.test(split.trim()) ? Math.min(Number(split.trim()), 100) : 0;
   // A field's error (or hint) line, named by its control so a screen reader reads it with the field.
   const msgId = (name: string) => `deal-${name}-msg`;
@@ -257,7 +260,21 @@ export function DealFileForm(p: Props) {
       <fieldset className={fieldset}>
         <legend className={legend}>{t("dealFile.section.noc")}</legend>
         {date("nocAppliedAt", t("dealFile.field.nocAppliedAt"), { past: true })}
-        {money("nocFee", t("dealFile.field.nocFee"), t("dealFile.field.nocFeeHint"))}
+        {/* Controlled, as the agreed price: the buyer's cash on transfer day above follows the invoiced fee as typed. */}
+        <Field label={t("dealFile.field.nocFee")} htmlFor="deal-nocFee" error={fe.nocFee} hint={t("dealFile.field.nocFeeHint")} messageId={msgId("nocFee")}>
+          <Input
+            id="deal-nocFee"
+            name="nocFee"
+            type="number"
+            min={0}
+            step={1}
+            inputMode="numeric"
+            aria-invalid={fe.nocFee ? true : undefined}
+            aria-describedby={msgId("nocFee")}
+            value={nocFee}
+            onChange={(e) => setNocFee(e.target.value)}
+          />
+        </Field>
         <div className="hidden lg:block" aria-hidden />
         {date("nocIssuedAt", t("dealFile.field.nocIssuedAt"), { past: true })}
         {date("nocValidUntil", t("dealFile.field.nocValidUntil"))}
@@ -296,6 +313,30 @@ export function DealFileForm(p: Props) {
               autoComplete="off"
               aria-invalid={fe.buyerEmail ? true : undefined}
               aria-describedby={msgId("buyerEmail")}
+            />
+          </Field>
+          {/* A buyer found off the platform, without an account: one is created for them with these (saveDealFile). */}
+          <Field label={t("dealFile.field.buyerName")} htmlFor="deal-buyerName" error={fe.buyerName} hint={t("dealFile.field.buyerNewHint")} messageId={msgId("buyerName")}>
+            <Input
+              id="deal-buyerName"
+              name="buyerName"
+              dir="auto"
+              maxLength={120}
+              autoComplete="off"
+              aria-invalid={fe.buyerName ? true : undefined}
+              aria-describedby={msgId("buyerName")}
+            />
+          </Field>
+          <Field label={t("dealFile.field.buyerPhone")} htmlFor="deal-buyerPhone" error={fe.buyerPhone} messageId={msgId("buyerPhone")}>
+            <Input
+              id="deal-buyerPhone"
+              name="buyerPhone"
+              type="tel"
+              dir="ltr"
+              maxLength={30}
+              autoComplete="off"
+              aria-invalid={fe.buyerPhone ? true : undefined}
+              aria-describedby={describedBy("buyerPhone")}
             />
           </Field>
         </fieldset>

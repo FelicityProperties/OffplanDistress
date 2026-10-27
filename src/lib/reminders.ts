@@ -16,7 +16,8 @@ import { addDays, dubaiToday, permitCurrentSql } from "./permits";
 //  - the daily ops cron (sendFollowUps) sends the seller or buyer their own nudge, once (the `reminders` table), and the
 //    admins one "ops.digest" notification a day with the count of each rule.
 // Samples, staff accounts and the offers / inquiries they made are never counted. Nudges only go to people who can log
-// in: never to a seller our team added who hasn't set a password through their claim link yet.
+// in: never to a seller our team added who hasn't set a password through their claim link yet, nor to a buyer our team
+// added to a deal file (no password either; no rule below is about them: they have no offer, listing or request).
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -113,7 +114,10 @@ export type FollowUps = Record<FollowUpKey, FollowUpItem[]> & { failedRules: Fol
 const sellers = alias(users, "seller");
 const buyers = alias(users, "buyer");
 const ago = (now: Date, ms: number) => new Date(now.getTime() - ms);
-/** "No password yet" accounts are sellers our team added who haven't claimed their listing: they can't log in. */
+/**
+ * "No password yet" accounts are sellers our team added who haven't claimed their listing, or buyers our team added to
+ * a deal file: they can't log in.
+ */
 const canLogIn = (passwordHash: AnyColumn) => sql<boolean>`(${passwordHash} is not null)`;
 /** Placeholder addresses (ending in .invalid) never receive email and mean nothing to our team either. */
 const realEmail = (email: string | null) => (email && !email.toLowerCase().endsWith(".invalid") ? email : null);

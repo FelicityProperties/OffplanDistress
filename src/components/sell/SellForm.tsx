@@ -249,6 +249,11 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
     const kept = readSellDraft(userId, DRAFT_FIELDS);
     setS({ ...EMPTY_STATE, ...prefill });
     setPlan([]);
+    // The documents, photos and ownership tick went with the earlier answers: never onto another unit. (Undo brings
+    // back the answers only, as the banner says of documents and photos.)
+    setDocs({});
+    setPhotos([]);
+    setConfirmed(false);
     setStep(0);
     setErrors({});
     setDraftLeadId(undefined);
@@ -492,7 +497,8 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
             >
               {t("draft.continue")}
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={startOver}>
+            {/* Not while photos are being prepared: they would land in the cleared form once ready. */}
+            <Button type="button" size="sm" variant="outline" onClick={startOver} disabled={preparing}>
               {t("draft.startOver")}
             </Button>
           </div>

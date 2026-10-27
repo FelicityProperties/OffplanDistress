@@ -137,6 +137,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                       </>
                     )}
                   </p>
+                  {/* A buyer our team added to a deal file: no password until they set one with "Forgot password". */}
+                  {!u.hasPassword && <p className="text-xs text-gold-foreground">{t("users.addedBuyer")}</p>}
                 </TableCell>
                 <TableCell>{tc(`intent.${u.intent}`)}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">

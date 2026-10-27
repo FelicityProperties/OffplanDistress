@@ -1,13 +1,14 @@
 "use server";
 
 import { createHash, randomBytes } from "node:crypto";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { and, count, desc, eq, gt, isNull, lt, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { listings, passwordResets, sessions, users } from "@/db/schema";
-import { dirOf, isLocale } from "@/i18n/config";
+import { dirOf, isLocale, LOCALE_COOKIE, type Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import { LEGAL_UPDATED } from "@/content/legal/brand";
@@ -40,13 +41,22 @@ function sha256(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
+/**
+ * Choosing a password here signs the account in, as logging in does (login in src/app/actions/auth.ts): the page's
+ * language is remembered (od_locale), so the dashboard, which has one address, opens in the account's email language.
+ */
+async function rememberLocale(locale: Locale) {
+  (await cookies()).set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+}
+
 /** Creates a token and emails the link — silently does nothing when the account can't or shouldn't be reset. */
 async function issueReset(email: string) {
   const user = await findUserByEmail(email);
   // Owner passwords are managed by ADMIN_PASSWORD; placeholder (.invalid) accounts can't receive email.
   if (!user || isOwnerEmail(user.email) || user.email.endsWith(".invalid")) return;
-  // No password yet: an account our team created for a seller. It gets a new claim link instead (below), and only
-  // while one of its staff-created listings still waits for the seller's confirmation.
+  // No password yet: an account our team created. A seller's gets a new claim link instead (below) while one of its
+  // staff-created listings still waits for the seller's confirmation; any other (a buyer our team added to a deal file)
+  // gets the usual reset link, with which they choose their first password.
   if (!user.passwordHash && user.role !== "user") return;
 
   const now = Date.now();
@@ -74,18 +84,19 @@ async function issueReset(email: string) {
       )
       .orderBy(desc(listings.createdAt))
       .limit(1);
-    if (!pending) return;
-    const claimToken = await issueClaimToken(user.id, pending.id, { keepOthers: true });
-    const claim = renderTemplate("listing.claim", locale, { name: user.fullName, project: pending.projectName, ref: refCode(pending.refNo) });
-    await sendEmail({
-      to: user.email,
-      subject: claim.title,
-      heading: claim.title,
-      body: claim.body,
-      cta: { label: claim.cta, href: claimPath(claimToken, locale) },
-      dir: dirOf(locale),
-    });
-    return;
+    if (pending) {
+      const claimToken = await issueClaimToken(user.id, pending.id, { keepOthers: true });
+      const claim = renderTemplate("listing.claim", locale, { name: user.fullName, project: pending.projectName, ref: refCode(pending.refNo) });
+      await sendEmail({
+        to: user.email,
+        subject: claim.title,
+        heading: claim.title,
+        body: claim.body,
+        cta: { label: claim.cta, href: claimPath(claimToken, locale) },
+        dir: dirOf(locale),
+      });
+      return;
+    }
   }
 
   const token = randomBytes(32).toString("base64url");
@@ -167,7 +178,9 @@ export async function resetPassword(_prev: PasswordFormState, formData: FormData
     .returning({ id: passwordResets.id });
   if (!claimed) return { error: t("errors.invalidToken"), invalidToken: true };
 
-  await db.update(users).set({ passwordHash: await hashPassword(parsed.data.password) }).where(eq(users.id, row.userId));
+  // Emails follow the language of the page the password was chosen on, as after a log-in.
+  const locale = await getLocale();
+  await db.update(users).set({ passwordHash: await hashPassword(parsed.data.password), locale }).where(eq(users.id, row.userId));
   // Other reset links go; a claim link our team sent stays (it now asks the seller to log in before confirming).
   await db
     .delete(passwordResets)
@@ -175,7 +188,8 @@ export async function resetPassword(_prev: PasswordFormState, formData: FormData
   // Sign out everywhere (including whoever may have the old password), then sign this browser in.
   await db.delete(sessions).where(eq(sessions.userId, row.userId));
   await createSession(row.userId);
-  redirect(localePath(safeNext(formData.get("next"), "/dashboard"), await getLocale()));
+  await rememberLocale(locale);
+  redirect(localePath(safeNext(formData.get("next"), "/dashboard"), locale));
 }
 
 /**
@@ -252,6 +266,7 @@ export async function claimListing(_prev: PasswordFormState, formData: FormData)
   await confirmOwnership(claim);
   await db.delete(sessions).where(eq(sessions.userId, claim.userId));
   await createSession(claim.userId);
+  await rememberLocale(await getLocale());
   redirect(`/dashboard/listings/${claim.listingId}`);
 }
 

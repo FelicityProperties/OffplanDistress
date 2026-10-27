@@ -3,7 +3,7 @@ import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { listings, offers } from "@/db/schema";
 import { OFFERS } from "./config";
-import { cancelOpenDeals } from "./deals";
+import { cancelOpenDeals, type CancelReason } from "./deals";
 import { notify } from "./notify";
 import type { TemplateKey } from "./notification-templates";
 
@@ -60,17 +60,22 @@ export async function closeOpenOffers(unit: Unit, why: "sold" | "unavailable", e
 /**
  * The unit is back on the market, so whatever deal was agreed on it is off: its accepted offer is declined and the
  * buyer told (offer.deal_cancelled). Call it whenever a listing goes live from another status, so a live unit never
- * carries an accepted offer (acceptOffer in src/app/actions/market.ts refuses a second one while one exists).
- * Returns how many accepted offers it closed.
+ * carries an accepted offer (acceptOffer in src/app/actions/market.ts refuses a second one while one exists), and
+ * when a unit under a deal leaves the market (withdrawn or rejected). Returns how many accepted offers it closed.
  */
-export async function cancelAcceptedOffers(unit: Unit, whileStatus: "live" | "withdrawn" = "live") {
+export async function cancelAcceptedOffers(
+  unit: Unit,
+  whileStatus: "live" | "withdrawn" | "rejected" = "live",
+  reason: CancelReason = whileStatus === "live" ? "relisted" : "seller_withdrew",
+) {
   try {
     // Only while the unit is still in that status: if the seller accepted a new offer in the moment since it went live,
-    // that offer is the deal now and stays accepted. ("withdrawn": the seller pulled out of the agreed deal.)
+    // that offer is the deal now and stays accepted. ("withdrawn": the seller pulled out of the agreed deal, or our team
+    // took the unit off the market, `reason` says which.)
     const stillLive = sql`exists (select 1 from ${listings} where ${listings.id} = ${unit.id} and ${listings.status} = ${whileStatus})`;
     // Its deal file first, kept with the reason (src/lib/deals.ts): until the accepted offer below is declined no new
     // offer can be accepted on the unit, so the file of a deal agreed in the meantime is never the one closed here.
-    await cancelOpenDeals(unit.id, whileStatus === "live" ? "relisted" : "seller_withdrew", whileStatus);
+    await cancelOpenDeals(unit.id, reason, whileStatus);
     const cancelled = await db
       .update(offers)
       .set({ status: "declined", updatedAt: new Date() })

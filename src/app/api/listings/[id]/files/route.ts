@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { files, listings } from "@/db/schema";
+import { isLocale } from "@/i18n/config";
 import { getT } from "@/i18n/server";
+import { translator } from "@/i18n/translator";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
 import { FILE_KINDS, MAX_UPLOAD_BYTES } from "@/lib/config";
@@ -18,7 +20,10 @@ const MAX_PHOTOS = 20;
 
 export async function POST(request: Request, ctx: RouteContext<"/api/listings/[id]/files">) {
   const { id } = await ctx.params;
-  const [user, t] = await Promise.all([getCurrentUser(), getT("sell")]);
+  // Errors in the language of the page that uploads (?locale=, uploadListingFile): an API route has no address of its
+  // own to take it from.
+  const asked = new URL(request.url).searchParams.get("locale");
+  const [user, t] = await Promise.all([getCurrentUser(), isLocale(asked) ? translator("sell", asked) : getT("sell")]);
   if (!user) return NextResponse.json({ error: t("upload.signIn") }, { status: 401 });
 
   // Reject oversized bodies before buffering them.
@@ -27,11 +32,18 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
   }
 
   const [listing] = await db
-    .select({ sellerId: listings.sellerId, images: listings.images, status: listings.status })
+    .select({
+      sellerId: listings.sellerId,
+      images: listings.images,
+      status: listings.status,
+      // A listing our team entered whose seller hasn't confirmed it yet (src/lib/claim.ts): the account it was filed
+      // under isn't its owner until then (as in src/app/api/files/[id]/route.ts).
+      awaitingSeller: sql<boolean>`coalesce(${listings.createdByStaff} and ${listings.ownershipConfirmedAt} is null, false)`,
+    })
     .from(listings)
     .where(eq(listings.id, id))
     .limit(1);
-  if (!listing || (listing.sellerId !== user.id && user.role !== "admin")) {
+  if (!listing || ((listing.sellerId !== user.id || listing.awaitingSeller) && user.role !== "admin")) {
     return NextResponse.json({ error: t("upload.notFound") }, { status: 404 });
   }
 
