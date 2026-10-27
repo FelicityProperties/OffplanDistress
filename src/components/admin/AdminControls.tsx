@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { Check, KeyRound, Trash2, X } from "lucide-react";
+import { Check, KeyRound, Loader2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   adminUpdateListing,
@@ -13,7 +13,7 @@ import {
   setKycStatus,
   setUserRole,
 } from "@/app/actions/admin";
-import { Field, FormMessage, SubmitButton } from "@/components/forms";
+import { Field, FormMessage } from "@/components/forms";
 import { selectClass } from "@/components/form-styles";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -66,9 +66,10 @@ export function ReviewButtons({ listingId }: { listingId: string }) {
               disabled={pending}
               onClick={() =>
                 start(async () => {
-                  await rejectListing(listingId, reason);
-                  toast(t("review.rejected"));
+                  const res = await rejectListing(listingId, reason);
                   setOpen(false);
+                  if ("error" in res && res.error) toast.error(res.error);
+                  else toast(t("review.rejected"));
                 })
               }
             >
@@ -83,6 +84,8 @@ export function ReviewButtons({ listingId }: { listingId: string }) {
 
 type EditProps = {
   listingId: string;
+  /** When the listing was last saved (its updated_at): the form starts again from the stored values when it changes. */
+  savedAt: string;
   status: ListingStatusKey;
   verified: boolean;
   nocEligible: boolean;
@@ -167,6 +170,7 @@ export function AdminListingForm(p: EditProps) {
   const t = useT("admin");
   const tc = useT("common");
   const [state, action] = useActionState(adminUpdateListing, {});
+  const [pending, start] = useTransition();
   useEffect(() => {
     if (state.ok) toast.success(t("form.saved"));
     // Only on a new save result — not when the language (and so `t`) changes.
@@ -176,7 +180,21 @@ export function AdminListingForm(p: EditProps) {
   return (
     // noValidate: the server checks every field and answers in the page's language, next to the field (the browser's
     // own bubbles follow the browser's language); min/max on the dates still limit the date picker.
-    <form action={action} noValidate className="grid gap-4 sm:grid-cols-2">
+    // Submitted from onSubmit, not `action`: React resets a form after its action, putting the selects and checkboxes
+    // back to the values the page was first loaded with (a save after that would write them back) and clearing what
+    // was typed when a save is refused. Keyed on the listing as saved, so once a save (here or in another card, such as
+    // an accepted offer) changes it, the fields show what is stored, never an older status to be saved back.
+    <form
+      key={p.savedAt}
+      noValidate
+      className="grid gap-4 sm:grid-cols-2"
+      aria-label={t("listing.manage")}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        start(() => action(fd));
+      }}
+    >
       <input type="hidden" name="listingId" value={p.listingId} />
       {/* The status this form was loaded with: saving after it changed (e.g. an offer was accepted) is refused. */}
       <input type="hidden" name="statusWas" value={p.status} />
@@ -332,29 +350,55 @@ export function AdminListingForm(p: EditProps) {
         <Textarea id="adminNotes" name="adminNotes" rows={3} defaultValue={p.adminNotes ?? ""} placeholder={t("form.notesPlaceholder")} />
       </Field>
       <div className="flex items-center gap-3 sm:col-span-2">
-        <SubmitButton pendingText={tc("saving")}>{t("form.save")}</SubmitButton>
+        <Button type="submit" disabled={pending}>
+          {pending && <Loader2 className="animate-spin" aria-hidden />}
+          {pending ? tc("saving") : t("form.save")}
+        </Button>
         <FormMessage state={state} />
       </div>
     </form>
   );
 }
 
+/**
+ * A select that shows the value as saved: the choice while it is being saved, the one before it when the save is
+ * refused (or fails), and the stored value again whenever the page brings a new one.
+ */
+function useSavedValue<V>(value: V) {
+  const [shown, setShown] = useState(value);
+  const [stored, setStored] = useState(value);
+  if (stored !== value) {
+    setStored(value);
+    setShown(value);
+  }
+  return [shown, setShown] as const;
+}
+
 export function KycSelect({ userId, value }: { userId: string; value: "not_started" | "pending" | "verified" }) {
   const t = useT("admin");
   const tc = useT("common");
   const [pending, start] = useTransition();
+  const [shown, setShown] = useSavedValue(value);
   return (
     <select
       aria-label={t("kyc.label")}
-      defaultValue={value}
+      value={shown}
       disabled={pending}
       className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-      onChange={(e) =>
+      onChange={(e) => {
+        const before = shown;
+        const next = e.target.value as typeof value;
+        setShown(next);
         start(async () => {
-          await setKycStatus(userId, e.target.value as typeof value);
-          toast.success(t("kyc.updated"));
-        })
-      }
+          try {
+            await setKycStatus(userId, next);
+            toast.success(t("kyc.updated"));
+          } catch {
+            setShown(before);
+            toast.error(t("kyc.failed"));
+          }
+        });
+      }}
     >
       <option value="not_started">{tc("kyc.not_started")}</option>
       <option value="pending">{tc("kyc.pending")}</option>
@@ -366,19 +410,26 @@ export function KycSelect({ userId, value }: { userId: string; value: "not_start
 export function RoleSelect({ userId, value }: { userId: string; value: "user" | "admin" }) {
   const t = useT("admin");
   const [pending, start] = useTransition();
+  const [shown, setShown] = useSavedValue(value);
   return (
     <select
       aria-label={t("role.label")}
-      defaultValue={value}
+      value={shown}
       disabled={pending}
       className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-      onChange={(e) =>
+      onChange={(e) => {
+        const before = shown;
+        const next = e.target.value as typeof value;
+        setShown(next);
         start(async () => {
-          const res = await setUserRole(userId, e.target.value as typeof value);
-          if (res.error) toast.error(res.error);
-          else toast.success(t("role.updated"));
-        })
-      }
+          // A refused change (your own access, an owner account) leaves the role as it was, so the select shows it.
+          const res = await setUserRole(userId, next).catch(() => ({ error: t("role.failed") }));
+          if (res.error) {
+            setShown(before);
+            toast.error(res.error);
+          } else toast.success(t("role.updated"));
+        });
+      }}
     >
       <option value="user">{t("role.user")}</option>
       <option value="admin">{t("role.admin")}</option>

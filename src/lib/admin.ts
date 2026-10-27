@@ -1,6 +1,6 @@
 import "server-only";
 import { alias } from "drizzle-orm/pg-core";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { auditEvents, files, inquiries, listings, offers, users } from "@/db/schema";
 import { awaitingOwnerSql } from "./import";
@@ -15,8 +15,11 @@ const docFlag = (kind: string) =>
  * neither exists (a status set by hand before deal files).
  */
 const LISTING_ID = sql.raw(`"listings"."id"`); // qualified: inside the subqueries "id" would be their own row's
+// A sale value only counts with the agreed price it was worked out from (a file opened for a status set by hand,
+// before the fix in insertMissingDeals, could hold the integer limit instead of nothing).
 const dealValueSql = sql<number>`coalesce(
-  (select d.sale_value from deals d where d.listing_id = ${LISTING_ID} and d.cancelled_at is null and d.sale_value is not null limit 1),
+  (select d.sale_value from deals d where d.listing_id = ${LISTING_ID} and d.cancelled_at is null and d.sale_value is not null
+     and d.agreed_price is not null limit 1),
   (select o.amount from offers o where o.listing_id = ${LISTING_ID} and o.status = 'accepted' order by o.updated_at desc limit 1)
     + greatest(${listings.originalPrice} - ${listings.amountPaid}, 0),
   ${saleValueSql})`;
@@ -42,7 +45,10 @@ export async function adminStats() {
       // Fees are counted on agreed prices, never on samples (they aren't deals), and only our share of them when a
       // co-broker takes part (the deal values are weighted by it, see ourValueSql).
       pipelineValue: sql<number>`coalesce(round(sum(${ourValueSql}) filter (where ${listings.status} in ('under_offer', 'noc_in_progress') and not ${listings.isSample})), 0)::bigint`,
-      transferredValue: sql<number>`coalesce(round(sum(${ourValueSql}) filter (where ${listings.status} = 'transferred' and not ${listings.isSample})), 0)::bigint`,
+      // Sold units, also once taken down after the transfer (withdrawn, with their completed deal file still open).
+      transferredValue: sql<number>`coalesce(round(sum(${ourValueSql}) filter (where (${listings.status} = 'transferred' or (${listings.status} = 'withdrawn'
+        and exists (select 1 from deals d where d.listing_id = ${LISTING_ID} and d.cancelled_at is null and d.transferred_at is not null)))
+        and not ${listings.isSample})), 0)::bigint`,
       samples: sql<number>`count(*) filter (where ${listings.isSample})::int`,
     })
     .from(listings);
@@ -216,6 +222,24 @@ export async function adminUsers(tab: "registered" | "pending" = "registered") {
     .where(tab === "pending" ? pendingClaimSql : registeredSql)
     .orderBy(desc(users.createdAt))
     .limit(1000);
+}
+
+/**
+ * Which tab of /admin/users lists each of these accounts ("registered" or "pending"); an account in neither (an import's
+ * placeholder owner, say) is left out.
+ */
+export async function userTabs(ids: string[]) {
+  const tabs = new Map<string, "registered" | "pending">();
+  if (!ids.length) return tabs;
+  const rows = await db
+    .select({ id: users.id, pending: sql<boolean>`(${pendingClaimSql})`, registered: sql<boolean>`(${registeredSql})` })
+    .from(users)
+    .where(inArray(users.id, ids));
+  for (const r of rows) {
+    if (r.pending) tabs.set(r.id, "pending");
+    else if (r.registered) tabs.set(r.id, "registered");
+  }
+  return tabs;
 }
 
 /** How many sellers are in the "pending" tab of /admin/users. */

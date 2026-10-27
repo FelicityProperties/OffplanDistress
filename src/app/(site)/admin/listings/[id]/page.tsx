@@ -377,6 +377,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         <h2 className="mb-4 font-sans text-lg font-semibold">{t("listing.manage")}</h2>
         <AdminListingForm
           listingId={l.id}
+          savedAt={l.updatedAt.toISOString()}
           status={l.status}
           verified={l.verified}
           nocEligible={l.nocEligible}

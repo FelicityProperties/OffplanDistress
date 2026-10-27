@@ -12,7 +12,7 @@ import type { TFn } from "@/i18n/translator";
 import { audit, changes } from "@/lib/audit";
 import { findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
 import { claimPath, isPlaceholderEmail, issueClaimToken, placeholderEmail } from "@/lib/claim";
-import { addNote, saveDealFile, stageGate, syncSaleValue, type DealFileState, type GateNeed } from "@/lib/deals";
+import { addNote, openDeal, saveDealFile, stageGate, syncSaleValue, type DealFileState, type GateNeed } from "@/lib/deals";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
 import { emailEnabled, sendEmail } from "@/lib/email";
 import { isImportOwner } from "@/lib/import";
@@ -68,17 +68,30 @@ async function notifySeller(l: ListingForNotice, key: Parameters<typeof notify>[
   if (!l.isSample && !awaitsSellerConfirmation(l)) await notify([l.sellerId], key, params, sellerHref(l.id));
 }
 
-/** Seller and the buyer whose offer was accepted hear about each step of the transfer. */
+/**
+ * Seller and buyer hear about each step of the transfer. The buyer is the deal file's (linked by our team on a deal set
+ * by hand, or the accepted offer's), else the accepted offer's. A buyer our team added who can't sign in yet (no
+ * password) is reached by our team instead, as a seller before claiming: the deal shows on their dashboard once they can.
+ */
 async function notifyDealStep(l: ListingForNotice, key: "deal.noc_in_progress" | "deal.transferred") {
   const params = { project: l.projectName, ref: refCode(l.refNo) };
-  const [accepted] = await db
-    .select({ buyerId: offers.buyerId })
-    .from(offers)
-    .where(and(eq(offers.listingId, l.id), eq(offers.status, "accepted")))
-    .orderBy(desc(offers.updatedAt))
-    .limit(1);
+  const deal = await openDeal(l.id);
+  const [accepted] = deal?.buyerId
+    ? [{ buyerId: deal.buyerId }]
+    : await db
+        .select({ buyerId: offers.buyerId })
+        .from(offers)
+        .where(and(eq(offers.listingId, l.id), eq(offers.status, "accepted")))
+        .orderBy(desc(offers.updatedAt))
+        .limit(1);
   await notifySeller(l, key, params);
-  if (accepted) await notify([accepted.buyerId], key, params, "/dashboard/offers?tab=sent");
+  if (!accepted) return;
+  const [buyer] = await db
+    .select({ canSignIn: sql<boolean>`${users.passwordHash} is not null` })
+    .from(users)
+    .where(eq(users.id, accepted.buyerId))
+    .limit(1);
+  if (buyer?.canSignIn) await notify([accepted.buyerId], key, params, "/dashboard/offers?tab=sent");
 }
 
 const listingNoticeColumns = {
@@ -140,13 +153,16 @@ export async function approveListing(listingId: string) {
   const me = await assertAdmin();
   const [before] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, listingId)).limit(1);
   if (!before) return { error: (await getT("errors"))("listing.notFound") };
+  // Only a listing waiting for review: a page opened before the seller withdrew it (or another admin published or
+  // rejected it) mustn't advertise it again without its owner.
+  if (before.status !== "pending_review") return reviewedMeanwhile();
   if (awaitsSellerConfirmation(before)) return { error: await unconfirmedMessage(before.sellerId) };
   // RERA: no property advert without a current DLD (Trakheesi) permit and Form A. Sample listings aren't adverts.
   const blocker = publishBlocker(before);
   if (blocker) return { error: (await getT("errors"))(blocker) };
   const now = new Date();
   const verified = before.verified || (await hasVerificationDocs(listingId));
-  await db
+  const [approved] = await db
     .update(listings)
     .set({
       status: "live",
@@ -156,7 +172,10 @@ export async function approveListing(listingId: string) {
       rejectionReason: null,
       updatedAt: now,
     })
-    .where(eq(listings.id, listingId));
+    // …and the same if it changes between the read above and this write.
+    .where(and(eq(listings.id, listingId), eq(listings.status, "pending_review")))
+    .returning({ id: listings.id });
+  if (!approved) return reviewedMeanwhile();
   await audit({
     actorId: me.id,
     action: "listing.approve",
@@ -175,6 +194,12 @@ export async function approveListing(listingId: string) {
   return { ok: true };
 }
 
+/** The review buttons' listing isn't waiting for review any more: the page is refreshed to show what it is now. */
+async function reviewedMeanwhile() {
+  refresh();
+  return { error: (await getT("errors"))("listing.statusChanged") };
+}
+
 export async function rejectListing(listingId: string, reason: string) {
   const me = await assertAdmin();
   const [before] = await db
@@ -182,34 +207,41 @@ export async function rejectListing(listingId: string, reason: string) {
     .from(listings)
     .where(eq(listings.id, listingId))
     .limit(1);
+  if (!before) return { error: (await getT("errors"))("listing.notFound") };
+  // Like Approve: only while it waits for review (a stale page mustn't reject a listing published since, ending its
+  // offers). A listing already out there is taken down from the listing editor.
+  if (before.status !== "pending_review") return reviewedMeanwhile();
   const clean = reason.trim().slice(0, 1000);
-  await db
+  const [rejected] = await db
     .update(listings)
     .set({ status: "rejected", rejectionReason: clean || null, updatedAt: new Date() })
-    .where(eq(listings.id, listingId));
-  if (before) {
-    await audit({
-      actorId: me.id,
-      action: "listing.reject",
-      entityType: "listing",
-      entityId: listingId,
-      // The reason as it was before (a listing rejected again keeps its earlier one until now).
-      diff: changes(before, { status: "rejected", rejectionReason: clean || null }),
-    });
-    await notifySeller(before, "listing.rejected", {
-      project: before.projectName,
-      reason: clean || { t: "errors", key: "notify.rejectedFallback" },
-    });
-    // Off the market: buyers with an open offer on it are told it is no longer available, and a deal agreed on it ends
-    // (as in the listing editor below).
-    await closeOpenOffers(before, "unavailable");
-    if (before.status !== "transferred") await cancelAcceptedOffers(before, "rejected", "withdrawn_by_team");
-  }
+    .where(and(eq(listings.id, listingId), eq(listings.status, "pending_review")))
+    .returning({ id: listings.id });
+  if (!rejected) return reviewedMeanwhile();
+  await audit({
+    actorId: me.id,
+    action: "listing.reject",
+    entityType: "listing",
+    entityId: listingId,
+    // The reason as it was before (a listing rejected again keeps its earlier one until now).
+    diff: changes(before, { status: "rejected", rejectionReason: clean || null }),
+  });
+  await notifySeller(before, "listing.rejected", {
+    project: before.projectName,
+    reason: clean || { t: "errors", key: "notify.rejectedFallback" },
+  });
+  // Off the market: buyers with an open offer on it are told it is no longer available, and a deal agreed on it ends
+  // (as in the listing editor below).
+  await closeOpenOffers(before, "unavailable");
+  await cancelAcceptedOffers(before, "rejected", "withdrawn_by_team");
   refresh();
   return { ok: true };
 }
 
 const statuses = Object.keys(LISTING_STATUS) as [ListingStatusKey, ...ListingStatusKey[]];
+
+/** The largest whole number a Postgres integer column holds. */
+const INT4_MAX = 2_147_483_647;
 
 /**
  * A permit or Form A expiry: a real calendar date (z.iso.date checks the day exists in that month) no more than a year
@@ -230,8 +262,9 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
     status: z.enum(statuses),
     verified: z.boolean(),
     nocEligible: z.boolean(),
-    launchPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
-    askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative(),
+    // int4 columns, like the penalty below: a typo with extra zeros is a field error, not a failed save.
+    launchPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX, t("field.amountTooLarge")).optional(),
+    askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX, t("field.amountTooLarge")),
     // Paid to the developer to date, corrected from its statement of account (at most the SPA price, checked below).
     // Empty or left out = unchanged.
     amountPaid: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
@@ -239,7 +272,7 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
     overdueAmount: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
     // An int4 column: a typo with extra zeros is a field error, not a failed save. (The overdue amount is capped by
     // the remaining balance below.)
-    overduePenalty: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(2_147_483_647, t("field.amountTooLarge")).optional(),
+    overduePenalty: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX, t("field.amountTooLarge")).optional(),
     arrearsCheckedAt: z.iso
       .date(t("field.date"))
       .refine((d) => d >= "2000-01-01" && d <= dubaiToday(), t("field.arrearsCheckedAt"))
@@ -267,6 +300,16 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
   });
 
 const scrubbedName = (v: string) => scrubTypedName(v).name || undefined;
+
+/**
+ * The unit's sale went through at DLD: it is transferred, or was taken down (withdrawn) after that with its completed
+ * deal file still open (a withdrawal from any earlier stage closes the file).
+ */
+async function transferCompleted(l: { id: string; status: ListingStatusKey }) {
+  if (l.status === "transferred") return true;
+  if (l.status !== "withdrawn") return false;
+  return (await openDeal(l.id))?.transferredAt != null;
+}
 
 export async function adminUpdateListing(_prev: FormState, formData: FormData): Promise<FormState> {
   const me = await assertAdmin();
@@ -325,6 +368,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       overduePenalty: listings.overduePenalty,
       arrearsCheckedAt: listings.arrearsCheckedAt,
       // For the audit trail's diff of what this save changed.
+      rejectionReason: listings.rejectionReason,
       pausedByAdmin: listings.pausedByAdmin,
       nocEligible: listings.nocEligible,
       launchPrice: listings.launchPrice,
@@ -345,6 +389,10 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   }
   // Overdue instalments are part of the balance still owed to the developer, so they can't be more than it.
   const remainingBalance = Math.max(current.originalPrice - amountPaid, 0);
+  // The sale value (asking price + that balance) is worked out in integers too (deal file, fees, the market figures).
+  if (v.askingPrice + remainingBalance > INT4_MAX) {
+    return { error: t("form.checkFields"), fieldErrors: { askingPrice: [t("field.amountTooLarge")] } };
+  }
   if (v.overdueAmount != null && v.overdueAmount > remainingBalance) {
     return {
       error: t("form.checkFields"),
@@ -372,6 +420,13 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   // back: the unit would go live again with an accepted offer, and its backup bidders be told the deal fell through.
   const statusWas = formData.get("statusWas");
   if (typeof statusWas === "string" && statusWas !== current.status) return { error: t("listing.statusChanged") };
+  // A unit transferred at DLD is sold: its deal completed, the buyer owns it and our fee is earned. It may be taken down
+  // (withdrawn, its deal file kept) and shown as transferred again, never put back on the market or into an earlier
+  // stage, which would close the completed deal as fallen through and tell the buyer so.
+  if (v.status !== current.status && v.status !== "transferred" && v.status !== "withdrawn" && (await transferCompleted(current))) {
+    const message = (await getT("admin"))("edit.transferredFinal");
+    return { error: message, fieldErrors: { status: [message] } };
+  }
   // A listed name, or the one already stored (older rows may hold a name that has since left the list).
   const developer = v.developer ?? current.developer;
   const community = v.community ?? current.community;
@@ -437,6 +492,8 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
     publicPrice: advertised ? v.askingPrice : current.publicPrice,
     images: v.images.filter((u) => /^https:\/\//.test(u) || u.startsWith("/api/files/")),
     publishedAt: current.publishedAt ?? (v.status === "live" ? now : null),
+    // Rejected here, with no reason typed: not the reason of an earlier rejection (the seller's page shows it).
+    ...(v.status === "rejected" && current.status !== "rejected" ? { rejectionReason: null } : {}),
   };
   const [saved] = await db
     .update(listings)
@@ -455,8 +512,13 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (statusChanged && v.status === "live" && !current.publishedAt) {
     await notifySeller(current, "listing.approved", { project: current.projectName, ref: refCode(current.refNo) });
   }
+  // Rejected from the editor (a listing already out there, say): the seller is told, as from the Reject button.
+  if (statusChanged && v.status === "rejected") {
+    await notifySeller(current, "listing.rejected", { project: current.projectName, reason: { t: "errors", key: "notify.rejectedFallback" } });
+  }
   if (statusChanged && v.status === "noc_in_progress") await notifyDealStep(current, "deal.noc_in_progress");
-  if (statusChanged && v.status === "transferred") await notifyDealStep(current, "deal.transferred");
+  // (Not again for a sold unit shown as transferred once more after being taken down.)
+  if (statusChanged && v.status === "transferred" && current.status !== "withdrawn") await notifyDealStep(current, "deal.transferred");
   // The bidders: a sold unit closes the open offers, and so does one taken off the market. A unit back on the market
   // has no deal any more: the accepted offer is closed (that buyer told) and the backups are active again. So has one
   // our team takes off the market while in a deal (as when the seller withdraws): its file is closed with the reason
