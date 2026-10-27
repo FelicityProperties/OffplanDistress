@@ -104,7 +104,9 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {tc(`financing.${o.financing}`)}
-                        <p className="text-xs">{t(o.buyerKyc === "verified" ? "kyc.verifiedTag" : "kyc.pendingTag")}</p>
+                        <p className="text-xs">
+                          {t(o.buyerKyc === "verified" ? "kyc.verifiedTag" : o.buyerKyc === "pending" ? "kyc.pendingTag" : "kyc.notStartedTag")}
+                        </p>
                       </TableCell>
                       <TableCell className="text-end font-semibold tabular">
                         {formatAED(o.amount, locale)}
@@ -122,6 +124,7 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
                           offerId={o.id}
                           status={o.status}
                           amount={o.amount}
+                          askingPrice={o.askingPrice}
                           listingStatus={o.listingStatus}
                         />
                       </TableCell>
@@ -156,9 +159,14 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
                   {sent.map((o) => (
                     <TableRow key={o.id}>
                       <TableCell>
-                        <Link href={`/deals/${refCode(o.refNo)}`} className="font-medium hover:underline">
-                          {o.projectName}
-                        </Link>
+                        {/* Off the market (withdrawn, paused, back in review, permit lapsed), its deal page would 404. */}
+                        {o.advertised ? (
+                          <Link href={`/deals/${refCode(o.refNo)}`} className="font-medium hover:underline">
+                            {o.projectName}
+                          </Link>
+                        ) : (
+                          <p className="font-medium">{o.projectName}</p>
+                        )}
                         <p className="text-xs text-muted-foreground">
                           {t("asking", { amount: formatAED(o.askingPrice, locale) })}
                         </p>

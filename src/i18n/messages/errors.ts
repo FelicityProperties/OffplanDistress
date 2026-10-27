@@ -39,6 +39,8 @@ export default defineMessages({
     "field.arrearsCheckedAt": "Pick the day you checked the statement: today or earlier.",
     "field.amountTooLarge": "That amount is too large. Check the figure.",
     "field.counterAmount": "Enter a counter amount.",
+    "field.offerMessageContact":
+      "Leave out phone numbers, email addresses, links and handles. Buyers stay anonymous until the MOU: our team puts you in touch then.",
     "field.dldPermitUrl": "Paste the https:// link on dubailand.gov.ae that the permit's QR code opens.",
     "field.expiryRange": "Check the date: it has to be between {from} and {to}.",
 
@@ -48,7 +50,9 @@ export default defineMessages({
     "offer.notFound": "Offer not found.",
     "offer.actionUnavailable": "That action isn't available for this offer.",
     "offer.unitTaken": "This unit already has an accepted offer.",
+    "offer.alreadyAccepted": "Your offer on this unit has already been accepted. Follow the deal in your dashboard under Offers.",
     "search.defaultName": "My search",
+    "search.tooMany": "You already have {max} saved searches. Delete one to save another.",
 
     "listing.notFound": "Listing not found.",
     "listing.permitRequired": "Add the DLD advertising permit number (Trakheesi) before publishing — RERA requires it on every property advert.",
@@ -66,7 +70,7 @@ export default defineMessages({
     "admin.ownerPassword": "The owner's password is set by ADMIN_PASSWORD in Vercel.",
     // Staff-assisted intake (adminCreateListing, claim links) and its approval rule.
     "listing.ownershipUnconfirmed":
-      "The seller hasn't confirmed ownership yet. Send them the claim link from this listing's page; you can approve it once they have confirmed.",
+      "The seller hasn't confirmed ownership yet. Send them the claim link from this listing's page, or confirm it there from their signed Form A; you can approve it once ownership is confirmed.",
     "admin.sellerContact": "Enter the seller's mobile number or email.",
     "admin.sellerPhone": "Enter a mobile number with its country code, e.g. +971 50 123 4567.",
     "admin.sellerIsStaff": "That email or number belongs to a staff account. A listing must belong to the seller's own account.",
@@ -177,6 +181,8 @@ export default defineMessages({
     "field.arrearsCheckedAt": "اختر تاريخ التحقق من كشف الحساب: اليوم أو قبله.",
     "field.amountTooLarge": "المبلغ المُدخل كبير جداً، يُرجى التحقق منه.",
     "field.counterAmount": "أدخل قيمة العرض المقابل.",
+    "field.offerMessageContact":
+      "يُرجى عدم كتابة أرقام الهواتف أو عناوين البريد الإلكتروني أو الروابط أو أسماء الحسابات، إذ تبقى هوية المشتري مخفية حتى توقيع مذكرة التفاهم، وعندها يتولى فريقنا التواصل بين الطرفين.",
     "field.dldPermitUrl": "الصق رابط ⁦https://⁩ على موقع ⁦dubailand.gov.ae⁩ الذي يفتحه رمز QR الخاص بالتصريح.",
     "field.expiryRange": "تحقّق من التاريخ: يجب أن يقع بين {from} و{to}.",
 
@@ -186,7 +192,9 @@ export default defineMessages({
     "offer.notFound": "العرض غير موجود.",
     "offer.actionUnavailable": "هذا الإجراء غير متاح لهذا العرض.",
     "offer.unitTaken": "يوجد بالفعل عرض مقبول على هذه الوحدة.",
+    "offer.alreadyAccepted": "سبق أن قُبل عرضك على هذه الوحدة. تابع الصفقة من قسم العروض في لوحة التحكم.",
     "search.defaultName": "بحثي",
+    "search.tooMany": "بلغتَ الحد الأقصى لعمليات البحث المحفوظة (⁨{max}⁩). احذف إحداها لحفظ بحث جديد.",
 
     "listing.notFound": "الإعلان غير موجود.",
     "listing.permitRequired": "أضف رقم تصريح الإعلان من دائرة الأراضي والأملاك (تراخيصي) قبل النشر، إذ تشترطه مؤسسة التنظيم العقاري على كل إعلان عقاري.",
@@ -203,7 +211,7 @@ export default defineMessages({
     "admin.userNotFound": "المستخدم غير موجود.",
     "admin.ownerPassword": "تُحدَّد كلمة مرور المالك عبر المتغير ADMIN_PASSWORD في Vercel.",
     "listing.ownershipUnconfirmed":
-      "لم يؤكد البائع ملكيته بعد. أرسل إليه رابط التأكيد من صفحة هذا الإعلان، ويمكنك الموافقة عليه بعد تأكيده.",
+      "لم يؤكد البائع ملكيته بعد. أرسل إليه رابط التأكيد من صفحة هذا الإعلان، أو أكّد الملكية منها بالنموذج (A) الموقّع منه، ويمكنك الموافقة على الإعلان بعد تأكيد الملكية.",
     "admin.sellerContact": "أدخل رقم جوال البائع أو بريده الإلكتروني.",
     "admin.sellerPhone": "أدخل رقم الجوال مع رمز الدولة، مثل ⁦+971 50 123 4567⁩.",
     "admin.sellerIsStaff": "هذا البريد الإلكتروني أو الرقم يخص حساباً لأحد أعضاء الفريق، ويجب أن يكون الإعلان في حساب البائع نفسه.",

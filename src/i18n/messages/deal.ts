@@ -12,6 +12,9 @@ export default defineMessages({
 
     back: "Back to deals",
     "banner.underOffer": "The seller has accepted an offer on this unit. You can still save it or send a backup offer.",
+    // To the buyer whose offer it is: the deal is theirs, so no backup offer (makeOffer refuses one too).
+    "banner.yourOffer": "Your offer on this unit was accepted. Follow the deal, from the MOU to the transfer, in {link}.",
+    "banner.yourOfferLink": "your offers",
     "banner.private": "Only you can see this page — the listing is currently “{status}”.",
     "banner.permitLapsed": "Only you can see this page: the listing's DLD advertising permit or Form A has expired, so it isn't shown as an advert until the new expiry date is entered.",
 
@@ -38,6 +41,9 @@ export default defineMessages({
     "plan.amount": "Amount",
     "plan.sample.milestone": "Construction milestone {n}",
     "plan.sample.onHandover": "On handover",
+    // The sell form's own names for new rows (sell plan.next / plan.nth), shown in the visitor's language.
+    "plan.defaultNext": "Next instalment",
+    "plan.defaultNth": "Instalment {n}",
     "sample.description":
       "Sample listing for illustration. {unit} in {project} by {developer}, {community}, with {paid} of the purchase price already paid to the developer. A buyer can step into the remaining payment plan below today's launch price.",
 
@@ -134,7 +140,9 @@ export default defineMessages({
     "offer.financing": "Financing",
     "offer.mortgage": "Mortgage at handover",
     "offer.message": "Message to seller (optional)",
+    "offer.messageHint": "No phone numbers, emails or links: you stay anonymous until the MOU, and our team puts you in touch.",
     "offer.placeholder": "I can complete within 3 weeks…",
+    "offer.yourDeal": "Follow your deal",
     "offer.submit": "Submit offer",
     "offer.sent": "Offer sent",
     "offer.sentDescription": "We'll present it to the seller and update you in your dashboard.",
@@ -150,6 +158,8 @@ export default defineMessages({
 
     back: "العودة إلى الصفقات",
     "banner.underOffer": "قبل البائع عرضاً على هذه الوحدة. لا يزال بإمكانك حفظها أو إرسال عرض احتياطي.",
+    "banner.yourOffer": "قُبل عرضك على هذه الوحدة. تابع الصفقة، من مذكرة التفاهم حتى نقل الملكية، في {link}.",
+    "banner.yourOfferLink": "صفحة عروضك",
     "banner.private": "هذه الصفحة مرئية لك فقط — حالة الإعلان حالياً «{status}».",
     "banner.permitLapsed": "هذه الصفحة مرئية لك فقط: انتهت صلاحية تصريح الإعلان من دائرة الأراضي والأملاك أو النموذج (A)، لذلك لا يظهر الإعلان للجمهور إلى أن يُدخَل تاريخ الانتهاء الجديد.",
 
@@ -176,6 +186,8 @@ export default defineMessages({
     "plan.amount": "المبلغ",
     "plan.sample.milestone": "دفعة أثناء الإنشاء {n}",
     "plan.sample.onHandover": "عند التسليم",
+    "plan.defaultNext": "القسط التالي",
+    "plan.defaultNth": "القسط {n}",
     "sample.description":
       "إعلان توضيحي فقط. وحدة ({unit}) في {project} من تطوير {developer}، {community}، وقد سُدِّد {paid} من سعر الشراء للمطوّر. يمكن للمشتري تولّي ما تبقّى من خطة الدفع بأقل من سعر الإطلاق الحالي.",
 
@@ -273,7 +285,9 @@ export default defineMessages({
     "offer.financing": "التمويل",
     "offer.mortgage": "تمويل عقاري عند التسليم",
     "offer.message": "رسالة إلى البائع (اختياري)",
+    "offer.messageHint": "دون أرقام هواتف أو عناوين بريد إلكتروني أو روابط: تبقى هويتك مخفية حتى توقيع مذكرة التفاهم، ويتولى فريقنا التواصل بينكما.",
     "offer.placeholder": "يمكنني إتمام الصفقة خلال 3 أسابيع…",
+    "offer.yourDeal": "تابع صفقتك",
     "offer.submit": "إرسال العرض",
     "offer.sent": "تم إرسال العرض",
     "offer.sentDescription": "سنعرضه على البائع ونطلعك على المستجدات في لوحة التحكم.",

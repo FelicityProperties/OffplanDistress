@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Copy, Mail, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { claimLink } from "@/app/actions/admin";
@@ -18,6 +18,7 @@ export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingI
   const t = useT("admin");
   const [pending, start] = useTransition();
   const [link, setLink] = useState<{ url: string; whatsapp: string | null } | null>(null);
+  const copyButton = useRef<HTMLButtonElement>(null);
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -38,6 +39,7 @@ export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingI
         </Button>
       )}
       <Button
+        ref={copyButton}
         size="sm"
         disabled={pending}
         onClick={() =>
@@ -62,7 +64,12 @@ export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingI
         <Copy aria-hidden /> {t("claim.copy")}
       </Button>
       <Dialog open={!!link} onOpenChange={(open) => !open && setLink(null)}>
-        <DialogContent>
+        <DialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            copyButton.current?.focus();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t("claim.dialogTitle", { name: sellerName })}</DialogTitle>
             <DialogDescription>{t("claim.dialogDesc")}</DialogDescription>

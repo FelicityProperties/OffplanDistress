@@ -60,7 +60,12 @@ const viewsIn = (p: Period) => sql`select * from page_views where created_at >= 
 
 /**
  * Every lead created in the period, one row each: kind, id, when, attribution, and what the list shows. Sample
- * listings and records made by admins are left out.
+ * listings, records made by admins and listings imported from a partner network's file (their source holds where they
+ * came from, not a visit) are left out, and so is what our team enters in the console: listings entered from a seller's
+ * documents (created_by_staff) and the accounts made for them, for an import's owner or for a buyer added to a deal
+ * file. A "signup" is an account its owner made: the sign-up form always sets a password, while the accounts our team
+ * makes have none until their owner claims one (the claim's audit row says it was a new account) or, for a deal-file
+ * buyer (audited as user.create), sets one with "Forgot password".
  */
 const leadsIn = (p: Period) => sql`
   select * from (
@@ -72,11 +77,15 @@ const leadsIn = (p: Period) => sql`
       where u.role is distinct from 'admin'
     union all
     select 'signup', u.id::text, u.created_at, u.source, u.full_name, null, u.id::text
-      from users u where u.role = 'user'
+      from users u where u.role = 'user' and u.password_hash is not null
+        and not exists (select 1 from audit_events a where a.actor_id = u.id and a.action = 'listing.claimed'
+                          and a.diff->>'newAccount' = 'true')
+        and not exists (select 1 from audit_events a where a.entity_type = 'user' and a.entity_id = u.id::text
+                          and a.action = 'user.create')
     union all
     select 'listing', l.id::text, l.created_at, l.source, l.project_name, l.ref_no, l.id::text
       from listings l join users u on u.id = l.seller_id
-      where not l.is_sample and u.role <> 'admin'
+      where not l.is_sample and not l.created_by_staff and u.role <> 'admin' and l.source->>'import' is null
     union all
     select 'offer', o.id::text, o.created_at, u.source, l.project_name, l.ref_no, o.listing_id::text
       from offers o join users u on u.id = o.buyer_id join listings l on l.id = o.listing_id

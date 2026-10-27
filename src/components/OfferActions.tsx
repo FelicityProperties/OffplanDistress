@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import { Check, Info } from "lucide-react";
 import { toast } from "sonner";
 import { respondToOffer } from "@/app/actions/market";
@@ -53,11 +53,14 @@ export function SellerOfferActions({
   offerId,
   status,
   amount,
+  askingPrice,
   listingStatus,
 }: {
   offerId: string;
   status: Status;
   amount: number;
+  /** The unit's asking price: the suggested counter never goes above it. */
+  askingPrice?: number;
   listingStatus: ListingStatusKey;
 }) {
   const t = useT("dashboard");
@@ -65,7 +68,11 @@ export function SellerOfferActions({
   const locale = useLocale();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
-  const [counter, setCounter] = useState(String(Math.round(amount * 1.05)));
+  const counterButton = useRef<HTMLButtonElement>(null);
+  // Suggested: 5% over the offer, but no more than the seller's own asking price (rarely what a seller means to ask).
+  const suggested = Math.round(amount * 1.05);
+  const [counter, setCounter] = useState(String(askingPrice ? Math.min(askingPrice, suggested) : suggested));
+  const aboveAsking = askingPrice != null && Number(counter) > askingPrice;
 
   const run = (action: "accept" | "decline" | "counter", value?: number) =>
     start(async () => {
@@ -96,7 +103,7 @@ export function SellerOfferActions({
           <Button size="sm" variant="success" disabled={pending} onClick={() => run("accept")}>
             <Check /> {tc("accept")}
           </Button>
-          <Button size="sm" variant="outline" disabled={pending} onClick={() => setOpen(true)}>
+          <Button ref={counterButton} size="sm" variant="outline" disabled={pending} onClick={() => setOpen(true)}>
             {tc("counter")}
           </Button>
         </>
@@ -105,7 +112,13 @@ export function SellerOfferActions({
         {tc("decline")}
       </Button>
       <Dialog open={open && live} onOpenChange={setOpen}>
-        <DialogContent>
+        {/* Opened from a button outside it (not a DialogTrigger): closed, focus goes back to that button. */}
+        <DialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            counterButton.current?.focus();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t("offerAction.counterTitle")}</DialogTitle>
           </DialogHeader>
@@ -115,11 +128,17 @@ export function SellerOfferActions({
           <Input
             type="number"
             min={0}
-            step={1000}
+            // Any whole dirham, as the asking price can be (the server rounds to one).
+            step={1}
             value={counter}
             onChange={(e) => setCounter(e.target.value)}
             aria-label={t("offerAction.counterAria")}
           />
+          {aboveAsking && (
+            <p role="status" className="text-xs text-warning">
+              {t("offerAction.counterAboveAsking", { amount: formatAED(askingPrice, locale) })}
+            </p>
+          )}
           <DialogFooter>
             <Button disabled={pending} onClick={() => run("counter", Number(counter))}>
               {t("offerAction.sendCounter", { amount: formatAED(Number(counter) || 0, locale) })}

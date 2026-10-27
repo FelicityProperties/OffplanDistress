@@ -49,7 +49,10 @@ async function insertMissingDeals(listingId?: string, offerId?: string) {
   await db.execute(sql`
     insert into deals (listing_id, offer_id, buyer_id, seller_id, agreed_price, sale_value, form_a_expires_at)
     select l.id, o.id, o.buyer_id, l.seller_id, o.amount,
-           least(o.amount::bigint + greatest(l.original_price - l.amount_paid, 0), ${INT_MAX})::int,
+           -- No accepted offer (a status set by hand): no price agreed, so no sale value yet. (least() skips nulls: without
+           -- the case it would be the integer limit, counted in the fee KPIs and the CSV.)
+           case when o.amount is null then null
+                else least(o.amount::bigint + greatest(l.original_price - l.amount_paid, 0), ${INT_MAX}) end::int,
            l.form_a_expires_at
     from listings l
     left join lateral (
@@ -75,8 +78,13 @@ export async function ensureDeal(listingId: string): Promise<Deal | null> {
   return openDeal(listingId);
 }
 
-/** Every deal under way gets its file (for the CSV export, which lists them all). */
+/**
+ * Every deal under way gets its file (for the CSV export, which lists them all). Files opened by hand before the fix
+ * above may hold the integer limit as their sale value with no agreed price: that sale value is cleared (it is worked
+ * out again once the agreed price is entered).
+ */
 export async function ensureAllDeals() {
+  await db.execute(sql`update deals set sale_value = null where agreed_price is null and sale_value is not null`);
   await insertMissingDeals();
 }
 

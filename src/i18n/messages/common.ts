@@ -29,6 +29,7 @@ export default defineMessages({
     "listing.paused": "Paused",
     "listing.rejected": "Rejected",
     "listing.withdrawn": "Withdrawn",
+    "pipeline.stage": "Stage {n} of {total}: {stage}",
 
     "offer.pending": "Pending",
     "offer.accepted": "Accepted",
@@ -42,6 +43,7 @@ export default defineMessages({
     "file.id": "Passport / Emirates ID",
     "file.photo": "Photo / render",
     "file.other": "Other document",
+    "file.form_a": "Form A (signed by the owner)",
 
     "kyc.not_started": "Not started",
     "kyc.pending": "In review",
@@ -213,6 +215,8 @@ export default defineMessages({
     accountOf: "{name}'s account",
     notFoundTitle: "Page not found",
     notFoundBody: "The page you're looking for doesn't exist, or the deal has been taken off the market.",
+    // The site's share card's description (og:image:alt), in the page's language; the card itself is in English.
+    shareImageAlt: "OffplanDistress — Dubai's marketplace for distressed off-plan units",
     goHome: "Go home",
     errorTitle: "This page didn't load",
     errorBody: "Something went wrong on our end. You can try again or head back home.",
@@ -245,6 +249,7 @@ export default defineMessages({
     "listing.paused": "متوقف مؤقتاً",
     "listing.rejected": "مرفوض",
     "listing.withdrawn": "مسحوب",
+    "pipeline.stage": "المرحلة {n} من {total}: {stage}",
 
     "offer.pending": "بانتظار الرد",
     "offer.accepted": "مقبول",
@@ -258,6 +263,7 @@ export default defineMessages({
     "file.id": "جواز السفر / الهوية الإماراتية",
     "file.photo": "صورة / تصميم",
     "file.other": "مستند آخر",
+    "file.form_a": "النموذج (A) موقّعاً من المالك",
 
     "kyc.not_started": "لم يبدأ",
     "kyc.pending": "قيد المراجعة",
@@ -357,7 +363,8 @@ export default defineMessages({
     "cta.primary": "بيع وحدتي",
     "cta.secondary": "تحدّث معنا أولاً",
     saveVsNew: "وفّر {amount} مقارنةً بالشراء الجديد",
-    watching: "{n} يتابعون",
+    // "label: {n}", as the other Arabic counts: a plural verb after 1 or 2 doesn't agree.
+    watching: "المتابعون: {n}",
     underOffer: "عليه عرض مقبول",
     vsLaunch: "أقل بـ {pct}% من سعر الإطلاق",
     sqft: "{n} قدم²",
@@ -426,6 +433,7 @@ export default defineMessages({
     accountOf: "حساب {name}",
     notFoundTitle: "الصفحة غير موجودة",
     notFoundBody: "الصفحة التي تبحث عنها غير موجودة، أو أن الصفقة لم تعد معروضة.",
+    shareImageAlt: "⁨OffplanDistress⁩ — منصة دبي للوحدات على الخارطة المتعثرة",
     goHome: "الصفحة الرئيسية",
     errorTitle: "تعذّر تحميل هذه الصفحة",
     errorBody: "حدث خطأ من جهتنا. يمكنك المحاولة مرة أخرى أو العودة إلى الصفحة الرئيسية.",

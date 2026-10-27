@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, FileCheck2, FilePlus2, FileX2 } from "lucide-react";
+import { CalendarClock, FileCheck2, FilePlus2, FileUp, FileX2, UserPlus } from "lucide-react";
 import { DeleteSamplesButton, ReviewButtons } from "@/components/admin/AdminControls";
 import { FollowUps } from "@/components/admin/FollowUps";
 import { StatusPill } from "@/components/badges";
@@ -16,23 +16,32 @@ import { formatAED, formatAEDCompact, formatDate, formatNumber, refCode } from "
 import { listingsWithoutPermitExpiry } from "@/lib/permits";
 import { developerName } from "@/lib/place-names";
 import { contactKinds } from "@/lib/typed-names";
+import { cn } from "@/lib/utils";
 
 /** Listings named in the "no permit expiry" banner; the rest are counted. */
 const NO_EXPIRY_LINKS = 12;
 
-export default async function AdminQueue() {
+// Typed by hand (not PageProps<"/admin">) so it compiles before Next regenerates its route types.
+export default async function AdminQueue({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireAdmin();
-  const [s, leads, queue, t, tc, ta, today, locale] = await Promise.all([
+  const [s, leads, inReview, t, tc, ta, ti, today, locale, params] = await Promise.all([
     adminStats(),
     leadStats(),
     adminListings("pending_review"),
     getT("admin"),
     getT("common"),
     getT("analytics"),
+    getT("intake"),
     todaySnapshot(),
     getLocale(),
+    searchParams,
   ]);
   const noExpiry = await listingsWithoutPermitExpiry();
+  // Imported listings still filed under their network's placeholder owner (src/lib/import.ts) have their own tab, so
+  // they don't bury the units our team can actually review.
+  const tab = params.tab === "imported" ? "imported" : "review";
+  const imported = inReview.filter((q) => q.awaitingOwner);
+  const queue = tab === "imported" ? imported : inReview.filter((q) => !q.awaitingOwner);
 
   return (
     <div className="space-y-6">
@@ -42,6 +51,12 @@ export default async function AdminQueue() {
           <Button asChild size="sm">
             <Link href="/admin/listings/new">
               <FilePlus2 aria-hidden /> {t("create.button")}
+            </Link>
+          </Button>
+          {/* Many units at once, from a partner network's file (nothing goes public). */}
+          <Button asChild size="sm" variant="outline">
+            <Link href="/admin/listings/import">
+              <FileUp aria-hidden /> {ti("import.button")}
             </Link>
           </Button>
           <DeleteSamplesButton count={s.samples} />
@@ -108,6 +123,30 @@ export default async function AdminQueue() {
         </Link>
       </div>
 
+      <div className="space-y-2">
+        <nav aria-label={ti("queue.tabs")} className="flex flex-wrap gap-1 rounded-lg bg-secondary p-1 text-sm sm:w-fit">
+          {(
+            [
+              ["review", "/admin", `${ti("queue.tab.review")} (${s.pending})`],
+              ["imported", "/admin?tab=imported", `${ti("queue.tab.imported")} (${imported.length})`],
+            ] as const
+          ).map(([key, href, label]) => (
+            <Link
+              key={key}
+              href={href}
+              aria-current={tab === key ? "page" : undefined}
+              className={cn(
+                "rounded-md px-3 py-1.5 font-medium text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                tab === key && "bg-card text-foreground shadow-card",
+              )}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+        {tab === "imported" && <p className="text-sm text-muted-foreground">{ti("imported.sub")}</p>}
+      </div>
+
       <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
         <Table className="min-w-[640px]">
           <TableHeader>
@@ -123,7 +162,7 @@ export default async function AdminQueue() {
             {queue.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
-                  {t("queue.empty")}
+                  {tab === "imported" ? ti("imported.empty") : t("queue.empty")}
                 </TableCell>
               </TableRow>
             )}
@@ -139,7 +178,13 @@ export default async function AdminQueue() {
                     <bdi>{refCode(q.refNo)}</bdi> · <bdi>{developerName(tc, q.developer, q.developerOther)}</bdi> ·{" "}
                     {tc(`unit.${q.unitType}`)} · {t("queue.submitted", { date: formatDate(q.createdAt, locale) })}
                   </p>
-                  {q.awaitingSeller && (
+                  {q.source?.import && q.source.ref && (
+                    <p className="text-xs text-muted-foreground">
+                      {ti("imported.from", { source: q.source.sourceName ?? q.source.import, ref: q.source.ref })}
+                    </p>
+                  )}
+                  {/* Under a placeholder owner, the Seller column says "Owner to add" instead. */}
+                  {q.awaitingSeller && !q.awaitingOwner && (
                     <p className="mt-1">
                       <StatusPill tone="warning">{t("claim.pendingBadge")}</StatusPill>
                     </p>
@@ -158,10 +203,16 @@ export default async function AdminQueue() {
                   )}
                 </TableCell>
                 <TableCell>
-                  {q.sellerName}
-                  <p className="text-xs text-muted-foreground">
-                    <bdi dir="ltr">{q.sellerPhone ?? q.sellerEmail}</bdi>
-                  </p>
+                  {q.awaitingOwner ? (
+                    <StatusPill tone="warning">{ti("owner.badge")}</StatusPill>
+                  ) : (
+                    <>
+                      {q.sellerName}
+                      <p className="text-xs text-muted-foreground">
+                        <bdi dir="ltr">{q.sellerPhone ?? q.sellerEmail}</bdi>
+                      </p>
+                    </>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2 text-xs">
@@ -187,7 +238,15 @@ export default async function AdminQueue() {
                 </TableCell>
                 <TableCell className="text-end tabular">{formatAED(q.askingPrice, locale)}</TableCell>
                 <TableCell>
-                  <ReviewButtons listingId={q.id} />
+                  {q.awaitingOwner ? (
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/admin/listings/${q.id}#owner`}>
+                        <UserPlus aria-hidden /> {ti("imported.setOwner")}
+                      </Link>
+                    </Button>
+                  ) : (
+                    <ReviewButtons listingId={q.id} />
+                  )}
                 </TableCell>
               </TableRow>
             ))}

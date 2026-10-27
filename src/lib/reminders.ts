@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { files, inquiries, listings, offers, reminders, sellerLeads, users } from "@/db/schema";
 import { emailOffReason } from "./email";
 import { leadCode } from "./estimate";
+import { awaitingOwnerSql } from "./import";
 import { formatNumber, refCode } from "./format";
 import { notify, notifyAdmins, type TemplateParams } from "./notify";
 import type { TemplateKey } from "./notification-templates";
@@ -18,6 +19,7 @@ import { addDays, dubaiToday, permitCurrentSql } from "./permits";
 // Samples, staff accounts and the offers / inquiries they made are never counted. Nudges only go to people who can log
 // in: never to a seller our team added who hasn't set a password through their claim link yet, nor to a buyer our team
 // added to a deal file (no password either; no rule below is about them: they have no offer, listing or request).
+// Imported listings still under their network's placeholder owner are in no rule at all (see notAwaitingOwner).
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -203,6 +205,11 @@ type SellerRow = { sellerName: string; sellerPhone: string | null; sellerEmail: 
 const sellerContact = (r: SellerRow): Contact => ({ name: r.sellerName, phone: r.sellerPhone, email: realEmail(r.sellerEmail) });
 /** A real listing of a real seller. */
 const realListing = and(eq(listings.isSample, false), eq(sellers.role, "user"));
+/**
+ * Not an imported listing still filed under its network's placeholder owner (src/lib/import.ts): nobody can review it
+ * or be reminded about it before our team enters the owner, so it isn't review backlog (it has its own tab on /admin).
+ */
+const notAwaitingOwner = sql`not ${awaitingOwnerSql}`;
 
 /**
  * Under review for 48 hours without the SPA (or Oqood) or without the statement of account. Not a listing we already
@@ -231,6 +238,7 @@ async function docsRule(now: Date): Promise<FollowUpItem[]> {
       and(
         eq(listings.status, "pending_review"),
         realListing,
+        notAwaitingOwner,
         eq(listings.verified, false),
         lte(listings.createdAt, ago(now, FOLLOW_UP.docsHours * HOUR)),
         sql`(not ${spa} or not ${soa})`,
@@ -479,7 +487,12 @@ async function reviewRule(now: Date): Promise<FollowUpItem[]> {
     .from(listings)
     .innerJoin(sellers, eq(sellers.id, listings.sellerId))
     .where(
-      and(eq(listings.status, "pending_review"), realListing, lte(listings.updatedAt, ago(now, FOLLOW_UP.reviewHours * HOUR))),
+      and(
+        eq(listings.status, "pending_review"),
+        realListing,
+        notAwaitingOwner,
+        lte(listings.updatedAt, ago(now, FOLLOW_UP.reviewHours * HOUR)),
+      ),
     )
     .orderBy(asc(listings.updatedAt))
     .limit(LIMIT);
@@ -497,8 +510,9 @@ async function reviewRule(now: Date): Promise<FollowUpItem[]> {
 }
 
 /**
- * Live or under-offer units whose next instalment falls due within 14 days or is already past: developers won't issue
- * the NOC while instalments are overdue, so our team agrees with the seller who pays it. For our team only.
+ * Live, under-offer and NOC-in-progress units whose next instalment falls due within 14 days or is already past:
+ * developers won't issue the NOC while instalments are overdue (so it matters most for a unit waiting for its NOC), so
+ * our team agrees with the seller who pays it. For our team only.
  */
 async function instalmentsRule(now: Date): Promise<FollowUpItem[]> {
   const today = dubaiToday(now);
@@ -516,7 +530,7 @@ async function instalmentsRule(now: Date): Promise<FollowUpItem[]> {
     .innerJoin(sellers, eq(sellers.id, listings.sellerId))
     .where(
       and(
-        inArray(listings.status, ["live", "under_offer"]),
+        inArray(listings.status, ["live", "under_offer", "noc_in_progress"]),
         realListing,
         isNotNull(listings.nextInstalmentDate),
         lte(listings.nextInstalmentDate, addDays(today, FOLLOW_UP.instalmentDays)),

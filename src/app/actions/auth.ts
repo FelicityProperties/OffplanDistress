@@ -12,7 +12,9 @@ import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { LEGAL_UPDATED } from "@/content/legal/brand";
 import { sourceFromForm } from "@/lib/attribution";
-import { clear, clientIp, hit, MINUTE } from "@/lib/throttle";
+import { isPlaceholderEmail } from "@/lib/claim";
+import { formText } from "@/lib/clean-text";
+import { attempts, clear, clientIp, hit, MINUTE, record } from "@/lib/throttle";
 import {
   createSession,
   destroySession,
@@ -65,9 +67,10 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
   const [t, ta] = await Promise.all([getT("errors"), getT("auth")]);
   const parsed = signupSchema(t, ta).safeParse(
     {
-      fullName: formData.get("fullName"),
+      // Without the control characters Postgres can't store (a NUL byte in a name would be a server error).
+      fullName: formText(formData.get("fullName")),
       email: formData.get("email"),
-      phone: formData.get("phone") || undefined,
+      phone: formText(formData.get("phone")) || undefined,
       password: formData.get("password"),
       intent: formData.get("intent") || "both",
       acceptTerms: formData.get("acceptTerms"),
@@ -81,6 +84,9 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
   if (isOwnerEmail(email)) {
     return { fieldErrors: { email: [t("signup.reserved")] } };
   }
+  // .invalid addresses are our own placeholders (src/lib/claim.ts, src/lib/import.ts) and never receive email: taken
+  // first by a sign-up, an import's placeholder owner address would stop that source's import.
+  if (isPlaceholderEmail(email)) return { fieldErrors: { email: [t("field.email")] } };
   if (await findUserByEmail(email)) {
     return { fieldErrors: { email: [t("signup.exists")] } };
   }
@@ -142,19 +148,27 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
   );
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
 
-  // Throttle before bcrypt: 10 tries per account and 50 per IP every 15 minutes.
-  const emailKey = `login:${parsed.data.email.toLowerCase()}`;
-  const [okEmail, okIp] = await Promise.all([
-    hit(emailKey, 10, 15 * MINUTE),
-    hit(`login-ip:${await clientIp()}`, 50, 15 * MINUTE),
+  // Throttle before bcrypt, every 15 minutes. From one address: 10 tries per account (each try counts, so a burst
+  // can't slip past) and 50 in all. Across all addresses: 100 wrong passwords per account. Only wrong passwords count
+  // there, so refused tries don't extend it, and no one address can lock someone else out of their account (the
+  // owner's login email is public).
+  const email = parsed.data.email.toLowerCase();
+  const ip = await clientIp();
+  const fromHere = `login:${email}:${ip}`;
+  const wrong = `login-fail:${email}`;
+  const [okHere, okIp, wrongTries] = await Promise.all([
+    hit(fromHere, 10, 15 * MINUTE),
+    hit(`login-ip:${ip}`, 50, 15 * MINUTE),
+    attempts(wrong, 15 * MINUTE),
   ]);
-  if (!okEmail || !okIp) return { error: t("tooMany") };
+  if (!okHere || !okIp || wrongTries >= 100) return { error: t("tooMany") };
 
   const user = await findUserByEmail(parsed.data.email);
   if (!user?.passwordHash || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+    await record(wrong);
     return { error: t("login.invalid") };
   }
-  await clear(emailKey);
+  await clear(fromHere);
   // Emails follow the language the user last used on the site.
   const locale = await getLocale();
   if (user.locale !== locale) await db.update(users).set({ locale }).where(eq(users.id, user.id));

@@ -2,19 +2,20 @@
 
 import { randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { files, inquiries, listings, offers, sellerLeads, sessions, users } from "@/db/schema";
+import { files, inquiries, listings, offers, passwordResets, sellerLeads, sessions, users, type Source } from "@/db/schema";
 import { dirOf, isLocale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { audit, changes } from "@/lib/audit";
 import { findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
 import { claimPath, isPlaceholderEmail, issueClaimToken, placeholderEmail } from "@/lib/claim";
-import { addNote, saveDealFile, stageGate, syncSaleValue, type DealFileState, type GateNeed } from "@/lib/deals";
+import { addNote, openDeal, saveDealFile, stageGate, syncSaleValue, type DealFileState, type GateNeed } from "@/lib/deals";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
 import { emailEnabled, sendEmail } from "@/lib/email";
+import { isImportOwner } from "@/lib/import";
 import { formatDate, formatNumber, refCode } from "@/lib/format";
 import { whatsappNumber } from "@/lib/leads";
 import { renderTemplate } from "@/lib/notification-templates";
@@ -67,17 +68,30 @@ async function notifySeller(l: ListingForNotice, key: Parameters<typeof notify>[
   if (!l.isSample && !awaitsSellerConfirmation(l)) await notify([l.sellerId], key, params, sellerHref(l.id));
 }
 
-/** Seller and the buyer whose offer was accepted hear about each step of the transfer. */
+/**
+ * Seller and buyer hear about each step of the transfer. The buyer is the deal file's (linked by our team on a deal set
+ * by hand, or the accepted offer's), else the accepted offer's. A buyer our team added who can't sign in yet (no
+ * password) is reached by our team instead, as a seller before claiming: the deal shows on their dashboard once they can.
+ */
 async function notifyDealStep(l: ListingForNotice, key: "deal.noc_in_progress" | "deal.transferred") {
   const params = { project: l.projectName, ref: refCode(l.refNo) };
-  const [accepted] = await db
-    .select({ buyerId: offers.buyerId })
-    .from(offers)
-    .where(and(eq(offers.listingId, l.id), eq(offers.status, "accepted")))
-    .orderBy(desc(offers.updatedAt))
-    .limit(1);
+  const deal = await openDeal(l.id);
+  const [accepted] = deal?.buyerId
+    ? [{ buyerId: deal.buyerId }]
+    : await db
+        .select({ buyerId: offers.buyerId })
+        .from(offers)
+        .where(and(eq(offers.listingId, l.id), eq(offers.status, "accepted")))
+        .orderBy(desc(offers.updatedAt))
+        .limit(1);
   await notifySeller(l, key, params);
-  if (accepted) await notify([accepted.buyerId], key, params, "/dashboard/offers?tab=sent");
+  if (!accepted) return;
+  const [buyer] = await db
+    .select({ canSignIn: sql<boolean>`${users.passwordHash} is not null` })
+    .from(users)
+    .where(eq(users.id, accepted.buyerId))
+    .limit(1);
+  if (buyer?.canSignIn) await notify([accepted.buyerId], key, params, "/dashboard/offers?tab=sent");
 }
 
 const listingNoticeColumns = {
@@ -107,6 +121,12 @@ function awaitsSellerConfirmation(l: { isSample: boolean; createdByStaff: boolea
   return !l.isSample && l.createdByStaff && l.ownershipConfirmedAt == null;
 }
 
+/** Why such a listing can't be published yet: still under an import's placeholder (set the owner first), or unconfirmed. */
+async function unconfirmedMessage(sellerId: string) {
+  const [seller] = await db.select({ email: users.email, passwordHash: users.passwordHash }).from(users).where(eq(users.id, sellerId)).limit(1);
+  return seller && isImportOwner(seller) ? (await getT("intake"))("approve.setOwnerFirst") : (await getT("errors"))("listing.ownershipUnconfirmed");
+}
+
 /** "Before “NOC in progress”, the deal file needs the date Form F … and the buyer's KYC verified." */
 function gateMessage(t: T, next: ListingStatusKey, missing: GateNeed[]) {
   const items = missing.map((k) => t(`deal.need.${k}`));
@@ -133,13 +153,16 @@ export async function approveListing(listingId: string) {
   const me = await assertAdmin();
   const [before] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, listingId)).limit(1);
   if (!before) return { error: (await getT("errors"))("listing.notFound") };
-  if (awaitsSellerConfirmation(before)) return { error: (await getT("errors"))("listing.ownershipUnconfirmed") };
+  // Only a listing waiting for review: a page opened before the seller withdrew it (or another admin published or
+  // rejected it) mustn't advertise it again without its owner.
+  if (before.status !== "pending_review") return reviewedMeanwhile();
+  if (awaitsSellerConfirmation(before)) return { error: await unconfirmedMessage(before.sellerId) };
   // RERA: no property advert without a current DLD (Trakheesi) permit and Form A. Sample listings aren't adverts.
   const blocker = publishBlocker(before);
   if (blocker) return { error: (await getT("errors"))(blocker) };
   const now = new Date();
   const verified = before.verified || (await hasVerificationDocs(listingId));
-  await db
+  const [approved] = await db
     .update(listings)
     .set({
       status: "live",
@@ -149,7 +172,10 @@ export async function approveListing(listingId: string) {
       rejectionReason: null,
       updatedAt: now,
     })
-    .where(eq(listings.id, listingId));
+    // …and the same if it changes between the read above and this write.
+    .where(and(eq(listings.id, listingId), eq(listings.status, "pending_review")))
+    .returning({ id: listings.id });
+  if (!approved) return reviewedMeanwhile();
   await audit({
     actorId: me.id,
     action: "listing.approve",
@@ -157,15 +183,19 @@ export async function approveListing(listingId: string) {
     entityId: listingId,
     diff: changes(before, { status: "live", verified, publicPrice: before.askingPrice }),
   });
-  if (before.status !== "live") {
-    await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });
-    // Back on the market: no deal agreed earlier stays accepted on it (see reopenUnit).
-    await reopenUnit(before, before.status);
-  }
+  await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });
+  // Back on the market: no deal agreed earlier stays accepted on it (see reopenUnit).
+  await reopenUnit(before, before.status);
   // A seller's price cut waits for re-approval; watchers hear about it once it is public again.
   if (!before.isSample && before.publicPrice != null) await notifyPriceDrop(before, before.publicPrice, before.askingPrice);
   refresh();
   return { ok: true };
+}
+
+/** The review buttons' listing isn't waiting for review any more: the page is refreshed to show what it is now. */
+async function reviewedMeanwhile() {
+  refresh();
+  return { error: (await getT("errors"))("listing.statusChanged") };
 }
 
 export async function rejectListing(listingId: string, reason: string) {
@@ -175,34 +205,41 @@ export async function rejectListing(listingId: string, reason: string) {
     .from(listings)
     .where(eq(listings.id, listingId))
     .limit(1);
+  if (!before) return { error: (await getT("errors"))("listing.notFound") };
+  // Like Approve: only while it waits for review (a stale page mustn't reject a listing published since, ending its
+  // offers). A listing already out there is taken down from the listing editor.
+  if (before.status !== "pending_review") return reviewedMeanwhile();
   const clean = reason.trim().slice(0, 1000);
-  await db
+  const [rejected] = await db
     .update(listings)
     .set({ status: "rejected", rejectionReason: clean || null, updatedAt: new Date() })
-    .where(eq(listings.id, listingId));
-  if (before) {
-    await audit({
-      actorId: me.id,
-      action: "listing.reject",
-      entityType: "listing",
-      entityId: listingId,
-      // The reason as it was before (a listing rejected again keeps its earlier one until now).
-      diff: changes(before, { status: "rejected", rejectionReason: clean || null }),
-    });
-    await notifySeller(before, "listing.rejected", {
-      project: before.projectName,
-      reason: clean || { t: "errors", key: "notify.rejectedFallback" },
-    });
-    // Off the market: buyers with an open offer on it are told it is no longer available, and a deal agreed on it ends
-    // (as in the listing editor below).
-    await closeOpenOffers(before, "unavailable");
-    if (before.status !== "transferred") await cancelAcceptedOffers(before, "rejected", "withdrawn_by_team");
-  }
+    .where(and(eq(listings.id, listingId), eq(listings.status, "pending_review")))
+    .returning({ id: listings.id });
+  if (!rejected) return reviewedMeanwhile();
+  await audit({
+    actorId: me.id,
+    action: "listing.reject",
+    entityType: "listing",
+    entityId: listingId,
+    // The reason as it was before (a listing rejected again keeps its earlier one until now).
+    diff: changes(before, { status: "rejected", rejectionReason: clean || null }),
+  });
+  await notifySeller(before, "listing.rejected", {
+    project: before.projectName,
+    reason: clean || { t: "errors", key: "notify.rejectedFallback" },
+  });
+  // Off the market: buyers with an open offer on it are told it is no longer available, and a deal agreed on it ends
+  // (as in the listing editor below).
+  await closeOpenOffers(before, "unavailable");
+  await cancelAcceptedOffers(before, "rejected", "withdrawn_by_team");
   refresh();
   return { ok: true };
 }
 
 const statuses = Object.keys(LISTING_STATUS) as [ListingStatusKey, ...ListingStatusKey[]];
+
+/** The largest whole number a Postgres integer column holds. */
+const INT4_MAX = 2_147_483_647;
 
 /**
  * A permit or Form A expiry: a real calendar date (z.iso.date checks the day exists in that month) no more than a year
@@ -223,8 +260,9 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
     status: z.enum(statuses),
     verified: z.boolean(),
     nocEligible: z.boolean(),
-    launchPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
-    askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative(),
+    // int4 columns, like the penalty below: a typo with extra zeros is a field error, not a failed save.
+    launchPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX, t("field.amountTooLarge")).optional(),
+    askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX, t("field.amountTooLarge")),
     // Paid to the developer to date, corrected from its statement of account (at most the SPA price, checked below).
     // Empty or left out = unchanged.
     amountPaid: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
@@ -232,7 +270,7 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
     overdueAmount: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().optional(),
     // An int4 column: a typo with extra zeros is a field error, not a failed save. (The overdue amount is capped by
     // the remaining balance below.)
-    overduePenalty: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(2_147_483_647, t("field.amountTooLarge")).optional(),
+    overduePenalty: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX, t("field.amountTooLarge")).optional(),
     arrearsCheckedAt: z.iso
       .date(t("field.date"))
       .refine((d) => d >= "2000-01-01" && d <= dubaiToday(), t("field.arrearsCheckedAt"))
@@ -260,6 +298,16 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
   });
 
 const scrubbedName = (v: string) => scrubTypedName(v).name || undefined;
+
+/**
+ * The unit's sale went through at DLD: it is transferred, or was taken down (withdrawn) after that with its completed
+ * deal file still open (a withdrawal from any earlier stage closes the file).
+ */
+async function transferCompleted(l: { id: string; status: ListingStatusKey }) {
+  if (l.status === "transferred") return true;
+  if (l.status !== "withdrawn") return false;
+  return (await openDeal(l.id))?.transferredAt != null;
+}
 
 export async function adminUpdateListing(_prev: FormState, formData: FormData): Promise<FormState> {
   const me = await assertAdmin();
@@ -318,6 +366,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       overduePenalty: listings.overduePenalty,
       arrearsCheckedAt: listings.arrearsCheckedAt,
       // For the audit trail's diff of what this save changed.
+      rejectionReason: listings.rejectionReason,
       pausedByAdmin: listings.pausedByAdmin,
       nocEligible: listings.nocEligible,
       launchPrice: listings.launchPrice,
@@ -338,6 +387,10 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   }
   // Overdue instalments are part of the balance still owed to the developer, so they can't be more than it.
   const remainingBalance = Math.max(current.originalPrice - amountPaid, 0);
+  // The sale value (asking price + that balance) is worked out in integers too (deal file, fees, the market figures).
+  if (v.askingPrice + remainingBalance > INT4_MAX) {
+    return { error: t("form.checkFields"), fieldErrors: { askingPrice: [t("field.amountTooLarge")] } };
+  }
   if (v.overdueAmount != null && v.overdueAmount > remainingBalance) {
     return {
       error: t("form.checkFields"),
@@ -365,6 +418,13 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   // back: the unit would go live again with an accepted offer, and its backup bidders be told the deal fell through.
   const statusWas = formData.get("statusWas");
   if (typeof statusWas === "string" && statusWas !== current.status) return { error: t("listing.statusChanged") };
+  // A unit transferred at DLD is sold: its deal completed, the buyer owns it and our fee is earned. It may be taken down
+  // (withdrawn, its deal file kept) and shown as transferred again, never put back on the market or into an earlier
+  // stage, which would close the completed deal as fallen through and tell the buyer so.
+  if (v.status !== current.status && v.status !== "transferred" && v.status !== "withdrawn" && (await transferCompleted(current))) {
+    const message = (await getT("admin"))("edit.transferredFinal");
+    return { error: message, fieldErrors: { status: [message] } };
+  }
   // A listed name, or the one already stored (older rows may hold a name that has since left the list).
   const developer = v.developer ?? current.developer;
   const community = v.community ?? current.community;
@@ -395,7 +455,8 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   }
   // Publishing from the editor is an approval too: not before the seller has confirmed a listing our team entered.
   if (PUBLIC_STATUSES.includes(v.status) && awaitsSellerConfirmation(current)) {
-    return { error: t("listing.ownershipUnconfirmed"), fieldErrors: { status: [t("listing.ownershipUnconfirmed")] } };
+    const message = await unconfirmedMessage(current.sellerId);
+    return { error: message, fieldErrors: { status: [message] } };
   }
   // Stage gates (src/lib/deals.ts): moving on to the NOC or the transfer needs the deal file to have what that step
   // needs. Only a change of status made now is checked, so a deal already in a stage can still be saved as it is.
@@ -429,6 +490,8 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
     publicPrice: advertised ? v.askingPrice : current.publicPrice,
     images: v.images.filter((u) => /^https:\/\//.test(u) || u.startsWith("/api/files/")),
     publishedAt: current.publishedAt ?? (v.status === "live" ? now : null),
+    // Rejected here, with no reason typed: not the reason of an earlier rejection (the seller's page shows it).
+    ...(v.status === "rejected" && current.status !== "rejected" ? { rejectionReason: null } : {}),
   };
   const [saved] = await db
     .update(listings)
@@ -447,8 +510,13 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (statusChanged && v.status === "live" && !current.publishedAt) {
     await notifySeller(current, "listing.approved", { project: current.projectName, ref: refCode(current.refNo) });
   }
+  // Rejected from the editor (a listing already out there, say): the seller is told, as from the Reject button.
+  if (statusChanged && v.status === "rejected") {
+    await notifySeller(current, "listing.rejected", { project: current.projectName, reason: { t: "errors", key: "notify.rejectedFallback" } });
+  }
   if (statusChanged && v.status === "noc_in_progress") await notifyDealStep(current, "deal.noc_in_progress");
-  if (statusChanged && v.status === "transferred") await notifyDealStep(current, "deal.transferred");
+  // (Not again for a sold unit shown as transferred once more after being taken down.)
+  if (statusChanged && v.status === "transferred" && current.status !== "withdrawn") await notifyDealStep(current, "deal.transferred");
   // The bidders: a sold unit closes the open offers, and so does one taken off the market. A unit back on the market
   // has no deal any more: the accepted offer is closed (that buyer told) and the backups are active again. So has one
   // our team takes off the market while in a deal (as when the seller withdraws): its file is closed with the reason
@@ -549,9 +617,38 @@ export async function deleteSampleListings() {
 
 // ---- Staff-assisted intake: a listing entered by our team from the documents a seller sent (src/lib/claim.ts) ----
 
-const staffSellerSchema = (t: T) =>
+/**
+ * What the staff forms' person checks say, worded for the form: the intake form's seller, or the Owner card's owner
+ * (an imported unit's owner may not be the one selling it to the buyer, and staff are entering someone else's name).
+ */
+type PersonMessages = { name: string; contact: string; phone: string; isStaff: string; phoneShared: string; phoneHasAccount: string };
+
+function sellerMessages(t: T): PersonMessages {
+  return {
+    name: t("field.fullName"),
+    contact: t("admin.sellerContact"),
+    phone: t("admin.sellerPhone"),
+    isStaff: t("admin.sellerIsStaff"),
+    phoneShared: t("admin.phoneShared"),
+    phoneHasAccount: t("admin.phoneHasAccount"),
+  };
+}
+
+async function ownerMessages(): Promise<PersonMessages> {
+  const ti = await getT("intake");
+  return {
+    name: ti("owner.error.name"),
+    contact: ti("owner.error.contact"),
+    phone: ti("owner.error.phone"),
+    isStaff: ti("owner.error.isStaff"),
+    phoneShared: ti("owner.error.phoneShared"),
+    phoneHasAccount: ti("owner.error.phoneHasAccount"),
+  };
+}
+
+const staffSellerSchema = (t: T, m: PersonMessages = sellerMessages(t)) =>
   z.object({
-    sellerName: z.string().trim().min(2, t("field.fullName")).max(120),
+    sellerName: z.string().trim().min(2, m.name).max(120),
     sellerEmail: z.string().trim().max(200).pipe(z.email(t("field.email"))).optional(),
     sellerPhone: z.string().trim().max(30).optional(),
     sellerLocale: z.enum(["en", "ar"]).catch("en"),
@@ -559,6 +656,38 @@ const staffSellerSchema = (t: T) =>
   });
 
 export type StaffListingState = FormState & { listingId?: string };
+
+type StaffSeller = z.output<ReturnType<typeof staffSellerSchema>>;
+type FieldErrors = Record<string, string[] | undefined>;
+
+/**
+ * The seller fields of a staff form (adminCreateListing, adminSetListingOwner): who the seller is, and a way to reach
+ * them for the claim link — a mobile number, an email, or both.
+ */
+function readStaffSeller(formData: FormData, t: T, m: PersonMessages = sellerMessages(t)) {
+  const opt = (k: string) => {
+    const v = formData.get(k);
+    return typeof v === "string" && v.trim() ? v : undefined;
+  };
+  const seller = staffSellerSchema(t, m).safeParse(
+    {
+      sellerName: formData.get("sellerName") ?? "",
+      sellerEmail: opt("sellerEmail"),
+      sellerPhone: opt("sellerPhone"),
+      sellerLocale: formData.get("sellerLocale"),
+      leadId: opt("leadId"),
+    },
+    { error: fallbackErrors(t) },
+  );
+  const fieldErrors: FieldErrors = seller.success ? {} : z.flattenError(seller.error).fieldErrors;
+  const typedPhone = opt("sellerPhone")?.trim();
+  const phoneDigits = typedPhone ? whatsappNumber(typedPhone) : null;
+  if (!fieldErrors.sellerPhone) {
+    if (!typedPhone && !opt("sellerEmail")) fieldErrors.sellerPhone = [m.contact];
+    else if (typedPhone && !phoneDigits) fieldErrors.sellerPhone = [m.phone];
+  }
+  return { seller: seller.success ? seller.data : null, fieldErrors, phoneDigits };
+}
 
 /**
  * The seller's account for a staff-created listing. With an email: the account with that email, if any. Without one:
@@ -595,38 +724,68 @@ async function staffListingSeller(email: string | undefined, phoneDigits: string
   return { user: matches[0] ?? null };
 }
 
+/**
+ * The account a staff-created listing is filed under: the seller's (staffListingSeller), or a new one without a
+ * password. Staff accounts and our own placeholder addresses are refused, as field errors. `created` when none matched.
+ */
+async function staffSellerAccount(
+  t: T,
+  s: StaffSeller,
+  phoneDigits: string | null,
+  source: Source | null,
+  m: PersonMessages = sellerMessages(t),
+): Promise<{ id: string; created: boolean } | { error: string; fieldErrors?: FieldErrors }> {
+  if (s.sellerEmail && isOwnerEmail(s.sellerEmail)) {
+    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [m.isStaff] } };
+  }
+  // .invalid addresses are our own placeholders (phone-only sellers, imports' placeholder owners, the sample listings'
+  // seller), never a seller's.
+  if (s.sellerEmail && isPlaceholderEmail(s.sellerEmail)) {
+    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("field.email")] } };
+  }
+  const found = await staffListingSeller(s.sellerEmail, phoneDigits);
+  if (found.error) {
+    return { error: t("form.checkFields"), fieldErrors: { sellerPhone: [found.error === "admin.phoneShared" ? m.phoneShared : m.phoneHasAccount] } };
+  }
+  if (found.user && (found.user.role === "admin" || isOwnerEmail(found.user.email))) {
+    return { error: t("form.checkFields"), fieldErrors: { [s.sellerEmail ? "sellerEmail" : "sellerPhone"]: [m.isStaff] } };
+  }
+  if (found.user) {
+    if (!found.user.phone && s.sellerPhone) {
+      await db.update(users).set({ phone: s.sellerPhone }).where(eq(users.id, found.user.id));
+    }
+    return { id: found.user.id, created: false };
+  }
+  // No password: the seller sets one (and their email, if we only have a phone number) with the claim link.
+  const email = s.sellerEmail?.toLowerCase() ?? placeholderEmail(phoneDigits!);
+  const [created] = await db
+    .insert(users)
+    .values({
+      email,
+      fullName: s.sellerName,
+      phone: s.sellerPhone ?? null,
+      passwordHash: null,
+      intent: "sell",
+      locale: s.sellerLocale,
+      source,
+    })
+    .onConflictDoNothing()
+    .returning({ id: users.id });
+  // Created at the same moment by someone else (a sign-up with this email): use that account.
+  const id = created?.id ?? (await findUserByEmail(email))?.id;
+  if (!id) return { error: t("form.fixDetails") };
+  return { id, created: Boolean(created) };
+}
+
 export async function adminCreateListing(_prev: StaffListingState, formData: FormData): Promise<StaffListingState> {
   const me = await assertAdmin();
   const t = await getT("errors");
-  const opt = (k: string) => {
-    const v = formData.get(k);
-    return typeof v === "string" && v.trim() ? v : undefined;
-  };
-  const seller = staffSellerSchema(t).safeParse(
-    {
-      sellerName: formData.get("sellerName") ?? "",
-      sellerEmail: opt("sellerEmail"),
-      sellerPhone: opt("sellerPhone"),
-      sellerLocale: formData.get("sellerLocale"),
-      leadId: opt("leadId"),
-    },
-    { error: fallbackErrors(t) },
-  );
+  const { seller, fieldErrors: sellerErrors, phoneDigits } = readStaffSeller(formData, t);
   const fields = await parseListingFields(formData);
-  const fieldErrors: Record<string, string[] | undefined> = {
-    ...(fields.ok ? {} : fields.fieldErrors),
-    ...(seller.success ? {} : z.flattenError(seller.error).fieldErrors),
-  };
-  const typedPhone = opt("sellerPhone")?.trim();
-  const phoneDigits = typedPhone ? whatsappNumber(typedPhone) : null;
-  // A way to reach the seller (for the claim link): a mobile number, an email, or both.
-  if (!fieldErrors.sellerPhone) {
-    if (!typedPhone && !opt("sellerEmail")) fieldErrors.sellerPhone = [t("admin.sellerContact")];
-    else if (typedPhone && !phoneDigits) fieldErrors.sellerPhone = [t("admin.sellerPhone")];
-  }
+  const fieldErrors: FieldErrors = { ...(fields.ok ? {} : fields.fieldErrors), ...sellerErrors };
   if (!fields.ok && !("fieldErrors" in fields)) return { error: fields.error };
-  if (!seller.success || !fields.ok || Object.keys(fieldErrors).length) return { error: t("form.checkFields"), fieldErrors };
-  const s = seller.data;
+  if (!seller || !fields.ok || Object.keys(fieldErrors).length) return { error: t("form.checkFields"), fieldErrors };
+  const s = seller;
   const v = fields.data;
 
   const lead = s.leadId
@@ -634,44 +793,13 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
     : undefined;
   if (s.leadId && !lead) return { error: t("admin.leadNotFound") };
 
-  if (s.sellerEmail && isOwnerEmail(s.sellerEmail)) {
-    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("admin.sellerIsStaff")] } };
-  }
-  // .invalid addresses are our own placeholders (phone-only sellers, the sample listings' seller), never a seller's.
-  if (s.sellerEmail && isPlaceholderEmail(s.sellerEmail)) {
-    return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [t("field.email")] } };
-  }
-  const found = await staffListingSeller(s.sellerEmail, phoneDigits);
-  if (found.error) return { error: t("form.checkFields"), fieldErrors: { sellerPhone: [t(found.error)] } };
-  let sellerId = found.user?.id;
-  if (found.user && (found.user.role === "admin" || isOwnerEmail(found.user.email))) {
-    return { error: t("form.checkFields"), fieldErrors: { [s.sellerEmail ? "sellerEmail" : "sellerPhone"]: [t("admin.sellerIsStaff")] } };
-  }
-  if (found.user && !found.user.phone && s.sellerPhone) {
-    await db.update(users).set({ phone: s.sellerPhone }).where(eq(users.id, found.user.id));
-  }
-  if (!sellerId) {
-    // No password: the seller sets one (and their email, if we only have a phone number) with the claim link.
-    const email = s.sellerEmail?.toLowerCase() ?? placeholderEmail(phoneDigits!);
-    const [created] = await db
-      .insert(users)
-      .values({
-        email,
-        fullName: s.sellerName,
-        phone: s.sellerPhone ?? null,
-        passwordHash: null,
-        intent: "sell",
-        locale: s.sellerLocale,
-        source: lead?.source ?? null,
-      })
-      .onConflictDoNothing()
-      .returning({ id: users.id });
-    // Created at the same moment by someone else (a sign-up with this email): use that account.
-    sellerId = created?.id ?? (await findUserByEmail(email))?.id;
-    if (!sellerId) return { error: t("form.fixDetails") };
-  }
+  const account = await staffSellerAccount(t, s, phoneDigits, lead?.source ?? null);
+  if ("error" in account) return account;
+  const sellerId = account.id;
 
-  const [row] = await db
+  // The account is made just before the listing (no transactions over Neon's HTTP driver): if the listing can't be
+  // stored, the account made for it goes too, rather than being left behind with no listing, in neither Users tab.
+  const insertListing = () => db
     .insert(listings)
     .values({
       sellerId,
@@ -699,6 +827,19 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
       leadId: lead?.id ?? null,
     })
     .returning({ id: listings.id, refNo: listings.refNo });
+  let row: Awaited<ReturnType<typeof insertListing>>[number];
+  try {
+    [row] = await insertListing();
+  } catch (err) {
+    console.error("[admin] staff listing insert failed", err);
+    if (account.created) {
+      await db
+        .delete(users)
+        .where(and(eq(users.id, sellerId), isNull(users.passwordHash), sql`not exists (select 1 from ${listings} l where l.seller_id = ${sellerId}::uuid)`))
+        .catch(() => {});
+    }
+    return { error: t("form.fixDetails") };
+  }
 
   // From a seller lead: the lead becomes this listing's (unless it already has one) and this seller's.
   if (lead) {
@@ -723,7 +864,7 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
       originalPrice: [null, v.originalPrice],
       amountPaid: [null, v.amountPaid],
       askingPrice: [null, v.askingPrice],
-      newSellerAccount: [null, !found.user],
+      newSellerAccount: [null, account.created],
       ...(lead ? { leadRef: [null, lead.id] } : {}),
     },
   });
@@ -755,6 +896,7 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
       phone: users.phone,
       locale: users.locale,
       role: users.role,
+      passwordHash: users.passwordHash,
     })
     .from(listings)
     .innerJoin(users, eq(users.id, listings.sellerId))
@@ -763,6 +905,8 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
   if (!l) return { error: t("listing.notFound") };
   if (!awaitsSellerConfirmation(l)) return { error: t("admin.claim.notNeeded") };
   if (l.role === "admin" || isOwnerEmail(l.email)) return { error: t("admin.sellerIsStaff") };
+  // Imported and still filed under the network's placeholder owner: nobody to send it to yet.
+  if (isImportOwner(l)) return { error: (await getT("intake"))("claim.setOwnerFirst") };
   if (via === "email" && isPlaceholderEmail(l.email)) return { error: t("admin.claim.noEmail") };
   if (via === "email" && !emailEnabled()) return { error: t("admin.claim.emailOff") };
 
@@ -787,6 +931,124 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
   const wa = l.phone ? whatsappNumber(l.phone) : null;
   const text = `${msg.title}\n\n${msg.body}\n\n${url}`;
   return { ok: true as const, url, whatsapp: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(text)}` : null };
+}
+
+/** Unused claim links of a listing: they went to the account it was filed under, or are no longer needed. */
+async function cancelClaimLinks(listingId: string) {
+  const gone = await db
+    .delete(passwordResets)
+    .where(and(eq(passwordResets.listingId, listingId), eq(passwordResets.purpose, "claim"), isNull(passwordResets.usedAt)))
+    .returning({ id: passwordResets.id });
+  return gone.length;
+}
+
+/**
+ * The Owner card of a listing our team entered (an imported one under its placeholder owner, or one filed under the
+ * wrong account): files it under the owner staff give, by the intake form's rules (staffSellerAccount). Only until
+ * ownership is confirmed; any claim link already sent stops working, and the change is audited (account ids only).
+ */
+export async function adminSetListingOwner(_prev: StaffListingState, formData: FormData): Promise<StaffListingState> {
+  const me = await assertAdmin();
+  const [t, ti] = await Promise.all([getT("errors"), getT("intake")]);
+  const id = z.uuid().safeParse(formData.get("listingId"));
+  if (!id.success) return { error: t("listing.notFound") };
+  const m = await ownerMessages();
+  const { seller, fieldErrors, phoneDigits } = readStaffSeller(formData, t, m);
+  if (!seller || Object.keys(fieldErrors).length) return { error: t("form.checkFields"), fieldErrors };
+  const [l] = await db
+    .select({
+      id: listings.id,
+      sellerId: listings.sellerId,
+      isSample: listings.isSample,
+      createdByStaff: listings.createdByStaff,
+      ownershipConfirmedAt: listings.ownershipConfirmedAt,
+    })
+    .from(listings)
+    .where(eq(listings.id, id.data))
+    .limit(1);
+  if (!l) return { error: t("listing.notFound") };
+  if (!l.createdByStaff || l.isSample) return { error: ti("owner.notStaff") };
+  if (l.ownershipConfirmedAt) return { error: ti("owner.locked") };
+  const account = await staffSellerAccount(t, seller, phoneDigits, null, m);
+  if ("error" in account) return account;
+  if (account.id === l.sellerId) return { error: ti("owner.same"), fieldErrors: { sellerName: [ti("owner.same")] } };
+  const [moved] = await db
+    .update(listings)
+    .set({ sellerId: account.id, updatedAt: new Date() })
+    // Not if it was confirmed, or re-filed by someone else, in the meantime.
+    .where(and(eq(listings.id, l.id), eq(listings.sellerId, l.sellerId), isNull(listings.ownershipConfirmedAt)))
+    .returning({ id: listings.id });
+  if (!moved) return { error: ti("owner.locked") };
+  const cancelled = await cancelClaimLinks(l.id);
+  await audit({
+    actorId: me.id,
+    action: "listing.owner",
+    entityType: "listing",
+    entityId: l.id,
+    // claimsCancelled: the unused claim links that stopped working (scrubDiff drops any key with "link" in it).
+    diff: { sellerId: [l.sellerId, account.id], newSellerAccount: account.created, claimsCancelled: cancelled },
+  });
+  refresh();
+  return { ok: true, listingId: l.id };
+}
+
+/**
+ * Ownership confirmed by the owner's RERA Form A signed with us (co-broker stock: signed through the owner's broker),
+ * instead of the claim link: staff tick that the signed Form A is uploaded (kind form_a) and checked. Only for a listing
+ * our team entered that is filed under its real owner (not an import's placeholder). The approval gates stay as they
+ * are: the Trakheesi permit is still required.
+ */
+export async function adminConfirmFormA(_prev: FormState, formData: FormData): Promise<FormState> {
+  const me = await assertAdmin();
+  const [t, ti] = await Promise.all([getT("errors"), getT("intake")]);
+  const id = z.uuid().safeParse(formData.get("listingId"));
+  if (!id.success) return { error: t("listing.notFound") };
+  if (formData.get("formAChecked") !== "on") return { error: ti("formA.needCheck"), fieldErrors: { formAChecked: [ti("formA.needCheck")] } };
+  const [l] = await db
+    .select({
+      id: listings.id,
+      sellerId: listings.sellerId,
+      isSample: listings.isSample,
+      createdByStaff: listings.createdByStaff,
+      ownershipConfirmedAt: listings.ownershipConfirmedAt,
+      email: users.email,
+      passwordHash: users.passwordHash,
+      role: users.role,
+    })
+    .from(listings)
+    .innerJoin(users, eq(users.id, listings.sellerId))
+    .where(eq(listings.id, id.data))
+    .limit(1);
+  if (!l) return { error: t("listing.notFound") };
+  if (!awaitsSellerConfirmation(l)) return { error: ti("formA.notNeeded") };
+  if (isImportOwner(l)) return { error: ti("formA.needOwner") };
+  if (l.role === "admin" || isOwnerEmail(l.email)) return { error: t("admin.sellerIsStaff") };
+  const [doc] = await db
+    .select({ id: files.id, filename: files.filename })
+    .from(files)
+    .where(and(eq(files.listingId, l.id), eq(files.kind, "form_a")))
+    .orderBy(desc(files.createdAt))
+    .limit(1);
+  if (!doc) return { error: ti("formA.needDoc") };
+  const now = new Date();
+  const [confirmed] = await db
+    .update(listings)
+    .set({ ownershipConfirmedAt: now, updatedAt: now })
+    .where(and(eq(listings.id, l.id), eq(listings.sellerId, l.sellerId), isNull(listings.ownershipConfirmedAt)))
+    .returning({ id: listings.id });
+  if (!confirmed) return { error: ti("formA.notNeeded") };
+  // The claim link isn't needed any more (it would refuse a confirmed listing anyway).
+  await cancelClaimLinks(l.id);
+  // Which document it rests on, and who checked it (the actor): the record a dispute over the owner's authority needs.
+  await audit({
+    actorId: me.id,
+    action: "listing.form_a_confirmed",
+    entityType: "listing",
+    entityId: l.id,
+    diff: { ownershipConfirmedAt: [null, now], via: "form_a", fileId: doc.id, filename: doc.filename },
+  });
+  refresh();
+  return { ok: true };
 }
 
 // ---- The deal file (src/lib/deals.ts): contracts, NOC and transfer milestones of an agreed deal ----

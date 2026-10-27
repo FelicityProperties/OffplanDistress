@@ -57,6 +57,18 @@ export default defineMessages({
     "pipeline.sub": "Every listing by stage. Open one to move it forward.",
     "pipeline.counts": "{offers} offers · {watchers} watching",
     "pipeline.empty": "Empty",
+    // A column shows its newest cards; the rest are one link (or a search) away.
+    "pipeline.showAll": "Show all {count}",
+    "pipeline.search": "Find a listing",
+    "pipeline.searchPlaceholder": "OD-1234 or project name",
+    "pipeline.searchSubmit": "Search",
+    "pipeline.results": "Listings matching “{q}”: {count}",
+    "pipeline.noResults": "No listing matches “{q}”.",
+    "pipeline.stageList": "{stage}: {count}",
+    "pipeline.backToBoard": "Back to the whole pipeline",
+    "pipeline.page": "Page {page} of {pages}",
+    "pipeline.prev": "Previous",
+    "pipeline.next": "Next",
 
     "listing.back": "Pipeline",
     "listing.listed": "listed {date}",
@@ -163,11 +175,17 @@ export default defineMessages({
 
     "kyc.label": "KYC status",
     "kyc.updated": "KYC updated",
+    "kyc.failed": "The KYC status couldn't be saved. Reload the page and try again.",
 
     "role.label": "Role",
     "role.user": "User",
     "role.admin": "Admin",
     "role.updated": "Role updated",
+    "role.failed": "The role couldn't be saved. Reload the page and try again.",
+
+    // The listing editor refuses to move a unit whose DLD transfer is complete (its deal and our fee are final).
+    "edit.transferredFinal":
+      "This unit's transfer at DLD is complete: it can be shown as Transferred or taken down (Withdrawn), but not put back on the market or into an earlier stage. Its deal file, the buyer's purchase and our fee stay as they are.",
 
     "samples.remove": "Remove {count} sample listings",
     "samples.confirm": "Delete all {count} sample listings? This can't be undone.",
@@ -304,8 +322,14 @@ export default defineMessages({
     "emailOff.title": "Email is off — users only get in-app notices",
     "emailOff.key":
       "RESEND_API_KEY isn't set. Add it in Vercel → Settings → Environment Variables, together with EMAIL_FROM (a sender on a domain you verified in Resend), then redeploy.",
-    "emailOff.sender":
-      "EMAIL_FROM isn't a sender on a domain verified in Resend, so no email reaches sellers or buyers. Set it in Vercel → Settings → Environment Variables, e.g. “OffplanDistress <deals@felicitypro.com>”, then redeploy.",
+    "emailOff.senderUnset":
+      "EMAIL_FROM isn't set, so no email reaches sellers or buyers. Set it in Vercel → Settings → Environment Variables to a sender on a domain you verified in Resend, e.g. OffplanDistress <deals@felicitypro.com>, then redeploy.",
+    "emailOff.senderUnreadable":
+      "EMAIL_FROM is set, but “{value}” isn't an email address the site can read, so no email reaches sellers or buyers. Write it as OffplanDistress <deals@felicitypro.com> or just deals@felicitypro.com in Vercel → Settings → Environment Variables, then redeploy.",
+    "emailOff.senderTest":
+      "EMAIL_FROM is Resend's test sender ({value}), which only delivers to the Resend account owner, so no email reaches sellers or buyers. Use a sender on a domain you verified in Resend, e.g. OffplanDistress <deals@felicitypro.com>, then redeploy.",
+    "emailOff.rejected":
+      "Resend refused the last email sent from {value} (error {status}: “{error}”), so emails aren't reaching users. Check in Resend → Domains that this domain is verified, and that RESEND_API_KEY is current. This note goes once an email goes through.",
 
     // Follow-ups on /admin (src/components/admin/FollowUps.tsx) and the admins' daily "ops.digest", from the same
     // queries (src/lib/reminders.ts).
@@ -492,6 +516,9 @@ export default defineMessages({
     "history.action.listing.create": "Created the listing from the seller's documents",
     "history.action.listing.claim_link": "Created a claim link for the seller",
     "history.action.listing.claimed": "Confirmed ownership and accepted the Terms (claim link)",
+    "history.action.listing.import": "Imported the listing from a partner network's file",
+    "history.action.listing.owner": "Changed who the listing is filed under",
+    "history.action.listing.form_a_confirmed": "Confirmed ownership from the owner's signed Form A",
     "history.action.listing.seller_status": "Changed the listing's status (seller)",
     "history.action.offer.respond": "Answered an offer on the seller's behalf",
     "history.action.deal.update": "Updated the deal file",
@@ -515,8 +542,14 @@ export default defineMessages({
     "history.field.termsVersion": "Terms version",
     "history.field.newAccount": "Set up their account",
     "history.field.publishedAt": "First published",
+    "history.field.importSource": "Imported from",
+    "history.field.importRef": "Ref in the source",
+    "history.field.sellerId": "Owner's account",
+    "history.field.claimsCancelled": "Claim links cancelled",
+    "history.field.fileId": "Document ID",
     "history.via.email": "Email",
     "history.via.copy": "Link copied for WhatsApp",
+    "history.via.form_a": "The owner's signed Form A",
 
     // Columns of /api/admin/export/deals.csv that the deal file's own labels don't cover
     "export.col.dealId": "Deal ID",
@@ -607,6 +640,17 @@ export default defineMessages({
     "pipeline.sub": "جميع الإعلانات حسب المرحلة. افتح أي إعلان لنقله إلى المرحلة التالية.",
     "pipeline.counts": "العروض: {offers} · المتابعون: {watchers}",
     "pipeline.empty": "لا توجد إعلانات",
+    "pipeline.showAll": "عرض الكل (⁨{count}⁩)",
+    "pipeline.search": "البحث عن إعلان",
+    "pipeline.searchPlaceholder": "⁦OD-1234⁩ أو اسم المشروع",
+    "pipeline.searchSubmit": "بحث",
+    "pipeline.results": "الإعلانات المطابقة لـ «⁨{q}⁩»: ⁨{count}⁩",
+    "pipeline.noResults": "لا يوجد إعلان يطابق «⁨{q}⁩».",
+    "pipeline.stageList": "{stage}: ⁨{count}⁩",
+    "pipeline.backToBoard": "العودة إلى مسار الصفقات كاملاً",
+    "pipeline.page": "الصفحة ⁨{page}⁩ من ⁨{pages}⁩",
+    "pipeline.prev": "السابق",
+    "pipeline.next": "التالي",
 
     "listing.back": "مسار الصفقات",
     "listing.listed": "أُدرج في {date}",
@@ -713,11 +757,16 @@ export default defineMessages({
 
     "kyc.label": "حالة التحقق من الهوية",
     "kyc.updated": "تم تحديث حالة التحقق من الهوية",
+    "kyc.failed": "تعذّر حفظ حالة التحقق من الهوية. أعِد تحميل الصفحة وحاول مرة أخرى.",
 
     "role.label": "الدور",
     "role.user": "مستخدم",
     "role.admin": "مسؤول",
     "role.updated": "تم تحديث الدور",
+    "role.failed": "تعذّر حفظ الدور. أعِد تحميل الصفحة وحاول مرة أخرى.",
+
+    "edit.transferredFinal":
+      "اكتمل نقل ملكية هذه الوحدة لدى دائرة الأراضي والأملاك: يمكن عرضها بحالة «تم نقل الملكية» أو إزالتها («مسحوب»)، لكن لا يمكن إعادتها إلى السوق أو إلى مرحلة سابقة. ويبقى ملف الصفقة وشراء المشتري وأتعابنا كما هي.",
 
     "samples.remove": "إزالة الإعلانات التوضيحية ({count})",
     "samples.confirm": "هل تريد حذف جميع الإعلانات التوضيحية ({count})؟ لا يمكن التراجع عن هذا الإجراء.",
@@ -848,8 +897,14 @@ export default defineMessages({
     "emailOff.title": "البريد الإلكتروني متوقف — لا يتلقى المستخدمون إلا الإشعارات داخل المنصة",
     "emailOff.key":
       "لم يُضبط المتغير ⁦RESEND_API_KEY⁩. أضِفه في ⁦Vercel⁩ من ⁦Settings⁩ ثم ⁦Environment Variables⁩ مع المتغير ⁦EMAIL_FROM⁩ (عنوان مُرسِل على نطاق تحققت منه في ⁦Resend⁩)، ثم أعِد النشر.",
-    "emailOff.sender":
-      "المتغير ⁦EMAIL_FROM⁩ ليس عنوان مُرسِل على نطاق تم التحقق منه في ⁦Resend⁩، لذلك لا تصل أي رسالة بريد إلكتروني إلى البائعين أو المشترين. اضبطه في ⁦Vercel⁩ من ⁦Settings⁩ ثم ⁦Environment Variables⁩، مثل ⁦OffplanDistress <deals@felicitypro.com>⁩، ثم أعِد النشر.",
+    "emailOff.senderUnset":
+      "لم يُضبط المتغير ⁦EMAIL_FROM⁩، لذلك لا تصل أي رسالة بريد إلكتروني إلى البائعين أو المشترين. اضبطه في ⁦Vercel⁩ من ⁦Settings⁩ ثم ⁦Environment Variables⁩ على عنوان مُرسِل من نطاق تحققت منه في ⁦Resend⁩، مثل ⁦OffplanDistress <deals@felicitypro.com>⁩، ثم أعِد النشر.",
+    "emailOff.senderUnreadable":
+      "المتغير ⁦EMAIL_FROM⁩ مضبوط، لكن القيمة «⁦{value}⁩» ليست عنوان بريد إلكتروني يستطيع الموقع قراءته، لذلك لا تصل أي رسالة إلى البائعين أو المشترين. اكتبه بالشكل ⁦OffplanDistress <deals@felicitypro.com>⁩ أو ⁦deals@felicitypro.com⁩ فقط في ⁦Vercel⁩ من ⁦Settings⁩ ثم ⁦Environment Variables⁩، ثم أعِد النشر.",
+    "emailOff.senderTest":
+      "المتغير ⁦EMAIL_FROM⁩ هو المُرسِل التجريبي من ⁦Resend⁩ (⁦{value}⁩)، ولا يصل إلا إلى صاحب حساب ⁦Resend⁩، لذلك لا تصل أي رسالة إلى البائعين أو المشترين. استخدم عنوان مُرسِل من نطاق تحققت منه في ⁦Resend⁩، مثل ⁦OffplanDistress <deals@felicitypro.com>⁩، ثم أعِد النشر.",
+    "emailOff.rejected":
+      "رفضت ⁦Resend⁩ آخر رسالة أُرسلت من ⁦{value}⁩ (الخطأ ⁦{status}⁩: «⁦{error}⁩»)، لذلك لا تصل الرسائل إلى المستخدمين. تحقّق في ⁦Resend⁩ من ⁦Domains⁩ أن هذا النطاق موثَّق، وأن ⁦RESEND_API_KEY⁩ ما زال صالحاً. تختفي هذه الملاحظة بعد نجاح إرسال رسالة.",
 
     "followups.title": "المتابعات",
     "followups.sub":
@@ -1029,6 +1084,9 @@ export default defineMessages({
     "history.action.listing.create": "أنشأ الإعلان من مستندات البائع",
     "history.action.listing.claim_link": "أنشأ رابط تأكيد للبائع",
     "history.action.listing.claimed": "أكّد الملكية ووافق على الشروط (رابط التأكيد)",
+    "history.action.listing.import": "استورد الإعلان من ملف شبكة شريكة",
+    "history.action.listing.owner": "غيّر الحساب المسجّل باسمه الإعلان",
+    "history.action.listing.form_a_confirmed": "أكّد الملكية بالنموذج (A) الموقّع من المالك",
     "history.action.listing.seller_status": "غيّر حالة الإعلان (البائع)",
     "history.action.offer.respond": "ردّ على عرض نيابةً عن البائع",
     "history.action.deal.update": "حدّث ملف الصفقة",
@@ -1052,8 +1110,14 @@ export default defineMessages({
     "history.field.termsVersion": "إصدار الشروط",
     "history.field.newAccount": "أعدّ حسابه",
     "history.field.publishedAt": "تاريخ النشر لأول مرة",
+    "history.field.importSource": "مستورد من",
+    "history.field.importRef": "المرجع في المصدر",
+    "history.field.sellerId": "حساب المالك",
+    "history.field.claimsCancelled": "روابط التأكيد الملغاة",
+    "history.field.fileId": "معرّف المستند",
     "history.via.email": "البريد الإلكتروني",
     "history.via.copy": "نُسخ الرابط لإرساله عبر واتساب",
+    "history.via.form_a": "النموذج (A) الموقّع من المالك",
 
     "export.col.dealId": "رقم الصفقة",
     "export.col.ref": "المرجع",

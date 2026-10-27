@@ -214,6 +214,8 @@ export const FILE_KINDS = {
   id: "Passport / Emirates ID",
   photo: "Photo / render",
   other: "Other document",
+  // Uploaded by our team only (src/app/api/listings/[id]/files): the owner's confirmation of a listing we entered.
+  form_a: "Form A (signed by the owner)",
 } as const;
 
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;

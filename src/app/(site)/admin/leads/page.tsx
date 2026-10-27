@@ -7,6 +7,7 @@ import { AedRange } from "@/components/exit/Aed";
 import { Button } from "@/components/ui/button";
 import { richText } from "@/content/legal/rich-text";
 import { getLocale, getT } from "@/i18n/server";
+import { userTabs } from "@/lib/admin";
 import { requireAdmin } from "@/lib/auth";
 import { BRAND } from "@/lib/config";
 import { leadCode, sellerEstimate } from "@/lib/estimate";
@@ -20,6 +21,9 @@ const STATUS_TONE = { new: "gold", contacted: "muted", converted: "success", los
 export default async function LeadsPage() {
   await requireAdmin();
   const [rows, t, tc, locale] = await Promise.all([adminLeads(), getT("admin"), getT("common"), getLocale()]);
+  // The "Account" link opens the tab of /admin/users that lists the account: a seller our team added who hasn't
+  // claimed their listing yet is under "pending", not with the accounts that can sign in.
+  const tabs = await userTabs([...new Set(rows.map((r) => r.lead.userId).filter((id): id is string => Boolean(id)))]);
   return (
     <div className="space-y-6">
       <PageTitle title={t("leads.title")} sub={t("leads.sub")} />
@@ -91,11 +95,19 @@ export default async function LeadsPage() {
                   </p>
                   {(l.userId || l.listingId) && (
                     <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                      {l.userId && (
-                        <Link href={`/admin/users#user-${l.userId}`} className="font-medium underline-offset-4 hover:underline">
-                          {t("leads.account")}: {userName ?? "—"}
-                        </Link>
-                      )}
+                      {l.userId &&
+                        (tabs.has(l.userId) ? (
+                          <Link
+                            href={`/admin/users${tabs.get(l.userId) === "pending" ? "?tab=pending" : ""}#user-${l.userId}`}
+                            className="font-medium underline-offset-4 hover:underline"
+                          >
+                            {t("leads.account")}: {userName ?? "—"}
+                          </Link>
+                        ) : (
+                          <span className="font-medium">
+                            {t("leads.account")}: {userName ?? "—"}
+                          </span>
+                        ))}
                       {l.listingId && listingRef != null && (
                         <Link href={`/admin/listings/${l.listingId}`} className="font-medium underline-offset-4 hover:underline">
                           {t("leads.listing", { ref: refCode(listingRef) })}

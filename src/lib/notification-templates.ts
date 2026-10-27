@@ -29,25 +29,42 @@ export const TEMPLATES = {
       cta: "مراجعة الإعلان",
     },
   },
+  // A seller's photos on a listing past review wait for our team (src/app/api/listings/[id]/files/route.ts); one notice
+  // until it is read, however many photos follow.
+  "listing.photos": {
+    en: {
+      title: "New photos to check: {project}",
+      body: "{seller} added photos to {ref}. They are not public yet: check them and add them to the listing's gallery.",
+      cta: "Review photos",
+    },
+    ar: {
+      title: "صور جديدة بانتظار المراجعة: {project}",
+      body: "أضاف {seller} صوراً إلى الإعلان ⁨{ref}⁩، وهي غير منشورة بعد. راجِعها وأضِفها إلى معرض صور الإعلان.",
+      cta: "مراجعة الصور",
+    },
+  },
+  // Not "we verified your documents": a listing can be approved without the Verified mark (an imported unit confirmed
+  // from the owner's Form A, say, before its SPA is in; Terms "Verified").
   "listing.approved": {
-    en: { title: "Your listing is live: {project}", body: "We verified your documents. Buyers can now see {ref} and make offers.", cta: "View listing" },
-    ar: { title: "إعلانك منشور الآن: {project}", body: "تحققنا من مستنداتك. يمكن للمشترين الآن مشاهدة {ref} وتقديم العروض.", cta: "عرض الإعلان" },
+    en: { title: "Your listing is live: {project}", body: "Our team has approved your listing. Buyers can now see {ref} and make offers.", cta: "View listing" },
+    ar: { title: "إعلانك منشور الآن: {project}", body: "وافق فريقنا على إعلانك. يمكن للمشترين الآن مشاهدة ⁨{ref}⁩ وتقديم العروض.", cta: "عرض الإعلان" },
   },
   "listing.rejected": {
     en: { title: "Your listing needs attention: {project}", body: "{reason}", cta: "Open listing" },
     ar: { title: "إعلانك بحاجة إلى إجراء منك: {project}", body: "{reason}", cta: "فتح الإعلان" },
   },
   // Staff-assisted intake (src/lib/claim.ts). The seller, with their claim link (emailed, or the same words sent on
-  // WhatsApp by our team); never sent for sample listings.
+  // WhatsApp by our team); never sent for sample listings. Worded for every way a unit reaches our team: the seller's
+  // own documents, or a partner network's file through their broker (bulk import).
   "listing.claim": {
     en: {
       title: "Confirm your listing: {project}",
-      body: "Hello {name}, our team has prepared your listing {ref} from the documents you sent us. Open the link to check the details and confirm that you own the unit or are authorised to sell it. The link works once and expires in 7 days.",
+      body: "Hello {name}, our team has prepared your listing {ref} from the details and documents we received. Open the link to check the details and confirm that you own the unit or are authorised to sell it. The link works once and expires in 7 days.",
       cta: "Confirm my listing",
     },
     ar: {
       title: "تأكيد إعلانك: {project}",
-      body: "مرحباً {name}، أعدّ فريقنا إعلانك ⁨{ref}⁩ من المستندات التي أرسلتها إلينا. افتح الرابط لمراجعة البيانات وتأكيد أنك مالك الوحدة أو مخوَّل ببيعها. يُستخدم الرابط مرة واحدة وتنتهي صلاحيته بعد 7 أيام.",
+      body: "مرحباً {name}، أعدّ فريقنا إعلانك ⁨{ref}⁩ من البيانات والمستندات التي وصلتنا. افتح الرابط لمراجعة البيانات وتأكيد أنك مالك الوحدة أو مخوَّل ببيعها. يُستخدم الرابط مرة واحدة وتنتهي صلاحيته بعد 7 أيام.",
       cta: "تأكيد إعلاني",
     },
   },

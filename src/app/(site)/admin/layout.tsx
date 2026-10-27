@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   await requireAdmin();
-  const [s, leads, t] = await Promise.all([adminStats(), leadStats(), getT("admin")]);
+  const [s, leads, t, ti] = await Promise.all([adminStats(), leadStats(), getT("admin"), getT("intake")]);
   // Without a key, or without a sender on our own domain, no email reaches sellers or buyers (src/lib/email.ts).
   const emailOff = emailOffReason();
   return (
@@ -29,6 +29,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         { href: "/admin/leads", label: t("nav.leads"), icon: "inbox", count: leads.newLeads },
         { href: "/admin/users", label: t("nav.users"), icon: "users" },
         { href: "/admin/analytics", label: t("nav.analytics"), icon: "analytics" },
+        // Bulk import of a partner network's file (also linked from the verification queue).
+        { href: "/admin/listings/import", label: ti("nav.import"), icon: "upload" },
       ]}
     >
       {emailOff && (
@@ -40,7 +42,13 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           <MailWarning className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
           <div className="min-w-0">
             <p className="font-semibold">{t("emailOff.title")}</p>
-            <p className="mt-1 wrap-anywhere text-muted-foreground">{t(`emailOff.${emailOff}`)}</p>
+            <p className="mt-1 wrap-anywhere text-muted-foreground">
+              {emailOff.reason === "key" || emailOff.reason === "senderUnset"
+                ? t(`emailOff.${emailOff.reason}`)
+                : emailOff.reason === "rejected"
+                  ? t("emailOff.rejected", { value: emailOff.value, status: emailOff.status, error: emailOff.error })
+                  : t(`emailOff.${emailOff.reason}`, { value: emailOff.value })}
+            </p>
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ import deals from "./deals";
 import errors from "./errors";
 import exit from "./exit";
 import home from "./home";
+import intake from "./intake";
 import legal from "./legal";
 import market from "./market";
 import marketing from "./marketing";
@@ -28,6 +29,7 @@ export const messages = {
   errors,
   exit,
   home,
+  intake,
   legal,
   market,
   marketing,

@@ -56,12 +56,14 @@ export function LocaleSwitcher({ className, full, compact }: { className?: strin
       disabled={pending}
       onClick={() => start(() => go(next))}
       className={cn("gap-1.5", className)}
-      aria-label={t("language")}
       title={compact ? label : undefined}
-      lang={next}
     >
-      <Languages />
-      {compact ? <span className="hidden xl:inline">{label}</span> : label}
+      {/* Named by what it shows ("العربية" / "English", in that language) and then what it is, for voice control. */}
+      <Languages aria-hidden />
+      <span lang={next} className={compact ? "sr-only xl:not-sr-only" : undefined}>
+        {label}
+      </span>
+      <span className="sr-only"> – {t("language")}</span>
     </Button>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "@/components/LocaleLink";
 import { AlertTriangle, Check, ExternalLink, FileUp, History, Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
-import { createListing } from "@/app/actions/listings";
+import { createListing, type CreateListingState } from "@/app/actions/listings";
 import { isHeic, preparePhoto, uploadListingFile } from "@/components/DocumentUploader";
 import { Button } from "@/components/ui/button";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
@@ -137,6 +137,18 @@ function stateFromDraft(saved: Record<string, string>, handoverQuarters: string[
   if (out.arrears && !["none", "one", "more"].includes(out.arrears)) out.arrears = "none";
   if (out.motivation && !(out.motivation in MOTIVATION)) out.motivation = "motivated";
   return out;
+}
+
+/**
+ * The props that tie a control to its Field with the same `id`: named by the label, described by the error or hint
+ * line (`hint`: the Field shows one), marked invalid with an error.
+ */
+function control(id: string, error?: string, hint?: boolean) {
+  return {
+    id,
+    "aria-invalid": error ? true : undefined,
+    "aria-describedby": error || hint ? `${id}-msg` : undefined,
+  } as const;
 }
 
 /** `id` labels the control with that id; its label is `${id}-label` and the error / hint `${id}-msg`. */
@@ -417,7 +429,8 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
       ),
     );
 
-    const res = await createListing({}, fd);
+    // A server error (or the connection dropping) mustn't leave the button on "Saving your listing…" for good.
+    const res = await createListing({}, fd).catch((): CreateListingState => ({ error: t("error.checkDetails") }));
     if (!res.ok || !res.listingId) {
       setBusy(null);
       const fe = Object.fromEntries(Object.entries(res.fieldErrors ?? {}).map(([k, v]) => [k, v?.[0] ?? t("error.invalid")]));
@@ -586,12 +599,17 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                     </Field>
                   );
                 })}
-                <Field label={t("field.projectName")} error={errors.projectName}>
-                  <Input value={s.projectName} onChange={(e) => set("projectName")(e.target.value)} placeholder={t("field.projectName.placeholder")} />
+                <Field id="projectName" label={t("field.projectName")} error={errors.projectName}>
+                  <Input
+                    {...control("projectName", errors.projectName)}
+                    value={s.projectName}
+                    onChange={(e) => set("projectName")(e.target.value)}
+                    placeholder={t("field.projectName.placeholder")}
+                  />
                 </Field>
-                <Field label={t("field.unitType")} error={errors.unitType}>
+                <Field id="unitType" label={t("field.unitType")} error={errors.unitType}>
                   <Select dir={dir} value={s.unitType} onValueChange={set("unitType")}>
-                    <SelectTrigger aria-label={t("field.unitType")}>
+                    <SelectTrigger {...control("unitType", errors.unitType)} aria-label={t("field.unitType")}>
                       <SelectValue placeholder={t("field.unitType.placeholder")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -603,35 +621,59 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label={t("field.size")} error={errors.sizeSqft}>
-                  <Input inputMode="numeric" value={s.sizeSqft} onChange={(e) => set("sizeSqft")(e.target.value)} placeholder="1,180" />
+                <Field id="sizeSqft" label={t("field.size")} error={errors.sizeSqft}>
+                  <Input
+                    {...control("sizeSqft", errors.sizeSqft)}
+                    inputMode="numeric"
+                    value={s.sizeSqft}
+                    onChange={(e) => set("sizeSqft")(e.target.value)}
+                    placeholder="1,180"
+                  />
                 </Field>
-                <Field label={t("field.floor")}>
-                  <Input value={s.floor} onChange={(e) => set("floor")(e.target.value)} placeholder="24" />
+                <Field id="floor" label={t("field.floor")}>
+                  <Input id="floor" value={s.floor} onChange={(e) => set("floor")(e.target.value)} placeholder="24" />
                 </Field>
-                <Field label={t("field.view")} className="sm:col-span-2">
-                  <Input value={s.view} onChange={(e) => set("view")(e.target.value)} placeholder={t("field.view.placeholder")} />
+                <Field id="view" label={t("field.view")} className="sm:col-span-2">
+                  <Input id="view" value={s.view} onChange={(e) => set("view")(e.target.value)} placeholder={t("field.view.placeholder")} />
                 </Field>
               </>
             )}
 
             {step === 1 && (
               <>
-                <Field label={t("field.originalPrice")} error={errors.originalPrice} hint={t("field.originalPrice.hint")}>
-                  <Input inputMode="numeric" value={s.originalPrice} onChange={(e) => set("originalPrice")(e.target.value)} placeholder="2,350,000" />
+                <Field id="originalPrice" label={t("field.originalPrice")} error={errors.originalPrice} hint={t("field.originalPrice.hint")}>
+                  <Input
+                    {...control("originalPrice", errors.originalPrice, true)}
+                    inputMode="numeric"
+                    value={s.originalPrice}
+                    onChange={(e) => set("originalPrice")(e.target.value)}
+                    placeholder="2,350,000"
+                  />
                 </Field>
-                <Field label={t("field.amountPaid")} error={errors.amountPaid}>
-                  <Input inputMode="numeric" value={s.amountPaid} onChange={(e) => set("amountPaid")(e.target.value)} placeholder="940,000" />
+                <Field id="amountPaid" label={t("field.amountPaid")} error={errors.amountPaid}>
+                  <Input
+                    {...control("amountPaid", errors.amountPaid)}
+                    inputMode="numeric"
+                    value={s.amountPaid}
+                    onChange={(e) => set("amountPaid")(e.target.value)}
+                    placeholder="940,000"
+                  />
                 </Field>
-                <Field label={t("field.nextDate")}>
-                  <Input type="date" value={s.nextInstalmentDate} onChange={(e) => set("nextInstalmentDate")(e.target.value)} />
+                <Field id="nextInstalmentDate" label={t("field.nextDate")}>
+                  <Input id="nextInstalmentDate" type="date" value={s.nextInstalmentDate} onChange={(e) => set("nextInstalmentDate")(e.target.value)} />
                 </Field>
-                <Field label={t("field.nextAmount")}>
-                  <Input inputMode="numeric" value={s.nextInstalmentAmount} onChange={(e) => set("nextInstalmentAmount")(e.target.value)} placeholder="117,500" />
+                <Field id="nextInstalmentAmount" label={t("field.nextAmount")} error={errors.nextInstalmentAmount}>
+                  <Input
+                    {...control("nextInstalmentAmount", errors.nextInstalmentAmount)}
+                    inputMode="numeric"
+                    value={s.nextInstalmentAmount}
+                    onChange={(e) => set("nextInstalmentAmount")(e.target.value)}
+                    placeholder="117,500"
+                  />
                 </Field>
-                <Field label={t("field.handover")} error={errors.handoverDate}>
+                <Field id="handoverDate" label={t("field.handover")} error={errors.handoverDate}>
                   <Select dir={dir} value={s.handoverDate} onValueChange={set("handoverDate")}>
-                    <SelectTrigger aria-label={t("field.handover")}>
+                    <SelectTrigger {...control("handoverDate", errors.handoverDate)} aria-label={t("field.handover")}>
                       <SelectValue placeholder={t("field.handover.placeholder")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -643,9 +685,9 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label={t("field.arrears")}>
+                <Field id="arrears" label={t("field.arrears")}>
                   <Select dir={dir} value={s.arrears} onValueChange={set("arrears")}>
-                    <SelectTrigger aria-label={t("field.arrears.aria")}>
+                    <SelectTrigger id="arrears" aria-label={t("field.arrears.aria")}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -687,11 +729,21 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                   {plan.length === 0 && (
                     <p className="text-xs text-muted-foreground">{t("plan.empty")}</p>
                   )}
+                  {/* The server's answer for the rows (an amount past what it can store, say): shown here, not just a toast. */}
+                  {errors.paymentPlan && (
+                    <p id="paymentPlan-msg" className="text-xs font-medium text-destructive">
+                      {errors.paymentPlan}
+                    </p>
+                  )}
                   {plan.map((p, i) => (
-                    <div key={i} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2">
-                      <Input aria-label={t("plan.milestone")} value={p.label} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
-                      <Input aria-label={t("plan.dueDate")} type="date" className="w-40" value={p.dueDate} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, dueDate: e.target.value } : x)))} />
-                      <Input aria-label={t("plan.amount")} inputMode="numeric" className="w-32" placeholder={t("plan.amount.placeholder")} value={p.amount} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} />
+                    // Phones: the milestone on its own line, then date, amount and remove (one line is wider than a phone).
+                    <div
+                      key={i}
+                      className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2 border-b border-border/60 pb-3 last:border-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:border-0 sm:pb-0"
+                    >
+                      <Input aria-label={t("plan.milestone")} className="col-span-3 sm:col-span-1" value={p.label} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
+                      <Input aria-label={t("plan.dueDate")} type="date" className="min-w-0 sm:w-40" value={p.dueDate} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, dueDate: e.target.value } : x)))} />
+                      <Input aria-label={t("plan.amount")} inputMode="numeric" className="min-w-0 sm:w-32" placeholder={t("plan.amount.placeholder")} value={p.amount} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} />
                       <Button type="button" size="icon" variant="ghost" aria-label={tc("remove")} onClick={() => setPlan((all) => all.filter((_, j) => j !== i))}>
                         <Trash2 />
                       </Button>
@@ -704,20 +756,41 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
             {step === 2 && (
               <>
                 <Field
+                  id="askingPrice"
                   label={t("field.asking")}
                   error={errors.askingPrice}
                   hint={num(s.amountPaid) ? t("field.asking.paid", { amount: aed(num(s.amountPaid)) }) : t("field.asking.hint")}
                 >
-                  <Input inputMode="numeric" value={s.askingPrice} onChange={(e) => set("askingPrice")(e.target.value)} placeholder="770,000" />
+                  <Input
+                    {...control("askingPrice", errors.askingPrice, true)}
+                    inputMode="numeric"
+                    value={s.askingPrice}
+                    onChange={(e) => set("askingPrice")(e.target.value)}
+                    placeholder="770,000"
+                  />
                 </Field>
                 {needsPhone && (
-                  <Field label={t("field.phone")} error={errors.phone} hint={t("field.phone.hint")}>
-                    <Input type="tel" dir="ltr" className="rtl:text-end" value={s.phone} onChange={(e) => set("phone")(e.target.value)} placeholder="+971 5X XXX XXXX" />
+                  <Field id="phone" label={t("field.phone")} error={errors.phone} hint={t("field.phone.hint")}>
+                    <Input
+                      {...control("phone", errors.phone, true)}
+                      type="tel"
+                      dir="ltr"
+                      className="rtl:text-end"
+                      value={s.phone}
+                      onChange={(e) => set("phone")(e.target.value)}
+                      placeholder="+971 5X XXX XXXX"
+                    />
                   </Field>
                 )}
                 <div className="space-y-2 sm:col-span-2">
-                  <Label>{t("field.motivation")}</Label>
-                  <RadioGroup dir={dir} value={s.motivation} onValueChange={set("motivation")} className="grid gap-2 sm:grid-cols-3">
+                  <Label id="motivation-label">{t("field.motivation")}</Label>
+                  <RadioGroup
+                    dir={dir}
+                    value={s.motivation}
+                    onValueChange={set("motivation")}
+                    aria-labelledby="motivation-label"
+                    className="grid gap-2 sm:grid-cols-3"
+                  >
                     {MOTIVATION_KEYS.map((k) => (
                       <label key={k} className="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm has-[[data-state=checked]]:border-primary">
                         <RadioGroupItem value={k} className="mt-0.5" />
@@ -729,8 +802,13 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                     ))}
                   </RadioGroup>
                 </div>
-                <Field label={t("field.description")} className="sm:col-span-2">
-                  <Textarea value={s.description} onChange={(e) => set("description")(e.target.value)} placeholder={t("field.description.placeholder")} />
+                <Field id="description" label={t("field.description")} className="sm:col-span-2">
+                  <Textarea
+                    id="description"
+                    value={s.description}
+                    onChange={(e) => set("description")(e.target.value)}
+                    placeholder={t("field.description.placeholder")}
+                  />
                 </Field>
               </>
             )}
@@ -741,7 +819,8 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                   <label
                     key={k}
                     className={cn(
-                      "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition hover:border-gold hover:bg-gold-soft/40",
+                      // The file input inside is visually hidden: the tile shows its keyboard focus.
+                      "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition hover:border-gold hover:bg-gold-soft/40 focus-within:border-gold focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background",
                       docs[k] && "border-success bg-success-soft/40",
                     )}
                   >
@@ -754,7 +833,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                 ))}
                 <label
                   className={cn(
-                    "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition hover:border-gold hover:bg-gold-soft/40 sm:col-span-2",
+                    "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition hover:border-gold hover:bg-gold-soft/40 focus-within:border-gold focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background sm:col-span-2",
                     photos.length > 0 && !errors.photos && "border-success bg-success-soft/40",
                   )}
                 >

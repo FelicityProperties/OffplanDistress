@@ -1,12 +1,13 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import bcrypt from "bcryptjs";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
+import { PATH_HEADER, QUERY_HEADER } from "@/i18n/paths";
 import { OWNER_EMAILS } from "@/lib/config";
 
 const COOKIE = "od_session";
@@ -95,14 +96,34 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
 
 export async function requireUser(next?: string): Promise<SessionUser> {
   const user = await getCurrentUser();
-  // The plain login address: src/proxy.ts sends a visitor who chose Arabic (od_locale) on to /ar/login. A language
-  // guessed from the browser alone must not, or it would become a saved choice for the whole site.
-  if (!user) redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
+  if (!user) {
+    // `next` with the page's own query string, or the page opened below it (requestedPage): the layout's and the page's
+    // redirects run side by side, and either may be the one that wins.
+    const back = next && !next.includes("?") ? await requestedPage(next) : next;
+    // The plain login address: src/proxy.ts sends a visitor who chose Arabic (od_locale) on to /ar/login. A language
+    // guessed from the browser alone must not, or it would become a saved choice for the whole site.
+    redirect(back ? `/login?next=${encodeURIComponent(back)}` : "/login");
+  }
   return user;
 }
 
-export async function requireAdmin(): Promise<SessionUser> {
-  const user = await requireUser("/admin");
+/**
+ * The page being opened (path and query, from src/proxy.ts) when it is `section` or a page in it, else `section`:
+ * where a login asked for on the way comes back to, e.g. an email's link to /dashboard/offers?tab=sent.
+ */
+export async function requestedPage(section: string): Promise<string> {
+  const h = await headers();
+  const path = h.get(PATH_HEADER);
+  if (!path || (path !== section && !path.startsWith(`${section}/`))) return section;
+  const query = new URLSearchParams(h.get(QUERY_HEADER) ?? "");
+  query.delete("_rsc"); // Next's own cache-busting parameter on client navigations
+  const qs = query.toString();
+  return sameSitePath(qs ? `${path}?${qs}` : path) ?? section;
+}
+
+/** `next`: where login comes back to (default: the admin page being opened). */
+export async function requireAdmin(next?: string): Promise<SessionUser> {
+  const user = await requireUser(next ?? (await requestedPage("/admin")));
   if (user.role !== "admin") redirect("/dashboard");
   return user;
 }

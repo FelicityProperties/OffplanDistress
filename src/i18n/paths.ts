@@ -9,6 +9,8 @@ import { DEFAULT_LOCALE, type Locale } from "./config";
 export const LOCALE_HEADER = "x-od-locale";
 /** The page's path without the language prefix ("/ar/deals" → "/deals"). */
 export const PATH_HEADER = "x-od-path";
+/** The page's query string ("?tab=sent", or ""): with PATH_HEADER, where a login asked for on the way comes back to. */
+export const QUERY_HEADER = "x-od-query";
 /**
  * The od_locale cookie as the browser sent it ("" when none). Opening an /ar page sets the cookie in the same response,
  * and Next shows cookies set by the proxy to the page, so the page can't tell a first visit from a saved choice.

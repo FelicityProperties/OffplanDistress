@@ -14,14 +14,17 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Marketing | Home, How it works, Fees (with calculator), Contact |
 | Market tools | Distress Index (`/market`: live stats on real listings — discounts, cash needed, developers, communities), seller exit calculator (`/exit-calculator`: keep paying vs stop paying vs sell here) |
 | Legal | Terms of Use, Privacy Policy, Cookie Policy (`/terms`, `/privacy`, `/cookies`) |
-| Marketplace | Browse deals (filters incl. cash at transfer, sort, search, saved searches), deal page (cash needed on transfer day, arrears with the developer, dated cash timeline, payment plan, true-cost breakdown, offer, watchlist, viewing request) |
+| Marketplace | Browse deals (filters incl. cash at transfer, sort, search by project, developer or community in English or Arabic, saved searches), deal page (cash needed on transfer day, arrears with the developer, dated cash timeline, payment plan, true-cost breakdown, offer, watchlist, viewing request) |
 | Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; "Prefer WhatsApp?" card; 5-step "Sell my unit" form (saved on the device between sittings, type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline), deal milestones |
 | Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts |
 | Everyone | Notification bell + notifications page, email notifications, self-service password reset, English / العربية (full right-to-left layout) |
-| Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), remove sample data |
+| Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, bulk import of a partner network's units (`/admin/listings/import`, owner set later, claim link or signed Form A), daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), remove sample data |
 
 Buyers stay anonymous to sellers in the app — every negotiation goes through our team, so neither side can
-bypass the platform.
+bypass the platform. An offer's message to the seller can't hold a phone number, email address, link or handle (the
+form says so and keeps the text to edit), and a buyer can send up to 10 offers or revisions an hour; re-sending an
+unchanged offer doesn't notify anyone again. The buyer whose offer was accepted sees "Your offer was accepted" on the
+deal page rather than an invitation to send a backup offer.
 
 Design (logo, favicon, colours, typography and page layouts) was generated in Lovable and ported to this
 Next.js app. Brand name, contact details and fee terms live in `src/lib/config.ts`.
@@ -72,6 +75,22 @@ never sets a password on an account that already has one. The admin listing page
 contain a phone number, email, link or WhatsApp handle ("Contact details in text"); the text is never changed
 automatically.
 
+**Bulk import.** Units a partner network shared with the owners' written permission come as one or more JSON files we
+prepare (`offplandistress-import/1`, documented in `src/lib/import-format.ts`: the source, then per unit its ref, link,
+posting date, the sell form's listing fields, up to 6 photos of 1.5 MB as base64 and team-only notes). Admin →
+"Import listings" (`/admin/listings/import`) checks every unit in the browser with the sell form's rules, shows a
+preview (New / Already imported / Invalid with the reason, in the file's terms: a developer or community off our lists is
+quoted, payment-plan rows are numbered, a unit's photo names must differ before the extension since photos are stored as
+JPEG), then imports one unit per request and uploads its photos one by one; failed rows and photos can be retried, and
+choosing the files again after a reload skips what is done (a unit is imported once per source + ref, enforced by a
+unique index; a retry first asks which photos the listing already has, so none is stored twice). **Nothing goes public:** each listing is in
+review, filed under one placeholder owner per source ("Owner to be added (…)", no password, never emailed or
+nudged; sign-ups refuse `.invalid` addresses, so nobody can register it first), under "Imported — owner to add" on
+`/admin`, its photos private. On its page, enter the owner in the Owner
+card (same matching as "New listing"; changing it cancels any claim link), then confirm ownership with the claim link
+or, for co-broker stock, upload the owner's signed Form A ("Form A (signed by the owner)") and tick "The owner's
+signed Form A is uploaded and checked"; enter the Trakheesi permit, then approve.
+
 ### Cash at transfer
 
 Cards, the deal page, the "Cash at transfer" filter (`minTransfer` / `maxTransfer`) and `sort=cash` show what the
@@ -98,14 +117,16 @@ Once an offer is accepted, the Deal file card on the admin listing page records 
 any co-broker, the NOC, the trustee office, the transfer and the invoice, with the agreed price as written in Form F
 (sale value, our fee and the buyer's ≈ cash at transfer update as you type). Stage gates in "Manage listing": "NOC in
 progress" needs Form F signed and both parties' KYC verified (Admin → Users); "Transferred" needs the NOC issue date,
-the DLD transfer date and the agreed price. Deals that were already under offer get their deal file the first time
+the DLD transfer date and the agreed price. A transferred unit stays sold: it can be taken down (Withdrawn, its deal
+file kept) and shown as transferred again, never put back on the market or into an earlier stage. Deals that were already under offer get their deal file the first time
 it is opened, a gate is checked or the CSV is exported. A deal set to under offer by hand (a buyer found off the
 platform) links the buyer by their account email; without an account, enter their full name (and mobile) there and one
 is created without a password (they set it with "Forgot password"; verify their KYC on Admin → Users). Correct "Paid
 to the developer to date" in "Manage listing" from the statement of account and the deal's sale value follows. The
 admin KPIs count our share of the fees (after any co-broker's) on the agreed sale value. Every admin action, a seller's claim and every
 document (not photos) opened by someone other than its uploader is logged (actor, before → after, IP; never passwords or tokens)
-in the listing's History panel. Pipeline → "Export all deals (CSV)" opens in Excel, Arabic included. Consent is
+in the listing's History panel. The pipeline shows each stage's newest 50 cards (withdrawn included), "Show all" for
+the rest and a search by OD-ref or project. Pipeline → "Export all deals (CSV)" opens in Excel, Arabic included. Consent is
 versioned: sign-ups, listings and offers store the Terms version (`LEGAL_UPDATED`) they accepted.
 
 ### Offers
@@ -212,9 +233,10 @@ the page covers a browser you use signed out. Page views are deleted after 13 mo
 3. Deploy. `vercel.json` pins the Next.js framework preset, so it doesn't matter what Vercel detected when the
    project was created. `npm run build` first runs `scripts/migrate.mjs`: it applies database migrations (a
    production build fails if Vercel has no database URL for Production, so a broken deploy never goes live),
-   sets up the owner login, and — on an empty database — adds 16 listings marked **Sample** so the marketplace
-   isn't empty on day one. Remove them from `/admin` with one click once real listings arrive, or set `SEED_SAMPLE_DATA=false`
-   before the first deploy.
+   sets up the owner login, and — on a brand-new database only — adds 16 listings marked **Sample** so the
+   marketplace isn't empty on day one (set `SEED_SAMPLE_DATA=false` before the first deploy to skip them). Migration
+   0009 removed them from the live site; once removed (there or with "Remove sample data" in `/admin`) they never come
+   back. Locally, `SEED_SAMPLE_DATA=force npm run db:migrate` puts them back for testing.
 4. Log in at `/login` with the owner email and `ADMIN_PASSWORD` — you land in `/admin`.
 
 See `.env.example` for every variable.

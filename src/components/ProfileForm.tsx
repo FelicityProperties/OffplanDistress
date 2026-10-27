@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState, useEffect, useTransition } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { requestKyc, updateProfile } from "@/app/actions/market";
-import { Field, FormMessage, SubmitButton } from "@/components/forms";
+import { Field, FormMessage } from "@/components/forms";
 import { selectClass } from "@/components/form-styles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ export function ProfileForm({ fullName, phone, intent }: { fullName: string; pho
   const t = useT("dashboard");
   const tc = useT("common");
   const [state, action] = useActionState(updateProfile, {});
+  const [pending, start] = useTransition();
   useEffect(() => {
     if (state.ok) toast.success(t("profile.saved"));
     // Only on a new save result — not when the language (and so `t`) changes.
@@ -20,7 +22,15 @@ export function ProfileForm({ fullName, phone, intent }: { fullName: string; pho
   }, [state]);
   const fe = state.fieldErrors ?? {};
   return (
-    <form action={action} className="space-y-4">
+    // Submitted from onSubmit (not the form's action), so a field that needs fixing doesn't reset what was typed.
+    <form
+      className="space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        start(() => action(fd));
+      }}
+    >
       <Field label={t("profile.fullName")} htmlFor="fullName" error={fe.fullName}>
         <Input id="fullName" name="fullName" defaultValue={fullName} required dir="auto" />
       </Field>
@@ -35,7 +45,10 @@ export function ProfileForm({ fullName, phone, intent }: { fullName: string; pho
         </select>
       </Field>
       <FormMessage state={state} />
-      <SubmitButton pendingText={tc("saving")}>{t("profile.save")}</SubmitButton>
+      <Button type="submit" disabled={pending}>
+        {pending && <Loader2 className="animate-spin" aria-hidden />}
+        {pending ? tc("saving") : t("profile.save")}
+      </Button>
     </form>
   );
 }

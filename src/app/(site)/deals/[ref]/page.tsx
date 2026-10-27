@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   AlertTriangle,
   ArrowDown,
@@ -36,7 +36,7 @@ import { InquiryDialog } from "@/components/InquiryForm";
 import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { db } from "@/db";
-import { listings } from "@/db/schema";
+import { listings, offers } from "@/db/schema";
 import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import { alternatesFor, openGraphBase } from "@/lib/seo";
@@ -82,8 +82,8 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
     title,
     description,
     alternates,
-    // The share image is the generated card in ./opengraph-image.tsx (price, discount, saving).
-    openGraph: { ...openGraphBase(locale), title, description, url: alternates?.canonical },
+    // The share image is the generated card in ./opengraph-image.tsx (price, discount, saving), not the site's.
+    openGraph: { ...openGraphBase(locale, { siteImage: false }), title, description, url: alternates?.canonical },
     // Sample listings are illustrations, not real adverts: keep them out of search results.
     ...(l.isSample ? { robots: { index: false }, alternates: null } : {}),
   };
@@ -107,7 +107,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     after(() => db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, l.id)));
   }
 
-  const [similar, watched, t, tc, td, tl, locale] = await Promise.all([
+  const [similar, watched, t, tc, td, tl, locale, myAccepted] = await Promise.all([
     similarDeals(l),
     watchedIds(user?.id),
     getT("deal"),
@@ -115,7 +115,16 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     getT("deals"),
     getT("legal"),
     getLocale(),
+    // The signed-in buyer holds the accepted offer: the deal is theirs (no backup offer from them, makeOffer agrees).
+    user && !isOwner
+      ? db
+          .select({ id: offers.id })
+          .from(offers)
+          .where(and(eq(offers.listingId, l.id), eq(offers.buyerId, user.id), eq(offers.status, "accepted")))
+          .limit(1)
+      : Promise.resolve([]),
   ]);
+  const yourDeal = myAccepted.length > 0;
   const a = analyzeDeal(l);
   // The Trakheesi QR, drawn on our server from the stored dubailand.gov.ae link (samples have no permit).
   const permitQr = l.isSample ? null : await permitQrSvg(l.dldPermitUrl);
@@ -136,6 +145,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
       })
     : l.description;
   const milestoneLabel = (label: string) => {
+    // The sell form names new rows itself, in the seller's language ("Next instalment", "القسط 2"): app copy most
+    // sellers keep, shown in the visitor's language. Anything the seller typed stays as written.
+    const trimmed = label.trim();
+    if (/^(?:Next instalment|القسط التالي)$/i.test(trimmed)) return t("plan.defaultNext");
+    const nth = /^(?:Instalment|القسط) (\d{1,3})$/i.exec(trimmed)?.[1];
+    if (nth) return t("plan.defaultNth", { n: Number(nth) });
     if (!arSample) return label;
     if (label === "On handover") return t("plan.sample.onHandover");
     const n = /^Construction milestone (\d+)$/.exec(label)?.[1];
@@ -155,10 +170,21 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
         ? [t("cost.upToDate", { date: checkedOn }), 0]
         : [t("cost.arrearsUnknown"), null];
   // "Your cash timeline": the listed plan from today, in Dubai dates.
-  const schedule = planSchedule(plan, l.handoverDate, dubaiToday(), {
+  const today = dubaiToday();
+  const schedule = planSchedule(plan, l.handoverDate, today, {
     date: l.nextInstalmentDate,
     amount: l.nextInstalmentAmount,
   });
+  // The seller's "next instalment" is only shown while it is ahead: once its date has passed (paid, or now overdue)
+  // the next one is the first instalment of the listed plan still to come, as planSchedule reads it.
+  const nextInstalment: { date: string; amount: number | null } | null = !l.nextInstalmentDate
+    ? null
+    : l.nextInstalmentDate >= today
+      ? { date: l.nextInstalmentDate, amount: l.nextInstalmentAmount }
+      : (plan
+          .filter((p) => p.amount > 0 && p.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(p.dueDate) && p.dueDate >= today)
+          .map((p) => ({ date: p.dueDate as string, amount: p.amount }))
+          .sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0))[0] ?? null);
   // The rest of the balance still owed after transfer that no listed future instalment covers.
   const unlisted = a.remainingAfterTransfer - schedule.future;
   // Part of that is usually listed instalments whose date has passed since the listing was made, beyond the overdue
@@ -289,7 +315,18 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
             <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <p>
               {advertised
-                ? t("banner.underOffer")
+                ? yourDeal
+                  ? richText(t("banner.yourOffer"), {
+                      link: (
+                        <Link
+                          href="/dashboard/offers?tab=sent"
+                          className="font-semibold underline decoration-gold-foreground/40 underline-offset-4 hover:decoration-gold-foreground"
+                        >
+                          {t("banner.yourOfferLink")}
+                        </Link>
+                      ),
+                    })
+                  : t("banner.underOffer")
                 : PUBLIC_STATUSES.includes(l.status)
                   ? t("banner.permitLapsed")
                   : t("banner.private", { status: tc(`listing.${l.status}`) })}
@@ -457,16 +494,22 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     <p className="min-w-0 font-medium leading-snug">{dueSoonText}</p>
                   </div>
                 ) : (
-                  l.nextInstalmentDate && (
+                  nextInstalment && (
                     <p className="inline-flex items-center gap-2 rounded-full bg-gold-soft px-3.5 py-1.5 text-sm font-medium text-gold-foreground">
                       <CalendarClock className="h-4 w-4" aria-hidden />
-                      {t("side.nextInstalment", { date: formatDate(l.nextInstalmentDate, locale) })}
+                      {t("side.nextInstalment", { date: formatDate(nextInstalment.date, locale) })}
                     </p>
                   )
                 )}
-                <div className={dueSoon || l.nextInstalmentDate ? "mt-5 grid gap-2.5" : "grid gap-2.5"}>
-                  {/* Offers only on an advert (the server refuses any other way too). */}
-                  {advertised && (
+                <div className={dueSoon || nextInstalment ? "mt-5 grid gap-2.5" : "grid gap-2.5"}>
+                  {/* Offers only on an advert (the server refuses any other way too), and not from the buyer whose
+                      offer was accepted: the deal is theirs, followed in their dashboard. */}
+                  {advertised && yourDeal && (
+                    <Link href="/dashboard/offers?tab=sent" className={buttonVariants({ variant: "gold", size: "lg", className: "w-full" })}>
+                      {t("offer.yourDeal")}
+                    </Link>
+                  )}
+                  {advertised && !yourDeal && (
                     <OfferDialog
                       listingId={l.id}
                       project={l.projectName}
@@ -631,14 +674,14 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground tabular">
                   <span className="font-semibold text-foreground">{t("plan.paidPct", { pct: formatPct(a.paidPct) })}</span>
-                  {l.nextInstalmentDate &&
+                  {nextInstalment &&
                     ` · ${
-                      l.nextInstalmentAmount
+                      nextInstalment.amount
                         ? t("plan.nextWithAmount", {
-                            amount: formatAED(l.nextInstalmentAmount, locale),
-                            date: formatDate(l.nextInstalmentDate, locale),
+                            amount: formatAED(nextInstalment.amount, locale),
+                            date: formatDate(nextInstalment.date, locale),
                           })
-                        : t("plan.nextOn", { date: formatDate(l.nextInstalmentDate, locale) })
+                        : t("plan.nextOn", { date: formatDate(nextInstalment.date, locale) })
                     }`}
                 </p>
 

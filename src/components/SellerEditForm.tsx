@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useTransition } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { updateMyListing } from "@/app/actions/listings";
-import { Field, FormMessage, SubmitButton } from "@/components/forms";
+import { Field, FormMessage } from "@/components/forms";
 import { selectClass } from "@/components/form-styles";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/i18n/client";
@@ -25,6 +27,7 @@ export function SellerEditForm(p: Props) {
   const t = useT("dashboard");
   const tc = useT("common");
   const [state, action] = useActionState(updateMyListing, {});
+  const [pending, start] = useTransition();
   useEffect(() => {
     if (state.ok) toast.success(t(state.review ? "edit.savedReview" : "edit.saved"));
     // Only on a new save result — not when the language (and so `t`) changes.
@@ -33,10 +36,19 @@ export function SellerEditForm(p: Props) {
   const fe = state.fieldErrors ?? {};
 
   return (
-    <form action={action} className="grid gap-4 sm:grid-cols-2">
+    // Submitted from onSubmit (not the form's action), so a field that needs fixing doesn't reset what was typed.
+    <form
+      className="grid gap-4 sm:grid-cols-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        start(() => action(fd));
+      }}
+    >
       <input type="hidden" name="listingId" value={p.listingId} />
       <Field label={t("edit.askingPrice")} htmlFor="askingPrice" error={fe.askingPrice}>
-        <Input id="askingPrice" name="askingPrice" type="number" min={0} step={1000} defaultValue={p.askingPrice} required />
+        {/* Any whole dirham (step 1), as the sell form takes: a step of 1,000 blocked saving a price like 770,500. */}
+        <Input id="askingPrice" name="askingPrice" type="number" min={0} step={1} defaultValue={p.askingPrice} required />
       </Field>
       <Field label={t("edit.motivation")} htmlFor="motivation" error={fe.motivation}>
         <select id="motivation" name="motivation" defaultValue={p.motivation} className={selectClass}>
@@ -56,15 +68,18 @@ export function SellerEditForm(p: Props) {
           name="nextInstalmentAmount"
           type="number"
           min={0}
-          step={1000}
+          step={1}
           defaultValue={p.nextInstalmentAmount ?? ""}
         />
       </Field>
       <Field label={t("edit.description")} htmlFor="description" error={fe.description} className="sm:col-span-2">
-        <Textarea id="description" name="description" rows={4} defaultValue={p.description ?? ""} dir="auto" />
+        <Textarea id="description" name="description" rows={4} maxLength={3000} defaultValue={p.description ?? ""} dir="auto" />
       </Field>
       <div className="flex items-center gap-3 sm:col-span-2">
-        <SubmitButton pendingText={tc("saving")}>{t("edit.save")}</SubmitButton>
+        <Button type="submit" disabled={pending}>
+          {pending && <Loader2 className="animate-spin" aria-hidden />}
+          {pending ? tc("saving") : t("edit.save")}
+        </Button>
         <FormMessage state={state} />
       </div>
     </form>

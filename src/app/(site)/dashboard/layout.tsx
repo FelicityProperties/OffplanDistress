@@ -14,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
+  // Signed out: login comes back to the page opened (an email's link to an offer, say), not the overview (requireUser).
   const user = await requireUser("/dashboard");
   const [[counts], [notif], t] = await Promise.all([
     db

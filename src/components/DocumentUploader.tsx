@@ -159,7 +159,19 @@ export async function uploadListingFile(listingId: string, file: File, kind: key
 
 type Failure = { name: string; error: string };
 
-export function DocumentUploader({ listingId, kinds }: { listingId: string; kinds: (keyof typeof FILE_KINDS)[] }) {
+/**
+ * `photosReviewed`: a seller's listing past review, whose new photos our team checks and adds to the gallery
+ * (src/app/api/listings/[id]/files/route.ts), so the seller is told they don't appear straight away.
+ */
+export function DocumentUploader({
+  listingId,
+  kinds,
+  photosReviewed = false,
+}: {
+  listingId: string;
+  kinds: (keyof typeof FILE_KINDS)[];
+  photosReviewed?: boolean;
+}) {
   const router = useRouter();
   const locale = useLocale();
   const t = useT("sell");
@@ -202,6 +214,7 @@ export function DocumentUploader({ listingId, kinds }: { listingId: string; kind
           : uploaded > 1
             ? t("uploader.uploadedMany", { n: uploaded })
             : t("uploader.uploaded"),
+        kind === "photo" && photosReviewed ? { description: t("uploader.photoReview") } : undefined,
       );
       // The document list and photos on the page include what did upload.
       startTransition(() => router.refresh());
@@ -235,7 +248,11 @@ export function DocumentUploader({ listingId, kinds }: { listingId: string; kind
           {busy ? <Loader2 className="animate-spin" /> : <FileUp />} {t("uploader.button")}
         </Button>
         <span className="text-xs text-muted-foreground" aria-live="polite">
-          {progress && progress.n > 1 ? t("uploader.progress", progress) : t(kind === "photo" ? "uploader.photoHint" : "uploader.hint")}
+          {progress && progress.n > 1
+            ? t("uploader.progress", progress)
+            : kind === "photo"
+              ? `${t("uploader.photoHint")}${photosReviewed ? ` · ${t("uploader.photoReview")}` : ""}`
+              : t("uploader.hint")}
         </span>
       </div>
       {failed.length > 0 && (

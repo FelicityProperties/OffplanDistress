@@ -1,0 +1,2 @@
+ALTER TYPE "public"."file_kind" ADD VALUE 'form_a';--> statement-breakpoint
+CREATE UNIQUE INDEX "listings_import_ref_idx" ON "listings" USING btree (("source"->>'import'),("source"->>'ref')) WHERE "listings"."source"->>'import' is not null;
