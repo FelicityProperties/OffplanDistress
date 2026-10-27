@@ -212,9 +212,10 @@ the page covers a browser you use signed out. Page views are deleted after 13 mo
 3. Deploy. `vercel.json` pins the Next.js framework preset, so it doesn't matter what Vercel detected when the
    project was created. `npm run build` first runs `scripts/migrate.mjs`: it applies database migrations (a
    production build fails if Vercel has no database URL for Production, so a broken deploy never goes live),
-   sets up the owner login, and — on an empty database — adds 16 listings marked **Sample** so the marketplace
-   isn't empty on day one. Remove them from `/admin` with one click once real listings arrive, or set `SEED_SAMPLE_DATA=false`
-   before the first deploy.
+   sets up the owner login, and — on a brand-new database only — adds 16 listings marked **Sample** so the
+   marketplace isn't empty on day one (set `SEED_SAMPLE_DATA=false` before the first deploy to skip them). Migration
+   0009 removed them from the live site; once removed (there or with "Remove sample data" in `/admin`) they never come
+   back. Locally, `SEED_SAMPLE_DATA=force npm run db:migrate` puts them back for testing.
 4. Log in at `/login` with the owner email and `ADMIN_PASSWORD` — you land in `/admin`.
 
 See `.env.example` for every variable.

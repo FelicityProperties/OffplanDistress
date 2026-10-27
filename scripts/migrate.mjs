@@ -86,7 +86,8 @@ try {
   }
 
   if (process.env.SEED_SAMPLE_DATA !== "false") {
-    await seedSamples(pool);
+    // "force" (local testing only) puts the samples back into a database that already had them removed.
+    await seedSamples(pool, process.env.SEED_SAMPLE_DATA === "force" && process.env.VERCEL_ENV !== "production");
   }
 } catch (err) {
   console.error("[migrate] Failed:", err);
@@ -141,9 +142,15 @@ async function ensureOwners(pool) {
   }
 }
 
-async function seedSamples(pool) {
-  const { rows } = await pool.query("select count(*)::int as n from listings");
-  if (rows[0].n > 0) return;
+async function seedSamples(pool, force = false) {
+  // Only a brand-new marketplace gets samples. Once they were seeded (the sample seller exists), removing them — from
+  // /admin, or migration 0009 on the live site — is final, even while no real listing exists yet.
+  const { rows } = await pool.query(
+    `select (select count(*) from listings)::int as listings,
+            (select count(*) from listings where is_sample)::int as samples,
+            exists (select 1 from users where email = 'sample-seller@offplandistress.invalid') as seeded`,
+  );
+  if (force ? rows[0].samples > 0 : rows[0].listings > 0 || rows[0].seeded) return;
 
   const samples = JSON.parse(await readFile(path.join(root, "scripts", "sample-listings.json"), "utf8"));
   const client = await pool.connect();
