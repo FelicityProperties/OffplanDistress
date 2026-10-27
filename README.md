@@ -164,7 +164,8 @@ hreflang and listed in `/sitemap.xml`; `src/proxy.ts` serves them. Visitors who 
 to the `/ar` address; the browser's language never redirects anyone (it only shows a "عرض بالعربية / View in English"
 bar). `/dashboard` and `/admin` keep one address and follow the visitor's chosen language. Filtered `/deals` views,
 login and sign-up are `noindex`; `robots.txt` names the sitemap and lets search engines see listing photos. With
-`NEXT_PUBLIC_SITE_URL` set, production sends every other host name to it (308). After deploying, submit
+`NEXT_PUBLIC_SITE_URL` set to the domain Vercel serves production on, production sends every other host name to it
+(308); an address Vercel doesn't serve yet is never redirected to. After deploying, submit
 `/sitemap.xml` in Google Search Console.
 
 ### Visit statistics

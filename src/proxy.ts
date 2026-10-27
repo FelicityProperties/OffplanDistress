@@ -13,8 +13,8 @@ import { configuredSiteUrl } from "@/lib/site-url";
 //   redirects anyone (a crawler has no cookie, so it sees each address in its own language).
 // - /en/… remembers English and redirects to the plain address: the language switcher's link without JavaScript.
 // - /dashboard and /admin have one address in both languages and follow the cookie (/ar/dashboard → /dashboard).
-// - In production with NEXT_PUBLIC_SITE_URL set, another host name (a *.vercel.app address) gets a 308 to the site's
-//   own address, so search engines index one copy.
+// - In production with NEXT_PUBLIC_SITE_URL set to the domain Vercel serves production on, another host name (a
+//   *.vercel.app address) gets a 308 to the site's own address, so search engines index one copy.
 
 const COOKIE = { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" as const };
 
@@ -33,8 +33,8 @@ function remember(response: NextResponse, request: NextRequest, locale: Locale) 
 }
 
 /**
- * 308 to NEXT_PUBLIC_SITE_URL's host, for page loads on any other host name. Production deployments only, and only
- * when the operator set the address (never previews, local or development servers). www and the bare domain are left to
+ * 308 to NEXT_PUBLIC_SITE_URL's host, for page loads on any other host name. Production deployments only, only when
+ * the operator set the address and Vercel serves production on it (never previews, local or development servers). www and the bare domain are left to
  * the hosting's domain settings: redirecting between them here could loop against a redirect configured there.
  */
 function canonicalHost(request: NextRequest) {
@@ -45,6 +45,11 @@ function canonicalHost(request: NextRequest) {
   const target = new URL(site);
   // A local address copied into the production settings by mistake must not send every visitor away from the site.
   if (target.hostname === "localhost" || /^[\d.]+$|^\[/.test(target.hostname)) return null;
+  // Only to a domain Vercel serves this project's production on (VERCEL_PROJECT_PRODUCTION_URL, its shortest production
+  // domain): an address that isn't connected yet must not send every visitor, permanently, to a host that doesn't answer.
+  const bare = (h: string) => h.toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "");
+  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (!production || bare(production) !== bare(target.hostname)) return null;
   const host = (request.headers.get("host") ?? request.nextUrl.host).toLowerCase();
   if (!host || host === target.host) return null;
   if (host.replace(/^www\./, "") === target.host.replace(/^www\./, "")) return null;
