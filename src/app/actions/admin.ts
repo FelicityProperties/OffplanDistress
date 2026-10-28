@@ -968,15 +968,19 @@ export async function adminSetListingOwner(_prev: StaffListingState, formData: F
     .limit(1);
   if (!l) return { error: t("listing.notFound") };
   if (!l.createdByStaff || l.isSample) return { error: ti("owner.notStaff") };
-  if (l.ownershipConfirmedAt) return { error: ti("owner.locked") };
+  // A confirmed listing keeps its owner — unless it is still filed under an import's placeholder (ownership confirmed
+  // on our team's record of the owner's authority, before the owner was entered): the real owner can still be set.
+  const [current] = await db.select({ email: users.email, passwordHash: users.passwordHash }).from(users).where(eq(users.id, l.sellerId)).limit(1);
+  const placeholder = current ? isImportOwner(current) : false;
+  if (l.ownershipConfirmedAt && !placeholder) return { error: ti("owner.locked") };
   const account = await staffSellerAccount(t, seller, phoneDigits, null, m);
   if ("error" in account) return account;
   if (account.id === l.sellerId) return { error: ti("owner.same"), fieldErrors: { sellerName: [ti("owner.same")] } };
   const [moved] = await db
     .update(listings)
     .set({ sellerId: account.id, updatedAt: new Date() })
-    // Not if it was confirmed, or re-filed by someone else, in the meantime.
-    .where(and(eq(listings.id, l.id), eq(listings.sellerId, l.sellerId), isNull(listings.ownershipConfirmedAt)))
+    // Not if it was confirmed (under a real owner), or re-filed by someone else, in the meantime.
+    .where(and(eq(listings.id, l.id), eq(listings.sellerId, l.sellerId), placeholder ? undefined : isNull(listings.ownershipConfirmedAt)))
     .returning({ id: listings.id });
   if (!moved) return { error: ti("owner.locked") };
   const cancelled = await cancelClaimLinks(l.id);

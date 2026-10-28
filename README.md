@@ -87,7 +87,11 @@ unique index; a retry first asks which photos the listing already has, so none i
 files in `scripts/partner-stock/` (the same format, with each photo's source URL instead of its bytes) is imported by
 the production build itself (`scripts/import-partner-stock.mjs`, run from `scripts/migrate.mjs`): the same rules and
 placeholder owner, photos fetched and resized at build time, run again on every build but skipping units already
-imported, and an in-app notice to admins when units arrive. **Nothing goes public:** each listing is in
+imported, and an in-app notice to admins when units arrive. Their DLD advertising permits can come the same way:
+`scripts/partner-stock/<key>-permits.json` (`offplandistress-permits/1`: ref, permit number, expiry, optional Form A
+expiry and verification link) records each permit as the editor would, confirms ownership on our record of the owner's
+written authority (the account owner's statement; the real owner is still entered afterwards from the Owner card) and
+publishes the unit at its asking price — never without a current permit. **Nothing goes public:** each listing is in
 review, filed under one placeholder owner per source ("Owner to be added (…)", no password, never emailed or
 nudged; sign-ups refuse `.invalid` addresses, so nobody can register it first), under "Imported — owner to add" on
 `/admin`, its photos private. On its page, enter the owner in the Owner

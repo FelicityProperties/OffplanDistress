@@ -19,7 +19,7 @@ import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
 import { LISTING_STATUS, OFFER_STATUS } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
-import { adminListing, adminOffers, confirmedByFormA } from "@/lib/admin";
+import { adminListing, adminOffers, confirmedByBroker, confirmedByFormA } from "@/lib/admin";
 import { listingFiles } from "@/lib/dashboard";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
 import { isUuid } from "@/lib/utils";
@@ -33,7 +33,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
   const row = await adminListing(id);
   if (!row) notFound();
   const { listing: l, seller } = row;
-  const [docs, offers, t, tc, ti, locale, viaFormA] = await Promise.all([
+  const [docs, offers, t, tc, ti, locale, viaFormA, viaBroker] = await Promise.all([
     listingFiles(l.id),
     adminOffers(l.id),
     getT("admin"),
@@ -41,6 +41,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
     getT("intake"),
     getLocale(),
     l.createdByStaff && l.ownershipConfirmedAt ? confirmedByFormA(l.id) : false,
+    l.createdByStaff && l.ownershipConfirmedAt ? confirmedByBroker(l.id) : false,
   ]);
   const a = analyzeDeal(l);
   // Community and developer are stored as English text; translate the known ones, keep anything else as entered.
@@ -254,8 +255,9 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         </div>
       </div>
 
-      {/* Who a listing our team entered is filed under, until ownership is confirmed (an import starts with nobody). */}
-      {awaitingSeller && (
+      {/* Who a listing our team entered is filed under, until ownership is confirmed (an import starts with nobody, and
+          one published on our record of the owner's authority still needs its owner entered). */}
+      {(awaitingSeller || (placeholderOwner && l.createdByStaff && !l.isSample)) && (
         <section id="owner" aria-labelledby="owner-title" className="scroll-mt-24 rounded-xl border bg-card p-6 shadow-card">
           <h2 id="owner-title" className="mb-2 font-sans text-lg font-semibold">
             {ti("owner.title")}
@@ -274,11 +276,20 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
                 <UserCheck className="h-5 w-5 shrink-0 text-gold-foreground" aria-hidden /> {t("claim.title")}
               </h2>
               {l.ownershipConfirmedAt ? (
-                <p className="mt-1 text-sm text-success">
-                  {viaFormA
-                    ? ti("claim.confirmedFormA", { date: formatDate(l.ownershipConfirmedAt, locale) })
-                    : t("claim.confirmed", { date: formatDate(l.ownershipConfirmedAt, locale) })}
-                </p>
+                <>
+                  <p className="mt-1 text-sm text-success">
+                    {viaFormA
+                      ? ti("claim.confirmedFormA", { date: formatDate(l.ownershipConfirmedAt, locale) })
+                      : viaBroker
+                        ? ti("claim.confirmedBroker", { date: formatDate(l.ownershipConfirmedAt, locale) })
+                        : t("claim.confirmed", { date: formatDate(l.ownershipConfirmedAt, locale) })}
+                  </p>
+                  {placeholderOwner && (
+                    <p className="mt-1 text-sm text-muted-foreground" data-testid="owner-still-placeholder">
+                      {ti("claim.ownerStillPlaceholder")}
+                    </p>
+                  )}
+                </>
               ) : placeholderOwner ? (
                 <p className="mt-1 text-sm text-muted-foreground" data-testid="set-owner-first">
                   {ti("claim.setOwnerFirst")}
@@ -290,18 +301,19 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
                 </>
               )}
             </div>
-            {!l.ownershipConfirmedAt &&
-              (placeholderOwner ? (
-                <Button asChild size="sm" variant="outline">
-                  <a href="#owner">{ti("imported.setOwner")}</a>
-                </Button>
-              ) : (
+            {placeholderOwner ? (
+              <Button asChild size="sm" variant="outline">
+                <a href="#owner">{ti("imported.setOwner")}</a>
+              </Button>
+            ) : (
+              !l.ownershipConfirmedAt && (
                 <ClaimLinkButtons
                   listingId={l.id}
                   sellerName={seller.fullName}
                   canEmail={!isPlaceholderEmail(seller.email) && emailEnabled()}
                 />
-              ))}
+              )
+            )}
           </div>
           {!l.ownershipConfirmedAt && !placeholderOwner && (
             <div className="mt-4">

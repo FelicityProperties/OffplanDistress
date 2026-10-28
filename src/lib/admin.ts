@@ -113,10 +113,19 @@ export async function adminListings(status?: (typeof listings.$inferSelect)["sta
 
 /** Whether ownership of a listing our team entered was confirmed from the owner's signed Form A (adminConfirmFormA). */
 export async function confirmedByFormA(listingId: string) {
+  return confirmedByAction(listingId, "listing.form_a_confirmed");
+}
+
+/** Ownership confirmed on our team's record of the owner's written authority (partner stock published from a file). */
+export async function confirmedByBroker(listingId: string) {
+  return confirmedByAction(listingId, "listing.ownership_confirmed");
+}
+
+async function confirmedByAction(listingId: string, action: string) {
   const [row] = await db
     .select({ id: auditEvents.id })
     .from(auditEvents)
-    .where(and(eq(auditEvents.entityType, "listing"), eq(auditEvents.entityId, listingId), eq(auditEvents.action, "listing.form_a_confirmed")))
+    .where(and(eq(auditEvents.entityType, "listing"), eq(auditEvents.entityId, listingId), eq(auditEvents.action, action)))
     .limit(1);
   return Boolean(row);
 }
