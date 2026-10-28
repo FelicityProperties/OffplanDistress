@@ -83,7 +83,11 @@ preview (New / Already imported / Invalid with the reason, in the file's terms: 
 quoted, payment-plan rows are numbered, a unit's photo names must differ before the extension since photos are stored as
 JPEG), then imports one unit per request and uploads its photos one by one; failed rows and photos can be retried, and
 choosing the files again after a reload skips what is done (a unit is imported once per source + ref, enforced by a
-unique index; a retry first asks which photos the listing already has, so none is stored twice). **Nothing goes public:** each listing is in
+unique index; a retry first asks which photos the listing already has, so none is stored twice). Stock we prepare as
+files in `scripts/partner-stock/` (the same format, with each photo's source URL instead of its bytes) is imported by
+the production build itself (`scripts/import-partner-stock.mjs`, run from `scripts/migrate.mjs`): the same rules and
+placeholder owner, photos fetched and resized at build time, run again on every build but skipping units already
+imported, and an in-app notice to admins when units arrive. **Nothing goes public:** each listing is in
 review, filed under one placeholder owner per source ("Owner to be added (…)", no password, never emailed or
 nudged; sign-ups refuse `.invalid` addresses, so nobody can register it first), under "Imported — owner to add" on
 `/admin`, its photos private. On its page, enter the owner in the Owner
