@@ -406,6 +406,8 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           dldPermitExpiresAt={l.dldPermitExpiresAt}
           dldPermitUrl={l.dldPermitUrl}
           formAExpiresAt={l.formAExpiresAt}
+          permitAttestedAt={l.permitAttestedAt?.toISOString() ?? null}
+          isSample={l.isSample}
           expiryBounds={expiryDateBounds()}
           images={l.images}
           arrears={{

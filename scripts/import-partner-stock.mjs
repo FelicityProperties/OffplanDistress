@@ -94,7 +94,9 @@ const isDldUrl = (s) => {
  * applied the way the admin editor + Approve do: the permit fields, ownership confirmed on our team's record of the
  * owner's written authority (the account owner's statement — the real owner is still entered afterwards from the
  * Owner card), then the listing goes live at its asking price. Only a unit still in review goes live; a permit entered
- * differently later only updates the permit fields. Nothing goes live without a permit that is current (RERA).
+ * differently later only updates the permit fields. Nothing goes live without a permit that is current (RERA). A unit
+ * published on the account owner's attestation without a number (listings.permit_attested_at, src/lib/attestation.ts)
+ * gets its number here too, and the attestation is cleared with it, as the editor does: the number is then the record.
  */
 async function applyPermits(pool, source, actor) {
   let doc;
@@ -136,7 +138,7 @@ async function applyPermits(pool, source, actor) {
       await client.query("begin");
       const { rows } = await client.query(
         `select id, status, is_sample, asking_price, published_at, ownership_confirmed_at, dld_permit, dld_permit_expires_at,
-                form_a_expires_at, dld_permit_url
+                form_a_expires_at, dld_permit_url, permit_attested_at
          from listings where source->>'import' = $1 and source->>'ref' = $2 for update`,
         [source.key, ref],
       );
@@ -148,13 +150,21 @@ async function applyPermits(pool, source, actor) {
         continue;
       }
       const now = new Date();
-      const wanted = { dldPermit: permit, dldPermitExpiresAt: p.expires, formAExpiresAt: p.formAExpires ?? null, dldPermitUrl: p.url ?? null };
-      const have = { dldPermit: l.dld_permit, dldPermitExpiresAt: day(l.dld_permit_expires_at), formAExpiresAt: day(l.form_a_expires_at), dldPermitUrl: l.dld_permit_url };
+      // With the number in, the attestation (if any) goes: the number is the record.
+      const wanted = { dldPermit: permit, dldPermitExpiresAt: p.expires, formAExpiresAt: p.formAExpires ?? null, dldPermitUrl: p.url ?? null, permitAttestedAt: null };
+      const have = {
+        dldPermit: l.dld_permit,
+        dldPermitExpiresAt: day(l.dld_permit_expires_at),
+        formAExpiresAt: day(l.form_a_expires_at),
+        dldPermitUrl: l.dld_permit_url,
+        permitAttestedAt: l.permit_attested_at ? new Date(l.permit_attested_at).toISOString() : null,
+      };
       const diff = {};
       for (const k of Object.keys(wanted)) if ((have[k] ?? null) !== (wanted[k] ?? null)) diff[k] = [have[k] ?? null, wanted[k] ?? null];
       if (Object.keys(diff).length) {
         await client.query(
-          `update listings set dld_permit = $2, dld_permit_expires_at = $3, form_a_expires_at = $4, dld_permit_url = $5, updated_at = $6 where id = $1`,
+          `update listings set dld_permit = $2, dld_permit_expires_at = $3, form_a_expires_at = $4, dld_permit_url = $5,
+                  permit_attested_at = null, permit_attested_by = null, updated_at = $6 where id = $1`,
           [l.id, wanted.dldPermit, wanted.dldPermitExpiresAt, wanted.formAExpiresAt, wanted.dldPermitUrl, now],
         );
         await client.query("insert into audit_events (actor_id, action, entity_type, entity_id, diff) values ($1, 'listing.update', 'listing', $2, $3)", [

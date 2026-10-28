@@ -122,6 +122,8 @@ export default defineMessages({
     "listedBy.broker": "Broker: {name} · BRN {brn}",
     "listedBy.permit": "DLD advertising permit No. {permit}",
     "listedBy.permitValid": "Permit valid until {date}",
+    // No number entered: the advert runs on the broker's own permit record (src/lib/attestation.ts)
+    "listedBy.permitHeld": "DLD advertising permit held by {company} (RERA ORN {orn}) — number available from the broker.",
     "listedBy.verify": "Verify this advert with DLD",
     "listedBy.sample": "Sample listing — not a property advert, so no DLD permit applies.",
     "listedBy.report": "Report this listing",
@@ -267,6 +269,7 @@ export default defineMessages({
     "listedBy.broker": "الوسيط: {name} · رقم الوسيط {brn}",
     "listedBy.permit": "رقم تصريح الإعلان من دائرة الأراضي والأملاك {permit}",
     "listedBy.permitValid": "التصريح سارٍ حتى {date}",
+    "listedBy.permitHeld": "تصريح الإعلان من دائرة الأراضي والأملاك محفوظ لدى {company} (رقم تسجيل المكتب لدى ريرا ⁨{orn}⁩) — ويمكن الحصول على رقمه من الوسيط.",
     "listedBy.verify": "تحقّق من هذا الإعلان لدى دائرة الأراضي والأملاك",
     "listedBy.sample": "إعلان توضيحي وليس إعلاناً عن عقار معروض، لذا لا يلزمه تصريح من دائرة الأراضي والأملاك.",
     "listedBy.report": "الإبلاغ عن هذا الإعلان",

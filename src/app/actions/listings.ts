@@ -281,6 +281,7 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
       dldPermit: listings.dldPermit,
       dldPermitExpiresAt: listings.dldPermitExpiresAt,
       formAExpiresAt: listings.formAExpiresAt,
+      permitAttestedAt: listings.permitAttestedAt,
       projectName: listings.projectName,
       refNo: listings.refNo,
     })

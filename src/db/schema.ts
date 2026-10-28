@@ -209,6 +209,14 @@ export const listings = pgTable(
     dldPermitExpiresAt: date("dld_permit_expires_at"),
     /** The permit's verification page on dubailand.gov.ae (what the Trakheesi QR code opens); shown with a QR code. */
     dldPermitUrl: text("dld_permit_url"),
+    /**
+     * An admin's recorded statement that Felicity holds a valid DLD (Trakheesi) advertising permit for this advert
+     * without the number being entered (src/lib/attestation.ts; the audit trail keeps the statement's text), and who
+     * made it. Lets the advert go live without a number; cleared automatically when a permit number is entered (then
+     * the number is the record). Never shown publicly.
+     */
+    permitAttestedAt: timestamp("permit_attested_at", { withTimezone: true }),
+    permitAttestedBy: uuid("permit_attested_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
     /** Last day of the seller's RERA Form A (listing agreement); the advert comes down with it, like the permit. */
     formAExpiresAt: date("form_a_expires_at"),
     /**

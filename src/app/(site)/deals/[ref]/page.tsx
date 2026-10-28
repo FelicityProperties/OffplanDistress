@@ -126,8 +126,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   ]);
   const yourDeal = myAccepted.length > 0;
   const a = analyzeDeal(l);
-  // The Trakheesi QR, drawn on our server from the stored dubailand.gov.ae link (samples have no permit).
-  const permitQr = l.isSample ? null : await permitQrSvg(l.dldPermitUrl);
+  // The Trakheesi QR, drawn on our server from the stored dubailand.gov.ae link (samples have no permit; without a
+  // number there is nothing to verify).
+  const permitQr = l.isSample || !l.dldPermit ? null : await permitQrSvg(l.dldPermitUrl);
+  // No number entered, but the account owner attested that Felicity holds the permit (src/lib/attestation.ts): the
+  // advert says so, with no verification link. Nothing about the attestation itself is shown.
+  const permitHeld = !l.isSample && !l.dldPermit && l.permitAttestedAt != null;
   const community = communityName(tc, l.community, l.communityOther);
   const developer = developerName(tc, l.developer, l.developerOther);
   const discountPct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
@@ -575,7 +579,13 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     <p>{t("listedBy.broker", { name: locale === "ar" ? BRAND.broker.nameAr : BRAND.broker.name, brn: BRAND.broker.brn })}</p>
                   )}
                   <p className="tabular">
-                    {l.isSample ? t("listedBy.sample") : l.dldPermit ? t("listedBy.permit", { permit: l.dldPermit }) : null}
+                    {l.isSample
+                      ? t("listedBy.sample")
+                      : l.dldPermit
+                        ? t("listedBy.permit", { permit: l.dldPermit })
+                        : permitHeld
+                          ? t("listedBy.permitHeld", { company: locale === "ar" ? BRAND.companyAr : BRAND.company, orn: BRAND.orn })
+                          : null}
                   </p>
                   {!l.isSample && l.dldPermitExpiresAt && (
                     <p className="tabular">{t("listedBy.permitValid", { date: formatDate(l.dldPermitExpiresAt, locale) })}</p>

@@ -9,13 +9,15 @@ import { files, inquiries, listings, offers, passwordResets, sellerLeads, sessio
 import { dirOf, isLocale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { ATTESTATION_VERSION, BULK_ATTESTATION, PERMIT_ATTESTATION } from "@/lib/attestation";
 import { audit, changes } from "@/lib/audit";
 import { findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
 import { claimPath, isPlaceholderEmail, issueClaimToken, placeholderEmail } from "@/lib/claim";
 import { addNote, openDeal, saveDealFile, stageGate, syncSaleValue, type DealFileState, type GateNeed } from "@/lib/deals";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
 import { emailEnabled, sendEmail } from "@/lib/email";
-import { isImportOwner } from "@/lib/import";
+import { awaitingOwnerSql, isImportOwner } from "@/lib/import";
+import { IMPORT_KEY_RE } from "@/lib/import-format";
 import { formatDate, formatNumber, refCode } from "@/lib/format";
 import { whatsappNumber } from "@/lib/leads";
 import { renderTemplate } from "@/lib/notification-templates";
@@ -105,6 +107,7 @@ const listingNoticeColumns = {
   dldPermit: listings.dldPermit,
   dldPermitExpiresAt: listings.dldPermitExpiresAt,
   formAExpiresAt: listings.formAExpiresAt,
+  permitAttestedAt: listings.permitAttestedAt,
   askingPrice: listings.askingPrice,
   publicPrice: listings.publicPrice,
   publishedAt: listings.publishedAt,
@@ -260,6 +263,8 @@ const adminEditSchema = (t: T, range: ExpiryRange, rangeMessage: string, stored:
     status: z.enum(statuses),
     verified: z.boolean(),
     nocEligible: z.boolean(),
+    // The account owner's attestation that Felicity holds the permit, in place of its number (src/lib/attestation.ts).
+    permitAttested: z.boolean(),
     // int4 columns, like the penalty below: a typo with extra zeros is a field error, not a failed save.
     launchPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX, t("field.amountTooLarge")).optional(),
     askingPrice: z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX, t("field.amountTooLarge")),
@@ -330,6 +335,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       status: formData.get("status"),
       verified: formData.get("verified") === "on",
       nocEligible: formData.get("nocEligible") === "on",
+      permitAttested: formData.get("permitAttested") === "on",
       launchPrice: formData.get("launchPrice") || undefined,
       askingPrice: formData.get("askingPrice"),
       amountPaid: formData.get("amountPaid") || undefined,
@@ -434,12 +440,17 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   if (!COMMUNITIES.includes(community) && community !== current.community) {
     return { error: t("form.checkFields"), fieldErrors: { community: [t("field.community")] } };
   }
+  // The attestation as saved: ticked and no number entered, it stands (recorded now if new); a number entered replaces
+  // it (the number is then the record, with the expiry rules below), and unticking withdraws it. Never on a sample:
+  // it isn't an advert, so there is no permit to hold (the editor hides the box).
+  const attested = !current.isSample && !v.dldPermit && v.permitAttested;
   const saving = {
     status: v.status,
     isSample: current.isSample,
     dldPermit: v.dldPermit || null,
     dldPermitExpiresAt: v.dldPermitExpiresAt ?? null,
     formAExpiresAt: v.formAExpiresAt ?? null,
+    permitAttestedAt: attested ? (current.permitAttestedAt ?? new Date()) : null,
   };
   // A unit with an agreed deal may stay in (or move between) under offer and NOC in progress once its permit or Form A
   // has run out: the daily job leaves it so for our team to renew or decide (src/lib/permits.ts), and no public page
@@ -493,15 +504,30 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
     // Rejected here, with no reason typed: not the reason of an earlier rejection (the seller's page shows it).
     ...(v.status === "rejected" && current.status !== "rejected" ? { rejectionReason: null } : {}),
   };
+  // A new attestation is recorded with this admin as its author; one withdrawn (unticked, or replaced by the number)
+  // is cleared with its author, as part of this save's diff.
+  const attestNow = attested && !current.permitAttestedAt;
+  const unattest = !attested && current.permitAttestedAt != null;
+  const attestation = attestNow ? { permitAttestedAt: now, permitAttestedBy: me.id } : unattest ? { permitAttestedAt: null, permitAttestedBy: null } : {};
   const [saved] = await db
     .update(listings)
-    .set({ ...values, updatedAt: now })
+    .set({ ...values, ...attestation, updatedAt: now })
     // …and the same if it changes between the read above and this write.
     .where(and(eq(listings.id, v.listingId), eq(listings.status, current.status)))
     .returning({ id: listings.id });
   if (!saved) return { error: t("listing.statusChanged") };
-  const diff = changes(current, values);
+  const diff = changes(current, { ...values, ...(unattest ? { permitAttestedAt: null } : {}) });
   if (Object.keys(diff).length) await audit({ actorId: me.id, action: "listing.update", entityType: "listing", entityId: v.listingId, diff });
+  // The statement itself, with its exact text and version, is its own event (src/lib/attestation.ts).
+  if (attestNow) {
+    await audit({
+      actorId: me.id,
+      action: "listing.permit_attested",
+      entityType: "listing",
+      entityId: v.listingId,
+      diff: { via: "owner_attestation", statement: PERMIT_ATTESTATION, version: ATTESTATION_VERSION },
+    });
+  }
   // The balance owed to the developer changed, so the open deal's sale value (and our fee on it) follows.
   if (amountPaid !== current.amountPaid) await syncSaleValue(me.id, v.listingId);
 
@@ -1053,6 +1079,96 @@ export async function adminConfirmFormA(_prev: FormState, formData: FormData): P
   });
   refresh();
   return { ok: true };
+}
+
+/** Why a unit of an import was left in review by adminPublishAttested. */
+export type PublishSkipped = { hasPermit: number; formAExpired: number; changed: number };
+
+/**
+ * "Publish all N on Felicity's permits" on the Imported tab (src/components/admin/PublishAttested.tsx): on the account
+ * owner's attestation (BULK_ATTESTATION in src/lib/attestation.ts) that Felicity holds a valid Trakheesi permit and the
+ * owner's signed Form A for every unit of an import still in review under its placeholder owner, and that each is still
+ * available, every such listing is attested, its ownership confirmed and it goes live at its asking price — what the
+ * editor's checkbox, Form A and Approve do one by one, without the permit numbers (the real owner is still entered
+ * afterwards from the Owner card; the placeholder is told nothing). One statement per listing, guarded by its status,
+ * so two admins publishing at once can't publish or audit one twice. A unit with a permit number entered keeps the
+ * number as its record (with the expiry rules) and is approved from its own page, like one whose Form A has run out.
+ */
+export async function adminPublishAttested(sourceKey: string) {
+  const me = await assertAdmin();
+  const t = await getT("errors");
+  if (typeof sourceKey !== "string" || !IMPORT_KEY_RE.test(sourceKey)) return { error: t("listing.notFound") };
+  const today = dubaiToday();
+  // What the statement covers: the import's units in review, real, entered by our team and still under the placeholder.
+  // Checked again on each write below, so a unit re-filed under its real owner (adminSetListingOwner) in the meantime
+  // isn't published, and its ownership confirmed, behind that owner's back.
+  const inScope = and(
+    sql`(${listings.source}->>'import') = ${sourceKey}`,
+    eq(listings.status, "pending_review"),
+    eq(listings.isSample, false),
+    eq(listings.createdByStaff, true),
+    awaitingOwnerSql,
+  );
+  const units = await db
+    .select({
+      id: listings.id,
+      projectName: listings.projectName,
+      isSample: listings.isSample,
+      askingPrice: listings.askingPrice,
+      publicPrice: listings.publicPrice,
+      publishedAt: listings.publishedAt,
+      ownershipConfirmedAt: listings.ownershipConfirmedAt,
+      dldPermit: listings.dldPermit,
+      dldPermitExpiresAt: listings.dldPermitExpiresAt,
+      formAExpiresAt: listings.formAExpiresAt,
+    })
+    .from(listings)
+    .where(inScope)
+    .orderBy(listings.refNo);
+  let published = 0;
+  const skipped: PublishSkipped = { hasPermit: 0, formAExpired: 0, changed: 0 };
+  for (const l of units) {
+    if (l.dldPermit) {
+      skipped.hasPermit++;
+      continue;
+    }
+    const now = new Date();
+    if (publishBlocker({ ...l, permitAttestedAt: now }, today)) {
+      skipped.formAExpired++;
+      continue;
+    }
+    const [done] = await db
+      .update(listings)
+      .set({
+        permitAttestedAt: now,
+        permitAttestedBy: me.id,
+        ownershipConfirmedAt: l.ownershipConfirmedAt ?? now,
+        status: "live",
+        publicPrice: l.askingPrice,
+        publishedAt: l.publishedAt ?? now,
+        rejectionReason: null,
+        updatedAt: now,
+      })
+      // Published, rejected, withdrawn or re-filed under its owner by someone else since the read above: left as they
+      // made it.
+      .where(and(eq(listings.id, l.id), inScope))
+      .returning({ id: listings.id });
+    if (!done) {
+      skipped.changed++;
+      continue;
+    }
+    const event = { actorId: me.id, entityType: "listing" as const, entityId: l.id };
+    await audit({ ...event, action: "listing.permit_attested", diff: { via: "owner_attestation", statement: BULK_ATTESTATION, version: ATTESTATION_VERSION } });
+    if (!l.ownershipConfirmedAt) {
+      await audit({ ...event, action: "listing.ownership_confirmed", diff: { via: "owner_attestation", ownershipConfirmedAt: [null, now] } });
+    }
+    await audit({ ...event, action: "listing.approve", diff: { status: ["pending_review", "live"], publicPrice: [l.publicPrice, l.askingPrice] } });
+    // Back on the market, as from Approve: no deal agreed on it earlier stays accepted (see reopenUnit).
+    await reopenUnit(l, "pending_review");
+    published++;
+  }
+  refresh();
+  return { ok: true as const, published, skipped };
 }
 
 // ---- The deal file (src/lib/deals.ts): contracts, NOC and transfer milestones of an agreed deal ----

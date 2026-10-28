@@ -1,8 +1,9 @@
+import { BULK_ATTESTATION } from "@/lib/attestation";
 import { defineMessages } from "../define";
 
 // Staff intake beyond the single-listing form: the bulk import of a partner network's file (/admin/listings/import),
-// the "Imported — owner to add" tab on /admin, the Owner card and the signed-Form-A confirmation on the admin listing
-// page. Admins only.
+// the "Imported — owner to add" tab on /admin (with "Publish all … on Felicity's permits"), the Owner card and the
+// signed-Form-A confirmation on the admin listing page. Admins only.
 export default defineMessages({
   en: {
     "nav.import": "Import listings",
@@ -128,6 +129,30 @@ export default defineMessages({
     "imported.empty": "No imported listings waiting for an owner.",
     "imported.from": "{source} · ref {ref}",
     "imported.setOwner": "Set the owner",
+
+    // "Publish all N on Felicity's permits": the whole import at once, on the account owner's attestation
+    // (src/lib/attestation.ts BULK_ATTESTATION, whose exact English text goes in each listing's history).
+    "publish.button": "Publish all {n} on Felicity's permits",
+    "publish.buttonSource": "Publish all {n} from {source} on Felicity's permits",
+    "publish.title": "Publish {n} listings on Felicity's permits",
+    "publish.titleOne": "Publish 1 listing on Felicity's permits",
+    "publish.desc":
+      "The {n} listings from {source} still in review under the placeholder owner go live now at their asking prices, without their permit numbers, on your statement below. Your account, the time and the statement's text are recorded in each listing's history. Enter each permit number when you can, so buyers can verify the advert with DLD; the real owner is still entered from each listing's Owner card.",
+    "publish.statement": BULK_ATTESTATION,
+    "publish.submit": "Publish",
+    "publish.publishing": "Publishing…",
+    "publish.done": "{n} listings published",
+    "publish.doneOne": "1 listing published",
+    "publish.none": "Nothing published: these listings were already published or changed in the meantime.",
+    "publish.skipped.hasPermit": "{n} left in review with a permit number entered — the number is their record, so approve them from their pages.",
+    "publish.skipped.formAExpired": "{n} left in review: their Form A has run out.",
+    "publish.skipped.changed": "{n} left as they are: changed in the meantime.",
+    "publish.failed": "Couldn't publish. Try again.",
+    // Live on the attestation, the real owner still to enter
+    "published.title": "{n} published without an owner yet",
+    "published.titleOne": "1 published without an owner yet",
+    "published.hint": "Live on Felicity's permits and still filed under the placeholder owner. Open each one and enter the real owner in its Owner card.",
+    "published.pipeline": "See the pipeline",
 
     "note.line": "Imported from {source} · ref {ref} · posted {date}",
     "note.lineNoDate": "Imported from {source} · ref {ref}",
@@ -307,6 +332,28 @@ export default defineMessages({
     "imported.empty": "لا توجد إعلانات مستوردة بانتظار تحديد مالكها.",
     "imported.from": "⁨{source}⁩ · المرجع ⁨{ref}⁩",
     "imported.setOwner": "تحديد المالك",
+
+    "publish.button": "نشر الإعلانات كلها (⁨{n}⁩) بتصاريح فيليسيتي",
+    "publish.buttonSource": "نشر الإعلانات كلها (⁨{n}⁩) من ⁨{source}⁩ بتصاريح فيليسيتي",
+    "publish.title": "نشر ⁨{n}⁩ من الإعلانات بتصاريح فيليسيتي",
+    "publish.titleOne": "نشر إعلان واحد بتصاريح فيليسيتي",
+    "publish.desc":
+      "تُنشر الآن الإعلانات (⁨{n}⁩) المستوردة من ⁨{source}⁩ والتي ما زالت قيد المراجعة باسم المالك المؤقت، بأسعارها المطلوبة ودون أرقام تصاريحها، بناءً على إفادتك أدناه. يُسجَّل حسابك ووقت الإفادة ونصّها في سجل كل إعلان. أدخل رقم كل تصريح متى أمكن ليتمكّن المشترون من التحقق من الإعلان لدى دائرة الأراضي والأملاك، ويبقى إدخال المالك الفعلي من بطاقة «المالك» في صفحة كل إعلان.",
+    "publish.statement":
+      "أُقرّ بأن فيليسيتي للعقارات ش.ذ.م.م تحتفظ بتصريح إعلان سارٍ من نظام تراخيصي وبالنموذج (A) الموقّع من المالك لكل وحدة من هذه الوحدات، وبأن كل وحدة ما زالت متاحة بالسعر المذكور.",
+    "publish.submit": "نشر",
+    "publish.publishing": "جارٍ النشر…",
+    "publish.done": "نُشر ⁨{n}⁩ من الإعلانات",
+    "publish.doneOne": "نُشر إعلان واحد",
+    "publish.none": "لم يُنشر شيء: هذه الإعلانات نُشرت أو تغيّرت في هذه الأثناء.",
+    "publish.skipped.hasPermit": "بقي ⁨{n}⁩ قيد المراجعة لأن رقم التصريح مُدخَل لها، فالرقم هو سجلّها؛ وافق عليها من صفحاتها.",
+    "publish.skipped.formAExpired": "بقي ⁨{n}⁩ قيد المراجعة: انتهت صلاحية النموذج (A) الخاص بها.",
+    "publish.skipped.changed": "تُرك ⁨{n}⁩ على حاله: تغيّر في هذه الأثناء.",
+    "publish.failed": "تعذّر النشر. حاول مرة أخرى.",
+    "published.title": "⁨{n}⁩ منشورة دون تحديد المالك بعد",
+    "published.titleOne": "إعلان واحد منشور دون تحديد المالك بعد",
+    "published.hint": "منشورة بتصاريح فيليسيتي وما زالت مسجّلة باسم المالك المؤقت. افتح كلاً منها وأدخل المالك الفعلي في بطاقة «المالك».",
+    "published.pipeline": "عرض مسار الصفقات",
 
     "note.line": "مستورد من ⁨{source}⁩ · المرجع ⁨{ref}⁩ · نُشر في ⁨{date}⁩",
     "note.lineNoDate": "مستورد من ⁨{source}⁩ · المرجع ⁨{ref}⁩",

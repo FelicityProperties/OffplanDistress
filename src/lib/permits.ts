@@ -12,6 +12,9 @@ import { notify, notifyAdmins, type TemplateParam } from "./notify";
 // that day. From the next day the listing stops showing as an advert on every public page (advertisedSql /
 // isAdvertised below), and the daily ops cron (src/app/api/cron/ops-daily) pauses a live one; a unit with an agreed
 // deal keeps its status and the admins decide. Sample listings aren't adverts, so none of this applies to them.
+// Without a permit number, the account owner's recorded attestation that Felicity holds the permit (listings.
+// permit_attested_at, src/lib/attestation.ts) lets the advert go live; it has no expiry to track, so it is never
+// paused, and the admin queue asks for the number.
 
 /** The UAE is on UTC+4 all year (no daylight saving). */
 const DUBAI_OFFSET_MS = 4 * 60 * 60 * 1000;
@@ -68,17 +71,21 @@ type PermitFields = {
   dldPermit: string | null;
   dldPermitExpiresAt: string | null;
   formAExpiresAt: string | null;
+  /** The account owner's attestation that Felicity holds the permit, standing in for a number (src/lib/attestation.ts). */
+  permitAttestedAt: Date | null;
 };
 
 /**
  * Why a listing can't be made public right now (an errors.ts key), or null when it can. The permit has to run past
- * today, since one that ends today comes down tomorrow morning. Form A is optional, but one that has run out (or
- * ends today) blocks the advert as well.
+ * today, since one that ends today comes down tomorrow morning. Without a number, the account owner's attestation
+ * stands in for it (no expiry is tracked then; a number entered later takes over, with these rules). Form A is
+ * optional, but one that has run out (or ends today) blocks the advert as well.
  */
 export function publishBlocker(l: PermitFields, today = dubaiToday()) {
   if (l.isSample) return null;
-  if (!l.dldPermit) return "listing.permitRequired" as const;
-  if (!l.dldPermitExpiresAt || l.dldPermitExpiresAt <= today) return "listing.permitExpiry" as const;
+  if (!l.dldPermit) {
+    if (!l.permitAttestedAt) return "listing.permitRequired" as const;
+  } else if (!l.dldPermitExpiresAt || l.dldPermitExpiresAt <= today) return "listing.permitExpiry" as const;
   if (l.formAExpiresAt && l.formAExpiresAt <= today) return "listing.formAExpired" as const;
   return null;
 }
@@ -118,12 +125,17 @@ export function advertisedSql(today = dubaiToday()) {
 const publicReal = and(inArray(listings.status, PUBLIC_STATUSES), eq(listings.isSample, false))!;
 
 /**
- * Public real listings without a permit expiry date: published before the dates were recorded. They aren't paused
- * (nothing says their permit has lapsed), but the admin queue asks for the date.
+ * Public real listings without a permit expiry date: published on the account owner's attestation without a number
+ * (`attested`), or before the dates were recorded. They aren't paused (nothing says their permit has lapsed), but the
+ * admin queue asks for the number, or the date, under its own wording for each.
  */
 export async function listingsWithoutPermitExpiry() {
   return db
-    .select({ id: listings.id, refNo: listings.refNo })
+    .select({
+      id: listings.id,
+      refNo: listings.refNo,
+      attested: sql<boolean>`(${listings.dldPermit} is null and ${listings.permitAttestedAt} is not null)`,
+    })
     .from(listings)
     .where(and(publicReal, isNull(listings.dldPermitExpiresAt)))
     .orderBy(listings.refNo);
