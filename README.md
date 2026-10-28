@@ -61,6 +61,16 @@ sitemap, share image); the daily `ops-daily` job then pauses live ones, tells th
 days and 1 day before expiry. Deals already under offer or in NOC keep their status; admins are told to renew.
 Listings that were live before expiry dates existed keep running until a date is entered (admin banner).
 
+**Attestation (no permit number).** When Felicity holds a unit's Trakheesi permit and the owner's signed Form A
+off-platform, the account owner can publish on their recorded statement instead of entering the number: tick "Felicity
+Properties holds a valid Trakheesi permit for this advert (number not entered)" in the listing editor and approve, or
+"Publish all N on Felicity's permits" on the Imported tab of `/admin`, which publishes a whole import at once (and
+confirms ownership on the same statement). It is the actor's own statement, recorded in the listing's History as
+`listing.permit_attested` with the time, IP and the statement's exact text; the deal page then says the permit is held
+by Felicity Properties L.L.C (RERA ORN 33951), with no QR code; nothing is paused (there is no expiry to track) and
+`/admin` lists these units under their own banner. Entering the number later (in the editor or through
+`<key>-permits.json`) replaces the attestation and enables DLD verification and expiry tracking.
+
 ### Staff intake (WhatsApp)
 
 Sellers who send their SPA and statement on WhatsApp don't have to fill in the form: Admin → Verification queue →
@@ -97,7 +107,8 @@ nudged; sign-ups refuse `.invalid` addresses, so nobody can register it first), 
 `/admin`, its photos private. On its page, enter the owner in the Owner
 card (same matching as "New listing"; changing it cancels any claim link), then confirm ownership with the claim link
 or, for co-broker stock, upload the owner's signed Form A ("Form A (signed by the owner)") and tick "The owner's
-signed Form A is uploaded and checked"; enter the Trakheesi permit, then approve.
+signed Form A is uploaded and checked"; enter the Trakheesi permit, then approve — or publish the whole import at once on
+the account owner's attestation (see Advertising compliance); the tab then lists what is live without an owner yet.
 
 ### Cash at transfer
 

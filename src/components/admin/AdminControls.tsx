@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLocale, useT } from "@/i18n/client";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, type ListingStatusKey } from "@/lib/config";
+import { formatDate } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
 
 export function ReviewButtons({ listingId }: { listingId: string }) {
@@ -109,6 +110,10 @@ type EditProps = {
   dldPermitExpiresAt: string | null;
   dldPermitUrl: string | null;
   formAExpiresAt: string | null;
+  /** When the account owner attested that Felicity holds the permit in place of its number (src/lib/attestation.ts), ISO. */
+  permitAttestedAt?: string | null;
+  /** A sample listing isn't an advert: no permit to attest to (the server ignores the box too). */
+  isSample?: boolean;
   /** The range the permit and Form A dates may take (expiryDateBounds in src/lib/permits.ts); the server checks it too. */
   expiryBounds?: { min: string; max: string };
   images: string[];
@@ -176,6 +181,7 @@ function NamePicker({
 export function AdminListingForm(p: EditProps) {
   const t = useT("admin");
   const tc = useT("common");
+  const locale = useLocale();
   const [state, action] = useActionState(adminUpdateListing, {});
   const [pending, start] = useTransition();
   useEffect(() => {
@@ -345,6 +351,20 @@ export function AdminListingForm(p: EditProps) {
           defaultValue={p.formAExpiresAt ?? ""}
         />
       </Field>
+      {/* In place of the number: the account owner's statement that Felicity holds the permit (src/lib/attestation.ts).
+          A number entered replaces it; unticking withdraws it. Not for a sample, which is never an advert. */}
+      {!p.isSample && (
+        <div className="sm:col-span-2">
+          <label className="flex items-start gap-2 text-sm">
+            <Checkbox name="permitAttested" defaultChecked={Boolean(p.permitAttestedAt)} className="mt-0.5" data-testid="permit-attested" />
+            <span>{t("form.permitAttested")}</span>
+          </label>
+          <p className="mt-1 ps-6 text-xs text-muted-foreground">
+            {t("form.permitAttestedHint")}
+            {p.permitAttestedAt && ` ${t("form.permitAttestedSince", { date: formatDate(p.permitAttestedAt, locale) })}`}
+          </p>
+        </div>
+      )}
       <div className="flex flex-col justify-center gap-3 pt-5">
         <label className="flex items-center gap-2 text-sm">
           <Checkbox name="verified" defaultChecked={p.verified} /> {t("form.verified")}

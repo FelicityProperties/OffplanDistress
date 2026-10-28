@@ -37,8 +37,10 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
   const developer = hasArabic(typedDeveloper) ? "" : typedDeveloper;
   const name = hasArabic(l.projectName) ? `${unit} in ${community}` : l.projectName;
   // Forwarded on WhatsApp, this card is the advert itself, so RERA's details go on it: the DLD permit, our office
-  // ORN and the broker's BRN. Samples aren't adverts and keep the full-height card.
-  const permit = l.dldPermit && !hasArabic(l.dldPermit) ? `DLD permit ${l.dldPermit}` : null;
+  // ORN and the broker's BRN. Samples aren't adverts and keep the full-height card. Without a number, an advert on the
+  // account owner's attestation (src/lib/attestation.ts) says the broker holds the permit.
+  const permit =
+    l.dldPermit && !hasArabic(l.dldPermit) ? `DLD permit ${l.dldPermit}` : !l.dldPermit && l.permitAttestedAt ? `DLD permit held by ${BRAND.company}` : null;
   const strip = l.isSample ? null : [permit, `RERA ORN ${BRAND.orn}`, `BRN ${BRAND.broker.brn}`].filter(Boolean).join(" · ");
   const bodyH = strip ? OG_SIZE.height - STRIP_H : OG_SIZE.height;
 

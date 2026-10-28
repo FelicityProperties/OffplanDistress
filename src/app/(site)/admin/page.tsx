@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { CalendarClock, FileCheck2, FilePlus2, FileUp, FileX2, UserPlus } from "lucide-react";
+import { CalendarClock, FileCheck2, FilePlus2, FileUp, FileX2, ShieldCheck, UserPlus } from "lucide-react";
 import { DeleteSamplesButton, ReviewButtons } from "@/components/admin/AdminControls";
 import { FollowUps } from "@/components/admin/FollowUps";
-import { StatusPill } from "@/components/badges";
+import { PublishAttestedButton } from "@/components/admin/PublishAttested";
+import { StatusPill, ToneStatus } from "@/components/badges";
 import { Kpi, PageTitle } from "@/components/Kpi";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
+import { LISTING_STATUS } from "@/lib/config";
 import { platformFee } from "@/lib/deal-math";
-import { adminListings, adminStats } from "@/lib/admin";
+import { adminListings, adminStats, publishedAwaitingOwner } from "@/lib/admin";
 import { todaySnapshot } from "@/lib/analytics-report";
 import { leadStats } from "@/lib/leads";
 import { formatAED, formatAEDCompact, formatDate, formatNumber, refCode } from "@/lib/format";
@@ -18,8 +20,43 @@ import { developerName } from "@/lib/place-names";
 import { contactKinds } from "@/lib/typed-names";
 import { cn } from "@/lib/utils";
 
-/** Listings named in the "no permit expiry" banner; the rest are counted. */
+/** Listings named in a "no permit expiry" banner; the rest are counted. */
 const NO_EXPIRY_LINKS = 12;
+
+/** Public listings whose permit expiry isn't tracked (listingsWithoutPermitExpiry): what to do, and the first few. */
+function PermitBanner({
+  icon: Icon,
+  title,
+  hint,
+  rows,
+  more,
+  testId,
+}: {
+  icon: typeof CalendarClock;
+  title: string;
+  hint: string;
+  rows: { id: string; refNo: number }[];
+  more: string;
+  testId: string;
+}) {
+  return (
+    <div role="note" data-testid={testId} className="flex items-start gap-3 rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-foreground">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+      <div className="min-w-0">
+        <p className="font-semibold">{title}</p>
+        <p className="mt-1">{hint}</p>
+        <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+          {rows.slice(0, NO_EXPIRY_LINKS).map((l) => (
+            <Link key={l.id} href={`/admin/listings/${l.id}`} className="font-medium underline underline-offset-4 hover:no-underline">
+              <bdi>{refCode(l.refNo)}</bdi>
+            </Link>
+          ))}
+          {rows.length > NO_EXPIRY_LINKS && <span>{more}</span>}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 // Typed by hand (not PageProps<"/admin">) so it compiles before Next regenerates its route types.
 export default async function AdminQueue({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -36,12 +73,28 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
     getLocale(),
     searchParams,
   ]);
-  const noExpiry = await listingsWithoutPermitExpiry();
+  const untracked = await listingsWithoutPermitExpiry();
+  // Published before expiry dates were recorded, and published on the account owner's attestation without a number
+  // (src/lib/attestation.ts): each under its own wording, so the team knows which is which.
+  const noExpiry = untracked.filter((l) => !l.attested);
+  const attested = untracked.filter((l) => l.attested);
   // Imported listings still filed under their network's placeholder owner (src/lib/import.ts) have their own tab, so
   // they don't bury the units our team can actually review.
   const tab = params.tab === "imported" ? "imported" : "review";
   const imported = inReview.filter((q) => q.awaitingOwner);
   const queue = tab === "imported" ? imported : inReview.filter((q) => !q.awaitingOwner);
+  // Each import's waiting units can be published together on the account owner's attestation (adminPublishAttested);
+  // once published they leave this tab but stay under the placeholder until the owner is entered, so they are listed.
+  const sources = new Map<string, { name: string; count: number }>();
+  for (const q of imported) {
+    const key = q.source?.import;
+    // (A sample is never an advert, so the action leaves it out too.)
+    if (!key || q.isSample) continue;
+    const entry = sources.get(key) ?? { name: q.source?.sourceName ?? key, count: 0 };
+    entry.count++;
+    sources.set(key, entry);
+  }
+  const publishedNoOwner = tab === "imported" ? await publishedAwaitingOwner() : [];
 
   return (
     <div className="space-y-6">
@@ -64,23 +117,25 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
       </PageTitle>
       {/* Adverts that went live before permit expiry dates were recorded: the cron can't take them down on time. */}
       {noExpiry.length > 0 && (
-        <div role="note" className="flex items-start gap-3 rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-foreground">
-          <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          <div className="min-w-0">
-            <p className="font-semibold">
-              {noExpiry.length === 1 ? t("permits.noExpiry.one") : t("permits.noExpiry.many", { n: noExpiry.length })}
-            </p>
-            <p className="mt-1">{t("permits.noExpiry.hint")}</p>
-            <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
-              {noExpiry.slice(0, NO_EXPIRY_LINKS).map((l) => (
-                <Link key={l.id} href={`/admin/listings/${l.id}`} className="font-medium underline underline-offset-4 hover:no-underline">
-                  <bdi>{refCode(l.refNo)}</bdi>
-                </Link>
-              ))}
-              {noExpiry.length > NO_EXPIRY_LINKS && <span>{t("permits.noExpiry.more", { n: noExpiry.length - NO_EXPIRY_LINKS })}</span>}
-            </p>
-          </div>
-        </div>
+        <PermitBanner
+          icon={CalendarClock}
+          testId="no-expiry-banner"
+          title={noExpiry.length === 1 ? t("permits.noExpiry.one") : t("permits.noExpiry.many", { n: noExpiry.length })}
+          hint={t("permits.noExpiry.hint")}
+          rows={noExpiry}
+          more={t("permits.noExpiry.more", { n: noExpiry.length - NO_EXPIRY_LINKS })}
+        />
+      )}
+      {/* Adverts live on Felicity's own permit record, number not entered: buyers can't verify them with DLD yet. */}
+      {attested.length > 0 && (
+        <PermitBanner
+          icon={ShieldCheck}
+          testId="attested-banner"
+          title={attested.length === 1 ? t("permits.attested.one") : t("permits.attested.many", { n: attested.length })}
+          hint={t("permits.attested.hint")}
+          rows={attested}
+          more={t("permits.noExpiry.more", { n: attested.length - NO_EXPIRY_LINKS })}
+        />
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Kpi label={t("queue.kpi.awaiting")} value={String(s.pending)} />
@@ -144,7 +199,18 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
             </Link>
           ))}
         </nav>
-        {tab === "imported" && <p className="text-sm text-muted-foreground">{ti("imported.sub")}</p>}
+        {tab === "imported" && (
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <p className="max-w-3xl text-sm text-muted-foreground">{ti("imported.sub")}</p>
+            {sources.size > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {[...sources].map(([key, src]) => (
+                  <PublishAttestedButton key={key} sourceKey={key} sourceName={src.name} count={src.count} named={sources.size > 1} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
@@ -253,6 +319,33 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
           </TableBody>
         </Table>
       </div>
+      {/* Published on the attestation and still under the placeholder: the real owner goes in from each Owner card. */}
+      {tab === "imported" && publishedNoOwner.length > 0 && (
+        <section aria-labelledby="published-no-owner-title" className="rounded-xl border bg-card p-5 shadow-card" data-testid="published-no-owner">
+          <h2 id="published-no-owner-title" className="font-sans font-semibold">
+            {publishedNoOwner.length === 1 ? ti("published.titleOne") : ti("published.title", { n: publishedNoOwner.length })}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {ti("published.hint")}{" "}
+            <Link href="/admin/pipeline" className="font-medium underline underline-offset-4 hover:no-underline">
+              {ti("published.pipeline")}
+            </Link>
+          </p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {publishedNoOwner.map((l) => (
+              <li key={l.id}>
+                <Link
+                  href={`/admin/listings/${l.id}#owner`}
+                  className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-sm hover:border-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <bdi className="font-medium tabular">{refCode(l.refNo)}</bdi>
+                  <ToneStatus label={tc(`listing.${l.status}`)} tone={LISTING_STATUS[l.status].tone} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <p className="text-xs text-muted-foreground">{t("queue.tip")}</p>
       {/* Who is waiting on whom: the same items the admins' daily digest counts (src/lib/reminders.ts). */}
       <FollowUps />

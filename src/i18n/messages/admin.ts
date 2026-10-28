@@ -1,3 +1,4 @@
+import { PERMIT_ATTESTATION } from "@/lib/attestation";
 import { defineMessages } from "../define";
 
 // Admin console (/admin/*) and its client controls. Statuses, KYC, unit types, file kinds, financing and
@@ -50,6 +51,11 @@ export default defineMessages({
     "permits.noExpiry.hint":
       "They went live before expiry dates were recorded, so they won't come down by themselves when the permit lapses. Add the date in each listing's editor:",
     "permits.noExpiry.more": "+{n} more",
+    // Published on the account owner's attestation that Felicity holds the permit (src/lib/attestation.ts), no number
+    "permits.attested.one": "1 listing is published on Felicity's permit without a number — enter the number when you can",
+    "permits.attested.many": "{n} listings are published on Felicity's permit without a number — enter the numbers when you can",
+    "permits.attested.hint":
+      "They went live on the account owner's statement that Felicity holds the permit, so buyers can't verify them with DLD yet and no expiry is tracked. Enter each permit number and its expiry in the listing's editor:",
     "queue.tip":
       "Tip: open a listing to add the current developer launch price before approving — it powers the discount badge and the buyer's saving calculation.",
 
@@ -164,6 +170,12 @@ export default defineMessages({
     "form.dldPermitUrlHint": "The https:// link on dubailand.gov.ae that the permit's QR code opens. Buyers see it as a link and a QR code.",
     "form.formAExpiresAt": "Form A valid until",
     "form.formAExpiresAtHint": "End date of the seller's Form A (listing agreement). Optional; once it passes, the listing comes down like an expired permit.",
+    // The account owner's attestation in place of the permit number (src/lib/attestation.ts; its exact English text
+    // goes in the audit trail).
+    "form.permitAttested": PERMIT_ATTESTATION,
+    "form.permitAttestedHint":
+      "Your recorded statement (your account, the time and the statement's text go in the listing's history); it lets the advert go live without the number. Enter the number when possible, so buyers can verify the advert with DLD and its expiry is tracked — entering it replaces this statement.",
+    "form.permitAttestedSince": "Recorded on {date}.",
     "form.verified": "SPA & payment history verified",
     "form.nocEligible": "Meets developer's resale (NOC) threshold",
     "form.images": "Image URLs (one per line)",
@@ -520,6 +532,7 @@ export default defineMessages({
     "history.action.listing.owner": "Changed who the listing is filed under",
     "history.action.listing.form_a_confirmed": "Confirmed ownership from the owner's signed Form A",
     "history.action.listing.ownership_confirmed": "Confirmed ownership on our record of the owner's authority",
+    "history.action.listing.permit_attested": "Recorded that Felicity holds the Trakheesi permit for this advert (number not entered)",
     "history.action.listing.seller_status": "Changed the listing's status (seller)",
     "history.action.offer.respond": "Answered an offer on the seller's behalf",
     "history.action.deal.update": "Updated the deal file",
@@ -548,10 +561,14 @@ export default defineMessages({
     "history.field.sellerId": "Owner's account",
     "history.field.claimsCancelled": "Claim links cancelled",
     "history.field.fileId": "Document ID",
+    "history.field.permitAttestedAt": "Permit held by Felicity (statement)",
+    "history.field.statement": "Statement",
+    "history.field.version": "Statement version",
     "history.via.email": "Email",
     "history.via.copy": "Link copied for WhatsApp",
     "history.via.form_a": "The owner's signed Form A",
     "history.via.broker_statement": "Our record of the owner's written authority (the account owner's statement)",
+    "history.via.owner_attestation": "The account owner's attestation",
 
     // Columns of /api/admin/export/deals.csv that the deal file's own labels don't cover
     "export.col.dealId": "Deal ID",
@@ -635,6 +652,10 @@ export default defineMessages({
     "permits.noExpiry.hint":
       "نُشرت هذه الإعلانات قبل تسجيل تواريخ الانتهاء، لذا لن يتوقف نشرها تلقائياً عند انتهاء صلاحية التصريح. أضِف التاريخ في صفحة تعديل كل إعلان:",
     "permits.noExpiry.more": "و{n} غيرها",
+    "permits.attested.one": "إعلان واحد منشور بتصريح فيليسيتي دون رقم — أدخل الرقم عندما يتيسّر",
+    "permits.attested.many": "عدد الإعلانات المنشورة بتصريح فيليسيتي دون رقم: ⁨{n}⁩ — أدخل الأرقام عندما يتيسّر",
+    "permits.attested.hint":
+      "نُشرت هذه الإعلانات بناءً على إفادة صاحب الحساب بأن فيليسيتي تحتفظ بالتصريح، لذا لا يستطيع المشترون التحقق منها لدى دائرة الأراضي والأملاك بعد، ولا تُتابَع صلاحيتها. أدخل رقم كل تصريح وتاريخ انتهائه في صفحة تعديل الإعلان:",
     "queue.tip":
       "نصيحة: افتح الإعلان وأضف سعر الإطلاق الحالي لدى المطوّر قبل الموافقة، فهو أساس شارة الخصم وحساب التوفير للمشتري.",
 
@@ -748,6 +769,10 @@ export default defineMessages({
     "form.dldPermitUrlHint": "رابط ⁦https://⁩ على موقع ⁦dubailand.gov.ae⁩ الذي يفتحه رمز QR الخاص بالتصريح. ويظهر للمشترين على شكل رابط ورمز QR.",
     "form.formAExpiresAt": "النموذج (A) سارٍ حتى",
     "form.formAExpiresAtHint": "تاريخ انتهاء النموذج (A) (اتفاقية الإدراج مع البائع). حقل اختياري، وعند انتهاء صلاحيته يُرفع الإعلان كما في حال انتهاء التصريح.",
+    "form.permitAttested": "تحتفظ فيليسيتي للعقارات بتصريح تراخيصي سارٍ لهذا الإعلان (لم يُدخَل الرقم)",
+    "form.permitAttestedHint":
+      "إفادتك المسجّلة (يُحفظ حسابك ووقت الإفادة ونصّها في سجل الإعلان)، وهي تتيح نشر الإعلان دون الرقم. أدخل الرقم متى أمكن ليتمكّن المشترون من التحقق من الإعلان لدى دائرة الأراضي والأملاك ولتُتابَع صلاحيته، وإدخاله يحلّ محلّ هذه الإفادة.",
+    "form.permitAttestedSince": "سُجّلت في ⁨{date}⁩.",
     "form.verified": "تم التحقق من اتفاقية البيع والشراء وسجل الدفعات",
     "form.nocEligible": "يستوفي حدّ إعادة البيع لدى المطوّر (شهادة عدم الممانعة)",
     "form.images": "روابط الصور (رابط في كل سطر)",
@@ -1090,6 +1115,7 @@ export default defineMessages({
     "history.action.listing.owner": "غيّر الحساب المسجّل باسمه الإعلان",
     "history.action.listing.form_a_confirmed": "أكّد الملكية بالنموذج (A) الموقّع من المالك",
     "history.action.listing.ownership_confirmed": "أكّد الملكية بناءً على سجلنا لتفويض المالك",
+    "history.action.listing.permit_attested": "سجّل أن فيليسيتي تحتفظ بتصريح تراخيصي لهذا الإعلان (لم يُدخَل الرقم)",
     "history.action.listing.seller_status": "غيّر حالة الإعلان (البائع)",
     "history.action.offer.respond": "ردّ على عرض نيابةً عن البائع",
     "history.action.deal.update": "حدّث ملف الصفقة",
@@ -1118,10 +1144,14 @@ export default defineMessages({
     "history.field.sellerId": "حساب المالك",
     "history.field.claimsCancelled": "روابط التأكيد الملغاة",
     "history.field.fileId": "معرّف المستند",
+    "history.field.permitAttestedAt": "إفادة الاحتفاظ بالتصريح",
+    "history.field.statement": "الإفادة",
+    "history.field.version": "إصدار الإفادة",
     "history.via.email": "البريد الإلكتروني",
     "history.via.copy": "نُسخ الرابط لإرساله عبر واتساب",
     "history.via.form_a": "النموذج (A) الموقّع من المالك",
     "history.via.broker_statement": "سجلنا لتفويض المالك الخطي (إفادة صاحب الحساب)",
+    "history.via.owner_attestation": "إفادة صاحب الحساب",
 
     "export.col.dealId": "رقم الصفقة",
     "export.col.ref": "المرجع",

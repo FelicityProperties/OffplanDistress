@@ -5,7 +5,9 @@ import { sql } from "drizzle-orm";
 // placeholder owner account per network until our team enters the real owner (adminSetListingOwner): no password, so
 // nobody can sign in to it, and a `.invalid` address, so it never receives email (src/lib/notify.ts, password resets).
 // While filed there, a listing has its own tab on /admin and is left out of the review backlog and the follow-ups
-// (src/lib/reminders.ts); it can't get a claim link or be approved (its ownership isn't confirmed).
+// (src/lib/reminders.ts); it can't get a claim link or be approved (its ownership isn't confirmed) — unless the account
+// owner publishes the whole import at once on their attestation (adminPublishAttested, src/lib/attestation.ts), after
+// which it is live and still under the placeholder until the real owner is entered.
 
 /** The placeholder owner's address for a network's key (IMPORT_KEY_RE). */
 export const importOwnerEmail = (key: string) => `owner-pending.${key}@offplandistress.invalid`;

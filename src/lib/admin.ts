@@ -1,6 +1,6 @@
 import "server-only";
 import { alias } from "drizzle-orm/pg-core";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { auditEvents, files, inquiries, listings, offers, users } from "@/db/schema";
 import { awaitingOwnerSql } from "./import";
@@ -109,6 +109,19 @@ export async function adminListings(status?: (typeof listings.$inferSelect)["sta
     .innerJoin(users, eq(users.id, listings.sellerId))
     .where(status ? eq(listings.status, status) : undefined)
     .orderBy(desc(listings.updatedAt));
+}
+
+/**
+ * Listings published on the account owner's attestation (adminPublishAttested) and still filed under their import's
+ * placeholder owner (src/lib/import.ts): out of review, with the real owner still to enter from the Owner card. Listed
+ * on the Imported tab of /admin so they aren't lost once they leave it.
+ */
+export async function publishedAwaitingOwner() {
+  return db
+    .select({ id: listings.id, refNo: listings.refNo, projectName: listings.projectName, status: listings.status })
+    .from(listings)
+    .where(and(awaitingOwnerSql, notInArray(listings.status, ["pending_review", "rejected", "withdrawn"])))
+    .orderBy(listings.refNo);
 }
 
 /** Whether ownership of a listing our team entered was confirmed from the owner's signed Form A (adminConfirmFormA). */
