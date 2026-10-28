@@ -9,6 +9,7 @@ import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { describeDatabaseVariables, findDatabaseUrl } from "../src/db/database-url.mjs";
+import { importPartnerStock } from "./import-partner-stock.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -88,6 +89,17 @@ try {
   if (process.env.SEED_SAMPLE_DATA !== "false") {
     // "force" (local testing only) puts the samples back into a database that already had them removed.
     await seedSamples(pool, process.env.SEED_SAMPLE_DATA === "force" && process.env.VERCEL_ENV !== "production");
+  }
+
+  // Partner-network stock (scripts/partner-stock/) goes into the live database from the production build, where it is
+  // reachable: into review under a placeholder owner, never public by itself (scripts/import-partner-stock.mjs).
+  // IMPORT_PARTNER_STOCK=1 runs it against a local database. A failure here never fails the build.
+  if (process.env.VERCEL_ENV === "production" || process.env.IMPORT_PARTNER_STOCK === "1") {
+    try {
+      await importPartnerStock(pool);
+    } catch (err) {
+      console.error("[import] Partner stock failed:", err);
+    }
   }
 } catch (err) {
   console.error("[migrate] Failed:", err);
