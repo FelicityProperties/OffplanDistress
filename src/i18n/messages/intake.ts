@@ -165,6 +165,8 @@ export default defineMessages({
 
     "claim.setOwnerFirst": "Set the owner first: the claim link goes to the owner, and this listing is still filed under a placeholder.",
     "claim.confirmedFormA": "Ownership confirmed on {date} from the owner's signed Form A.",
+    "claim.confirmedBroker": "Ownership confirmed on {date} on our record of the owner's written authority.",
+    "claim.ownerStillPlaceholder": "The listing is still filed under a placeholder: enter the real owner below so they can see it in their account.",
     "approve.setOwnerFirst":
       "Set the owner first: this listing is still filed under a placeholder. Then confirm ownership (claim link or the owner's signed Form A) and enter the permit before approving.",
 
@@ -340,6 +342,8 @@ export default defineMessages({
 
     "claim.setOwnerFirst": "حدّد المالك أولاً: يُرسَل رابط التأكيد إلى المالك، وهذا الإعلان ما زال مسجّلاً باسم مالك مؤقت.",
     "claim.confirmedFormA": "أُكّدت الملكية في ⁨{date}⁩ بالنموذج (A) الموقّع من المالك.",
+    "claim.confirmedBroker": "أُكّدت الملكية في ⁨{date}⁩ بناءً على سجلنا لتفويض المالك الخطي.",
+    "claim.ownerStillPlaceholder": "ما زال الإعلان مسجّلاً باسم مالك مؤقت: أدخل المالك الفعلي أدناه ليراه في حسابه.",
     "approve.setOwnerFirst":
       "حدّد المالك أولاً: ما زال هذا الإعلان مسجّلاً باسم مالك مؤقت. ثم أكّد الملكية (برابط التأكيد أو بالنموذج (A) الموقّع من المالك) وأدخل التصريح قبل الموافقة عليه.",
 

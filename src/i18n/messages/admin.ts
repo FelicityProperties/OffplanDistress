@@ -519,6 +519,7 @@ export default defineMessages({
     "history.action.listing.import": "Imported the listing from a partner network's file",
     "history.action.listing.owner": "Changed who the listing is filed under",
     "history.action.listing.form_a_confirmed": "Confirmed ownership from the owner's signed Form A",
+    "history.action.listing.ownership_confirmed": "Confirmed ownership on our record of the owner's authority",
     "history.action.listing.seller_status": "Changed the listing's status (seller)",
     "history.action.offer.respond": "Answered an offer on the seller's behalf",
     "history.action.deal.update": "Updated the deal file",
@@ -550,6 +551,7 @@ export default defineMessages({
     "history.via.email": "Email",
     "history.via.copy": "Link copied for WhatsApp",
     "history.via.form_a": "The owner's signed Form A",
+    "history.via.broker_statement": "Our record of the owner's written authority (the account owner's statement)",
 
     // Columns of /api/admin/export/deals.csv that the deal file's own labels don't cover
     "export.col.dealId": "Deal ID",
@@ -1087,6 +1089,7 @@ export default defineMessages({
     "history.action.listing.import": "استورد الإعلان من ملف شبكة شريكة",
     "history.action.listing.owner": "غيّر الحساب المسجّل باسمه الإعلان",
     "history.action.listing.form_a_confirmed": "أكّد الملكية بالنموذج (A) الموقّع من المالك",
+    "history.action.listing.ownership_confirmed": "أكّد الملكية بناءً على سجلنا لتفويض المالك",
     "history.action.listing.seller_status": "غيّر حالة الإعلان (البائع)",
     "history.action.offer.respond": "ردّ على عرض نيابةً عن البائع",
     "history.action.deal.update": "حدّث ملف الصفقة",
@@ -1118,6 +1121,7 @@ export default defineMessages({
     "history.via.email": "البريد الإلكتروني",
     "history.via.copy": "نُسخ الرابط لإرساله عبر واتساب",
     "history.via.form_a": "النموذج (A) الموقّع من المالك",
+    "history.via.broker_statement": "سجلنا لتفويض المالك الخطي (إفادة صاحب الحساب)",
 
     "export.col.dealId": "رقم الصفقة",
     "export.col.ref": "المرجع",

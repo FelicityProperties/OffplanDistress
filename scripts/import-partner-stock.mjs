@@ -9,7 +9,8 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const STOCK_DIR = path.join(root, "scripts", "partner-stock");
+// PARTNER_STOCK_DIR: another folder of files, for a local test against a database copy.
+const STOCK_DIR = process.env.PARTNER_STOCK_DIR || path.join(root, "scripts", "partner-stock");
 const FORMAT = "offplandistress-import/1";
 const MAX_PHOTO_BYTES = 1_500_000;
 const PHOTO_WIDTH = 1024;
@@ -19,7 +20,7 @@ const INT_MAX = 2_147_483_647;
 export async function importPartnerStock(pool) {
   let names = [];
   try {
-    names = (await readdir(STOCK_DIR)).filter((n) => n.endsWith(".json")).sort();
+    names = (await readdir(STOCK_DIR)).filter((n) => n.endsWith(".json") && !n.endsWith("-permits.json")).sort();
   } catch {
     return;
   }
@@ -67,6 +68,154 @@ async function importSource(pool, doc, sharp) {
   }
   console.log(`[import] ${source.name}: ${created} listings created, ${photos} photos added, ${failed} failed (${units.length} in the file).`);
   if (created) await tellAdmins(pool, source, created);
+  await applyPermits(pool, source, actor);
+}
+
+const PERMITS_FORMAT = "offplandistress-permits/1";
+const DUBAI_OFFSET_MS = 4 * 60 * 60 * 1000;
+const dubaiToday = () => new Date(Date.now() + DUBAI_OFFSET_MS).toISOString().slice(0, 10);
+const addYears = (day, n) => {
+  const [y, m, d] = day.split("-").map(Number);
+  return new Date(Date.UTC(y + n, m - 1, d)).toISOString().slice(0, 10);
+};
+const isoDay = (s) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
+const isDldUrl = (s) => {
+  try {
+    const u = new URL(s);
+    return u.protocol === "https:" && !u.username && !u.password && !u.port && (u.hostname === "dubailand.gov.ae" || u.hostname.endsWith(".dubailand.gov.ae"));
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * The network's units' DLD (Trakheesi) advertising permits, from scripts/partner-stock/<key>-permits.json
+ * ({format: "offplandistress-permits/1", source: "<key>", permits: [{ref, permit, expires, formAExpires?, url?}]}),
+ * applied the way the admin editor + Approve do: the permit fields, ownership confirmed on our team's record of the
+ * owner's written authority (the account owner's statement — the real owner is still entered afterwards from the
+ * Owner card), then the listing goes live at its asking price. Only a unit still in review goes live; a permit entered
+ * differently later only updates the permit fields. Nothing goes live without a permit that is current (RERA).
+ */
+async function applyPermits(pool, source, actor) {
+  let doc;
+  try {
+    doc = JSON.parse(await readFile(path.join(STOCK_DIR, `${source.key}-permits.json`), "utf8"));
+  } catch {
+    return;
+  }
+  if (doc?.format !== PERMITS_FORMAT || doc.source !== source.key || !Array.isArray(doc.permits)) {
+    console.error(`[permits] ${source.key}-permits.json: not an ${PERMITS_FORMAT} file for ${source.key}`);
+    return;
+  }
+  const today = dubaiToday();
+  const maxExpiry = addYears(today, 3);
+  let live = 0;
+  let updated = 0;
+  let skipped = 0;
+  for (const p of doc.permits) {
+    const ref = typeof p?.ref === "string" ? p.ref.trim() : "";
+    const permit = typeof p?.permit === "string" ? p.permit.trim().slice(0, 80) : "";
+    const why = !ref
+      ? "no ref"
+      : !permit
+        ? "no permit number"
+        : !isoDay(p.expires) || p.expires <= today || p.expires > maxExpiry
+          ? "the permit expiry must be a date after today, within three years"
+          : p.formAExpires != null && (!isoDay(p.formAExpires) || p.formAExpires <= today || p.formAExpires > maxExpiry)
+            ? "the Form A expiry must be a date after today, within three years"
+            : p.url != null && !isDldUrl(p.url)
+              ? "the verification link must be https on dubailand.gov.ae"
+              : null;
+    if (why) {
+      skipped++;
+      console.error(`[permits] ${source.key} ${ref || "?"}: skipped — ${why}`);
+      continue;
+    }
+    const client = await pool.connect();
+    try {
+      await client.query("begin");
+      const { rows } = await client.query(
+        `select id, status, is_sample, asking_price, published_at, ownership_confirmed_at, dld_permit, dld_permit_expires_at,
+                form_a_expires_at, dld_permit_url
+         from listings where source->>'import' = $1 and source->>'ref' = $2 for update`,
+        [source.key, ref],
+      );
+      const l = rows[0];
+      if (!l || l.is_sample) {
+        await client.query("rollback");
+        skipped++;
+        console.error(`[permits] ${source.key} ${ref}: skipped — no such imported listing`);
+        continue;
+      }
+      const now = new Date();
+      const wanted = { dldPermit: permit, dldPermitExpiresAt: p.expires, formAExpiresAt: p.formAExpires ?? null, dldPermitUrl: p.url ?? null };
+      const have = { dldPermit: l.dld_permit, dldPermitExpiresAt: day(l.dld_permit_expires_at), formAExpiresAt: day(l.form_a_expires_at), dldPermitUrl: l.dld_permit_url };
+      const diff = {};
+      for (const k of Object.keys(wanted)) if ((have[k] ?? null) !== (wanted[k] ?? null)) diff[k] = [have[k] ?? null, wanted[k] ?? null];
+      if (Object.keys(diff).length) {
+        await client.query(
+          `update listings set dld_permit = $2, dld_permit_expires_at = $3, form_a_expires_at = $4, dld_permit_url = $5, updated_at = $6 where id = $1`,
+          [l.id, wanted.dldPermit, wanted.dldPermitExpiresAt, wanted.formAExpiresAt, wanted.dldPermitUrl, now],
+        );
+        await client.query("insert into audit_events (actor_id, action, entity_type, entity_id, diff) values ($1, 'listing.update', 'listing', $2, $3)", [
+          actor,
+          l.id,
+          JSON.stringify(diff),
+        ]);
+        updated++;
+      }
+      if (!l.ownership_confirmed_at) {
+        await client.query("update listings set ownership_confirmed_at = $2, updated_at = $2 where id = $1", [l.id, now]);
+        await client.query(
+          "insert into audit_events (actor_id, action, entity_type, entity_id, diff) values ($1, 'listing.ownership_confirmed', 'listing', $2, $3)",
+          [actor, l.id, JSON.stringify({ via: "broker_statement", ownershipConfirmedAt: [null, now.toISOString()] })],
+        );
+      }
+      if (l.status === "pending_review") {
+        await client.query(
+          `update listings set status = 'live', public_price = asking_price, published_at = coalesce(published_at, $2), rejection_reason = null, updated_at = $2
+           where id = $1`,
+          [l.id, now],
+        );
+        await client.query("insert into audit_events (actor_id, action, entity_type, entity_id, diff) values ($1, 'listing.approve', 'listing', $2, $3)", [
+          actor,
+          l.id,
+          JSON.stringify({ status: ["pending_review", "live"], publicPrice: [null, l.asking_price] }),
+        ]);
+        live++;
+      }
+      await client.query("commit");
+    } catch (err) {
+      await client.query("rollback").catch(() => {});
+      skipped++;
+      console.error(`[permits] ${source.key} ${ref}: failed`, err?.message ?? err);
+    } finally {
+      client.release();
+    }
+  }
+  console.log(`[permits] ${source.name}: ${live} listings went live, ${updated} permits recorded, ${skipped} skipped (${doc.permits.length} in the file).`);
+  if (live) await tellAdminsLive(pool, source, live);
+}
+
+/** A date column as "YYYY-MM-DD" (pg returns a Date in local time for `date` columns). */
+function day(v) {
+  if (v == null) return null;
+  if (typeof v === "string") return v.slice(0, 10);
+  return new Date(v.getTime() - v.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+}
+
+async function tellAdminsLive(pool, source, live) {
+  const { rows } = await pool.query("select id, coalesce(locale, 'en') as locale from users where role = 'admin'");
+  for (const a of rows) {
+    const ar = a.locale === "ar";
+    await pool.query("insert into notifications (user_id, type, title, body, href) values ($1, 'listing.imported_live', $2, $3, '/deals')", [
+      a.id,
+      ar ? `أصبح ${live} إعلانًا من ${source.name} منشورًا` : `${live} listings from ${source.name} are now live`,
+      ar
+        ? "نُشرت بتصاريح الإعلان المسجّلة. يبقى تحديد المالك الفعلي لكل إعلان من بطاقة «المالك» في صفحته."
+        : "They were published with the advertising permits on file. The real owner of each still gets entered from the Owner card on its page.",
+    ]);
+  }
 }
 
 /** The owner account (first admin) — the import's actor in the audit trail and the photos' uploader. */
