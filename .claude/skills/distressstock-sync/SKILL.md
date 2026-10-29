@@ -104,6 +104,10 @@ a price line or the handover the parser can't read: the site's wording changed, 
 the diff should be about as big as the summary says (a new unit ≈ 100 lines; a removed one adds one `"removed"` line; a
 unit back on the site loses it). `git status` must show nothing from `$RAW`. Spot-check one new unit against its page.
 
+**A day with no changes** (the build printed `unchanged` and `git diff --stat scripts/partner-stock/` shows nothing):
+there is nothing to ship. Skip step 5, remove any sync branch you created, and report "DistressStock sync YYYY-MM-DD:
+no changes (N units on the site, all already listed)" in one line.
+
 ## 5. Ship
 
 1. `git fetch origin && git switch -c sync/distressstock-$(date +%F) origin/main`, then `git add scripts/partner-stock/`
@@ -114,6 +118,8 @@ unit back on the site loses it). `git status` must show nothing from `$RAW`. Spo
    minutes, not a sleep loop), then read the PR's checks (`mcp__github__pull_request_read` / `get_check_run`); repeat
    until the check passed. A failed check: read the logs, fix only if it's the sync's own files, else report.
 4. Merge the PR (`mcp__github__merge_pull_request`, squash).
+   If the GitHub tools are not available in your session, push the branch anyway and report its name with the
+   summary, so the owner can open and merge the PR; never push the sync straight to `main`.
 5. Report to the user in 5 lines: the counts (new / removed / updated / skipped); the new and removed units by title;
    when N > 0: "press Publish all N on Felicity's permits at https://offplandistress.vercel.app/admin?tab=imported";
    anything skipped (illegible plans, excluded units) and why; anything the valves stopped.
