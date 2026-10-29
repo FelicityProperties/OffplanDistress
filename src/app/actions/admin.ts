@@ -2,14 +2,14 @@
 
 import { randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { files, inquiries, listings, offers, passwordResets, sellerLeads, sessions, users, type Source } from "@/db/schema";
 import { dirOf, isLocale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
-import { ATTESTATION_VERSION, BULK_ATTESTATION, PERMIT_ATTESTATION } from "@/lib/attestation";
+import { ATTESTATION_VERSION, BULK_ATTESTATION, LISTING_ATTESTATION, PERMIT_ATTESTATION } from "@/lib/attestation";
 import { audit, changes } from "@/lib/audit";
 import { findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
 import { claimPath, isPlaceholderEmail, issueClaimToken, placeholderEmail } from "@/lib/claim";
@@ -19,6 +19,7 @@ import { emailEnabled, sendEmail } from "@/lib/email";
 import { awaitingOwnerSql, isImportOwner } from "@/lib/import";
 import { IMPORT_KEY_RE } from "@/lib/import-format";
 import { formatDate, formatNumber, refCode } from "@/lib/format";
+import { isUuid } from "@/lib/utils";
 import { whatsappNumber } from "@/lib/leads";
 import { renderTemplate } from "@/lib/notification-templates";
 import { notify, notifyPriceDrop } from "@/lib/notify";
@@ -1098,12 +1099,33 @@ export async function adminPublishAttested(sourceKey: string) {
   const me = await assertAdmin();
   const t = await getT("errors");
   if (typeof sourceKey !== "string" || !IMPORT_KEY_RE.test(sourceKey)) return { error: t("listing.notFound") };
+  const result = await publishAttested(me.id, sql`(${listings.source}->>'import') = ${sourceKey}`, BULK_ATTESTATION);
+  refresh();
+  return { ok: true as const, ...result };
+}
+
+/**
+ * "Publish on Felicity's permits" on one imported unit's own admin page (src/components/admin/PublishAttested.tsx
+ * with `listing`): the same statement, for that unit only (LISTING_ATTESTATION). Approve can't take it while it is
+ * under the placeholder owner, so this is how a single unit goes live without its permit number.
+ */
+export async function adminPublishAttestedListing(listingId: string) {
+  const me = await assertAdmin();
+  const t = await getT("errors");
+  if (!isUuid(listingId)) return { error: t("listing.notFound") };
+  const result = await publishAttested(me.id, eq(listings.id, listingId), LISTING_ATTESTATION);
+  refresh();
+  return { ok: true as const, ...result };
+}
+
+/** The publish itself, for the units `where` names that the statement covers; `statement` goes in each audit row. */
+async function publishAttested(actorId: string, where: SQL, statement: string) {
   const today = dubaiToday();
-  // What the statement covers: the import's units in review, real, entered by our team and still under the placeholder.
-  // Checked again on each write below, so a unit re-filed under its real owner (adminSetListingOwner) in the meantime
-  // isn't published, and its ownership confirmed, behind that owner's back.
+  // What the statement covers: units in review, real, entered by our team and still under the placeholder. Checked
+  // again on each write below, so a unit re-filed under its real owner (adminSetListingOwner) in the meantime isn't
+  // published, and its ownership confirmed, behind that owner's back.
   const inScope = and(
-    sql`(${listings.source}->>'import') = ${sourceKey}`,
+    where,
     eq(listings.status, "pending_review"),
     eq(listings.isSample, false),
     eq(listings.createdByStaff, true),
@@ -1141,7 +1163,7 @@ export async function adminPublishAttested(sourceKey: string) {
       .update(listings)
       .set({
         permitAttestedAt: now,
-        permitAttestedBy: me.id,
+        permitAttestedBy: actorId,
         ownershipConfirmedAt: l.ownershipConfirmedAt ?? now,
         status: "live",
         publicPrice: l.askingPrice,
@@ -1157,8 +1179,8 @@ export async function adminPublishAttested(sourceKey: string) {
       skipped.changed++;
       continue;
     }
-    const event = { actorId: me.id, entityType: "listing" as const, entityId: l.id };
-    await audit({ ...event, action: "listing.permit_attested", diff: { via: "owner_attestation", statement: BULK_ATTESTATION, version: ATTESTATION_VERSION } });
+    const event = { actorId, entityType: "listing" as const, entityId: l.id };
+    await audit({ ...event, action: "listing.permit_attested", diff: { via: "owner_attestation", statement, version: ATTESTATION_VERSION } });
     if (!l.ownershipConfirmedAt) {
       await audit({ ...event, action: "listing.ownership_confirmed", diff: { via: "owner_attestation", ownershipConfirmedAt: [null, now] } });
     }
@@ -1167,8 +1189,7 @@ export async function adminPublishAttested(sourceKey: string) {
     await reopenUnit(l, "pending_review");
     published++;
   }
-  refresh();
-  return { ok: true as const, published, skipped };
+  return { published, skipped };
 }
 
 // ---- The deal file (src/lib/deals.ts): contracts, NOC and transfer milestones of an agreed deal ----

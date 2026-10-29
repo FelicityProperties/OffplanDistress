@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft, ExternalLink, FileText, ImageIcon, UserCheck 
 import { AdminListingForm, ReviewButtons } from "@/components/admin/AdminControls";
 import { ClaimLinkButtons } from "@/components/admin/ClaimLinkButtons";
 import { FormAConfirm, OwnerForm } from "@/components/admin/OwnerCard";
+import { PublishAttestedListingButton } from "@/components/admin/PublishAttested";
 import { DealFileCard } from "@/components/admin/DealFileCard";
 import { HistoryPanel } from "@/components/admin/HistoryPanel";
 import { StatusPill } from "@/components/badges";
@@ -118,6 +119,11 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
               </Link>
             </Button>
             {l.status === "pending_review" && <ReviewButtons listingId={l.id} />}
+            {/* An imported unit still under its placeholder owner can't be approved; it goes live on the account owner's
+                statement instead, as the whole import can from the Imported tab (src/lib/attestation.ts). */}
+            {l.status === "pending_review" && placeholderOwner && l.createdByStaff && !l.isSample && !l.dldPermit && (
+              <PublishAttestedListingButton listingId={l.id} refCode={refCode(l.refNo)} />
+            )}
           </div>
         </div>
       </div>
