@@ -111,6 +111,16 @@ export type ImportProvenance = {
   notes: string | null;
   importedAt: string;
   importedBy: string;
+  /**
+   * The synced fields as last applied from the network's file by the build (scripts/import-partner-stock.mjs), so the
+   * next build can tell our team's edits (kept) from the network's changes (applied).
+   */
+  synced?: Record<string, unknown>;
+  /**
+   * The build's sync state: the day the unit left the network and the status it had (while withdrawn for that), when
+   * it was put back, and the fields our team edited that the network changed too (the admins were told once).
+   */
+  sync?: { removedAt?: string; withdrawnFrom?: string; restoredAt?: string; conflicts?: Record<string, unknown> };
 };
 
 export const users = pgTable(

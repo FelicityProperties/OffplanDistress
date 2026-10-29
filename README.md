@@ -96,8 +96,17 @@ choosing the files again after a reload skips what is done (a unit is imported o
 unique index; a retry first asks which photos the listing already has, so none is stored twice). Stock we prepare as
 files in `scripts/partner-stock/` (the same format, with each photo's source URL instead of its bytes) is imported by
 the production build itself (`scripts/import-partner-stock.mjs`, run from `scripts/migrate.mjs`): the same rules and
-placeholder owner, photos fetched and resized at build time, run again on every build but skipping units already
-imported, and an in-app notice to admins when units arrive. Their DLD advertising permits can come the same way:
+placeholder owner, photos fetched and resized at build time, run again on every build, and an in-app notice to admins
+when units arrive. Each build also syncs the units already imported with the file, which is regenerated from the
+network: a synced field (prices, paid, instalments, plan, handover, size, floor, view, description) takes the file's
+value unless our team edited it since the last sync (the snapshot in `listings.source.synced` tells; their edit stands
+and is reported once as a conflict); a price change on a live advert updates the advertised price and tells the
+watchers; a unit marked `"removed": "YYYY-MM-DD"` (gone from the network) is withdrawn as a seller's withdrawal is
+(open offers closed, `listing.sync_withdrawn` in History) and put back when it is listed again (live if it was live and
+can still be published, else into review); a unit with a deal in progress is never touched, only reported; a build that
+would withdraw more than 3 and more than a quarter of a source's listed units withdraws none (the valve, unless the
+file's `sync.allowMassRemoval` is true); one `listing.synced` notice per build gives the admins the counts, the
+conflicts and what was left alone. Their DLD advertising permits can come the same way:
 `scripts/partner-stock/<key>-permits.json` (`offplandistress-permits/1`: ref, permit number, expiry, optional Form A
 expiry and verification link) records each permit as the editor would, confirms ownership on our record of the owner's
 written authority (the account owner's statement; the real owner is still entered afterwards from the Owner card) and
@@ -109,6 +118,19 @@ card (same matching as "New listing"; changing it cancels any claim link), then 
 or, for co-broker stock, upload the owner's signed Form A ("Form A (signed by the owner)") and tick "The owner's
 signed Form A is uploaded and checked"; enter the Trakheesi permit, then approve — or publish the whole import at once on
 the account owner's attestation (see Advertising compliance); the tab then lists what is live without an owner yet.
+
+**Daily DistressStock sync.** `scripts/partner-stock/distressstock.json` is regenerated every day from the partner
+site by `scripts/partner-stock/sync-distressstock.mjs`, run by an agent following `.claude/skills/distressstock-sync`:
+`fetch --raw <dir>` logs in (`DISTRESSSTOCK_PASSWORD`, never in the repo), saves and parses every unit page, saves each
+payment-plan image with a PNG copy and writes a delta against the committed files; the agent reads each new or changed
+plan image and writes its figures into `scripts/partner-stock/distressstock-plans.json` (`offplandistress-plans/1`, one
+entry per ref with the image URL it was read from; the build checks that seller + remaining = unit price, the
+instalments = remaining, the transfer rows = total, and that the page's selling price still matches); `build --raw <dir>`
+then rewrites the manifest deterministically (units by ref, 1-space indent): a unit gone from the site keeps its entry
+with `"removed": "YYYY-MM-DD"` for 90 days (the import withdraws it, and restores it if it comes back); bulk deals, shops
+and units outside Dubai are never listed; a unit whose plan is missing, illegible or inconsistent keeps its previous entry
+and is flagged (exit 2); a run that would mark more than a quarter of the listed units removed writes nothing (exit 3;
+`--allow-mass-removal`, on the user's word, also sets the file's `sync.allowMassRemoval` for the import's own valve).
 
 ### Cash at transfer
 

@@ -12,8 +12,11 @@ import { fallbackErrors, listingSchema, type ListingFields } from "./listing-sch
 //   "generatedAt": "<ISO>",
 //   "units": [{ "ref": "0G2Q5c", "url": "https://…/u/0G2Q5c", "posted": "2026-04-18" | null,
 //               "listing": { …listingSchema's fields… }, "photos": [{ "filename", "type", "data": "<base64>" }],
-//               "notes": "for our team only" }]
+//               "notes": "for our team only", "removed": "2026-11-03" (optional) }]
 // }
+//
+// "removed" is the day the unit left the partner site, kept by the daily sync (scripts/partner-stock/
+// sync-distressstock.mjs) for the build-time import, which withdraws the listing; this page ignores it.
 
 export const IMPORT_FORMAT = "offplandistress-import/1";
 export const IMPORT_MAX_PHOTOS = 6;
