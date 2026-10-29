@@ -16,9 +16,24 @@
 //   diff --raw <dir>       prints <dir>/delta.json's summary again.
 //   delta --raw <dir>      recomputes <dir>/delta.json from the saved pages (no network: after editing the plans file).
 //   parse --raw <dir>      re-parses the saved pages into <dir>/units.json (no network; what the tests use).
+//   sheet --raw <dir> [--ref <ref>]…
+//                          contact sheets for the photo curation: for every unit in delta.json's needsPhotos (listed, no
+//                          entry in the photos file) or the refs given, downloads the page's OVERVIEW images (up to 12,
+//                          cached under <dir>/photos/) and writes <dir>/sheets/<ref>.png — thumbnails, each with its
+//                          index — and <dir>/sheets/<ref>.json, the image urls by index.
 //
-// Plain Node 22; sharp (already a dependency) is only used for the PNG copies. PARTNER_STOCK_DIR names another folder
-// holding the manifest and the plans file (the tests work on copies that way).
+// scripts/partner-stock/distressstock-photos.json is the photo order the team curates, so the building leads a unit's
+// gallery (the site's first image is usually a location map):
+//   { "format": "offplandistress-photos/1", "source": "distressstock", "photos": { "<ref>": ["<absolute image url>", …] } }
+// hero first, at most 4 urls; the keyplan is never listed (the build appends it). A listed unit with an entry gets those
+// urls in that order + the page's KEYPLAN image last as its manifest photos; one without keeps the page's first 4
+// OVERVIEW images + keyplan (and its previous list on rebuilds). File names stay with their image — a url the unit
+// already had keeps its name, a new one is <ref>-<8 hex of sha1(url)>.webp — so the import, which keys photos by name,
+// never fetches a picture twice; it then puts the listing's gallery in the manifest's order.
+//
+// Plain Node 22; sharp (already a dependency) is only used for the PNG copies and the contact sheets. PARTNER_STOCK_DIR
+// names another folder holding the manifest, the plans file and the photos file (the tests work on copies that way).
+import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,8 +45,15 @@ const ROOT = path.dirname(path.dirname(HERE));
 const STOCK_DIR = process.env.PARTNER_STOCK_DIR ? path.resolve(process.env.PARTNER_STOCK_DIR) : HERE;
 const MANIFEST_PATH = path.join(STOCK_DIR, "distressstock.json");
 const PLANS_PATH = path.join(STOCK_DIR, "distressstock-plans.json");
+const PHOTOS_PATH = path.join(STOCK_DIR, "distressstock-photos.json");
 const IMPORT_FORMAT = "offplandistress-import/1";
 const PLANS_FORMAT = "offplandistress-plans/1";
+const PHOTOS_FORMAT = "offplandistress-photos/1";
+/** Curated urls per unit (the keyplan comes on top; the import takes IMPORT_MAX_PHOTOS in all). */
+const CURATED_MAX = 4;
+/** The contact sheets: up to SHEET.max OVERVIEW images as SHEET.w × SHEET.h thumbnails in SHEET.cols columns. */
+const SHEET = { max: 12, cols: 4, w: 240, h: 170, gap: 8, title: 30 };
+const SHEET_GAP_MS = 150;
 const SOURCE = { key: "distressstock", name: "DistressStock", url: SITE };
 const USER_AGENT = "Mozilla/5.0 (compatible; OffplanDistress-sync/1.0)";
 const REQUEST_GAP_MS = 200;
@@ -546,6 +568,38 @@ export function buildEntry(u, plan, today, rules) {
   return { entry: { ref, url: u.url, posted: postedDay(u.posted), listing, photos, notes: cut(notes.join(" "), 2000) } };
 }
 
+/** The images under the headings containing `word` ("OVERVIE", "KEYPLAN"), as absolute urls, in page order. */
+const sectionImages = (u, word) => u.sections.filter((s) => s.heading.toUpperCase().includes(word)).flatMap((s) => s.images).map(absoluteUrl);
+const hash8 = (s) => createHash("sha1").update(s).digest("hex").slice(0, 8);
+
+/**
+ * The photos of a unit the team curated: the urls in their order (hero first), then the page's keyplan, at most
+ * maxPhotos in all. A file name stays with its image, so the production import (which keys photos by name) never
+ * fetches a picture twice: a url the previous entry had keeps its name, whatever it was; a url new to the unit is
+ * <ref>-<8 hex of sha1(url)>.webp; the keyplan is <ref>-k0.webp while that name is its own. A curated url that is not on
+ * today's page is still used (the site reshuffles galleries) and returned in notOnPage, for the summary.
+ */
+export function curatedPhotos(u, urls, previous, maxPhotos) {
+  const ref = u.ref;
+  const before = Array.isArray(previous) ? previous : [];
+  const named = new Map(before.map((p) => [p.url, p.filename]));
+  const taken = new Set(before.map((p) => p.filename));
+  const keyplan = sectionImages(u, "KEYPLAN")[0] ?? null;
+  const onPage = new Set(u.sections.flatMap((s) => s.images).map(absoluteUrl));
+  const photos = [];
+  const notOnPage = [];
+  for (const url of urls) {
+    if (url === keyplan) continue; // goes last, wherever the list put it
+    photos.push({ filename: named.get(url) ?? `${ref}-${hash8(url)}.webp`, url });
+    if (!onPage.has(url)) notOnPage.push(url);
+  }
+  if (keyplan) {
+    const k0 = `${ref}-k0.webp`;
+    photos.push({ filename: named.get(keyplan) ?? (taken.has(k0) ? `${ref}-${hash8(keyplan)}.webp` : k0), url: keyplan });
+  }
+  return { photos: photos.slice(0, maxPhotos), notOnPage };
+}
+
 /** The entry with its keys in the manifest's order (unknown ones last), `removed` only when set. */
 function normalizeEntry(e) {
   const pick = (obj, keys) => {
@@ -630,6 +684,29 @@ async function readPlans() {
   return doc.plans;
 }
 
+const isImageUrl = (v) => typeof v === "string" && v.length <= 500 && /^https?:\/\/\S+$/.test(v);
+
+/** The curated photo order by ref: 1–CURATED_MAX distinct absolute urls, hero first (see the header); {} when the file is missing. */
+async function readPhotos() {
+  let doc;
+  try {
+    doc = await readJson(PHOTOS_PATH);
+  } catch (err) {
+    if (err.code !== "ENOENT") throw new Error(`${rel(PHOTOS_PATH)}: ${err.message}`);
+    console.warn(`sync-distressstock: ${rel(PHOTOS_PATH)} is missing — every unit keeps the page's photo order`);
+    return {};
+  }
+  if (doc?.format !== PHOTOS_FORMAT || doc.source !== SOURCE.key || !isObject(doc.photos)) {
+    throw new Error(`${rel(PHOTOS_PATH)}: not an ${PHOTOS_FORMAT} file for ${SOURCE.key}`);
+  }
+  for (const [ref, urls] of Object.entries(doc.photos)) {
+    if (!Array.isArray(urls) || !urls.length || urls.length > CURATED_MAX || !urls.every(isImageUrl) || new Set(urls).size !== urls.length) {
+      throw new Error(`${rel(PHOTOS_PATH)}: ${ref} needs 1–${CURATED_MAX} distinct absolute image urls, hero first (the keyplan is added by the build)`);
+    }
+  }
+  return doc.photos;
+}
+
 async function readUnits(dir) {
   const file = path.join(dir, "units.json");
   let units;
@@ -708,14 +785,15 @@ class CookieJar {
 
 /** The site, politely: one request at a time, at least REQUEST_GAP_MS apart, cookies kept, one retry per page. */
 class Site {
-  constructor(jar) {
+  constructor(jar, gap = REQUEST_GAP_MS) {
     this.jar = jar;
+    this.gap = gap;
     this.last = 0;
     this.requests = 0;
   }
 
   async request(url, init = {}) {
-    const wait = this.last + REQUEST_GAP_MS - Date.now();
+    const wait = this.last + this.gap - Date.now();
     if (wait > 0) await sleep(wait);
     this.last = Date.now();
     this.requests++;
@@ -781,10 +859,14 @@ async function loadSharp() {
   }
 }
 
+/** The pages, the images and the session cookie never go near the (public) repository. */
+function assertOutsideRepo(dir) {
+  if (dir === ROOT || dir.startsWith(`${ROOT}${path.sep}`)) die(`--raw ${dir} is inside the repository — use a folder outside it (the saved pages, images and cookies.txt must never be committed).`);
+}
+
 async function cmdFetch(opts) {
   const dir = path.resolve(needRaw(opts));
-  // The pages and the session cookie never go near the (public) repository.
-  if (dir === ROOT || dir.startsWith(`${ROOT}${path.sep}`)) die(`--raw ${dir} is inside the repository — use a folder outside it (the saved pages and cookies.txt must never be committed).`);
+  assertOutsideRepo(dir);
   const password = process.env.DISTRESSSTOCK_PASSWORD;
   if (!password) die("DISTRESSSTOCK_PASSWORD is not set — the partner site's password (ask the owner; never write it into the repo).");
   await mkdir(path.join(dir, "units"), { recursive: true });
@@ -850,15 +932,17 @@ const pngPath = (dir, ref, i = 0) => path.join(dir, "plans", `${ref}${i ? `-${i 
 
 /** Today's pages against the committed manifest and plans file. */
 async function computeDelta(units, dir, fetchedAt) {
-  const [rules, plans, manifest] = await Promise.all([repoRules(), readPlans(), readManifest()]);
+  const [rules, plans, photos, manifest] = await Promise.all([repoRules(), readPlans(), readPhotos(), readManifest()]);
   const today = dubaiToday();
   const prev = new Map(manifest.units.map((e) => [e.ref, e]));
   const onSite = new Set(units.map((u) => u.ref));
-  const delta = { fetchedAt, unitsOnSite: units.length, new: [], removed: [], restored: [], changed: [], needsPlan: [], excluded: [], labels: {} };
+  const delta = { fetchedAt, unitsOnSite: units.length, new: [], removed: [], restored: [], changed: [], needsPlan: [], needsPhotos: [], excluded: [], labels: {} };
   for (const u of units) {
     const was = prev.get(u.ref);
     delta.labels[u.ref] = u.title;
     const a = assess(u, was, plans, rules, today);
+    // Listed after today's build (kept, fresh, or waiting for its plan) with no curated photo order: a sheet to make.
+    if ((was || a.kind === "ok" || a.kind === "flag") && !photos[u.ref]) delta.needsPhotos.push(u.ref);
     if (a.kind === "excluded" || a.kind === "skip") {
       delta.excluded.push({ ref: u.ref, reason: a.reason });
       if (a.kind === "excluded") continue;
@@ -886,9 +970,10 @@ async function computeDelta(units, dir, fetchedAt) {
 
 function printDelta(d) {
   const name = (ref) => (d.labels?.[ref] ? `  ${d.labels[ref]}` : "");
+  const needsPhotos = d.needsPhotos ?? [];
   console.log(
     `DistressStock ${d.fetchedAt.slice(0, 10)}: ${d.unitsOnSite} units on the site — ${d.new.length} new, ${d.removed.length} removed, ` +
-      `${d.restored.length} back, ${d.changed.length} changed, ${d.needsPlan.length} need a plan read, ${d.excluded.length} excluded`,
+      `${d.restored.length} back, ${d.changed.length} changed, ${d.needsPlan.length} need a plan read, ${needsPhotos.length} need photos, ${d.excluded.length} excluded`,
   );
   for (const n of d.new) console.log(`  new        ${n.ref}  ${n.title}  ${n.url}`);
   for (const r of d.removed) console.log(`  removed    ${r}${name(r)}`);
@@ -896,6 +981,7 @@ function printDelta(d) {
   for (const c of d.changed) console.log(`  changed    ${c.ref}  ${Object.keys(c.fields).join(", ")}`);
   for (const p of d.needsPlan) console.log(`  plan       ${p.ref}  ${p.reason}${p.detail ? ` (${p.detail})` : ""}  → ${p.pngPath}${p.moreImages ? ` (+${p.moreImages.length} more)` : ""}`);
   for (const e of d.excluded) console.log(`  excluded   ${e.ref}  ${e.reason}`);
+  if (needsPhotos.length) console.log(`  photos     ${needsPhotos.length} listed unit(s) without a curated photo order (run sheet): ${needsPhotos.join(", ")}`);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -906,11 +992,18 @@ async function cmdBuild(opts) {
   const today = opts.today ?? dubaiToday();
   if (!isCalendarDay(today)) die(`--today must be a calendar day (YYYY-MM-DD), not ${opts.today}`);
   const units = await readUnits(dir);
-  const [rules, plans, manifest] = await Promise.all([repoRules(), readPlans(), readManifest()]);
+  const [rules, plans, photos, manifest] = await Promise.all([repoRules(), readPlans(), readPhotos(), readManifest()]);
   const prev = new Map(manifest.units.map((e) => [e.ref, e]));
   const onSite = new Set(units.map((u) => u.ref));
   const out = [];
-  const s = { today, listed: 0, new: [], updated: [], removed: [], restored: [], dropped: [], flagged: [], skipped: [], excluded: [] };
+  const s = { today, listed: 0, new: [], updated: [], removed: [], restored: [], dropped: [], flagged: [], skipped: [], excluded: [], photos: { curated: 0, needsPhotos: [], notOnPage: [] } };
+  /** A copy of the entry with the team's curated photo order, when it has one (names kept from the previous entry's list). */
+  const curate = (entry, u, previous) => {
+    if (!photos[u.ref]) return entry;
+    const c = curatedPhotos(u, photos[u.ref], previous, rules.maxPhotos);
+    for (const url of c.notOnPage) s.photos.notOnPage.push({ ref: u.ref, url });
+    return { ...entry, photos: c.photos };
+  };
 
   for (const u of units) {
     const was = prev.get(u.ref);
@@ -919,7 +1012,7 @@ async function cmdBuild(opts) {
       s.excluded.push({ ref: u.ref, title: u.title, reason: a.reason, wasListed: !!was });
       // Listed before and excluded now (re-posted as a bulk deal, say — or the page's wording drifted): kept as it was,
       // so a rule never withdraws it and it is still marked removed the day it really leaves the site; the summary says.
-      if (was) out.push(normalizeEntry(was));
+      if (was) out.push(normalizeEntry(curate(was, u, was.photos)));
       continue;
     }
     if (a.kind === "flag" || a.kind === "skip") {
@@ -928,7 +1021,7 @@ async function cmdBuild(opts) {
       if (a.kind === "flag") Object.assign(item, { image: a.image, pngPath: pngPath(dir, u.ref) });
       (a.kind === "flag" ? s.flagged : s.skipped).push(item);
       if (was) {
-        const kept = normalizeEntry(was);
+        const kept = normalizeEntry(curate(was, u, was.photos));
         if (kept.removed) {
           delete kept.removed; // it is on the site again, whatever its plan needs
           s.restored.push(u.ref);
@@ -944,7 +1037,7 @@ async function cmdBuild(opts) {
       const fields = Object.keys(entryChanges(was, entry));
       if (fields.length) s.updated.push({ ref: u.ref, title: u.title, fields });
     } else s.new.push({ ref: u.ref, title: u.title });
-    out.push(normalizeEntry(entry));
+    out.push(normalizeEntry(curate(entry, u, was?.photos)));
   }
 
   for (const e of manifest.units) {
@@ -971,6 +1064,11 @@ async function cmdBuild(opts) {
   }
 
   out.sort(byRef);
+  for (const e of out) {
+    if (e.removed) continue;
+    if (photos[e.ref]) s.photos.curated++;
+    else s.photos.needsPhotos.push(e.ref);
+  }
   const refused = out.flatMap((e) => validateEntry(e, rules).map((why) => `${e.ref}: ${why}`));
   if (refused.length) die(`the manifest would be refused by the import — nothing written:\n  ${refused.join("\n  ")}`);
   // The production import has the same valve; a mass removal let through here is let through there by the file itself
@@ -1000,6 +1098,8 @@ function printBuild(s, previouslyListed, unchanged) {
   for (const x of s.flagged) console.log(`  flagged    ${x.ref}  ${x.reason}${x.detail ? ` (${x.detail})` : ""} — ${x.kept ? "previous entry kept" : "left out"}; read ${x.pngPath}`);
   for (const x of s.skipped) console.log(`  skipped    ${x.ref}  ${x.reason} — ${x.kept ? "previous entry kept" : "left out"}  (${x.title})`);
   for (const x of s.excluded) console.log(`  excluded   ${x.ref}  ${x.reason}${x.wasListed ? " — was in the manifest: previous entry kept, tell the user" : ""}  (${x.title})`);
+  for (const x of s.photos.notOnPage) console.log(`  photo      ${x.ref}  curated url not on today's page (still used): ${x.url}`);
+  console.log(`photos: ${s.photos.curated} units curated, ${s.photos.needsPhotos.length} listed without curation (new units: run \`sheet\`)`);
   if (s.flagged.length) console.log(`${s.flagged.length} unit(s) need their payment plan transcribed into ${rel(PLANS_PATH)}; then run build again (exit 2).`);
 }
 
@@ -1035,6 +1135,90 @@ async function cmdParse(opts) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// sheet: the contact sheets the team picks a unit's curated photo order from.
+
+const svgText = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+async function cmdSheet(opts) {
+  const dir = path.resolve(needRaw(opts));
+  assertOutsideRepo(dir);
+  const units = await readUnits(dir);
+  const byRef = new Map(units.map((u) => [u.ref, u]));
+  let refs = opts.refs;
+  if (!refs.length) {
+    refs = (await computeDelta(units, dir, nowIso())).needsPhotos;
+    if (!refs.length) return void console.log("every listed unit has a curated photo order — no sheets to make");
+  }
+  const sharp = await loadSharp();
+  if (!sharp) die("the contact sheets need sharp (npm install)");
+  await mkdir(path.join(dir, "photos"), { recursive: true });
+  await mkdir(path.join(dir, "sheets"), { recursive: true });
+  const jar = new CookieJar(path.join(dir, "cookies.txt"));
+  await jar.load();
+  const site = new Site(jar, SHEET_GAP_MS);
+  const prev = new Map((await readManifest()).units.map((e) => [e.ref, e]));
+  const { max, cols, w, h, gap } = SHEET;
+  const width = cols * (w + gap) + gap;
+  for (const ref of refs) {
+    const u = byRef.get(ref);
+    if (!u) {
+      console.warn(`sync-distressstock: ${ref}: no saved page (not on the site today) — no sheet`);
+      continue;
+    }
+    const images = [...new Set(sectionImages(u, "OVERVIE"))].slice(0, max);
+    const tiles = [];
+    for (const [i, url] of images.entries()) {
+      // Cached by url: the site reshuffles galleries, so an index would name another picture tomorrow.
+      const target = new URL(url);
+      const file = path.join(dir, "photos", `${ref}-${hash8(url)}${path.extname(target.pathname) || ".img"}`);
+      let buf;
+      try {
+        buf = await readFile(file);
+      } catch {
+        if (target.hostname !== HOST) {
+          console.warn(`sync-distressstock: ${ref}: image ${i} is off the site (${url}) — not fetched`);
+          continue;
+        }
+        try {
+          buf = Buffer.from(await (await site.get(target.pathname + target.search)).arrayBuffer());
+        } catch (err) {
+          console.warn(`sync-distressstock: ${ref}: image ${i} (${url}) failed: ${err?.message ?? err}`);
+          continue;
+        }
+        await writeFile(file, buf);
+      }
+      try {
+        const thumb = await sharp(buf).resize({ width: w, height: h, fit: "cover" }).png().toBuffer();
+        const badge = Buffer.from(
+          `<svg width="${w}" height="${h}"><rect x="4" y="4" width="34" height="26" rx="6" fill="#111" opacity="0.85"/>` +
+            `<text x="21" y="23" font-family="Arial" font-size="18" font-weight="bold" fill="#fff" text-anchor="middle">${i}</text></svg>`,
+        );
+        tiles.push(await sharp(thumb).composite([{ input: badge, top: 0, left: 0 }]).png().toBuffer());
+      } catch (err) {
+        console.warn(`sync-distressstock: ${ref}: image ${i} (${url}) can't be read as a picture: ${err?.message ?? err}`);
+      }
+    }
+    const rows = Math.ceil(tiles.length / cols) || 1;
+    const height = SHEET.title + rows * (h + gap) + gap;
+    const title = Buffer.from(`<svg width="${width}" height="${SHEET.title}"><text x="8" y="21" font-family="Arial" font-size="16" fill="#111">${svgText(`${ref} · ${u.title}`)}</text></svg>`);
+    const composite = [
+      { input: title, top: 0, left: 0 },
+      ...tiles.map((input, n) => ({ input, top: SHEET.title + gap + Math.floor(n / cols) * (h + gap), left: gap + (n % cols) * (w + gap) })),
+    ];
+    const png = path.join(dir, "sheets", `${ref}.png`);
+    await sharp({ create: { width, height, channels: 3, background: "#ffffff" } }).composite(composite).png().toFile(png);
+    await writeJson(path.join(dir, "sheets", `${ref}.json`), {
+      ref,
+      title: u.title,
+      images,
+      keyplan: sectionImages(u, "KEYPLAN")[0] ?? null,
+      current: (prev.get(ref)?.photos ?? []).map((p) => p.url),
+    });
+    console.log(`${png}  (${tiles.length} of ${images.length} images; ${u.title})`);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 
 function needRaw(opts) {
   if (!opts.raw) die("--raw <dir> is required");
@@ -1043,10 +1227,11 @@ function needRaw(opts) {
 
 function parseArgs(argv) {
   const [cmd, ...rest] = argv;
-  const opts = { raw: null, today: null, allowMassRemoval: false };
+  const opts = { raw: null, today: null, allowMassRemoval: false, refs: [] };
   for (let i = 0; i < rest.length; i++) {
     if (rest[i] === "--raw" && rest[i + 1]) opts.raw = rest[++i];
     else if (rest[i] === "--today" && rest[i + 1]) opts.today = rest[++i];
+    else if (rest[i] === "--ref" && rest[i + 1]) opts.refs.push(...rest[++i].split(",").filter(Boolean));
     else if (rest[i] === "--allow-mass-removal") opts.allowMassRemoval = true;
     else die(`unknown option ${rest[i]}`);
   }
@@ -1055,10 +1240,10 @@ function parseArgs(argv) {
 
 async function main() {
   const { cmd, opts } = parseArgs(process.argv.slice(2));
-  const commands = { fetch: cmdFetch, build: cmdBuild, diff: cmdDiff, delta: cmdDelta, parse: cmdParse };
-  if (!commands[cmd]) die("usage: sync-distressstock.mjs fetch|build|diff|delta|parse --raw <dir> [--today YYYY-MM-DD] [--allow-mass-removal]");
-  // Node's fetch ignores HTTPS_PROXY unless told to (NODE_USE_ENV_PROXY): run the network command under it when a proxy is set.
-  if (cmd === "fetch" && (process.env.HTTPS_PROXY || process.env.https_proxy) && !process.env.NODE_USE_ENV_PROXY) {
+  const commands = { fetch: cmdFetch, build: cmdBuild, diff: cmdDiff, delta: cmdDelta, parse: cmdParse, sheet: cmdSheet };
+  if (!commands[cmd]) die("usage: sync-distressstock.mjs fetch|build|diff|delta|parse|sheet --raw <dir> [--today YYYY-MM-DD] [--allow-mass-removal] [--ref <ref>]…");
+  // Node's fetch ignores HTTPS_PROXY unless told to (NODE_USE_ENV_PROXY): run the network commands under it when a proxy is set.
+  if ((cmd === "fetch" || cmd === "sheet") && (process.env.HTTPS_PROXY || process.env.https_proxy) && !process.env.NODE_USE_ENV_PROXY) {
     const { spawnSync } = await import("node:child_process");
     const r = spawnSync(process.execPath, ["--disable-warning=UNDICI-EHPA", ...process.argv.slice(1)], { stdio: "inherit", env: { ...process.env, NODE_USE_ENV_PROXY: "1" } });
     process.exit(r.status ?? 1);
