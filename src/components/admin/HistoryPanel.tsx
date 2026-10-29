@@ -51,6 +51,7 @@ const MONEY = new Set([
   "amountPaid",
   "amount",
   "counterAmount",
+  "nextInstalmentAmount",
   "agreedPrice",
   "saleValue",
   "depositAmount",
@@ -59,6 +60,9 @@ const MONEY = new Set([
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 /** A moment the diff stored as an ISO string (audit.ts turns Dates into toISOString()), e.g. publishedAt. */
 const ISO_MOMENT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/;
+/** One row of a listing's payment plan (src/lib/listing-schema.ts PlanInstalment), as a diff of the plan holds them. */
+const isInstalment = (v: unknown): v is { label: string; dueDate: string | null; amount: number } =>
+  typeof v === "object" && v !== null && typeof (v as { label?: unknown }).label === "string" && typeof (v as { amount?: unknown }).amount === "number";
 
 export async function HistoryPanel({ listingId }: { listingId: string }) {
   const [events, t, tc, locale] = await Promise.all([listingHistory(listingId), getT("admin"), getT("common"), getLocale()]);
@@ -80,6 +84,7 @@ export async function HistoryPanel({ listingId }: { listingId: string }) {
     if (typeof v === "boolean") return t(v ? "history.yes" : "history.no");
     if (typeof v === "number") return MONEY.has(key) ? formatAED(v, locale) : String(v);
     if (Array.isArray(v)) return v.map((x) => value(e, key, x)).join(", ") || "—";
+    if (isInstalment(v)) return `${v.label}: ${v.dueDate ? formatDate(v.dueDate, locale) : "—"} · ${formatAED(v.amount, locale)}`;
     if (typeof v !== "string") return JSON.stringify(v);
     const lookup = (k: string, ns: "admin" | "common") => {
       if (ns === "admin") return isAdminKey(k) ? t(k) : null;
@@ -98,7 +103,9 @@ export async function HistoryPanel({ listingId }: { listingId: string }) {
                 ? lookup(`dealFile.held.${v}`, "admin")
                 : key === "via"
                   ? lookup(`history.via.${v}`, "admin")
-                  : null;
+                  : key === "reason"
+                    ? lookup(`history.reason.${v}`, "admin")
+                    : null;
     if (translated) return translated;
     if (ISO_DAY.test(v)) return formatDate(v, locale);
     // In Dubai time, as the event's own time above.

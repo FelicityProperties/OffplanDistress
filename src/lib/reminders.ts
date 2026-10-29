@@ -298,6 +298,7 @@ async function noOffersRule(now: Date): Promise<FollowUpItem[]> {
       and(
         eq(listings.status, "live"),
         realListing,
+        notAwaitingOwner,
         permitCurrentSql(dubaiToday(now)),
         sql`${liveSince} <= ${ago(now, FOLLOW_UP.noOffersDays * DAY).toISOString()}::timestamptz`,
         sql`not exists (select 1 from ${offers} o join ${users} b on b.id = o.buyer_id where o.listing_id = ${listings.id} and b.role = 'user')`,
@@ -532,6 +533,8 @@ async function instalmentsRule(now: Date): Promise<FollowUpItem[]> {
       and(
         inArray(listings.status, ["live", "under_offer", "noc_in_progress"]),
         realListing,
+        // Published on the account owner's attestation with the owner still to enter: nobody to agree it with yet.
+        notAwaitingOwner,
         isNotNull(listings.nextInstalmentDate),
         lte(listings.nextInstalmentDate, addDays(today, FOLLOW_UP.instalmentDays)),
       ),
