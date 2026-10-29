@@ -128,8 +128,10 @@ entry per ref with the image URL it was read from; the build checks that seller 
 instalments = remaining, the transfer rows = total, and that the page's selling price still matches); `build --raw <dir>`
 then rewrites the manifest deterministically (units by ref, 1-space indent): a unit gone from the site keeps its entry
 with `"removed": "YYYY-MM-DD"` for 90 days (the import withdraws it, and restores it if it comes back); bulk deals, shops
-and units outside Dubai are never listed; a unit whose plan is missing, illegible or inconsistent keeps its previous entry
-and is flagged (exit 2); a run that would mark more than a quarter of the listed units removed writes nothing (exit 3;
+and units outside Dubai are never listed (one listed before keeps its previous entry until it leaves the site); a unit
+whose plan is missing, illegible or inconsistent keeps its previous entry and is flagged (exit 2), as does one whose
+page's size, prices or handover can no longer be read as before (the site's wording changed: fix the parser, never the
+figures); a run that would mark more than a quarter of the listed units removed writes nothing (exit 3;
 `--allow-mass-removal`, on the user's word, also sets the file's `sync.allowMassRemoval` for the import's own valve).
 
 ### Cash at transfer

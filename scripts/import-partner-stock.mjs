@@ -173,8 +173,8 @@ function permitLapsed(r, today) {
 
 /**
  * A unit already imported: the file's value of each synced field is applied where ours is still the one last synced
- * (listings.source.synced, the snapshot; a row from before the sync existed, without one, counts as unedited) and the
- * snapshot is refreshed. A field our team edited since keeps their value: a conflict, reported to the admins once
+ * (listings.source.synced, the snapshot; a row without one only takes the file's value for a field never filled in)
+ * and the snapshot is refreshed. A field our team edited since keeps their value: a conflict, reported to the admins once
  * (source.sync.conflicts remembers it) and again only when the network changes it anew, forgotten once the two agree.
  * On a public advert the advertised price follows the asking price, with the price-drop notices, as the listing editor
  * does. A unit the sync withdrew earlier that is back on the network is restored first: live again when it was live
@@ -246,7 +246,11 @@ async function syncListing(pool, unit, id, actor, report) {
       delete state.withdrawnFrom;
     }
     // The fields: the file's value where ours is still the one last synced, else our team's edit stands (a conflict).
-    const snap = src.synced ? valuesOf(src.synced) : have;
+    // A row without a snapshot (imported before the sync existed, or by hand through /admin/listings/import): nothing
+    // says whether a value that differs from the file is our team's edit or the network's change, so only a field
+    // never filled in takes the file's value; the rest stand, as conflicts, and the snapshot starts from the file.
+    const unfilled = (v) => v == null || (Array.isArray(v) && v.length === 0);
+    const snap = src.synced ? valuesOf(src.synced) : Object.fromEntries(SYNCED_FIELDS.map((f) => [f, unfilled(have[f]) ? have[f] : wanted[f]]));
     const diff = {};
     const conflicts = {};
     const synced = {};
@@ -255,6 +259,16 @@ async function syncListing(pool, unit, id, actor, report) {
         synced[f] = wanted[f];
         if (!same(wanted[f], have[f])) diff[f] = [have[f], wanted[f]];
       } else {
+        conflicts[f] = wanted[f];
+        synced[f] = snap[f];
+      }
+    }
+    // Paid never above the SPA price (the file keeps the pair together; with one side kept as our team's, neither moves).
+    const after = (f) => (f in diff ? wanted[f] : have[f]);
+    if (after("amountPaid") > after("originalPrice")) {
+      for (const f of ["amountPaid", "originalPrice"]) {
+        if (!(f in diff)) continue;
+        delete diff[f];
         conflicts[f] = wanted[f];
         synced[f] = snap[f];
       }

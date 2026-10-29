@@ -395,11 +395,12 @@ export function planProblems(p, unit = null) {
   return probs;
 }
 
+/** "AED 2,980,000" → 2980000; anything else (another currency, "AED 3.6M", a figure under five digits) is unreadable. */
 function money(s) {
   const m = MONEY_RE.exec(s ?? "");
   if (!m) return null;
   const n = Number(m[1].replace(/[^\d]/g, ""));
-  return n > 0 ? n : null;
+  return n >= 10_000 ? n : null;
 }
 
 function canon(value, list, mapping, names) {
@@ -477,7 +478,18 @@ export function buildEntry(u, plan, today, rules) {
   if (!ut) return { skip: `unit type not recognised (${f.Type ?? "—"}, ${f.Bedrooms ?? "—"})` };
   const sz = size(f);
   if (!sz) return { skip: "no size" };
-  const origDld = money(f["Original Price + DLD 4%"]);
+  // The page's wording drifting (a changed label, "AED 3.6M", square metres, "Q2-2028") must not change a listed unit's
+  // figures: a line that is there but can't be read as it was yesterday keeps the previous entry, or leaves a new unit out.
+  const sizeText = pyStrip(f.Size ?? f.BUA);
+  if (/sq\.?\s*m\b|m²|sqm/i.test(sizeText)) return { skip: `size not in sq ft (${sizeText})` };
+  const origLine = pyStrip(f["Original Price + DLD 4%"]);
+  const origDld = money(origLine);
+  if (origLine && !origDld) return { skip: `the posted original price can't be read (${origLine})` };
+  const sellingLine = pyStrip(f["Selling price"]);
+  if (sellingLine && !money(sellingLine)) return { skip: `the posted selling price can't be read (${sellingLine})` };
+  const handoverText = pyStrip(f.Handover);
+  const handoverDate = handover(handoverText);
+  if (!handoverDate && /\d{4}/.test(handoverText) && !/^READY/i.test(handoverText)) return { skip: `the posted handover can't be read (${handoverText})` };
   const ready = p.totalRemaining === 0;
   let op = null;
   if (ready) {
@@ -512,7 +524,7 @@ export function buildEntry(u, plan, today, rules) {
     originalPrice: op,
     amountPaid: paid,
     askingPrice: p.paymentToSeller,
-    handoverDate: handover(f.Handover),
+    handoverDate,
     nextInstalmentDate: next ? next.dueDate : null,
     nextInstalmentAmount: next ? next.amount : null,
     paymentPlan,
@@ -771,6 +783,8 @@ async function loadSharp() {
 
 async function cmdFetch(opts) {
   const dir = path.resolve(needRaw(opts));
+  // The pages and the session cookie never go near the (public) repository.
+  if (dir === ROOT || dir.startsWith(`${ROOT}${path.sep}`)) die(`--raw ${dir} is inside the repository — use a folder outside it (the saved pages and cookies.txt must never be committed).`);
   const password = process.env.DISTRESSSTOCK_PASSWORD;
   if (!password) die("DISTRESSSTOCK_PASSWORD is not set — the partner site's password (ask the owner; never write it into the repo).");
   await mkdir(path.join(dir, "units"), { recursive: true });
@@ -903,6 +917,9 @@ async function cmdBuild(opts) {
     const a = assess(u, was, plans, rules, today);
     if (a.kind === "excluded") {
       s.excluded.push({ ref: u.ref, title: u.title, reason: a.reason, wasListed: !!was });
+      // Listed before and excluded now (re-posted as a bulk deal, say — or the page's wording drifted): kept as it was,
+      // so a rule never withdraws it and it is still marked removed the day it really leaves the site; the summary says.
+      if (was) out.push(normalizeEntry(was));
       continue;
     }
     if (a.kind === "flag" || a.kind === "skip") {
@@ -982,7 +999,7 @@ function printBuild(s, previouslyListed, unchanged) {
   for (const x of s.dropped) console.log(`  dropped    ${x.ref}  ${x.title}  (removed ${x.removed})`);
   for (const x of s.flagged) console.log(`  flagged    ${x.ref}  ${x.reason}${x.detail ? ` (${x.detail})` : ""} — ${x.kept ? "previous entry kept" : "left out"}; read ${x.pngPath}`);
   for (const x of s.skipped) console.log(`  skipped    ${x.ref}  ${x.reason} — ${x.kept ? "previous entry kept" : "left out"}  (${x.title})`);
-  for (const x of s.excluded) console.log(`  excluded   ${x.ref}  ${x.reason}${x.wasListed ? " — was in the manifest, now left out" : ""}  (${x.title})`);
+  for (const x of s.excluded) console.log(`  excluded   ${x.ref}  ${x.reason}${x.wasListed ? " — was in the manifest: previous entry kept, tell the user" : ""}  (${x.title})`);
   if (s.flagged.length) console.log(`${s.flagged.length} unit(s) need their payment plan transcribed into ${rel(PLANS_PATH)}; then run build again (exit 2).`);
 }
 

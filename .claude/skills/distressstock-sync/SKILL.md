@@ -94,6 +94,9 @@ prints the summary (listed, new, updated with the fields, removed, back, dropped
 counts are also in `$RAW/build.json`. Exit codes: **0** done; **2** a unit still needs its plan (the file is written;
 go back to step 2, then build again — repeat until 0); **3** the safety valve (below; nothing written); **1** a
 problem with the inputs (message says). Units are excluded for good when they are bulk deals, shops or outside Dubai.
+A unit is *skipped* (previous entry kept, a new one left out) when its page can't be read as before — size not in sq ft,
+a price line or the handover the parser can't read: the site's wording changed, so the parser needs updating; never
+"fix" it by editing the manifest or the plans file.
 
 ## 4. Review
 
@@ -136,6 +139,7 @@ Publishing stays with the owner's "Publish all N on Felicity's permits" click.
 - **Fetch stops** (gate stays / 0 units / page failed twice): the site is down, changed, or the password changed. Report
   it; don't retry in a loop, don't guess passwords.
 - **A plan that won't add up** after two careful readings: `legible: false` with a note, and say so in the report.
-- **A unit in the previous manifest but now excluded** (e.g. re-posted as a bulk deal): the build leaves it out and
-  says so; mention it in the report.
+- **A unit in the previous manifest but now excluded** (e.g. re-posted as a bulk deal): the build keeps its previous
+  entry (a rule never withdraws a listed unit; it is marked removed the day it really leaves the site) and says so
+  every day it lasts; mention it in the report so the user can decide about the listing.
 - Never edit `distressstock.json` by hand; the build regenerates it. Never commit anything from `$RAW`.
