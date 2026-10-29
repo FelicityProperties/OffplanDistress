@@ -326,7 +326,7 @@ async function withdrawRemoved(pool, source, removed, allowMass, actor, report) 
   } = await pool.query("select count(*)::int as listed from listings where source->>'import' = $1 and status = any($2) and not is_sample", [source.key, LISTED]);
   const due = [];
   for (const unit of removed) {
-    const { rows } = await pool.query("select id, ref_no, status, source from listings where source->>'import' = $1 and source->>'ref' = $2 limit 1", [
+    const { rows } = await pool.query("select id, ref_no, status, source from listings where source->>'import' = $1 and source->>'ref' = $2 and not is_sample limit 1", [
       source.key,
       unit.ref,
     ]);

@@ -27,9 +27,22 @@ export function siteUrl() {
 }
 
 /**
- * The site's address as the operator set it in NEXT_PUBLIC_SITE_URL, or null when it isn't set (or is unusable):
- * only then is it safe to send visitors from another host name to it (src/proxy.ts).
+ * The site's address as the operator set it in NEXT_PUBLIC_SITE_URL, or null when it isn't set (or is unusable).
  */
 export function configuredSiteUrl() {
   return originOf(process.env.NEXT_PUBLIC_SITE_URL);
+}
+
+/**
+ * The one address visitors on any other host name are sent to (src/proxy.ts): NEXT_PUBLIC_SITE_URL as the operator set
+ * it, else the custom domain Vercel serves production on (VERCEL_PROJECT_PRODUCTION_URL, set by Vercel once a domain is
+ * assigned to the project; a *.vercel.app address is never a target, since without a domain it is the only host there
+ * is). Null when neither is usable.
+ */
+export function canonicalSiteUrl() {
+  const configured = configuredSiteUrl();
+  if (configured) return configured;
+  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (!production || /\.vercel\.app$/i.test(production)) return null;
+  return originOf(production);
 }
