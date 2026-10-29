@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { LOCALE_COOKIE, type Locale } from "@/i18n/config";
 import { AR_PREFIX, isLocalizedPath, LOCALE_HEADER, PATH_HEADER, QUERY_HEADER, SAVED_HEADER, stripLocale } from "@/i18n/paths";
-import { configuredSiteUrl } from "@/lib/site-url";
+import { canonicalSiteUrl } from "@/lib/site-url";
 
 // Runs before every page (not the API, Next's files or static files; see `config` below).
 //
@@ -13,8 +13,8 @@ import { configuredSiteUrl } from "@/lib/site-url";
 //   redirects anyone (a crawler has no cookie, so it sees each address in its own language).
 // - /en/… remembers English and redirects to the plain address: the language switcher's link without JavaScript.
 // - /dashboard and /admin have one address in both languages and follow the cookie (/ar/dashboard → /dashboard).
-// - In production with NEXT_PUBLIC_SITE_URL set to the domain Vercel serves production on, another host name (a
-//   *.vercel.app address) gets a 308 to the site's own address, so search engines index one copy.
+// - In production, another host name (the *.vercel.app address) gets a 308 to the site's own domain, so search engines
+//   index one copy: NEXT_PUBLIC_SITE_URL when set, else the domain assigned to the project on Vercel (canonicalSiteUrl).
 
 const COOKIE = { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" as const };
 
@@ -33,13 +33,14 @@ function remember(response: NextResponse, request: NextRequest, locale: Locale) 
 }
 
 /**
- * 308 to NEXT_PUBLIC_SITE_URL's host, for page loads on any other host name. Production deployments only, only when
- * the operator set the address and Vercel serves production on it (never previews, local or development servers). www and the bare domain are left to
- * the hosting's domain settings: redirecting between them here could loop against a redirect configured there.
+ * 308 to the site's own domain (canonicalSiteUrl in src/lib/site-url.ts), for page loads on any other host name.
+ * Production deployments only, only to a domain Vercel serves production on (never previews, local or development
+ * servers). www and the bare domain are left to the hosting's domain settings: redirecting between them here could loop
+ * against a redirect configured there.
  */
 function canonicalHost(request: NextRequest) {
   if (process.env.VERCEL_ENV !== "production") return null;
-  const site = configuredSiteUrl();
+  const site = canonicalSiteUrl();
   if (!site) return null;
   if (request.method !== "GET" && request.method !== "HEAD") return null;
   const target = new URL(site);
