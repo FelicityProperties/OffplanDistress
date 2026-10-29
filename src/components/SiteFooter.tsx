@@ -1,12 +1,15 @@
 import Link from "@/components/LocaleLink";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { NewsletterForm } from "@/components/NewsletterForm";
 import { getLocale, getT } from "@/i18n/server";
+import { getCurrentUser } from "@/lib/auth";
 import { BRAND } from "@/lib/config";
+import { prefillEmail } from "@/lib/newsletter";
 import { cn } from "@/lib/utils";
 
 export async function SiteFooter() {
-  const [t, locale] = await Promise.all([getT("common"), getLocale()]);
+  const [t, tn, locale, user] = await Promise.all([getT("common"), getT("newsletter"), getLocale(), getCurrentUser()]);
   const ar = locale === "ar";
   // RERA: the office's licence details belong on every page of a broker's site.
   const legal = [
@@ -22,6 +25,7 @@ export async function SiteFooter() {
         { href: "/sell", label: t("sellMyUnit") },
         { href: "/market", label: t("marketIndex") },
         { href: "/exit-calculator", label: t("exitCalculator") },
+        { href: "/newsletter", label: tn("footer.link") },
         { href: "/dashboard", label: t("myAccount") },
       ],
     },
@@ -88,6 +92,8 @@ export async function SiteFooter() {
               </a>
             </li>
           </ul>
+          {/* The daily deals newsletter (src/lib/newsletter.ts) */}
+          <NewsletterForm variant="footer" source="footer" defaultEmail={prefillEmail(user)} className="mt-8" />
         </div>
         {columns.map((col) => (
           <div key={col.title}>

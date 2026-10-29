@@ -9,8 +9,8 @@ import { sanitizeSource } from "@/lib/attribution";
 // - visitors: distinct visitor ids per Dubai day, added up over the range (the id changes daily by design);
 // - session: one browser tab's visit, ended by 30 minutes without a page view;
 // - engaged time: time the pages were visible; bounce: a session with one page view seen for under 10 seconds;
-// - leads: seller estimate requests + enquiries + new accounts + new listings + offers, each counted, created in the
-//   range (sample listings and anything by an admin left out); conversion = leads / visitors.
+// - leads: seller estimate requests + enquiries + new accounts + new listings + offers + newsletter confirmations, each
+//   counted, created in the range (sample listings and anything by an admin left out); conversion = leads / visitors.
 
 export const RANGES = ["today", "7d", "30d", "90d"] as const;
 export type RangeKey = (typeof RANGES)[number];
@@ -90,9 +90,14 @@ const leadsIn = (p: Period) => sql`
     select 'offer', o.id::text, o.created_at, u.source, l.project_name, l.ref_no, o.listing_id::text
       from offers o join users u on u.id = o.buyer_id join listings l on l.id = o.listing_id
       where u.role <> 'admin' and not l.is_sample
+    union all
+    -- A newsletter sign-up counts once its address is confirmed (src/lib/newsletter.ts); no visit is recorded with it,
+    -- so it has no attribution, and the list shows the address masked.
+    select 'newsletter', n.id::text, n.confirmed_at, null::jsonb, left(n.email, 1) || '***' || substring(n.email from '@.*$'), null, n.id::text
+      from newsletter_subscribers n where n.confirmed_at is not null
   ) x where created_at >= ${at(p.from)} and created_at < ${at(p.to)}`;
 
-export const LEAD_KINDS = ["seller", "inquiry", "signup", "listing", "offer"] as const;
+export const LEAD_KINDS = ["seller", "inquiry", "signup", "listing", "offer", "newsletter"] as const;
 export type LeadKind = (typeof LEAD_KINDS)[number];
 
 export const CHANNELS = ["google", "whatsapp", "instagram", "facebook", "linkedin", "tiktok", "other", "direct"] as const;
@@ -388,7 +393,7 @@ export type LeadJourney = {
    * Why there is no page trail: an offer (made from an account; its source is how the buyer first arrived), a lead from
    * before visit statistics started, or a form that came without a session id (e.g. a browser blocking site storage).
    */
-  noTrail: "account" | "before" | "noSid" | null;
+  noTrail: "account" | "before" | "noSid" | "newsletter" | null;
   /** From the first recorded page to the lead, and the visible time on those pages. */
   spanMs: number | null;
   engagedMs: number | null;
@@ -437,7 +442,8 @@ async function journeys(p: Period, start: Date | null): Promise<LeadJourney[]> {
     // The page with the form is recorded just before it is sent; allow a minute for slow connections.
     const steps = sid ? (views.get(sid) ?? []).filter((s) => s.at.getTime() <= l.createdAt.getTime() + 60_000).slice(-JOURNEY_STEPS) : null;
     const first = steps?.[0];
-    const noTrail = sid ? null : l.kind === "offer" ? "account" : !start || l.createdAt < start ? "before" : "noSid";
+    // A newsletter address is confirmed from an email, never from a page with the beacon: no trail by design.
+    const noTrail = sid ? null : l.kind === "offer" ? "account" : l.kind === "newsletter" ? "newsletter" : !start || l.createdAt < start ? "before" : "noSid";
     return {
       kind: l.kind,
       id: l.id,

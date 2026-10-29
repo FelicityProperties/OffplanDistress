@@ -85,13 +85,29 @@ export function canEmail(to: string) {
 
 let warnedSender = false;
 
-type Email = { to: string; subject: string; heading: string; body?: string | null; cta?: { label: string; href: string }; dir?: "ltr" | "rtl" };
+export type Email = {
+  to: string;
+  subject: string;
+  heading: string;
+  body?: string | null;
+  cta?: { label: string; href: string };
+  dir?: "ltr" | "rtl";
+  /**
+   * A trusted block of inline-styled HTML shown in place of the body paragraph, inside the same layout (wordmark,
+   * heading, footer); the caller escapes its own data. The daily newsletter (src/lib/newsletter-issue.ts) uses it.
+   */
+  html?: string;
+  /** The plain-text version, instead of the one made from the heading, body and button. */
+  text?: string;
+  /** Extra message headers, e.g. List-Unsubscribe; passed to Resend as they are. */
+  headers?: Record<string, string>;
+};
 
 function escape(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-function render({ heading, body, cta, dir = "ltr" }: Email) {
+function render({ heading, body, cta, dir = "ltr", html: block, text: plain }: Email) {
   const href = cta ? (cta.href.startsWith("http") ? cta.href : `${siteUrl()}${cta.href}`) : null;
   const location = translator("common", dir === "rtl" ? "ar" : "en")("location");
   const html = `<!doctype html><html dir="${dir}"><body style="margin:0;background:#faf8f3;font-family:Inter,Segoe UI,Arial,sans-serif;color:#141c33">
@@ -100,13 +116,18 @@ function render({ heading, body, cta, dir = "ltr" }: Email) {
 <tr><td style="padding:24px 28px;border-bottom:1px solid #ebe6dc;font-family:Georgia,serif;font-size:20px;font-weight:600" dir="ltr">Offplan<span style="font-weight:400;opacity:.8">Distress</span></td></tr>
 <tr><td style="padding:28px">
 <h1 style="margin:0 0 12px;font-size:20px;line-height:1.35">${escape(heading)}</h1>
-${body ? `<p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#4a5068;white-space:pre-line">${escape(body)}</p>` : ""}
+${block ?? (body ? `<p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#4a5068;white-space:pre-line">${escape(body)}</p>` : "")}
 ${href && cta ? `<a href="${escape(href)}" style="display:inline-block;background:#141c33;color:#faf8f3;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px">${escape(cta.label)}</a>` : ""}
 </td></tr>
 <tr><td style="padding:18px 28px;border-top:1px solid #ebe6dc;font-size:12px;color:#8a8fa3">${escape(BRAND.company)} · ${escape(location)}</td></tr>
 </table></td></tr></table></body></html>`;
-  const text = [heading, body, href ? `${cta!.label}: ${href}` : null].filter(Boolean).join("\n\n");
+  const text = plain ?? [heading, body, href ? `${cta!.label}: ${href}` : null].filter(Boolean).join("\n\n");
   return { html, text };
+}
+
+/** The email as it would be sent, for a preview: the whole HTML document (layout included) and the plain text. */
+export function renderEmail(email: Omit<Email, "to">) {
+  return render({ ...email, to: "" });
 }
 
 // Resend accepts about 2 requests a second per account, and notifications fan out (a daily alert run, a price
@@ -118,7 +139,8 @@ const REQUEST_GAP_MS = 600;
 const MAX_ATTEMPTS = 3;
 const REQUEST_TIMEOUT_MS = 10_000;
 
-type Payload = { from: string; to: string[]; reply_to?: string; subject: string; html: string; text: string };
+// Per-email `headers` are accepted by the batch endpoint too (the SDK's batch options are the single-send ones minus attachments).
+type Payload = { from: string; to: string[]; reply_to?: string; subject: string; html: string; text: string; headers?: Record<string, string> };
 type Pending = { payload: Payload; resolve: (result: { sent: boolean }) => void };
 
 const pending: Pending[] = [];
@@ -158,6 +180,7 @@ export function sendEmail(email: Email): Promise<{ sent: boolean }> {
       subject: email.subject,
       html,
       text,
+      ...(email.headers ? { headers: email.headers } : {}),
     };
   } catch (err) {
     console.error("[email] could not render", err);

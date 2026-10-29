@@ -314,15 +314,16 @@ export const TEMPLATES = {
   },
   // Admins, once a day: how many follow-ups are open. Each {line} is an admin.ts "followups.digest.*" line (empty when
   // its count is 0), so the counts read the same as the Follow-ups section on /admin. {partial} says a rule failed today.
+  // {inventory} is yesterday's market changes and the newsletter's reach (newsletter.ts "digest.inventory").
   "ops.digest": {
     en: {
       title: "Today's follow-ups ({date}): {total}",
-      body: "{signup}{docs}{noOffers}{offers}{counters}{leads}{review}{instalments}{viewings}{partial}{email}Each one is listed under Follow-ups on the admin home page, with call and WhatsApp buttons.",
+      body: "{signup}{docs}{noOffers}{offers}{counters}{leads}{review}{instalments}{viewings}{inventory}{partial}{email}Each one is listed under Follow-ups on the admin home page, with call and WhatsApp buttons.",
       cta: "Open follow-ups",
     },
     ar: {
       title: "متابعات اليوم ({date}): ⁨{total}⁩",
-      body: "{signup}{docs}{noOffers}{offers}{counters}{leads}{review}{instalments}{viewings}{partial}{email}تجد كلاً منها في قسم المتابعات على الصفحة الرئيسية للوحة الإدارة، مع زرّي الاتصال وواتساب.",
+      body: "{signup}{docs}{noOffers}{offers}{counters}{leads}{review}{instalments}{viewings}{inventory}{partial}{email}تجد كلاً منها في قسم المتابعات على الصفحة الرئيسية للوحة الإدارة، مع زرّي الاتصال وواتساب.",
       cta: "فتح المتابعات",
     },
   },

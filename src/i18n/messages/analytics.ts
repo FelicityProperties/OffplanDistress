@@ -30,7 +30,7 @@ export default defineMessages({
     "kpi.bounce.hint": "Visits with one page seen for under 10 seconds",
     "kpi.leads": "Leads",
     "kpi.leads.hint":
-      "Estimates {seller} · Enquiries {inquiry} · Accounts {signup} · Listings {listing} · Offers {offer}",
+      "Estimates {seller} · Enquiries {inquiry} · Accounts {signup} · Listings {listing} · Offers {offer} · Newsletter {newsletter}",
     "kpi.conversion": "Visitor-to-lead conversion",
     "kpi.conversion.hint": "Leads ÷ visitors",
     "kpi.conversion.since": "Leads since visit statistics started ({date}) ÷ visitors",
@@ -134,12 +134,14 @@ export default defineMessages({
     "journey.noSid":
       "No visit id came with this form (for example, the browser blocks site storage), so the pages viewed aren't known.",
     "journey.account": "Made from a signed-in account: the source above is how the buyer first found us.",
+    "journey.newsletter": "A newsletter sign-up, confirmed from the email: there is no page trail for it.",
     "journey.listing": "Listing {ref}",
     "kind.seller": "Seller estimate",
     "kind.inquiry": "Enquiry",
     "kind.signup": "New account",
     "kind.listing": "New listing",
     "kind.offer": "Offer",
+    "kind.newsletter": "Newsletter",
 
     "dur.s": "{s}s",
     "dur.ms": "{m}m {s}s",
@@ -190,7 +192,7 @@ export default defineMessages({
     "kpi.bounce.hint": "زيارات اقتصرت على صفحة واحدة لأقل من 10 ثوانٍ",
     "kpi.leads": "العملاء المحتملون",
     "kpi.leads.hint":
-      "طلبات التقييم {seller} · الاستفسارات {inquiry} · الحسابات {signup} · الإعلانات {listing} · العروض {offer}",
+      "طلبات التقييم {seller} · الاستفسارات {inquiry} · الحسابات {signup} · الإعلانات {listing} · العروض {offer} · النشرة الإخبارية {newsletter}",
     "kpi.conversion": "نسبة تحوّل الزوار إلى عملاء محتملين",
     "kpi.conversion.hint": "العملاء المحتملون ÷ الزوار",
     "kpi.conversion.since": "العملاء المحتملون منذ بدء تسجيل إحصاءات الزيارات (⁨{date}⁩) ÷ الزوار",
@@ -292,12 +294,14 @@ export default defineMessages({
     "journey.noSession": "أُرسل قبل بدء تسجيل إحصاءات الزيارات، لذا لا تُعرف الصفحات التي تصفحها.",
     "journey.noSid": "لم يصل مع هذا النموذج معرّف للزيارة (لأن المتصفح يحظر تخزين بيانات المواقع مثلاً)، لذا لا تُعرف الصفحات التي تصفحها.",
     "journey.account": "قُدّم من حساب مسجّل الدخول: والمصدر المبيّن أعلاه هو الطريقة التي وصل بها المشتري إلينا أول مرة.",
+    "journey.newsletter": "اشتراك في النشرة الإخبارية أُكّد من رسالة البريد الإلكتروني، لذا لا يوجد مسار صفحات له.",
     "journey.listing": "الإعلان ⁨{ref}⁩",
     "kind.seller": "طلب تقييم من بائع",
     "kind.inquiry": "استفسار",
     "kind.signup": "حساب جديد",
     "kind.listing": "إعلان جديد",
     "kind.offer": "عرض شراء",
+    "kind.newsletter": "النشرة الإخبارية",
 
     "dur.s": "{s} ث",
     "dur.ms": "{m} د {s} ث",

@@ -630,9 +630,67 @@ export const auditEvents = pgTable(
   ],
 );
 
+export const newsletterStatus = pgEnum("newsletter_status", ["pending", "confirmed", "unsubscribed"]);
+
+/**
+ * The daily deals newsletter (src/lib/newsletter.ts). Anyone can leave an address on the site; it gets the daily issue
+ * only once the confirmation link in the first email was opened (double opt-in), and every issue carries a one-click
+ * unsubscribe link. No account is needed; a signed-in subscriber is linked to their account for the admin's view only.
+ * Consent is recorded as the Privacy Policy says: when, from which IP, and where on the site.
+ */
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** Lower-cased; one row per address. */
+    email: text("email").notNull(),
+    /** The language the address was left in: the issues come in it. */
+    locale: text("locale").notNull().default("en"),
+    status: newsletterStatus("status").notNull().default("pending"),
+    /** The random secret in this address's confirmation and unsubscribe links (one for both; rotated when resent). */
+    token: text("token").notNull(),
+    /** Where on the site the address was left: "home" | "deals" | "footer" | "newsletter". */
+    source: text("source").notNull().default("site"),
+    userId: uuid("user_id").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
+    consentedAt: timestamp("consented_at", { withTimezone: true }).notNull().defaultNow(),
+    consentIp: text("consent_ip"),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+    /** When the last issue went to this address. */
+    lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("newsletter_subscribers_email_idx").on(t.email),
+    uniqueIndex("newsletter_subscribers_token_idx").on(t.token),
+    index("newsletter_subscribers_status_idx").on(t.status, t.locale),
+  ],
+);
+
+/** One daily issue of the newsletter: the window it covered, what it listed and how the send went, so no day goes twice. */
+export const newsletterIssues = pgTable(
+  "newsletter_issues",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** The Dubai day the issue is for; one per day. */
+    day: date("day").notNull(),
+    /** The window of changes it covers: (since, until]. */
+    since: timestamp("since", { withTimezone: true }).notNull(),
+    until: timestamp("until", { withTimezone: true }).notNull(),
+    /** What it listed and the counts, e.g. { newListings: [ids], priceDrops: [{ id, from, to }], gone: 2, recipients: 40, failed: 0 }. */
+    content: jsonb("content").$type<Record<string, unknown>>().notNull(),
+    /** Null while the issue is being sent (or when there was nothing to send that day). */
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("newsletter_issues_day_idx").on(t.day)],
+);
+
 export type User = typeof users.$inferSelect;
 export type Listing = typeof listings.$inferSelect;
 export type Offer = typeof offers.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type SellerLead = typeof sellerLeads.$inferSelect;
 export type Deal = typeof deals.$inferSelect;
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;

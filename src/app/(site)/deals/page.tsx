@@ -4,6 +4,7 @@ import Link from "@/components/LocaleLink";
 import { ChevronLeft, ChevronRight, Info, RotateCcw, SearchX, SlidersHorizontal, X } from "lucide-react";
 import { DealCard } from "@/components/DealCard";
 import { DealsToolbar, FilterPanel, SaveSearchButton } from "@/components/deals/DealFilters";
+import { NewsletterForm } from "@/components/NewsletterForm";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
@@ -13,6 +14,7 @@ import { getCurrentUser } from "@/lib/auth";
 import type { MOTIVATION } from "@/lib/config";
 import { formatAEDCompact } from "@/lib/format";
 import { dealFacets, PAGE_SIZE, parseFilters, searchDeals, watchedIds, type DealFilters } from "@/lib/listings";
+import { prefillEmail } from "@/lib/newsletter";
 import { communityName, developerName } from "@/lib/place-names";
 import { alternatesFor, openGraphBase } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -387,6 +389,9 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
                 <p className="text-xs text-muted-foreground tabular">{t("pagination.page", { page: filters.page, pages })}</p>
               </nav>
             )}
+
+            {/* The daily newsletter, under the results (and under "no deals match", for the next ones) */}
+            <NewsletterForm variant="inline" source="deals" defaultEmail={prefillEmail(user)} className="mt-12" />
           </div>
         </div>
       </div>

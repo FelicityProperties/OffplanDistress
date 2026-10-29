@@ -12,6 +12,7 @@ import intake from "./intake";
 import legal from "./legal";
 import market from "./market";
 import marketing from "./marketing";
+import newsletter from "./newsletter";
 import notifications from "./notifications";
 import password from "./password";
 import searches from "./searches";
@@ -33,6 +34,7 @@ export const messages = {
   legal,
   market,
   marketing,
+  newsletter,
   notifications,
   password,
   searches,

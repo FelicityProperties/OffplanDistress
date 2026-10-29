@@ -7,6 +7,7 @@ import { emailOffReason } from "./email";
 import { leadCode } from "./estimate";
 import { awaitingOwnerSql } from "./import";
 import { formatNumber, refCode } from "./format";
+import { inventoryDigest } from "./newsletter-issue";
 import { notify, notifyAdmins, type TemplateParams } from "./notify";
 import type { TemplateKey } from "./notification-templates";
 import { addDays, dubaiToday, permitCurrentSql } from "./permits";
@@ -711,6 +712,14 @@ export async function sendFollowUps(now = new Date()) {
       if (await claim("digest", today, "ops")) {
         const line = (k: FollowUpKey) =>
           counts[k] ? { t: "admin" as const, key: `followups.digest.${k}` as const, vars: { n: counts[k] } } : "";
+        // Yesterday's market changes and the newsletter's reach (src/lib/newsletter-issue.ts); left out if it fails.
+        const inventory = await inventoryDigest(now).then(
+          (i) => ({ t: "newsletter" as const, key: "digest.inventory" as const, vars: { n: i.newListings, m: i.priceDrops, k: i.gone, s: i.subscribers } }),
+          (err: unknown) => {
+            console.error("[reminders] the digest's inventory line failed", err);
+            return "";
+          },
+        );
         const stored = await notifyAdmins(
           "ops.digest",
           {
@@ -727,6 +736,7 @@ export async function sendFollowUps(now = new Date()) {
             review: line("review"),
             instalments: line("instalments"),
             viewings: line("viewings"),
+            inventory,
             // A rule that failed this time counts 0 above; say so rather than let the numbers look complete.
             partial: f.failedRules.length ? { t: "admin", key: "followups.digest.partial" } : "",
             email: emailOffReason() ? { t: "admin", key: "followups.digest.emailOff" } : "",
