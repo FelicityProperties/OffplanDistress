@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/site-url";
 
 /** Pages for signed-in people and one-time links: never crawled, in either language. */
-const PRIVATE = ["/dashboard", "/admin", "/reset-password", "/forgot-password"];
+const PRIVATE = ["/dashboard", "/admin", "/reset-password", "/forgot-password", "/newsletter/confirm", "/newsletter/unsubscribe"];
 
 export default function robots(): MetadataRoute.Robots {
   return {

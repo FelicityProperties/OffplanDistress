@@ -15,6 +15,7 @@ import {
   Inbox,
   LayoutDashboard,
   MessageSquare,
+  Newspaper,
   SearchCheck,
   UserRound,
   Users,
@@ -38,6 +39,7 @@ const ICONS = {
   inbox: Inbox,
   analytics: ChartColumn,
   upload: FileUp,
+  newsletter: Newspaper,
 } satisfies Record<string, LucideIcon>;
 
 export type ShellItem = { href: string; label: string; icon: keyof typeof ICONS; count?: number; exact?: boolean };

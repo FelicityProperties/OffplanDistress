@@ -17,6 +17,7 @@ import { CtaBand } from "@/components/CtaBand";
 import { communityName, DealCard } from "@/components/DealCard";
 import { DealImage } from "@/components/DealImage";
 import { FeeCalculator } from "@/components/FeeCalculator";
+import { NewsletterBand } from "@/components/NewsletterBand";
 import { SellerEstimateSection } from "@/components/sell/SellerEstimateSection";
 import { StepsFlow } from "@/components/Steps";
 import { SampleBadge, SectionHeading } from "@/components/badges";
@@ -30,6 +31,7 @@ import { analyzeDeal } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, refCode } from "@/lib/format";
 import { featuredDeals, marketStats, watchedIds, type ListingCard } from "@/lib/listings";
 import { MIN_LIVE, MIN_SAMPLE } from "@/lib/market";
+import { prefillEmail } from "@/lib/newsletter";
 import type { Locale } from "@/i18n/config";
 
 const TRUST = [
@@ -231,6 +233,9 @@ export default async function Home() {
           </div>
         )}
       </section>
+
+      {/* The daily newsletter, right under the deals it will carry */}
+      <NewsletterBand defaultEmail={prefillEmail(user)} />
 
       {/* How it works */}
       <section className="relative isolate overflow-hidden bg-secondary py-24">

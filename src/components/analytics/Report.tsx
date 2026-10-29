@@ -493,7 +493,7 @@ export function LivePanel({
 }
 
 // Seller estimates in gold as on /admin/leads; the kind is always written out, so the tone only groups.
-const LEAD_TONE = { seller: "gold", inquiry: "muted", signup: "muted", listing: "gold", offer: "muted" } as const;
+const LEAD_TONE = { seller: "gold", inquiry: "muted", signup: "muted", listing: "gold", offer: "muted", newsletter: "muted" } as const;
 const SHOWN_STEPS = 12;
 
 function leadHref(l: LeadJourney) {
@@ -508,6 +508,8 @@ function leadHref(l: LeadJourney) {
       return `/admin/listings/${l.linkId}`;
     case "offer":
       return "/admin/offers";
+    case "newsletter":
+      return "/admin/newsletter";
   }
 }
 
@@ -551,7 +553,15 @@ export function Journeys({ leads, locale, t, ta }: { leads: LeadJourney[]; local
             </p>
             {l.steps == null ? (
               <p className="mt-2 text-xs text-muted-foreground">
-                {t(l.noTrail === "account" ? "journey.account" : l.noTrail === "noSid" ? "journey.noSid" : "journey.noSession")}
+                {t(
+                  l.noTrail === "account"
+                    ? "journey.account"
+                    : l.noTrail === "noSid"
+                      ? "journey.noSid"
+                      : l.noTrail === "newsletter"
+                        ? "journey.newsletter"
+                        : "journey.noSession",
+                )}
               </p>
             ) : steps.length === 0 ? (
               <p className="mt-2 text-xs text-muted-foreground">{t("journey.noPages")}</p>

@@ -10,6 +10,10 @@ export const ATTESTATION_VERSION = "2026-10-28";
 /** The per-listing statement: the checkbox in "Manage listing" (src/components/admin/AdminControls.tsx). */
 export const PERMIT_ATTESTATION = "Felicity Properties holds a valid Trakheesi permit for this advert (number not entered)";
 
+/** The statement for one unit: the Publish dialog on its own admin page (src/components/admin/PublishAttested.tsx). */
+export const LISTING_ATTESTATION =
+  "I confirm that Felicity Properties L.L.C holds a valid Trakheesi advertising permit and the owner's signed Form A for this unit, and that it is still available at the stated price.";
+
 /** The bulk statement: the Publish dialog on the Imported tab (src/components/admin/PublishAttested.tsx). */
 export const BULK_ATTESTATION =
   "I confirm that Felicity Properties L.L.C holds a valid Trakheesi advertising permit and the owner's signed Form A for each of these units, and that each unit is still available at the stated price.";

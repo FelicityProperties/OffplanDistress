@@ -93,4 +93,4 @@ export function switchHref(href: string, to: Locale) {
  * Public pages that are never indexed (robots.txt keeps crawlers off the password pages; login and sign-up carry
  * noindex): no canonical or hreflang links for them.
  */
-export const NOINDEX_PATHS = /^\/(?:login|signup|forgot-password|reset-password)(?:\/|$)/;
+export const NOINDEX_PATHS = /^\/(?:login|signup|forgot-password|reset-password|newsletter\/(?:confirm|unsubscribe))(?:\/|$)/;

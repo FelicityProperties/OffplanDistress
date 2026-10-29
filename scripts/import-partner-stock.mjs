@@ -22,8 +22,9 @@ const INT_MAX = 2_147_483_647;
 export async function importPartnerStock(pool) {
   let names = [];
   try {
-    // Beside each stock file: its permits (applyPermits) and the transcribed payment plans the daily sync keeps.
-    names = (await readdir(STOCK_DIR)).filter((n) => n.endsWith(".json") && !n.endsWith("-permits.json") && !n.endsWith("-plans.json")).sort();
+    // Beside each stock file: its permits (applyPermits), and the transcribed payment plans and curated photo order the
+    // daily sync keeps (both already folded into the stock file).
+    names = (await readdir(STOCK_DIR)).filter((n) => n.endsWith(".json") && !n.endsWith("-permits.json") && !n.endsWith("-plans.json") && !n.endsWith("-photos.json")).sort();
   } catch {
     return;
   }
@@ -67,8 +68,11 @@ async function importSource(pool, doc, sharp) {
       }
       const { id, isNew } = await ensureListing(pool, source, unit, ownerId, actor);
       if (isNew) created++;
-      else await syncListing(pool, unit, id, actor, report);
+      // Photos first (a name the listing lacks is fetched and appended), then the sync puts the gallery in the file's order.
       photos += await ensurePhotos(pool, id, unit.photos ?? [], actor ?? ownerId, sharp);
+      // A new unit's gallery snapshot is the gallery as just imported (syncListing compares against it from the next build on).
+      if (isNew) await pool.query("update listings set source = jsonb_set(source, '{synced,images}', to_jsonb(images)) where id = $1", [id]);
+      else await syncListing(pool, unit, id, actor, actor ?? ownerId, report);
     } catch (err) {
       failed++;
       console.error(`[import] ${source.name} ${unit?.ref}: failed`, err?.message ?? err);
@@ -104,6 +108,7 @@ const COLUMNS = {
   floor: "floor",
   view: "view",
   description: "description",
+  images: "images",
 };
 /** The statuses the sync may change: in review, live or paused. src/lib/offers.ts DEAL_STATUSES, src/lib/config.ts PUBLIC_STATUSES. */
 const LISTED = ["pending_review", "live", "paused"];
@@ -181,15 +186,17 @@ function permitLapsed(r, today) {
  * and could be approved today (ownership confirmed, a current permit or the attestation, Form A — Approve's rules),
  * else into review. A unit with a deal in progress (under offer, NOC in progress, an accepted offer or an open deal
  * file) is never changed, only reported when the file would have changed it; a sold, rejected or withdrawn one is left.
+ * The gallery follows the file's photo order the same way (galleryOrder): applied while the array is still the import's
+ * own or as the last sync left it (source.synced.images), else our team's arrangement stands, a conflict like a field's.
  */
-async function syncListing(pool, unit, id, actor, report) {
+async function syncListing(pool, unit, id, actor, uploader, report) {
   const wanted = valuesOf(checkListing(unit.listing));
   const client = await pool.connect();
   try {
     await client.query("begin");
     const { rows } = await client.query(
       `select id, ref_no, status, is_sample, seller_id, project_name, asking_price, public_price, original_price, amount_paid,
-              next_instalment_date, next_instalment_amount, payment_plan, handover_date, size_sqft, floor, view, description,
+              next_instalment_date, next_instalment_amount, payment_plan, handover_date, size_sqft, floor, view, description, images,
               dld_permit, dld_permit_expires_at, form_a_expires_at, permit_attested_at, created_by_staff, ownership_confirmed_at, source
        from listings where id = $1 for update`,
       [id],
@@ -203,7 +210,8 @@ async function syncListing(pool, unit, id, actor, report) {
     const src = row.source ?? {};
     const state = { ...(src.sync ?? {}) };
     const have = valuesOf(row);
-    const changed = SYNCED_FIELDS.filter((f) => !same(wanted[f], have[f]));
+    const gallery = await galleryOrder(client, id, row.images ?? [], unit.photos ?? [], uploader, src.synced?.images);
+    const changed = [...SYNCED_FIELDS.filter((f) => !same(wanted[f], have[f])), ...(gallery.changed ? ["images"] : [])];
     const now = new Date();
     const today = dubaiToday();
     let status = row.status;
@@ -273,12 +281,23 @@ async function syncListing(pool, unit, id, actor, report) {
         synced[f] = snap[f];
       }
     }
+    // The gallery: the file's photos in its order, the other entries (older import photos, anything our team added)
+    // after them as they are — nothing dropped — while the array is still ours; else their arrangement stands.
+    let syncedImages;
+    if (!gallery.changed) syncedImages = gallery.current;
+    else if (gallery.ours) {
+      diff.images = [gallery.current, gallery.desired];
+      syncedImages = gallery.desired;
+    } else {
+      conflicts.images = gallery.desired;
+      syncedImages = gallery.snapshot;
+    }
     const fields = Object.keys(diff);
     if (fields.length) {
       // The advertised price follows the asking price while the public sees the advert (src/lib/permits.ts isAdvertised).
       const advertised = PUBLIC_STATUSES.includes(status) && !permitLapsed(row, today);
       const sets = fields.map((f, i) => `${COLUMNS[f]} = $${i + 2}`);
-      const params = [id, ...fields.map((f) => (f === "paymentPlan" ? JSON.stringify(wanted[f]) : wanted[f]))];
+      const params = [id, ...fields.map((f) => (f === "images" ? gallery.desired : f === "paymentPlan" ? JSON.stringify(wanted[f]) : wanted[f]))];
       if (diff.askingPrice && advertised) {
         diff.publicPrice = [row.public_price, wanted.askingPrice];
         sets.push(`public_price = $${params.push(wanted.askingPrice)}`);
@@ -295,10 +314,10 @@ async function syncListing(pool, unit, id, actor, report) {
     if (Object.keys(conflicts).length) state.conflicts = conflicts;
     else delete state.conflicts;
     // The snapshot and the sync's own state, written when either changed (so a build that changes nothing writes nothing).
-    const next = { ...src, synced: { ...synced, syncedAt: now.toISOString() } };
+    const next = { ...src, synced: { ...synced, images: syncedImages ?? null, syncedAt: now.toISOString() } };
     if (Object.keys(state).length) next.sync = state;
     else delete next.sync;
-    if (!src.synced || !same(valuesOf(src.synced), synced) || !same(src.sync ?? null, next.sync ?? null)) {
+    if (!src.synced || !same(valuesOf(src.synced), synced) || !same(src.synced.images ?? null, syncedImages ?? null) || !same(src.sync ?? null, next.sync ?? null)) {
       await client.query("update listings set source = $2 where id = $1", [id, JSON.stringify(next)]);
     }
     await client.query("commit");
@@ -440,6 +459,7 @@ const FIELD_LABELS = {
     floor: "floor",
     view: "view",
     description: "description",
+    images: "photos",
   },
   ar: {
     askingPrice: "السعر المطلوب",
@@ -453,6 +473,7 @@ const FIELD_LABELS = {
     floor: "الطابق",
     view: "الإطلالة",
     description: "الوصف",
+    images: "الصور",
   },
 };
 /** The statuses' names (src/i18n/messages/common.ts). */
@@ -813,6 +834,26 @@ function checkListing(v) {
     description: str(v.description, 3000),
     paymentPlan,
   };
+}
+
+/**
+ * The listing's gallery against the file: desired = the file's photos (by name, through the files table) in its order,
+ * then the array's other entries as they are — older import photos the file dropped, anything our team added by hand;
+ * nothing is removed, only ordered. The array is "ours" (the order may be applied) while every entry is a photo the
+ * import uploaded, or the array is as the last sync left it (the snapshot, source.synced.images); one our team
+ * rearranged since is theirs.
+ */
+async function galleryOrder(client, listingId, current, photos, uploaderId, snapshot) {
+  const { rows } = await client.query("select id, filename, uploader_id from files where listing_id = $1 and kind = 'photo' order by created_at, id", [listingId]);
+  const byName = new Map();
+  for (const f of rows) if (!byName.has(f.filename)) byName.set(f.filename, `/api/files/${f.id}`);
+  const imported = new Set(rows.filter((f) => f.uploader_id === uploaderId).map((f) => `/api/files/${f.id}`));
+  const first = photos.map((p) => byName.get(p?.filename)).filter((u) => u && current.includes(u));
+  const rest = [...current];
+  for (const u of first) rest.splice(rest.indexOf(u), 1);
+  const desired = [...first, ...rest];
+  const snap = Array.isArray(snapshot) ? snapshot : null;
+  return { current, desired, changed: !same(desired, current), ours: current.every((u) => imported.has(u)) || same(current, snap), snapshot: snap };
 }
 
 /** Fetches the photos the listing doesn't have yet (by file name) and adds them to its gallery, in the file's order. */

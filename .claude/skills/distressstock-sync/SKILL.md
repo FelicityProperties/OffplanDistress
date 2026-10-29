@@ -9,7 +9,8 @@ DistressStock (https://distressonly.deals, password gate) lists distressed off-p
 production build imports `scripts/partner-stock/distressstock.json` (format `offplandistress-import/1`): new units go
 into review, units marked removed are withdrawn, changed figures are applied. This runbook keeps that file in step with
 the site, once a day. Each unit's payment plan is an **image** on the site; you read it and write the figures into
-`scripts/partner-stock/distressstock-plans.json` — that is the only part a script can't do.
+`scripts/partner-stock/distressstock-plans.json`; and a unit's photo order is picked once, by eye, from a contact sheet
+into `scripts/partner-stock/distressstock-photos.json` (step 3) — the two parts a script can't do.
 
 Ground rules: the repo is public — never commit the password, `cookies.txt`, the saved HTML pages or the images.
 `DISTRESSSTOCK_PASSWORD` comes from the environment's secrets (or the user); never write it into a file or the report.
@@ -83,7 +84,30 @@ several images continues in `<ref>-2.png`, `<ref>-3.png`; `moreImages` lists the
   the original price + 40), else the page's "Original Price + DLD 4%" ÷ 1.04; paid = SPA price − remaining; asking = payment
   to seller.
 
-## 3. Build
+## 3. Curate the photos of every `needsPhotos` unit
+
+The site's first gallery image is usually a location map, so the owner wants the building's picture first: each unit's
+photo order is chosen by hand, once. `delta.json`'s `needsPhotos` lists the listed units (new ones too) with no entry
+yet in `scripts/partner-stock/distressstock-photos.json` (format `offplandistress-photos/1`:
+`{ "format": "offplandistress-photos/1", "source": "distressstock", "photos": { "<ref>": ["<absolute image url>", …] } }`,
+hero first, at most 4 urls per ref; never the keyplan — the build appends it last). For each of them:
+
+```
+node scripts/partner-stock/sync-distressstock.mjs sheet --raw $RAW              # every needsPhotos unit
+node scripts/partner-stock/sync-distressstock.mjs sheet --raw $RAW --ref <ref>  # one unit (repeatable)
+```
+
+downloads the page's OVERVIEW images (up to 12, cached under `$RAW/photos/`) and writes `$RAW/sheets/<ref>.png` — the
+thumbnails, each with its index — and `$RAW/sheets/<ref>.json`, the image urls by index (plus the unit's current
+manifest photos). View the PNG with your image reader and pick, by index, the **building exterior as the hero** (never
+a map, a logo, a floor plan, a text slide or a payment table), then up to 3 more — an amenity or an interior, then the
+map last if you include it at all. Write their urls in that order under `photos["<ref>"]` (refs sorted) and run the
+build again. The build keeps each picture's file name (a url the unit already had keeps its name; a new one is
+`<ref>-<8 hex of sha1(url)>.webp`), so the production import never fetches a photo twice; it then puts the listing's
+gallery in that order, the building first on the deal cards. A curated url the page no longer shows is still used —
+the build's summary names it (`photo … not on today's page`); re-check the unit when that happens.
+
+## 4. Build
 
 ```
 node scripts/partner-stock/sync-distressstock.mjs build --raw $RAW
@@ -91,24 +115,26 @@ node scripts/partner-stock/sync-distressstock.mjs build --raw $RAW
 
 Rewrites `scripts/partner-stock/distressstock.json` from the pages, the plans file and the previous manifest and
 prints the summary (listed, new, updated with the fields, removed, back, dropped, flagged, skipped, excluded); the
-counts are also in `$RAW/build.json`. Exit codes: **0** done; **2** a unit still needs its plan (the file is written;
-go back to step 2, then build again — repeat until 0); **3** the safety valve (below; nothing written); **1** a
-problem with the inputs (message says). Units are excluded for good when they are bulk deals, shops or outside Dubai.
+counts are also in `$RAW/build.json`, with the photo line (`photos: N units curated, M listed without curation …`;
+M should be 0 after step 3). Exit codes: **0** done; **2** a unit still needs its plan (the
+file is written; go back to step 2, then build again — repeat until 0); **3** the safety valve (below; nothing
+written); **1** a problem with the inputs (message says). Units are excluded for good when they are bulk deals, shops or outside Dubai.
 A unit is *skipped* (previous entry kept, a new one left out) when its page can't be read as before — size not in sq ft,
 a price line or the handover the parser can't read: the site's wording changed, so the parser needs updating; never
 "fix" it by editing the manifest or the plans file.
 
-## 4. Review
+## 5. Review
 
-`git diff --stat scripts/partner-stock/` — only `distressstock.json` and `distressstock-plans.json` may change, and
-the diff should be about as big as the summary says (a new unit ≈ 100 lines; a removed one adds one `"removed"` line; a
-unit back on the site loses it). `git status` must show nothing from `$RAW`. Spot-check one new unit against its page.
+`git diff --stat scripts/partner-stock/` — only `distressstock.json`, `distressstock-plans.json` and
+`distressstock-photos.json` may change, and the diff should be about as big as the summary says (a new unit ≈ 100
+lines; a removed one adds one `"removed"` line; a unit back on the site loses it; a curated unit changes its `photos`
+list). `git status` must show nothing from `$RAW`. Spot-check one new unit against its page.
 
 **A day with no changes** (the build printed `unchanged` and `git diff --stat scripts/partner-stock/` shows nothing):
-there is nothing to ship. Skip step 5, remove any sync branch you created, and report "DistressStock sync YYYY-MM-DD:
+there is nothing to ship. Skip step 6, remove any sync branch you created, and report "DistressStock sync YYYY-MM-DD:
 no changes (N units on the site, all already listed)" in one line.
 
-## 5. Ship
+## 6. Ship
 
 1. `git fetch origin && git switch -c sync/distressstock-$(date +%F) origin/main`, then `git add scripts/partner-stock/`
    and commit: `DistressStock sync YYYY-MM-DD: N new, M removed, K updated` (counts from the build summary).
@@ -124,13 +150,16 @@ no changes (N units on the site, all already listed)" in one line.
    when N > 0: "press Publish all N on Felicity's permits at https://offplandistress.vercel.app/admin?tab=imported";
    anything skipped (illegible plans, excluded units) and why; anything the valves stopped.
 
-## 6. What the production build then does
+## 7. What the production build then does
 
 `scripts/import-partner-stock.mjs` runs on the deploy: new units are imported in review under the placeholder owner
 ("Imported — owner to add" on `/admin`) with their photos; units marked `"removed"` are withdrawn (open offers closed)
 and put back when they reappear; changed figures (asking / original price, paid, instalments, plan, handover, size,
 floor, view, description) are applied unless our team edited that field since — then their edit stands and the conflict
-is reported to the admins once; a unit with a deal in progress is never touched; the admins get one notice per build.
+is reported to the admins once; a listing's gallery is put in the manifest's photo order (new photos fetched by file
+name first, nothing deleted, anything else in the gallery kept after them) by the same rule — rearranged by our team
+since the last sync, it stays theirs and is reported once; a unit with a deal in progress is never touched; the admins
+get one notice per build.
 Publishing stays with the owner's "Publish all N on Felicity's permits" click.
 
 ## Safety valves — what to do when one trips

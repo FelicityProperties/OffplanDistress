@@ -1,4 +1,4 @@
-import { BULK_ATTESTATION } from "@/lib/attestation";
+import { BULK_ATTESTATION, LISTING_ATTESTATION } from "@/lib/attestation";
 import { defineMessages } from "../define";
 
 // Staff intake beyond the single-listing form: the bulk import of a partner network's file (/admin/listings/import),
@@ -148,6 +148,16 @@ export default defineMessages({
     "publish.skipped.formAExpired": "{n} left in review: their Form A has run out.",
     "publish.skipped.changed": "{n} left as they are: changed in the meantime.",
     "publish.failed": "Couldn't publish. Try again.",
+    // One unit from its own page (adminPublishAttestedListing; LISTING_ATTESTATION's exact text goes in its history)
+    "publish.one.button": "Publish on Felicity's permits",
+    "publish.one.title": "Publish {ref} on Felicity's permits",
+    "publish.one.desc":
+      "This listing goes live now at its asking price, without its permit number, on your statement below. Your account, the time and the statement's text are recorded in its history. Enter the permit number when you can, so buyers can verify the advert with DLD; the real owner is still entered from the Owner card.",
+    "publish.one.statement": LISTING_ATTESTATION,
+    "publish.one.done": "Published: the listing is live.",
+    "publish.one.hasPermit": "This listing has a permit number, so the number is its record: confirm ownership and use Approve.",
+    "publish.one.formAExpired": "Not published: its Form A has run out.",
+    "publish.one.changed": "Not published: it is no longer in review under the placeholder owner. Use Approve.",
     // Live on the attestation, the real owner still to enter
     "published.title": "{n} published without an owner yet",
     "published.titleOne": "1 published without an owner yet",
@@ -193,7 +203,7 @@ export default defineMessages({
     "claim.confirmedBroker": "Ownership confirmed on {date} on our record of the owner's written authority.",
     "claim.ownerStillPlaceholder": "The listing is still filed under a placeholder: enter the real owner below so they can see it in their account.",
     "approve.setOwnerFirst":
-      "Set the owner first: this listing is still filed under a placeholder. Then confirm ownership (claim link or the owner's signed Form A) and enter the permit before approving.",
+      "Set the owner first: this listing is still filed under a placeholder. Then confirm ownership (claim link or the owner's signed Form A) and enter the permit before approving. Or publish it now on Felicity's permits, with the button next to Approve.",
 
     "formA.title": "Or confirm with the owner's signed Form A",
     "formA.hint":
@@ -350,6 +360,16 @@ export default defineMessages({
     "publish.skipped.formAExpired": "بقي ⁨{n}⁩ قيد المراجعة: انتهت صلاحية النموذج (A) الخاص بها.",
     "publish.skipped.changed": "تُرك ⁨{n}⁩ على حاله: تغيّر في هذه الأثناء.",
     "publish.failed": "تعذّر النشر. حاول مرة أخرى.",
+    "publish.one.button": "نشر بتصاريح فيليسيتي",
+    "publish.one.title": "نشر ⁨{ref}⁩ بتصاريح فيليسيتي",
+    "publish.one.desc":
+      "يُنشر هذا الإعلان الآن بسعره المطلوب ودون رقم تصريحه، بناءً على إفادتك أدناه. يُسجَّل حسابك ووقت الإفادة ونصّها في سجل الإعلان. أدخل رقم التصريح متى أمكن ليتمكّن المشترون من التحقق من الإعلان لدى دائرة الأراضي والأملاك، ويبقى إدخال المالك الفعلي من بطاقة «المالك».",
+    "publish.one.statement":
+      "أُقرّ بأن فيليسيتي للعقارات ش.ذ.م.م تحتفظ بتصريح إعلان سارٍ من نظام تراخيصي وبالنموذج (A) الموقّع من المالك لهذه الوحدة، وبأنها ما زالت متاحة بالسعر المذكور.",
+    "publish.one.done": "نُشر الإعلان وأصبح متاحاً للعموم.",
+    "publish.one.hasPermit": "لهذا الإعلان رقم تصريح مُدخَل، فالرقم هو سجلّه: أكّد الملكية ثم استخدم زر الموافقة.",
+    "publish.one.formAExpired": "لم يُنشر: انتهت صلاحية النموذج (A) الخاص به.",
+    "publish.one.changed": "لم يُنشر: لم يعد قيد المراجعة باسم المالك المؤقت. استخدم زر الموافقة.",
     "published.title": "⁨{n}⁩ منشورة دون تحديد المالك بعد",
     "published.titleOne": "إعلان واحد منشور دون تحديد المالك بعد",
     "published.hint": "منشورة بتصاريح فيليسيتي وما زالت مسجّلة باسم المالك المؤقت. افتح كلاً منها وأدخل المالك الفعلي في بطاقة «المالك».",
@@ -392,7 +412,7 @@ export default defineMessages({
     "claim.confirmedBroker": "أُكّدت الملكية في ⁨{date}⁩ بناءً على سجلنا لتفويض المالك الخطي.",
     "claim.ownerStillPlaceholder": "ما زال الإعلان مسجّلاً باسم مالك مؤقت: أدخل المالك الفعلي أدناه ليراه في حسابه.",
     "approve.setOwnerFirst":
-      "حدّد المالك أولاً: ما زال هذا الإعلان مسجّلاً باسم مالك مؤقت. ثم أكّد الملكية (برابط التأكيد أو بالنموذج (A) الموقّع من المالك) وأدخل التصريح قبل الموافقة عليه.",
+      "حدّد المالك أولاً: ما زال هذا الإعلان مسجّلاً باسم مالك مؤقت. ثم أكّد الملكية (برابط التأكيد أو بالنموذج (A) الموقّع من المالك) وأدخل التصريح قبل الموافقة عليه. أو انشره الآن بتصاريح فيليسيتي بالزر المجاور لزر الموافقة.",
 
     "formA.title": "أو أكّد الملكية بالنموذج (A) الموقّع من المالك",
     "formA.hint":

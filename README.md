@@ -17,8 +17,8 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Marketplace | Browse deals (filters incl. cash at transfer, sort, search by project, developer or community in English or Arabic, saved searches), deal page (cash needed on transfer day, arrears with the developer, dated cash timeline, payment plan, true-cost breakdown, offer, watchlist, viewing request) |
 | Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; "Prefer WhatsApp?" card; 5-step "Sell my unit" form (saved on the device between sittings, type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline), deal milestones |
 | Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts |
-| Everyone | Notification bell + notifications page, email notifications, self-service password reset, English / العربية (full right-to-left layout) |
-| Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, bulk import of a partner network's units (`/admin/listings/import`, owner set later, claim link or signed Form A), daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), remove sample data |
+| Everyone | Notification bell + notifications page, email notifications, self-service password reset, daily deals newsletter (`/newsletter`, no account needed, double opt-in, one-click unsubscribe), English / العربية (full right-to-left layout) |
+| Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, bulk import of a partner network's units (`/admin/listings/import`, owner set later, claim link or signed Form A), daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), newsletter subscribers and issues (`/admin/newsletter`, CSV export), remove sample data |
 
 Buyers stay anonymous to sellers in the app — every negotiation goes through our team, so neither side can
 bypass the platform. An offer's message to the seller can't hold a phone number, email address, link or handle (the
@@ -133,6 +133,12 @@ whose plan is missing, illegible or inconsistent keeps its previous entry and is
 page's size, prices or handover can no longer be read as before (the site's wording changed: fix the parser, never the
 figures); a run that would mark more than a quarter of the listed units removed writes nothing (exit 3;
 `--allow-mass-removal`, on the user's word, also sets the file's `sync.allowMassRemoval` for the import's own valve).
+The site's first gallery image is usually a location map, so `scripts/partner-stock/distressstock-photos.json`
+(`offplandistress-photos/1`: `photos: { "<ref>": [url, …] }`, the building first, at most 4) holds the photo order the
+agent picks from `sheet --raw <dir>`'s contact sheets; the build lists those urls + the page's keyplan under stable file
+names (a url the unit had keeps its name, a new one is `<ref>-<sha1 prefix>.webp`, so the import never fetches a photo
+twice), and the import then puts the listing's gallery in that order — nothing deleted, other entries kept after them —
+unless our team rearranged it by hand since the last sync (left as they made it, reported once, like a synced field).
 
 ### Cash at transfer
 
@@ -151,8 +157,9 @@ who signed up to sell but listed nothing (24 h and 72 h), listings missing their
 listings with no offers after 21 days, offers the seller hasn't answered (48 h) and counter-offers the buyer hasn't
 answered (48 h). Admins get one "Today's follow-ups" digest — those items plus new leads not called, listings waiting
 for review, instalments due within 14 days and viewing requests not handled — and the same list, with call and
-WhatsApp buttons, is under Follow-ups at the bottom of `/admin`. Samples, staff and sellers who haven't claimed a
-staff-created listing are never nudged.
+WhatsApp buttons, is under Follow-ups at the bottom of `/admin`. The digest also carries one "Inventory yesterday" line
+(new adverts, price drops, units no longer available in the last 24 hours, and the confirmed newsletter subscribers).
+Samples, staff and sellers who haven't claimed a staff-created listing are never nudged.
 
 ### Deal file and audit trail
 
@@ -209,6 +216,7 @@ listing or account are deleted 24 months after the last update.
 | Listing paused because its permit or Form A expired | Seller |
 | A scheduled job failed or `CRON_SECRET` is missing | Admins (at most once per 12 h per job) |
 | New deals matching a saved search (daily, 09:00 Dubai) | Search owner |
+| The newsletter's daily issue: new deals, price drops, units gone (daily, 09:00 Dubai, only on days the inventory changed) | Confirmed newsletter subscribers (email only) |
 | Staff created a listing for you | Seller — confirmation (claim) link |
 | Seller confirmed a staff-created listing | Admins — approve it |
 | Nothing listed yet, documents missing, no offers after 21 days | Seller |
@@ -220,6 +228,25 @@ In-app notifications always work. Emails go out through [Resend](https://resend.
 buyers only get emails when `EMAIL_FROM` is a sender on a domain verified in Resend (Resend's `onboarding@resend.dev`
 reaches only the Resend account owner); until then only the owner logins get theirs and the admin console shows
 "Email is off".
+
+### Newsletter
+
+Anyone can leave an email address for the daily deals newsletter, no account needed: the band under the featured
+deals on the home page, the bar under the results on `/deals`, the footer of every page and `/newsletter` (with a
+sample issue). Double opt-in: the address is `pending` until the link in the confirmation email is opened
+(`/newsletter/confirm?t=…`, in the language it was left in); only confirmed addresses get issues. The
+`saved-search-alerts` job sends the issue at 09:00 Dubai, only on days the inventory changed
+(`src/lib/newsletter-issue.ts`): the adverts that went live, price drops with the old and new price, how many units are
+no longer available, the RERA details every advert carries, and a one-click unsubscribe link: `List-Unsubscribe` /
+`List-Unsubscribe-Post` headers (RFC 8058) naming `POST /api/newsletter/unsubscribe?t=…`, while the footer link opens
+`/newsletter/unsubscribe?t=…`, which shows the masked address and asks first (a GET never unsubscribes). Consent is
+recorded with the row: when, from which IP and where on the site; a signed-in subscriber is linked to their account
+(the Privacy Policy's newsletter bullets — data, consent, retention, emails — describe exactly that record).
+The forms say "check your inbox" whatever the address's state (only a non-address is refused), a filled honeypot is
+ignored, and sign-ups are limited to 5 an hour per IP and 3 a day per address. `/admin/newsletter`: a preview of
+today's issue, the counts, the subscribers (search, status filter, 50 a page), the last 14 issues and "Export CSV"
+(`/api/admin/export/newsletter.csv`, admins only, audited); confirmations count as leads on `/admin/analytics`. Needs
+nothing beyond email (`RESEND_API_KEY`, `EMAIL_FROM`) and `CRON_SECRET`.
 
 ### Arabic addresses and SEO
 
@@ -260,8 +287,9 @@ the page covers a browser you use signed out. Page views are deleted after 13 mo
      emails in `ADMIN_EMAILS`). The repo is public, so owner emails can't be registered through the sign-up form;
      every production build creates or repairs the owner login from this variable instead (preview builds leave
      it alone). To change the owner password, change the variable and redeploy production.
-   - `CRON_SECRET` — **required for the daily jobs**: any long random string. Saved-search alerts and the
-     `ops-daily` permit job refuse to run without it (admins get an in-app alert). Optional `HEARTBEAT_URL` /
+   - `CRON_SECRET` — **required for the daily jobs**: any long random string. Saved-search alerts (the same 09:00
+     Dubai run then sends the newsletter's daily issue) and the `ops-daily` permit job refuse to run without it
+     (admins get an in-app alert). Optional `HEARTBEAT_URL` /
      `OPS_HEARTBEAT_URL` receive a ping after each successful run, for an uptime monitor; `/api/health` answers 200
      when the app and database are up.
    - Previews: preview builds skip migrations and sample data (they may share the production database). Once
