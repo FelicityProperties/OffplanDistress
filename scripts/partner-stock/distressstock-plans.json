@@ -473,6 +473,43 @@
    "totalCosts": 6109200,
    "notes": "All checks pass: seller + remaining = unit price; 7 x 174,870 + 2,331,600 = 3,555,690; transfer rows sum to 2,553,510; total 6,109,200. Final row is printed 'On Completion' (not 'On Handover'). The printed DLD fee (233,200) is not 4% of the unit price + 40 (that would be 230,040), so OP probably refers to a different price. Transcribed as printed."
   },
+  "6tU9pf": {
+   "image": "https://distressonly.deals/media/units/423/e76423cf4374.webp",
+   "transcribedAt": "2026-10-29",
+   "legible": true,
+   "unitPrice": 4700000,
+   "paymentToSeller": 2186173,
+   "dldFee": 199240,
+   "trusteeFee": 5250,
+   "commission": 98700,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "11-MAR-2027",
+     "dueDate": "2027-03-11",
+     "amount": 223027
+    },
+    {
+     "label": "11-JUN-2027",
+     "dueDate": "2027-06-11",
+     "amount": 398400
+    },
+    {
+     "label": "11-SEP-2027",
+     "dueDate": "2027-09-11",
+     "amount": 398400
+    },
+    {
+     "label": "26-NOV-2027",
+     "dueDate": "2027-11-26",
+     "amount": 1494000
+    }
+   ],
+   "totalOnTransfer": 2489363,
+   "totalRemaining": 2513827,
+   "totalCosts": 5003190,
+   "notes": "All checks pass: seller + remaining = unit price; instalments sum to 2513827; transfer rows sum to 2489363; total costs = 2489363 + 2513827. Commission label: Buyer's Agency Commission (2%+VAT)."
+  },
   "9MTsaW": {
    "image": "https://distressonly.deals/media/units/404/b632e0ac47ab.webp",
    "transcribedAt": "2026-10-27",

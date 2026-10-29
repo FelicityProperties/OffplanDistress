@@ -227,9 +227,9 @@ Every public page has an Arabic address (`/ar`, `/ar/deals`, `/ar/deals/OD-…`)
 hreflang and listed in `/sitemap.xml`; `src/proxy.ts` serves them. Visitors who chose Arabic are sent from plain links
 to the `/ar` address; the browser's language never redirects anyone (it only shows a "عرض بالعربية / View in English"
 bar). `/dashboard` and `/admin` keep one address and follow the visitor's chosen language. Filtered `/deals` views,
-login and sign-up are `noindex`; `robots.txt` names the sitemap and lets search engines see listing photos. With
-`NEXT_PUBLIC_SITE_URL` set to the domain Vercel serves production on, production sends every other host name to it
-(308); an address Vercel doesn't serve yet is never redirected to. After deploying, submit
+login and sign-up are `noindex`; `robots.txt` names the sitemap and lets search engines see listing photos. Production
+sends every other host name (the `*.vercel.app` address) to the site's own domain (308): `NEXT_PUBLIC_SITE_URL` when
+set, else the domain assigned to the project on Vercel; an address Vercel doesn't serve yet is never redirected to. After deploying, submit
 `/sitemap.xml` in Google Search Console.
 
 ### Visit statistics
@@ -268,7 +268,7 @@ the page covers a browser you use signed out. Page views are deleted after 13 mo
      each preview has its own Neon branch, set `PREVIEW_DB_ISOLATED=true` for Preview.
    - `RESEND_API_KEY` + `EMAIL_FROM` for email: `EMAIL_FROM` must be a sender on a domain you verified in Resend
      (e.g. `OffplanDistress <deals@felicitypro.com>`), or sellers and buyers get no emails in production.
-   - Optional: `NEXT_PUBLIC_SITE_URL` (e.g. `https://offplandistress.com`; defaults to the Vercel production URL) for
+   - Optional: `NEXT_PUBLIC_SITE_URL` (e.g. `https://offplandistress.com`; defaults to the domain assigned to the project on Vercel) for
      links in emails, canonical URLs and the redirect of other host names; `ANALYTICS_SALT` for the visit statistics.
    - Company details (trade licence 1145910, RERA ORN 33951, broker BRN 59244, phone/WhatsApp +971 56 352 0611,
      office address in Bay Square) are built in (`BRAND` in `src/lib/config.ts`). Each can be overridden with its

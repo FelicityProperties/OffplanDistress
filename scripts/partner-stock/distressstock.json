@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-10-29T09:59:49Z",
+ "generatedAt": "2026-10-29T10:33:27Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -819,6 +819,75 @@
     }
    ],
    "notes": "Posted on DistressStock August 18, 2026: DISTRESS DEAL: 3-BR IN CANAL HEIGHTS 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 6,062,160; selling price AED 5,750,000. 2 instalment(s) in the posted plan fall before today (16-SEP-2026, 16-OCT-2026): confirm whether they were paid."
+  },
+  {
+   "ref": "6tU9pf",
+   "url": "https://distressonly.deals/u/6tU9pf",
+   "posted": "2026-10-28",
+   "listing": {
+    "projectName": "Binghatti Skyblade",
+    "developer": "Binghatti",
+    "developerOther": null,
+    "community": "Downtown Dubai",
+    "communityOther": null,
+    "unitType": "2br",
+    "sizeSqft": 1260,
+    "floor": "35-45",
+    "view": "Burj",
+    "originalPrice": 4980000,
+    "amountPaid": 2466173,
+    "askingPrice": 2186173,
+    "handoverDate": "2027-11-30",
+    "nextInstalmentDate": "2027-03-11",
+    "nextInstalmentAmount": 223027,
+    "paymentPlan": [
+     {
+      "label": "11-MAR-2027",
+      "dueDate": "2027-03-11",
+      "amount": 223027
+     },
+     {
+      "label": "11-JUN-2027",
+      "dueDate": "2027-06-11",
+      "amount": 398400
+     },
+     {
+      "label": "11-SEP-2027",
+      "dueDate": "2027-09-11",
+      "amount": 398400
+     },
+     {
+      "label": "26-NOV-2027",
+      "dueDate": "2027-11-26",
+      "amount": 1494000
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "6tU9pf-o0.webp",
+     "url": "https://distressonly.deals/media/units/423/de194413c81a.webp"
+    },
+    {
+     "filename": "6tU9pf-o1.webp",
+     "url": "https://distressonly.deals/media/units/423/99b7f2e41fa8.webp"
+    },
+    {
+     "filename": "6tU9pf-o2.webp",
+     "url": "https://distressonly.deals/media/units/423/e909e99bf9db.webp"
+    },
+    {
+     "filename": "6tU9pf-o3.webp",
+     "url": "https://distressonly.deals/media/units/423/f79b6d933154.webp"
+    },
+    {
+     "filename": "6tU9pf-k0.webp",
+     "url": "https://distressonly.deals/media/units/423/2ab63d8a1f6f.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock October 28, 2026: DISTRESS DEAL: 2-BR IN BINGHATTI SKYBLADE. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 5,179,199; selling price AED 4,700,000."
   },
   {
    "ref": "9MTsaW",
