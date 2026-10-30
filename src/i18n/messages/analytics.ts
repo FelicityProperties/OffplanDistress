@@ -449,8 +449,8 @@ export default defineMessages({
     "journey.sub":
       "此时间范围内最新的潜在客户、其访问的来源，以及他们在联系我们之前浏览过的页面。",
     "journey.empty": "此时间范围内没有潜在客户。",
-    "journey.stats": "联系前在 {span} 内浏览了 {n} 个页面 · 页面停留 {time}",
-    "journey.stats.one": "联系前在 {span} 内浏览了 1 个页面 · 页面停留 {time}",
+    "journey.stats": "联系前在 {span}内浏览了 {n} 个页面 · 页面停留 {time}",
+    "journey.stats.one": "联系前在 {span}内浏览了 1 个页面 · 页面停留 {time}",
     "journey.steps": "联系前浏览的页面",
     "journey.earlier": "未显示的更早页面：{n}",
     "journey.noPages":

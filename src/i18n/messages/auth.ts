@@ -95,7 +95,7 @@ export default defineMessages({
     "login.title": "欢迎回来",
     "login.sub": "登录您的 {brand} 账户。",
     "login.forgot": "忘记密码？",
-    "login.pending": "正在登录……",
+    "login.pending": "正在登录…",
     "login.newHere": "还没有账户？",
     "login.createAccount": "注册账户",
 
@@ -106,7 +106,7 @@ export default defineMessages({
     "signup.role.sell": "我想卖房",
     "signup.role.both": "买房和卖房",
     "signup.submit": "创建账户",
-    "signup.pending": "正在创建账户……",
+    "signup.pending": "正在创建账户…",
     "signup.consent": "创建账户即表示您同意我们的团队就您的房源和报价与您联系。",
     "signup.acceptTerms": "我同意《{terms}》和《{privacy}》",
     "signup.acceptTerms.terms": "使用条款",

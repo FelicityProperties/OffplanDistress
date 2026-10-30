@@ -422,7 +422,7 @@ export default defineMessages({
     "watchlist.saved": "关注于 {date}",
 
     "profile.title": "个人资料与 KYC",
-    "profile.signedInAs": "当前登录账号",
+    "profile.signedInAs": "当前登录账户",
     "profile.kycStatus": "KYC 状态",
     "profile.kycBody":
       "根据阿联酋法律，我们须在过户前核验买家和卖家的身份。已通过 KYC 认证的买家，其报价在向卖家展示时会带有“KYC 已认证”标签，更容易被接受。",

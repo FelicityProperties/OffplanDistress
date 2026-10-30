@@ -643,7 +643,7 @@ export default defineMessages({
     "docs.photos": "照片或开发商效果图（选填）",
     "docs.photosHint": "JPG、PNG 或 WebP 格式。手机拍摄的大图会自动压缩。",
     "docs.photosSelected": "已选择 {n} 张",
-    "docs.preparing": "正在处理照片……",
+    "docs.preparing": "正在处理照片…",
     "photo.heic":
       "{name} 无法在此浏览器中打开：HEIC 照片仅能在 Safari 中打开。请将其另存为 JPG（多数手机和相册应用均支持）或改用 Safari，然后重新选择。",
     "photo.unreadable": "{name} 无法作为照片读取。请选择 JPG、PNG 或 WebP 图片。",
@@ -692,8 +692,8 @@ export default defineMessages({
     "error.communityOther": "请输入社区名称",
     "error.docTooLarge": "{name} 超过 4 MB。请选择更小的文件，例如压缩后的 PDF。",
 
-    "submit.saving": "正在保存您的房源……",
-    "submit.uploading": "正在上传文件（{i}/{n}）……",
+    "submit.saving": "正在保存您的房源…",
+    "submit.uploading": "正在上传文件（{i}/{n}）…",
     "submit.cta": "提交核实",
     "confirm.label":
       "本人确认拥有此单元或已获授权出售，所提供的文件真实有效，并同意《{terms}》",
@@ -732,7 +732,7 @@ export default defineMessages({
     "uploader.uploaded": "文件已上传",
     "uploader.uploadedMany": "已上传 {n} 个文件",
     "uploader.uploadedSome": "已上传 {done} 个文件，共 {n} 个",
-    "uploader.progress": "正在上传第 {i} 个，共 {n} 个……",
+    "uploader.progress": "正在上传第 {i} 个，共 {n} 个…",
     "uploader.failedList": "以下文件上传失败。请处理后重新选择：",
     "uploader.fileError": "{name}：{error}",
     "uploader.dismiss": "关闭",
@@ -789,7 +789,7 @@ export default defineMessages({
     "estimate.consent": "我们仅会使用您的姓名和号码就出售单元事宜答复您，详见我们的《{privacy}》。",
     "estimate.consent.privacy": "隐私政策",
     "estimate.submit": "发送给我们的团队",
-    "estimate.submitting": "正在发送……",
+    "estimate.submitting": "正在发送…",
     "estimate.error.name": "请输入您的姓名",
     "estimate.error.tooMany": "您在过去一小时内已多次提交估算。请改为通过 WhatsApp 联系我们，或稍后再试。",
 
