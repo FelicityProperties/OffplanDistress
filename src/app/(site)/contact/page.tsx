@@ -6,6 +6,7 @@ import { InquiryFields } from "@/components/InquiryForm";
 import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND } from "@/lib/config";
+import { issueFormToken } from "@/lib/spam";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("marketing");
@@ -164,6 +165,7 @@ export default async function ContactPage() {
                   defaults={user ? { name: user.fullName, email: user.email, phone: user.phone } : undefined}
                   submitLabel={t("contact.submit")}
                   messagePlaceholder={t("contact.placeholder")}
+                  formToken={issueFormToken()}
                 />
               </div>
             </div>

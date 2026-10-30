@@ -11,6 +11,7 @@ export default defineMessages({
 
     "form.fixDetails": "Some details need fixing.",
     "form.checkFields": "Check the highlighted fields.",
+    "form.verifyFailed": "Please try again — the anti-spam check did not pass.",
 
     "field.invalid": "Check this field.",
     "field.tooLong": "Too long — {max} characters maximum.",
@@ -153,6 +154,7 @@ export default defineMessages({
 
     "form.fixDetails": "بعض البيانات بحاجة إلى تصحيح.",
     "form.checkFields": "راجِع الحقول المحددة.",
+    "form.verifyFailed": "يُرجى المحاولة مرة أخرى، فلم يجتز النموذج فحص مكافحة الرسائل المزعجة.",
 
     "field.invalid": "تحقق من هذا الحقل.",
     "field.tooLong": "النص طويل جداً — الحد الأقصى لعدد الأحرف: {max}.",

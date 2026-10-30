@@ -19,6 +19,7 @@ import { emailEnabled, sendEmail } from "@/lib/email";
 import { awaitingOwnerSql, isImportOwner } from "@/lib/import";
 import { IMPORT_KEY_RE } from "@/lib/import-format";
 import { formatDate, formatNumber, refCode } from "@/lib/format";
+import { notifyInquiryReceived } from "@/lib/inquiries";
 import { isUuid } from "@/lib/utils";
 import { whatsappNumber } from "@/lib/leads";
 import { renderTemplate } from "@/lib/notification-templates";
@@ -621,6 +622,40 @@ export async function setInquiryHandled(id: string, handled: boolean) {
   await db.update(inquiries).set({ handled }).where(eq(inquiries.id, id));
   if (before && before.handled !== handled) {
     await audit({ actorId: me.id, action: "inquiry.handled", entityType: "inquiry", entityId: id, diff: { handled: [before.handled, handled] } });
+  }
+  refresh();
+  return { ok: true };
+}
+
+/**
+ * "Spam" on an inbox row, "Not spam" on the Spam tab of /admin/inquiries. A message the content score caught
+ * (src/lib/spam.ts) notified nobody; moved back to the inbox, the team gets the "inquiry.received" notice it skipped.
+ */
+export async function setInquirySpam(id: string, spam: boolean) {
+  const me = await assertAdmin();
+  if (!isUuid(id)) return { error: (await getT("errors"))("field.invalid") };
+  const [q] = await db
+    .select({ inquiry: inquiries, projectName: listings.projectName, refNo: listings.refNo })
+    .from(inquiries)
+    .leftJoin(listings, eq(listings.id, inquiries.listingId))
+    .where(eq(inquiries.id, id))
+    .limit(1);
+  if (!q) return { error: (await getT("errors"))("field.invalid") };
+  if (q.inquiry.spam !== spam) {
+    // A row marked by hand keeps the score's reason if it had one; the reason only shows on the Spam tab.
+    const spamReason = spam ? (q.inquiry.spamReason ?? "marked by the team") : q.inquiry.spamReason;
+    await db.update(inquiries).set({ spam, spamReason }).where(eq(inquiries.id, id));
+    await audit({
+      actorId: me.id,
+      action: spam ? "inquiry.spam" : "inquiry.not_spam",
+      entityType: "inquiry",
+      entityId: id,
+      diff: { spam: [q.inquiry.spam, spam] },
+    });
+    if (!spam) {
+      const listing = q.refNo != null && q.projectName ? { projectName: q.projectName, refNo: q.refNo } : null;
+      await notifyInquiryReceived({ ...q.inquiry, listing });
+    }
   }
   refresh();
   return { ok: true };

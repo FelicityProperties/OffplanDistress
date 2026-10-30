@@ -342,6 +342,10 @@ export const inquiries = pgTable(
     phone: text("phone"),
     message: text("message"),
     handled: boolean("handled").notNull().default(false),
+    /** Caught by the content score (src/lib/spam.ts): on the admin's Spam tab, in no count, nobody notified. */
+    spam: boolean("spam").notNull().default(false),
+    /** Why it was caught, for the admin ("wording: into google; link: seo-example.net"). */
+    spamReason: text("spam_reason"),
     source: jsonb("source").$type<Source>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

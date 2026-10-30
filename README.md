@@ -197,6 +197,22 @@ kept in session storage, not a cookie, and saved with the lead, sign-up, listing
 logging in from the thank-you link attaches the lead to the account and pre-fills the sell form. Leads with no
 listing or account are deleted 24 months after the last update.
 
+### Contact form and spam protection
+
+The contact form (`/contact`) and the viewing / info request on each deal page land in `/admin/inquiries` and notify
+the admins; the free estimate's lead form shares the same defences (`src/lib/spam.ts`). Every submission passes a
+honeypot field nobody sees, then a server-signed timing token the page was rendered with (no JavaScript needed; a
+post without one, with a stale one, or under three seconds after the page was served is a bot and gets the normal
+thank-you with nothing stored), then the limits: 5 contact messages an hour per IP (10 for deal-page requests, 5
+estimates), 3 a day per email address (per phone number for estimates). A message is then scored: the "get your site
+into Google's index" vocabulary, links to other sites, a one-word name, a fake address, a long off-topic text; at 3
+points it is stored flagged — the sender sees the thank-you, nobody is notified, and it sits on the **Spam** tab of
+`/admin/inquiries` with the reason, where "Not spam" moves it to the inbox and sends the team the notice it skipped
+("Spam" on an inbox row does the opposite). Spam never counts: not in the sidebar badge, the follow-ups, the daily
+digest or the analytics' leads line. Optional extra: Cloudflare Turnstile (`NEXT_PUBLIC_TURNSTILE_SITE_KEY` +
+`TURNSTILE_SECRET_KEY`) renders the widget on both forms and verifies every submission; without the keys nothing
+changes. Migration 0013 adds the columns and flags the SEO pitches already stored.
+
 ### Notifications
 
 | Event | Who hears about it |
@@ -298,6 +314,9 @@ the page covers a browser you use signed out. Page views are deleted after 13 mo
      (e.g. `OffplanDistress <deals@felicitypro.com>`), or sellers and buyers get no emails in production.
    - Optional: `NEXT_PUBLIC_SITE_URL` (e.g. `https://offplandistress.com`; defaults to the domain assigned to the project on Vercel) for
      links in emails, canonical URLs and the redirect of other host names; `ANALYTICS_SALT` for the visit statistics.
+   - Optional: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` (a Managed or Invisible Turnstile widget made
+     in the Cloudflare dashboard for the site's domain) put Cloudflare's anti-bot check on the contact / viewing form
+     and the free estimate; `FORM_SECRET` signs those forms' timing tokens (defaults to `CRON_SECRET`).
    - Company details (trade licence 1145910, RERA ORN 33951, broker BRN 59244, phone/WhatsApp +971 56 352 0611,
      office address in Bay Square) are built in (`BRAND` in `src/lib/config.ts`). Each can be overridden with its
      `NEXT_PUBLIC_*` variable (see `.env.example`); an empty variable keeps the built-in value.

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createInquiry } from "@/app/actions/market";
 import { AttributionField } from "@/components/Attribution";
 import { Field, FormMessage, SubmitButton } from "@/components/forms";
+import { SpamGuard } from "@/components/SpamGuard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ export function InquiryFields({
   onDone,
   submitLabel,
   messagePlaceholder,
+  formToken,
 }: {
   listingId?: string;
   type: "info" | "viewing" | "contact";
@@ -30,17 +32,23 @@ export function InquiryFields({
   onDone?: () => void;
   submitLabel?: string;
   messagePlaceholder?: string;
+  /** issueFormToken() from the page that renders the form (src/lib/spam.ts). */
+  formToken?: string;
 }) {
   const t = useT("marketing");
   const tc = useT("common");
   const tl = useT("legal");
   const [state, action] = useActionState(createInquiry, {});
+  // Counts refused submissions, so the anti-spam widget (if any) issues a fresh token for the next try.
+  const [attempt, setAttempt] = useState(0);
   const done = useRef(onDone);
   done.current = onDone;
   useEffect(() => {
     if (state.ok) {
       toast.success(t("inquiry.sentTitle"), { description: t("inquiry.sentBody") });
       done.current?.();
+    } else if (state.error || state.fieldErrors) {
+      setAttempt((n) => n + 1);
     }
     // `t` only changes with the locale; the toast should fire once per submission.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -52,10 +60,11 @@ export function InquiryFields({
   }
 
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} className="relative space-y-4">
       {listingId && <input type="hidden" name="listingId" value={listingId} />}
       <input type="hidden" name="type" value={type} />
       <AttributionField />
+      <SpamGuard token={formToken} resetKey={attempt} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t("inquiry.name")} htmlFor="inq-name" error={fe.name}>
           <Input id="inq-name" name="name" defaultValue={defaults?.name} required autoComplete="name" />
@@ -113,11 +122,13 @@ export function InquiryDialog({
   project,
   defaults,
   triggerClassName,
+  formToken,
 }: {
   listingId: string;
   project: string;
   defaults?: Defaults;
   triggerClassName?: string;
+  formToken?: string;
 }) {
   const t = useT("marketing");
   const [open, setOpen] = useState(false);
@@ -141,6 +152,7 @@ export function InquiryDialog({
           defaults={defaults}
           onDone={() => setOpen(false)}
           messagePlaceholder={t("inquiry.dialogPlaceholder")}
+          formToken={formToken}
         />
       </DialogContent>
     </Dialog>
