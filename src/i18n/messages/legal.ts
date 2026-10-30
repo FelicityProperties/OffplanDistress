@@ -28,7 +28,7 @@ export default defineMessages({
     "closing.body": "Write to us and our team will get back to you.",
     "closing.email": "Email {email}",
     "closing.language":
-      "This document is published in English and Arabic. If the two versions differ, the English version prevails.",
+      "This document is published in English, Arabic and Simplified Chinese. If the versions differ, the English version prevails.",
 
     "inquiry.privacy": "We use your details only to answer your message, as explained in our {privacy}.",
     newTab: "(opens in a new tab)",
@@ -58,9 +58,39 @@ export default defineMessages({
     "closing.body": "راسلنا وسيتواصل معك فريقنا.",
     "closing.email": "راسلنا على {email}",
     "closing.language":
-      "يُنشر هذا المستند باللغتين الإنجليزية والعربية، وفي حال وجود أي اختلاف بين النسختين، تسود النسخة الإنجليزية.",
+      "يُنشر هذا المستند باللغات الإنجليزية والعربية والصينية المبسطة، وفي حال وجود أي اختلاف بين النسخ، تسود النسخة الإنجليزية.",
 
     "inquiry.privacy": "لا نستخدم بياناتك إلا للرد على رسالتك، وفقاً لما توضّحه {privacy}.",
     newTab: "(يُفتح في علامة تبويب جديدة)",
+  },
+  zh: {
+    "meta.terms.title": "使用条款",
+    "meta.terms.description":
+      "通过我们的平台买卖迪拜急售期房的条款：我们作为经纪方的角色、费用、报价、核实流程以及您的义务。",
+    "meta.privacy.title": "隐私政策",
+    "meta.privacy.description":
+      "我们如何依据《阿联酋个人数据保护法》收集、使用、共享和保护您的个人数据，以及您如何行使自己的权利。",
+    "meta.cookies.title": "Cookie 政策",
+    "meta.cookies.description":
+      "我们仅使用两个 Cookie（均为严格必要），本政策说明如何删除或阻止它们。不使用分析、广告或第三方 Cookie。",
+
+    eyebrow: "法律信息",
+    "nav.label": "法律文件",
+    "nav.terms": "使用条款",
+    "nav.privacy": "隐私政策",
+    "nav.cookies": "Cookie 政策",
+    lastUpdated: "最后更新：{date}",
+    sectionsCount: "共 {n} 节",
+    summary: "要点概览",
+    toc: "本页内容",
+    backToTop: "返回顶部",
+    "closing.title": "对本文件有疑问？",
+    "closing.body": "请来信联系我们，我们的团队会尽快回复。",
+    "closing.email": "发送邮件至 {email}",
+    "closing.language":
+      "本文件以英文发布，并提供阿拉伯文和中文版本。如各版本之间存在差异，以英文版本为准。",
+
+    "inquiry.privacy": "我们仅将您的信息用于回复您的消息，详见我们的《{privacy}》。",
+    newTab: "（在新标签页中打开）",
   },
 });

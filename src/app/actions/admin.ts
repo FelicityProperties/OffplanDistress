@@ -6,7 +6,7 @@ import { and, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { files, inquiries, listings, offers, passwordResets, sellerLeads, sessions, users, type Source } from "@/db/schema";
-import { dirOf, isLocale } from "@/i18n/config";
+import { dirOf, isLocale, LOCALES } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { ATTESTATION_VERSION, BULK_ATTESTATION, LISTING_ATTESTATION, PERMIT_ATTESTATION } from "@/lib/attestation";
@@ -678,7 +678,7 @@ const staffSellerSchema = (t: T, m: PersonMessages = sellerMessages(t)) =>
     sellerName: z.string().trim().min(2, m.name).max(120),
     sellerEmail: z.string().trim().max(200).pipe(z.email(t("field.email"))).optional(),
     sellerPhone: z.string().trim().max(30).optional(),
-    sellerLocale: z.enum(["en", "ar"]).catch("en"),
+    sellerLocale: z.enum(LOCALES).catch("en"),
     leadId: z.uuid().optional(),
   });
 
@@ -949,6 +949,7 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
       heading: msg.title,
       body: msg.body,
       cta: { label: msg.cta, href: claimPath(token, locale) },
+      locale,
       dir: dirOf(locale),
     });
     return sent ? { ok: true as const, emailed: true } : { error: t("admin.claim.emailFailed") };

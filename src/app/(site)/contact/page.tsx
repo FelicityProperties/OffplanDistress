@@ -5,7 +5,7 @@ import { Landmark, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { InquiryFields } from "@/components/InquiryForm";
 import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
-import { BRAND } from "@/lib/config";
+import { BRAND, brandAddress, brandName, brokerName, licenceAuthority } from "@/lib/config";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("marketing");
@@ -20,7 +20,6 @@ const linkClass = "hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-lift
 
 export default async function ContactPage() {
   const [user, t, locale] = await Promise.all([getCurrentUser(), getT("marketing"), getLocale()]);
-  const ar = locale === "ar";
 
   // Phone and WhatsApp only appear once they're configured (see BRAND in src/lib/config.ts).
   const tiles: Tile[] = [];
@@ -51,7 +50,7 @@ export default async function ContactPage() {
     label: t("contact.tile.office"),
     value: (
       <>
-        {ar ? BRAND.addressAr : BRAND.address}
+        {brandAddress(locale)}
         <span className="mt-1 block text-sm font-normal text-gold-foreground underline decoration-gold/50 underline-offset-4">
           {t("contact.tile.directions")}
         </span>
@@ -60,13 +59,13 @@ export default async function ContactPage() {
     href: BRAND.mapsUrl,
   });
   const licence: [string, ReactNode][] = [
-    [t("contact.licence.company"), ar ? BRAND.companyAr : BRAND.company],
+    [t("contact.licence.company"), brandName(locale)],
     [
       t("contact.licence.tradeLicence"),
-      t("contact.licence.tradeLicenceValue", { n: BRAND.licence, authority: ar ? BRAND.licenceAuthorityAr : BRAND.licenceAuthority }),
+      t("contact.licence.tradeLicenceValue", { n: BRAND.licence, authority: licenceAuthority(locale) }),
     ],
     [t("contact.licence.orn"), BRAND.orn],
-    [t("contact.licence.broker"), `${ar ? BRAND.broker.nameAr : BRAND.broker.name} · ${BRAND.broker.brn}`],
+    [t("contact.licence.broker"), `${brokerName(locale)} · ${BRAND.broker.brn}`],
   ];
 
   return (

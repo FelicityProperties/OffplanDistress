@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { richText } from "@/content/legal/rich-text";
-import type { LegalContent } from "@/content/legal/types";
+import type { LegalContent, LegalDoc } from "@/content/legal/types";
 import { intlLocale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import { BRAND } from "@/lib/config";
@@ -55,20 +55,25 @@ function inline(text: string): ReactNode[] {
   });
 }
 
-/** "Account data: …" → bold lead-in. Only short labels qualify, so ordinary sentences are left alone. */
+/**
+ * "Account data: …" (or "账户数据：…" with the full-width colon) → bold lead-in. Only short labels qualify, so ordinary
+ * sentences are left alone.
+ */
 function bullet(text: string): ReactNode {
-  const m = /^([^:.;]{1,60}):\s([\s\S]*)$/.exec(text);
+  const m = /^([^:.;：。；]{1,60})(:\s|：)([\s\S]*)$/.exec(text);
   if (!m) return inline(text);
   return (
     <>
-      <strong className="font-semibold text-foreground">{inline(m[1])}</strong>: {inline(m[2])}
+      <strong className="font-semibold text-foreground">{inline(m[1])}</strong>
+      {m[2]}
+      {inline(m[3])}
     </>
   );
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-function TocLinks({ sections, className }: { sections: LegalContent["en"]["sections"]; className?: string }) {
+function TocLinks({ sections, className }: { sections: LegalDoc["sections"]; className?: string }) {
   return (
     <ol className={cn("space-y-0.5 text-sm", className)}>
       {sections.map((s, i) => (
@@ -89,8 +94,9 @@ function TocLinks({ sections, className }: { sections: LegalContent["en"]["secti
 /** Terms / Privacy / Cookies page: hero, summary, sticky table of contents and numbered sections. */
 export async function LegalDocument({ doc, current }: { doc: LegalContent; current?: DocKey }) {
   const [locale, t] = await Promise.all([getLocale(), getT("legal")]);
-  const d = doc[locale];
-  const date = new Intl.DateTimeFormat(locale === "ar" ? intlLocale("ar") : "en-GB", {
+  // Every locale in LOCALES has its own version; should one be missing at runtime, the English document is shown.
+  const d: LegalDoc = (doc as Partial<LegalContent>)[locale] ?? doc.en;
+  const date = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : intlLocale(locale), {
     day: "numeric",
     month: "long",
     year: "numeric",

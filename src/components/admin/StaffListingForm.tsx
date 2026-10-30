@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLocale, useT } from "@/i18n/client";
+import { LOCALES, type Locale } from "@/i18n/config";
 import { COMMUNITIES, DEVELOPERS, MOTIVATION, UNIT_TYPES } from "@/lib/config";
 import { formatQuarter } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
@@ -20,7 +21,7 @@ export type StaffPrefill = {
   sellerName?: string;
   sellerPhone?: string;
   sellerEmail?: string;
-  sellerLocale?: "en" | "ar";
+  sellerLocale?: Locale;
   developer?: string;
   developerOther?: string;
   community?: string;
@@ -93,8 +94,11 @@ export function StaffListingForm({ prefill = {}, quarters }: { prefill?: StaffPr
           </Field>
           <Field label={t("create.sellerLocale")} htmlFor="sellerLocale">
             <select id="sellerLocale" name="sellerLocale" defaultValue={prefill.sellerLocale ?? "en"} className={selectClass}>
-              <option value="en">{t("create.locale.en")}</option>
-              <option value="ar">{t("create.locale.ar")}</option>
+              {LOCALES.map((l) => (
+                <option key={l} value={l}>
+                  {t(`create.locale.${l}`)}
+                </option>
+              ))}
             </select>
           </Field>
         </div>

@@ -1,24 +1,24 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { LOCALE_COOKIE, type Locale } from "@/i18n/config";
-import { AR_PREFIX, isLocalizedPath, LOCALE_HEADER, PATH_HEADER, QUERY_HEADER, SAVED_HEADER, stripLocale } from "@/i18n/paths";
+import { DEFAULT_LOCALE, isLocale, LOCALE_COOKIE, type Locale } from "@/i18n/config";
+import { isLocalizedPath, LOCALE_HEADER, localeOfPath, localePath, PATH_HEADER, QUERY_HEADER, SAVED_HEADER, stripLocale } from "@/i18n/paths";
 import { canonicalSiteUrl } from "@/lib/site-url";
 
 // Runs before every page (not the API, Next's files or static files; see `config` below).
 //
-// - /ar/… is the Arabic version of a public page: rewritten to the page itself, with x-od-locale: ar and x-od-path
-//   (the path without /ar) on the request, so getLocale() (src/i18n/server.ts) and the metadata know. Opening one
-//   remembers Arabic in the od_locale cookie.
-// - A plain public address is English. A visitor whose od_locale cookie says Arabic gets a 307 to the /ar address, so
-//   links in emails, WhatsApp shares and old bookmarks open in their language. The browser's Accept-Language never
-//   redirects anyone (a crawler has no cookie, so it sees each address in its own language).
-// - /en/… remembers English and redirects to the plain address: the language switcher's link without JavaScript.
-// - /dashboard and /admin have one address in both languages and follow the cookie (/ar/dashboard → /dashboard).
+// - /ar/… and /zh/… are the Arabic and Chinese versions of a public page: rewritten to the page itself, with
+//   x-od-locale: ar (or zh) and x-od-path (the path without the prefix) on the request, so getLocale()
+//   (src/i18n/server.ts) and the metadata know. Opening one remembers that language in the od_locale cookie.
+// - A plain public address is English. A visitor whose od_locale cookie says Arabic or Chinese gets a 307 to the /ar
+//   or /zh address, so links in emails, WhatsApp shares and old bookmarks open in their language. The browser's
+//   Accept-Language never redirects anyone (a crawler has no cookie, so it sees each address in its own language).
+// - /en/… remembers English and redirects to the plain address: the language menu's link without JavaScript.
+// - /dashboard and /admin have one address in every language and follow the cookie (/ar/dashboard → /dashboard).
 // - In production, another host name (the *.vercel.app address) gets a 308 to the site's own domain, so search engines
 //   index one copy: NEXT_PUBLIC_SITE_URL when set, else the domain assigned to the project on Vercel (canonicalSiteUrl).
 
 const COOKIE = { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" as const };
 
-/** Next's generated share images: same image in both languages, never redirected. */
+/** Next's generated share images: the same image in every language, never redirected. */
 const METADATA_IMAGE = /\/(?:opengraph-image|twitter-image)(?:-[\w-]+)?$/;
 
 /** A page load the visitor asked for, as opposed to Next's background fetches (link prefetches, client navigation). */
@@ -77,32 +77,34 @@ export function proxy(request: NextRequest) {
   headers.set(QUERY_HEADER, request.nextUrl.search);
   const saved = request.cookies.get(LOCALE_COOKIE)?.value;
 
-  const prefix = /^\/(ar|en)(?=\/|$)/.exec(pathname)?.[1] as Locale | undefined;
+  // The language the address names: /ar/…, /zh/… (a page in that language) or /en/… (the switch back to English).
+  const prefix: Locale | null = localeOfPath(pathname);
   if (prefix) {
     const path = stripLocale(pathname);
     const plain = request.nextUrl.clone();
     plain.pathname = path;
-    if (prefix === "en" || !isLocalizedPath(path)) {
+    if (prefix === DEFAULT_LOCALE || !isLocalizedPath(path)) {
       // "/en/…" (switch to English) or "/ar/dashboard" (the consoles have one address): remember the language and go
       // to the plain address. Anything but a page load of such an address is not a page.
-      if (!read && prefix === "ar") return NextResponse.next();
+      if (!read && prefix !== DEFAULT_LOCALE) return NextResponse.next();
       return remember(NextResponse.redirect(plain, 307), request, prefix);
     }
-    headers.set(LOCALE_HEADER, "ar");
+    headers.set(LOCALE_HEADER, prefix);
     headers.set(PATH_HEADER, path);
     headers.set(SAVED_HEADER, saved ?? "");
     const response = NextResponse.rewrite(plain, { request: { headers } });
     // Only a page load the visitor asked for sets the cookie: a link prefetch from an English page must not.
-    return read && isDocumentRequest(request) ? remember(response, request, "ar") : response;
+    return read && isDocumentRequest(request) ? remember(response, request, prefix) : response;
   }
 
   if (isLocalizedPath(pathname)) {
-    if (read && saved === "ar" && !METADATA_IMAGE.test(pathname)) {
-      const arabic = request.nextUrl.clone();
-      arabic.pathname = pathname === "/" ? AR_PREFIX : `${AR_PREFIX}${pathname}`;
-      return NextResponse.redirect(arabic, 307);
+    // A saved Arabic or Chinese choice opens the plain address in that language (/ar/…, /zh/…).
+    if (read && isLocale(saved) && saved !== DEFAULT_LOCALE && !METADATA_IMAGE.test(pathname)) {
+      const localized = request.nextUrl.clone();
+      localized.pathname = localePath(pathname, saved);
+      return NextResponse.redirect(localized, 307);
     }
-    headers.set(LOCALE_HEADER, "en");
+    headers.set(LOCALE_HEADER, DEFAULT_LOCALE);
     headers.set(SAVED_HEADER, saved ?? "");
   }
   headers.set(PATH_HEADER, pathname);

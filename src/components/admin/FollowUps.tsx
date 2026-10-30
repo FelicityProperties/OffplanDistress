@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ListTodo, Mail, MessageCircle, Phone } from "lucide-react";
 import { StatusPill } from "@/components/badges";
 import { Button } from "@/components/ui/button";
+import { listSeparator } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import { BRAND } from "@/lib/config";
 import { formatAED, formatDate, formatNumber, timeAgo } from "@/lib/format";
@@ -56,7 +57,7 @@ export async function FollowUps() {
   const { counts, total } = followUpCounts(f);
   // Numbers, amounts and dates keep their own direction inside Arabic sentences.
   const iso = (s: string) => (locale === "ar" ? `\u2068${s}\u2069` : s);
-  const sep = locale === "ar" ? "، " : ", ";
+  const sep = listSeparator(locale);
 
   const meta = (key: FollowUpKey, it: FollowUpItem) => {
     const time = timeAgo(it.since, locale);

@@ -64,7 +64,8 @@ function externalReferrerHost() {
 
 export function PageViewTracker({ staff }: { staff: boolean }) {
   const address = usePathname();
-  // The same page in both languages is one page in the report: "/ar/deals" is recorded as "/deals" with locale "ar".
+  // The same page in every language is one page in the report: "/ar/deals" is recorded as "/deals" with locale "ar",
+  // "/zh/deals" with locale "zh".
   const pathname = address ? stripLocale(address) : address;
   const params = useSearchParams();
   const pageLocale = useLocale();

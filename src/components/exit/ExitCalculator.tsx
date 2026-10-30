@@ -313,7 +313,8 @@ export function ExitCalculator() {
   /** Translated text with its numbers isolated (percentages, ranges) — for display, not attributes. */
   const tx = (...args: Parameters<typeof t>) => ltr(t(...args));
   const locale = useLocale();
-  const plural = useMemo(() => new Intl.PluralRules(locale === "ar" ? "ar" : "en"), [locale]);
+  // The language's plural forms (Chinese has only "other": its messages carry the figure).
+  const plural = useMemo(() => new Intl.PluralRules(locale), [locale]);
   const monthsText = (n: number) => t(`count.months.${plural.select(n)}`, { n });
   const ids = useId();
   const [price, setPrice] = useState<number | null>(DEFAULTS.price);

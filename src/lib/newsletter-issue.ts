@@ -6,7 +6,7 @@ import { dirOf, type Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { tFor } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
-import { BRAND, PUBLIC_STATUSES, type UnitTypeKey } from "./config";
+import { BRAND, brandAddress, brandName, brokerName, PUBLIC_STATUSES, type UnitTypeKey } from "./config";
 import { analyzeDeal } from "./deal-math";
 import { emailEnabled, sendEmail } from "./email";
 import { formatAED, formatDate, formatQuarter, refCode } from "./format";
@@ -259,12 +259,22 @@ function escape(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-const plurals: Record<Locale, Intl.PluralRules> = { en: new Intl.PluralRules("en"), ar: new Intl.PluralRules("ar") };
+const plurals: Record<Locale, Intl.PluralRules> = {
+  en: new Intl.PluralRules("en"),
+  ar: new Intl.PluralRules("ar"),
+  zh: new Intl.PluralRules("zh"),
+};
 
-/** "3 new distressed deals" / "صفقتان متعثرتان جديدتان": the message form for the count (Arabic has one, two, few, many). */
+/**
+ * "3 new distressed deals" / "صفقتان متعثرتان جديدتان" / "3 套新急售房源": the message form for the count. English has
+ * one and other, Arabic one, two, few, many and other, Chinese only other (so its messages carry the figure); a form
+ * the language's rules name but the messages don't have falls back to "other".
+ */
 function counted(t: TFn<"newsletter">, locale: Locale, noun: "new" | "drops" | "gone", n: number) {
   const form = plurals[locale].select(n);
-  return t(`issue.${noun}.${form === "zero" ? "other" : form}` as Parameters<typeof t>[0], { n });
+  const key = `issue.${noun}.${form}` as Parameters<typeof t>[0];
+  const text = form === "zero" ? key : t(key, { n });
+  return text === key ? t(`issue.${noun}.other` as Parameters<typeof t>[0], { n }) : text;
 }
 
 const LINK_STYLE = "color:#141c33;font-weight:600;text-decoration:underline";
@@ -285,9 +295,10 @@ export function renderIssue(content: IssueContent, locale: Locale, opts: { unsub
   const base = siteUrl();
   const url = (href: string) => `${base}${localePath(href, locale)}`;
   const unsubscribeUrl = opts.unsubscribeUrl ?? `${base}${unsubscribePath("preview", locale)}`;
-  const company = rtl ? BRAND.companyAr : BRAND.company;
-  const brokerName = rtl ? BRAND.broker.nameAr : BRAND.broker.name;
-  const address = rtl ? BRAND.addressAr : BRAND.address;
+  // The licence details in Arabic on the Arabic issue, in their Latin form on the English and Chinese ones.
+  const company = brandName(locale);
+  const broker = brokerName(locale);
+  const address = brandAddress(locale);
   const site = new URL(base).host;
 
   const n = content.newListings.length;
@@ -361,7 +372,7 @@ ${more > 0 ? `<p style="margin:8px 0 0;font-size:14px"><a href="${escape(allDeal
 
   const footerLines = [
     td("listedBy.office", { company, orn: BRAND.orn }),
-    td("listedBy.broker", { name: brokerName, brn: BRAND.broker.brn }),
+    td("listedBy.broker", { name: broker, brn: BRAND.broker.brn }),
     address,
   ];
   const html = `<p style="margin:0 0 4px;font-size:15px;line-height:1.6;${MUTED}">${escape(t("issue.intro"))}</p>
@@ -401,6 +412,7 @@ async function sendOne(content: IssueContent, s: Subscriber) {
     heading: rendered.heading,
     html: rendered.html,
     text: rendered.text,
+    locale: s.locale,
     dir: dirOf(s.locale),
     // RFC 8058: mail clients show their own unsubscribe button and POST to the endpoint, no page involved.
     headers: {

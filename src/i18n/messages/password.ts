@@ -153,4 +153,79 @@ export default defineMessages({
 
     backToLogin: "العودة إلى تسجيل الدخول",
   },
+  zh: {
+    "meta.forgot.title": "忘记密码",
+    "meta.forgot.description": "获取链接，为您的账户设置新密码。",
+    "meta.reset.title": "设置新密码",
+
+    "field.email": "电子邮箱",
+    "field.password": "新密码",
+    "field.confirm": "确认新密码",
+    "field.passwordHint": "至少 8 个字符",
+
+    "forgot.title": "忘记密码？",
+    "forgot.sub": "输入您注册时使用的电子邮箱，我们将向您发送设置新密码的链接。",
+    "forgot.submit": "发送重置链接",
+    "forgot.resend": "重新发送",
+    "forgot.sentTitle": "请查收邮件",
+    "forgot.sentBody":
+      "如果 {email} 对应的账户存在，我们已向该邮箱发送重置密码的链接。链接有效期为 1 小时，如未收到，请检查垃圾邮件文件夹。",
+    "forgot.noEmailTitle": "邮件重置功能暂未开通",
+    "forgot.noEmailBody":
+      "我们的邮件服务尚未配置，暂时无法发送重置链接。请联系我们的团队，我们将为您重置密码。",
+    "forgot.remembered": "想起密码了？",
+
+    "reset.title": "设置新密码",
+    "reset.sub": "请设置一个未在其他地方使用的密码。保存后将直接为您登录。",
+    "reset.submit": "保存新密码",
+    "reset.signOutNote": "此操作会使您在其他所有设备上退出登录。",
+    "reset.missingTitle": "缺少重置链接",
+    "reset.missingBody": "请打开密码重置邮件中的链接，或申请新的链接。",
+    "reset.invalidTitle": "此链接已失效",
+    "reset.invalidBody": "重置链接仅可使用一次，且 1 小时后失效。请申请新的链接以继续。",
+    "reset.requestNew": "申请新链接",
+
+    "errors.email": "请输入有效的电子邮箱",
+    "errors.passwordMin": "请使用至少 8 个字符",
+    "errors.mismatch": "两次输入的密码不一致",
+    "errors.invalidToken": "此重置链接无效或已失效。",
+
+    "meta.claim.title": "确认您的房源",
+    "claim.title": "确认您的房源",
+    "claim.sub":
+      "我们的团队已根据收到的信息和文件准备好这条房源。请核对信息，确认您有权出售该单元，并为您的账户设置密码。",
+    "claim.subExisting": "我们的团队已将这条房源添加到您的账户。请核对信息并确认您有权出售该单元。",
+    "claim.summary": "您的房源",
+    "claim.summary.ref": "参考编号",
+    "claim.summary.project": "项目",
+    "claim.summary.unit": "单元",
+    "claim.summary.asking": "您的要价",
+    "claim.summaryNote": "信息有误？请在确认前联系我们的团队，我们会为您更正。",
+    "claim.name": "账户姓名",
+    "claim.email": "您的电子邮箱",
+    "claim.emailHint": "您将使用此邮箱登录，我们也会把房源的最新进展发送到此邮箱。",
+    "claim.submit": "确认并创建我的账户",
+    "claim.submitExisting": "确认我的房源",
+    "claim.after":
+      "接下来，我们的团队将核查您的文件，并向您发送迪拜房地产监管局（RERA）的 A 表（委托销售协议）供您签署。迪拜土地局广告许可签发后，房源即会发布。您的联系方式绝不会向买家显示。",
+    "claim.confirmNew":
+      "本人为该单元的业主或已获授权出售该单元，所提供的文件真实有效，并同意《{terms}》和《{privacy}》",
+    "claim.privacy": "隐私政策",
+    "claim.errors.confirmNew": "请确认您有权出售该单元，并接受《使用条款》和《隐私政策》",
+    "claim.loginTitle": "登录以确认您的房源",
+    "claim.loginBody": "我们的团队已将这条房源添加到您现有的账户（{email}）。请使用您的密码登录，登录后此页面会再次打开供您确认。",
+    "claim.loginCta": "登录以确认",
+    "claim.otherAccount": "您当前登录的是另一个账户。请先退出登录，然后重新打开链接并以 {email} 登录。",
+    "claim.logout": "退出",
+    "claim.invalidTitle": "此链接已失效",
+    "claim.invalidBody":
+      "确认链接仅可使用一次，且 7 天后失效。已经确认过了？登录即可查看您的房源。否则，请通过 WhatsApp 联系我们的团队，我们会向您发送新的链接。",
+    "claim.contact": "通过 WhatsApp 联系我们",
+    "claim.errors.emailTaken":
+      "此邮箱已被另一个账户使用。请改用其他邮箱，或登录该账户并联系我们，将这条房源转移到该账户。",
+    "claim.errors.emailReserved": "此邮箱不能用于卖家账户。请改用其他邮箱。",
+    "claim.errors.signIn": "请登录这条房源所属的账户，然后重新打开链接。",
+
+    backToLogin: "返回登录",
+  },
 });

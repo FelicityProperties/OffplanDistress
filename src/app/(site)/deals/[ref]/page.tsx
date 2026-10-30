@@ -37,11 +37,12 @@ import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { db } from "@/db";
 import { listings, offers } from "@/db/schema";
+import { DEFAULT_LOCALE } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import { alternatesFor, openGraphBase } from "@/lib/seo";
 import { getCurrentUser } from "@/lib/auth";
-import { BRAND, FEES, PUBLIC_STATUSES } from "@/lib/config";
+import { BRAND, brandName, brokerName, FEES, PUBLIC_STATUSES } from "@/lib/config";
 import { richText } from "@/content/legal/rich-text";
 import { analyzeDeal, planSchedule } from "@/lib/deal-math";
 import { formatAED, formatDate, formatPct, formatQuarter, formatUSDFromAED, parseRefCode, refCode } from "@/lib/format";
@@ -137,9 +138,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const discountPct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
   const paidWidth = Math.min(100, Math.max(0, Math.round(a.paidPct * 100)));
   const plan = l.paymentPlan ?? [];
-  // Sample listings are seeded with English copy; show Arabic visitors a translated version.
-  const arSample = l.isSample && locale === "ar";
-  const description = arSample
+  // Sample listings are seeded with English copy; Arabic and Chinese visitors get a translated version.
+  const translatedSample = l.isSample && locale !== DEFAULT_LOCALE;
+  const description = translatedSample
     ? t("sample.description", {
         unit: tc(`unit.${l.unitType}`),
         project: l.projectName,
@@ -149,13 +150,13 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
       })
     : l.description;
   const milestoneLabel = (label: string) => {
-    // The sell form names new rows itself, in the seller's language ("Next instalment", "القسط 2"): app copy most
-    // sellers keep, shown in the visitor's language. Anything the seller typed stays as written.
+    // The sell form names new rows itself, in the seller's language ("Next instalment", "القسط 2", "第 2 期"): app
+    // copy most sellers keep, shown in the visitor's language. Anything the seller typed stays as written.
     const trimmed = label.trim();
-    if (/^(?:Next instalment|القسط التالي)$/i.test(trimmed)) return t("plan.defaultNext");
-    const nth = /^(?:Instalment|القسط) (\d{1,3})$/i.exec(trimmed)?.[1];
-    if (nth) return t("plan.defaultNth", { n: Number(nth) });
-    if (!arSample) return label;
+    if (/^(?:Next instalment|القسط التالي|下一期)$/i.test(trimmed)) return t("plan.defaultNext");
+    const nth = /^(?:(?:Instalment|القسط) (\d{1,3})|第 ?(\d{1,3}) ?期)$/i.exec(trimmed);
+    if (nth) return t("plan.defaultNth", { n: Number(nth[1] ?? nth[2]) });
+    if (!translatedSample) return label;
     if (label === "On handover") return t("plan.sample.onHandover");
     const n = /^Construction milestone (\d+)$/.exec(label)?.[1];
     return n ? t("plan.sample.milestone", { n }) : label;
@@ -271,7 +272,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   ];
 
   const facts: [string, string, typeof Mountain][] = [
-    [t("facts.view"), (!arSample && l.view) || "—", Mountain],
+    [t("facts.view"), (!translatedSample && l.view) || "—", Mountain],
     [tc("handover"), formatQuarter(l.handoverDate, locale), CalendarClock],
     [t("facts.originalPrice"), formatAED(l.originalPrice, locale), Tag],
     [t("facts.launchPrice"), l.launchPrice ? formatAED(l.launchPrice, locale) : t("facts.beingAssessed"), Sparkles],
@@ -573,10 +574,10 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     {t(l.isSample ? "listedBy.titleSample" : "listedBy.title")}
                   </p>
                   <p className="mt-1.5">
-                    <bdi>{t("listedBy.office", { company: locale === "ar" ? BRAND.companyAr : BRAND.company, orn: BRAND.orn })}</bdi>
+                    <bdi>{t("listedBy.office", { company: brandName(locale), orn: BRAND.orn })}</bdi>
                   </p>
                   {!l.isSample && (
-                    <p>{t("listedBy.broker", { name: locale === "ar" ? BRAND.broker.nameAr : BRAND.broker.name, brn: BRAND.broker.brn })}</p>
+                    <p>{t("listedBy.broker", { name: brokerName(locale), brn: BRAND.broker.brn })}</p>
                   )}
                   <p className="tabular">
                     {l.isSample
@@ -584,7 +585,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       : l.dldPermit
                         ? t("listedBy.permit", { permit: l.dldPermit })
                         : permitHeld
-                          ? t("listedBy.permitHeld", { company: locale === "ar" ? BRAND.companyAr : BRAND.company, orn: BRAND.orn })
+                          ? t("listedBy.permitHeld", { company: brandName(locale), orn: BRAND.orn })
                           : null}
                   </p>
                   {!l.isSample && l.dldPermitExpiresAt && (

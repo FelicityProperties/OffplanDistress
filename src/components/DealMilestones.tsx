@@ -1,8 +1,9 @@
 "use client";
 
 import { CheckCircle2, Circle } from "lucide-react";
-import { intlLocale } from "@/i18n/config";
+import type { Locale } from "@/i18n/config";
 import { useLocale, useT } from "@/i18n/client";
+import { dateLocale } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 // Transfer milestones under the status pipeline on the seller's listing page and the buyer's offers page. Only the
@@ -27,8 +28,8 @@ const STEPS = [
 ] as const;
 
 /** "2026-10-24" → "24 Oct 2026" (as formatDate), read as a calendar day: the same on the server and in any time zone. */
-function dayLabel(day: string, locale: "en" | "ar") {
-  return new Date(`${day.slice(0, 10)}T00:00:00Z`).toLocaleDateString(locale === "ar" ? intlLocale("ar") : "en-GB", {
+function dayLabel(day: string, locale: Locale) {
+  return new Date(`${day.slice(0, 10)}T00:00:00Z`).toLocaleDateString(dateLocale(locale), {
     day: "numeric",
     month: "short",
     year: "numeric",

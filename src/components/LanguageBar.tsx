@@ -4,15 +4,27 @@ import { useState, useTransition } from "react";
 import { Languages, X } from "lucide-react";
 import { useSwitchLocale } from "@/components/LocaleSwitcher";
 import { setLocale } from "@/i18n/actions";
-import { dirOf, type Locale } from "@/i18n/config";
+import { dirOf, htmlLang, type Locale } from "@/i18n/config";
 
 export type LanguageBarCopy = { label: string; body: string; cta: string; dismiss: string };
 
 /**
- * "View in English" on an Arabic page, "عرض بالعربية" on an English one: offered when the browser prefers the other
- * language and the visitor hasn't chosen yet (src/i18n/server.ts offeredLocale). Written in the language it offers.
- * The link opens the same page (filters kept) in that language; dismissing keeps the page's language (od_locale), so
- * the bar doesn't come back.
+ * The bar's own face when its language isn't the page's: the Arabic faces (declared on <html>) for an Arabic bar, the
+ * system's Chinese faces for a Chinese one (the same stack as globals.css gives zh-CN pages); tracking off for both.
+ */
+const BAR_STYLE: Partial<Record<Locale, React.CSSProperties>> = {
+  ar: { fontFamily: "var(--font-arabic), ui-sans-serif, system-ui, sans-serif", letterSpacing: 0 },
+  zh: {
+    fontFamily: 'var(--font-inter), "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", sans-serif',
+    letterSpacing: 0,
+  },
+};
+
+/**
+ * "View in English" on an Arabic page, "عرض بالعربية" or "查看中文版" on an English one: offered when the browser
+ * prefers another language and the visitor hasn't chosen yet (src/i18n/server.ts offeredLocale). Written in the
+ * language it offers. The link opens the same page (filters kept) in that language; dismissing keeps the page's
+ * language (od_locale), so the bar doesn't come back.
  */
 export function LanguageBar({ to, current, copy }: { to: Locale; current: Locale; copy: LanguageBarCopy }) {
   const [open, setOpen] = useState(true);
@@ -23,11 +35,10 @@ export function LanguageBar({ to, current, copy }: { to: Locale; current: Locale
     <div
       role="region"
       aria-label={copy.label}
-      lang={to}
+      lang={htmlLang(to)}
       dir={dirOf(to)}
       data-lang-bar={to}
-      // The Arabic face (already declared on <html>) for the Arabic bar on an English page.
-      style={to === "ar" ? { fontFamily: "var(--font-arabic), ui-sans-serif, system-ui, sans-serif", letterSpacing: 0 } : undefined}
+      style={BAR_STYLE[to]}
       className="border-b border-gold/30 bg-gold-soft text-gold-foreground"
     >
       <div className="container-page flex min-h-11 items-center gap-3 py-1.5 text-sm">
@@ -36,7 +47,7 @@ export function LanguageBar({ to, current, copy }: { to: Locale; current: Locale
           {copy.body}{" "}
           <a
             href={href(to)}
-            hrefLang={to}
+            hrefLang={htmlLang(to)}
             aria-disabled={pending || undefined}
             className="whitespace-nowrap rounded-sm font-semibold text-foreground underline decoration-gold decoration-2 underline-offset-4 hover:decoration-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={(e) => {

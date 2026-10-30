@@ -6,11 +6,11 @@ import { StatusPill } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { intlLocale, type Locale } from "@/i18n/config";
+import { isLocale, type Locale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import { userTabs } from "@/lib/admin";
 import { requireAdmin } from "@/lib/auth";
-import { formatDate, formatNumber } from "@/lib/format";
+import { dateLocale, formatDate, formatNumber } from "@/lib/format";
 import {
   adminSubscribers,
   isNewsletterSource,
@@ -32,7 +32,7 @@ const ISSUES_SHOWN = 14;
 /** "28 Oct 2026, 09:00" in Dubai time, in the admin's language. */
 function dubaiTime(d: Date | null, locale: Locale) {
   if (!d) return "—";
-  return d.toLocaleString(locale === "ar" ? intlLocale("ar") : "en-GB", {
+  return d.toLocaleString(dateLocale(locale), {
     timeZone: "Asia/Dubai",
     day: "numeric",
     month: "short",
@@ -179,7 +179,7 @@ export default async function NewsletterAdminPage({ searchParams }: { searchPara
                   <TableCell>
                     <StatusPill tone={STATUS_TONE[r.status]}>{t(`admin.status.${r.status}`)}</StatusPill>
                   </TableCell>
-                  <TableCell>{t(r.locale === "ar" ? "admin.lang.ar" : "admin.lang.en")}</TableCell>
+                  <TableCell>{t(`admin.lang.${isLocale(r.locale) ? r.locale : "en"}`)}</TableCell>
                   <TableCell>{isNewsletterSource(r.source) ? t(`admin.source.${r.source}`) : r.source}</TableCell>
                   <TableCell className="whitespace-nowrap tabular">{formatDate(r.consentedAt, locale)}</TableCell>
                   <TableCell className="whitespace-nowrap tabular">{formatDate(r.confirmedAt, locale)}</TableCell>

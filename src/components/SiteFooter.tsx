@@ -4,13 +4,12 @@ import { Logo } from "@/components/Logo";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
-import { BRAND } from "@/lib/config";
+import { BRAND, brandAddress, brandName } from "@/lib/config";
 import { prefillEmail } from "@/lib/newsletter";
 import { cn } from "@/lib/utils";
 
 export async function SiteFooter() {
   const [t, tn, locale, user] = await Promise.all([getT("common"), getT("newsletter"), getLocale(), getCurrentUser()]);
-  const ar = locale === "ar";
   // RERA: the office's licence details belong on every page of a broker's site.
   const legal = [
     BRAND.orn && t("reraOrn", { orn: BRAND.orn }),
@@ -88,7 +87,7 @@ export async function SiteFooter() {
                 className="inline-flex items-start gap-2.5 text-primary-foreground/70 transition-colors hover:text-gold"
               >
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-                <span className="max-w-xs">{ar ? BRAND.addressAr : BRAND.address}</span>
+                <span className="max-w-xs">{brandAddress(locale)}</span>
               </a>
             </li>
           </ul>
@@ -118,7 +117,7 @@ export async function SiteFooter() {
           )}
         >
           <p>
-            © {new Date().getFullYear()} <bdi>{ar ? BRAND.companyAr : BRAND.company}</bdi>
+            © {new Date().getFullYear()} <bdi>{brandName(locale)}</bdi>
             {legal.map((item) => (
               <span key={item as string} className="tabular">
                 {" · "}

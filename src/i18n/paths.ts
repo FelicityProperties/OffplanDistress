@@ -1,9 +1,9 @@
-import { DEFAULT_LOCALE, type Locale } from "./config";
+import { DEFAULT_LOCALE, isLocale, LOCALES, type Locale } from "./config";
 
-// Language in the address. English pages are at their plain path (/deals); their Arabic twin is under /ar (/ar/deals),
-// rewritten to the same page by src/proxy.ts. The signed-in consoles (/dashboard, /admin) and the API have one
-// address for both languages: they follow the od_locale cookie. Pure functions, used on the server, in the browser
-// and in the proxy.
+// Language in the address. English pages are at their plain path (/deals); their Arabic twin is under /ar (/ar/deals)
+// and their Chinese twin under /zh (/zh/deals), both rewritten to the same page by src/proxy.ts. The signed-in consoles
+// (/dashboard, /admin) and the API have one address in every language: they follow the od_locale cookie. Pure
+// functions, used on the server, in the browser and in the proxy.
 
 /** Request headers src/proxy.ts sets on every page request (anything the browser sent under these names is dropped). */
 export const LOCALE_HEADER = "x-od-locale";
@@ -12,24 +12,30 @@ export const PATH_HEADER = "x-od-path";
 /** The page's query string ("?tab=sent", or ""): with PATH_HEADER, where a login asked for on the way comes back to. */
 export const QUERY_HEADER = "x-od-query";
 /**
- * The od_locale cookie as the browser sent it ("" when none). Opening an /ar page sets the cookie in the same response,
- * and Next shows cookies set by the proxy to the page, so the page can't tell a first visit from a saved choice.
+ * The od_locale cookie as the browser sent it ("" when none). Opening an /ar or /zh page sets the cookie in the same
+ * response, and Next shows cookies set by the proxy to the page, so the page can't tell a first visit from a saved
+ * choice.
  */
 export const SAVED_HEADER = "x-od-saved";
 
-/** Prefix of the Arabic pages. */
+/** Prefix of the Arabic pages (kept for older callers; prefixOf() knows every language). */
 export const AR_PREFIX = "/ar";
 
-/** Paths with one address in both languages: the consoles, the API and Next's own files. */
+/** The address prefix of a language's public pages: "" for English (the plain address), "/ar", "/zh". */
+export function prefixOf(locale: Locale) {
+  return locale === DEFAULT_LOCALE ? "" : `/${locale}`;
+}
+
+/** Paths with one address in every language: the consoles, the API and Next's own files. */
 const SHARED = /^\/(?:dashboard|admin|api|_next)(?:\/|$)|^\/__/;
 /** A file (robots.txt, icon.svg, …) rather than a page. */
 const FILE = /\/[^/]*\.[A-Za-z0-9]+$/;
-/** Leading language segment: /ar or /en, then / or the end. */
-const PREFIX = /^\/(ar|en)(?=\/|$)/;
+/** Leading language segment: /ar, /en or /zh (every LOCALES entry), then / or the end. */
+const PREFIX = new RegExp(`^/(${LOCALES.join("|")})(?=/|$)`);
 
 /**
- * Public pages, which have an English and an Arabic address. The path must be a site path ("/…", no query string);
- * a path that still carries a language prefix is judged without it.
+ * Public pages, which have an address in every language. The path must be a site path ("/…", no query string); a path
+ * that still carries a language prefix is judged without it.
  */
 export function isLocalizedPath(path: string) {
   if (!path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) return false;
@@ -37,13 +43,17 @@ export function isLocalizedPath(path: string) {
   return !SHARED.test(bare) && !FILE.test(bare);
 }
 
-/** The language the address itself names: "ar" under /ar, otherwise null (plain paths are English or cookie-based). */
+/**
+ * The language the address itself names: "ar" under /ar, "zh" under /zh, "en" under /en (the switch link the proxy
+ * answers with a redirect); null for a plain path (English, or the cookie's language on the consoles).
+ */
 export function localeOfPath(path: string): Locale | null {
-  return PREFIX.exec(path)?.[1] === "ar" ? "ar" : null;
+  const named = PREFIX.exec(path)?.[1];
+  return isLocale(named) ? named : null;
 }
 
 /**
- * The path without its language segment: "/ar/deals" → "/deals", "/ar" → "/", "/en/sell" → "/sell". Never a
+ * The path without its language segment: "/ar/deals" → "/deals", "/zh" → "/", "/en/sell" → "/sell". Never a
  * protocol-relative address: "/ar//evil.com" (or "/ar/\evil.com") is "/evil.com", not "//evil.com", which a browser
  * would open as another site (a ?next= or a redirect built from it would leave the site).
  */
@@ -58,13 +68,14 @@ function splitHref(href: string): [string, string] {
 }
 
 /**
- * A link on this site for a given language: public pages get the /ar prefix for Arabic and lose it for English; the
- * consoles, the API, files, other sites, mailto:/tel: and "#…" links are returned as they are (a stray /ar before a
- * console path is dropped, since /ar/dashboard is not a page). Never doubles a prefix.
+ * A link on this site for a given language: public pages get the language's prefix (/ar, /zh) and lose it for
+ * English; the consoles, the API, files, other sites, mailto:/tel: and "#…" links are returned as they are (a stray
+ * /ar before a console path is dropped, since /ar/dashboard is not a page). Never doubles a prefix.
  *
  *   localePath("/deals?sort=cash", "ar") → "/ar/deals?sort=cash"
- *   localePath("/", "ar")                → "/ar"
+ *   localePath("/", "zh")                → "/zh"
  *   localePath("/ar/deals", "en")        → "/deals"
+ *   localePath("/ar/deals", "zh")        → "/zh/deals"
  *   localePath("/dashboard", "ar")       → "/dashboard"
  */
 export function localePath(href: string, locale: Locale) {
@@ -73,19 +84,20 @@ export function localePath(href: string, locale: Locale) {
   const bare = stripLocale(path);
   if (!isLocalizedPath(bare)) return PREFIX.test(path) ? bare + rest : href;
   if (locale === DEFAULT_LOCALE) return bare + rest;
-  return (bare === "/" ? AR_PREFIX : AR_PREFIX + bare) + rest;
+  const prefix = prefixOf(locale);
+  return (bare === "/" ? prefix : prefix + bare) + rest;
 }
 
 /**
- * The link that switches a page to the other language without JavaScript: the Arabic address, or "/en/…" for
+ * The link that switches a page to another language without JavaScript: the /ar or /zh address, or "/en/…" for
  * English, which the proxy answers by remembering English (od_locale) and redirecting to the plain address. The
- * language switcher uses it as its href (open in a new tab, no script), and navigates to localePath() itself.
+ * language menu uses it as each entry's href (open in a new tab, no script), and navigates to localePath() itself.
  */
 export function switchHref(href: string, to: Locale) {
   const [path, rest] = splitHref(href);
   const bare = stripLocale(path);
   if (!isLocalizedPath(bare)) return bare + rest;
-  if (to === "ar") return localePath(bare + rest, "ar");
+  if (to !== DEFAULT_LOCALE) return localePath(bare + rest, to);
   return (bare === "/" ? "/en" : `/en${bare}`) + rest;
 }
 

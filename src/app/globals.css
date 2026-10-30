@@ -162,6 +162,22 @@ html[dir="rtl"] * {
   letter-spacing: 0 !important;
 }
 
+/*
+ * Chinese (zh-CN): the Latin faces stay first (the brand, "AED", digits, project names), and the Chinese glyphs, which
+ * Inter and Fraunces don't have, fall through to the system's Simplified Chinese faces: PingFang (macOS/iOS), Microsoft
+ * YaHei (Windows), Noto Sans CJK (Android, Linux). Nothing is downloaded: a CJK web font is several megabytes.
+ */
+html[lang="zh-CN"],
+html:lang(zh) {
+  --app-sans: var(--font-inter), "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --app-display: var(--font-fraunces), "Fraunces", "Songti SC", "STSong", "SimSun", "Noto Serif CJK SC", "Noto Serif SC", ui-serif, Georgia, serif;
+}
+/* CJK glyphs are set solid: the headings' tightened tracking (and any tracking-tight utility) would make them touch. */
+html[lang="zh-CN"] :is(h1, h2, h3, h4, [class*="tracking-tight"]),
+html:lang(zh) :is(h1, h2, h3, h4, [class*="tracking-tight"]) {
+  letter-spacing: 0;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);

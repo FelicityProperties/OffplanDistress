@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { listings } from "@/db/schema";
+import { DEFAULT_LOCALE, htmlLang, LOCALES, type Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { refCode } from "@/lib/format";
 import { advertisedSql } from "@/lib/permits";
@@ -24,15 +25,17 @@ function photos(base: string, images: string[]) {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
-  // Every page twice, English and Arabic, each naming both (hreflang) with English as the default.
+  // Every page once per language (English at the plain address, Arabic under /ar, Chinese under /zh), each naming all
+  // of them (hreflang en, ar, zh-CN) with English as the default.
   const both = (path: string, extra: Omit<MetadataRoute.Sitemap[number], "url" | "alternates"> = {}) => {
-    const en = `${base}${path === "/" ? "" : path}`;
-    const ar = `${base}${localePath(path, "ar")}`;
-    const alternates = { languages: { en, ar, "x-default": en } };
-    return [
-      { url: en, alternates, ...extra },
-      { url: ar, alternates, ...extra },
-    ];
+    const url = (locale: Locale) => {
+      const p = localePath(path, locale);
+      return `${base}${p === "/" ? "" : p}`;
+    };
+    const languages = Object.fromEntries(LOCALES.map((l) => [htmlLang(l), url(l)]));
+    languages["x-default"] = url(DEFAULT_LOCALE);
+    const alternates = { languages };
+    return LOCALES.map((l) => ({ url: url(l), alternates, ...extra }));
   };
   const pages = [
     "/",
