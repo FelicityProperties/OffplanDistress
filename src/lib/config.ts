@@ -1,3 +1,5 @@
+import type { Locale } from "@/i18n/config";
+
 // Single place for brand and commercial terms. Change here, it changes everywhere.
 
 // An address override, ignoring the placeholder the old .env.example shipped ("Dubai, United Arab Emirates"), which
@@ -38,6 +40,35 @@ export const BRAND = {
     brn: process.env.NEXT_PUBLIC_BROKER_BRN || "59244",
   },
 };
+
+/**
+ * The Arabic form of a licence detail on Arabic pages, the Latin (English) form everywhere else, Chinese pages included:
+ * the legal name, the broker's name and the office address are what the trade licence and the RERA card say, and a
+ * Chinese reader looks them up in that form.
+ */
+export function localizedName(locale: Locale, en: string, ar: string) {
+  return locale === "ar" ? ar : en;
+}
+
+/** The licensed company's name (Felicity Properties L.L.C / فيليسيتي للعقارات ش.ذ.م.م) in the page's language. */
+export function brandName(locale: Locale) {
+  return localizedName(locale, BRAND.company, BRAND.companyAr);
+}
+
+/** The registered broker's name in the page's language. */
+export function brokerName(locale: Locale) {
+  return localizedName(locale, BRAND.broker.name, BRAND.broker.nameAr);
+}
+
+/** The office address in the page's language. */
+export function brandAddress(locale: Locale) {
+  return localizedName(locale, BRAND.address, BRAND.addressAr);
+}
+
+/** The licensing authority's name in the page's language. */
+export function licenceAuthority(locale: Locale) {
+  return localizedName(locale, BRAND.licenceAuthority, BRAND.licenceAuthorityAr);
+}
 
 /** UAE dirham is pegged to the US dollar (Central Bank of the UAE): 1 USD = 3.6725 AED. */
 export const AED_PER_USD = 3.6725;

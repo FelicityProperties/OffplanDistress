@@ -19,6 +19,7 @@ import {
 } from "@/components/analytics/Report";
 import { PageTitle } from "@/components/Kpi";
 import { formatAsOf } from "@/components/market/shared";
+import { listSeparator } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { TKey } from "@/i18n/translator";
 import { analyticsReport, isRange, LIVE_MINUTES, RANGES } from "@/lib/analytics-report";
@@ -256,7 +257,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
                   <>
                     <bdi>{c.city}</bdi>
                     <span className="text-muted-foreground">
-                      {locale === "ar" ? "، " : ", "}
+                      {listSeparator(locale)}
                       {countryName(c.country, locale, t)}
                     </span>
                   </>

@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { richText } from "@/content/legal/rich-text";
 import { useDir, useLocale, useT } from "@/i18n/client";
+import { listSeparator } from "@/i18n/config";
 import { readAttribution } from "@/lib/attribution";
 import { COMMUNITIES, DEVELOPERS, FEES, FILE_KINDS, MAX_UPLOAD_BYTES, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
@@ -351,7 +352,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
     }
     setPhotos(ready);
     setPreparing(false);
-    const names = failed.map((f) => f.name).join(locale === "ar" ? "، " : ", ");
+    const names = failed.map((f) => f.name).join(listSeparator(locale));
     setErrors(({ photos: _, ...rest }) =>
       failed.length ? { ...rest, photos: t(failed.some(isHeic) ? "photo.heic" : "photo.unreadable", { name: names }) } : rest,
     );
@@ -472,7 +473,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
         <p className="mt-3 text-muted-foreground">{t("done.body")}</p>
         {done.failed.length > 0 && (
           <p className="mt-4 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning">
-            {t("done.failed", { files: done.failed.join(locale === "ar" ? "، " : ", ") })}
+            {t("done.failed", { files: done.failed.join(listSeparator(locale)) })}
           </p>
         )}
         <div className="mt-8 flex justify-center gap-2">

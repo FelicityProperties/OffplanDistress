@@ -1,16 +1,22 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
 import { cache } from "react";
-import { DEFAULT_LOCALE, isLocale, LOCALE_COOKIE, type Locale } from "./config";
+import { DEFAULT_LOCALE, isLocale, LOCALE_COOKIE, localeFromTag, type Locale } from "./config";
 import type { Namespace } from "./messages";
 import { isLocalizedPath, LOCALE_HEADER, PATH_HEADER, SAVED_HEADER } from "./paths";
 import { translator } from "./translator";
 
+/** The first (preferred) tag of an Accept-Language header, lower-cased; "" when there is none or it is "*". */
+function preferredTag(accept: string | null) {
+  const first = (accept ?? "").split(",")[0].split(";")[0].trim().toLowerCase();
+  return first === "*" ? "" : first;
+}
+
 /**
- * The request's language. A public page's address decides it (src/proxy.ts sets x-od-locale: "ar" under /ar, "en" on
- * the plain address), so search engines see each address in one language. Only the consoles (/dashboard, /admin),
- * API routes and anything else the proxy doesn't see use the visitor's saved choice (od_locale), else their browser's
- * preference, else English.
+ * The request's language. A public page's address decides it (src/proxy.ts sets x-od-locale: "ar" under /ar, "zh"
+ * under /zh, "en" on the plain address), so search engines see each address in one language. Only the consoles
+ * (/dashboard, /admin), API routes and anything else the proxy doesn't see use the visitor's saved choice (od_locale),
+ * else their browser's preference (Arabic or Chinese), else English.
  */
 export const getLocale = cache(async (): Promise<Locale> => {
   const h = await headers();
@@ -20,8 +26,7 @@ export const getLocale = cache(async (): Promise<Locale> => {
   if (path && isLocalizedPath(path)) return DEFAULT_LOCALE;
   const saved = (await cookies()).get(LOCALE_COOKIE)?.value;
   if (isLocale(saved)) return saved;
-  const accept = h.get("accept-language") ?? "";
-  return /^\s*ar\b/i.test(accept) ? "ar" : DEFAULT_LOCALE;
+  return localeFromTag(preferredTag(h.get("accept-language")));
 });
 
 /**
@@ -35,17 +40,17 @@ export const getPagePath = cache(async (): Promise<string | null> => {
 
 /**
  * The other language to offer on a public page (src/components/LanguageBar.tsx), or null: when the browser's preferred
- * language (Accept-Language: Arabic, or anything else = English) is not the page's, and the visitor hasn't settled on
- * the page's language (od_locale). Never a redirect: the address keeps deciding the language.
+ * language (Accept-Language: Arabic or Chinese, anything else = English) is not the page's, and the visitor hasn't
+ * settled on the page's language (od_locale). Never a redirect: the address keeps deciding the language.
  */
 export async function offeredLocale(): Promise<Locale | null> {
   const [path, locale, h, c] = await Promise.all([getPagePath(), getLocale(), headers(), cookies()]);
   if (!path || !isLocalizedPath(path)) return null;
   // The first (preferred) language tag. None or "*" (crawlers, scripts): nothing to suggest.
-  const first = (h.get("accept-language") ?? "").split(",")[0].split(";")[0].trim().toLowerCase();
-  if (!first || first === "*") return null;
-  const prefers: Locale = first === "ar" || first.startsWith("ar-") ? "ar" : "en";
-  // The cookie as the browser sent it (the proxy's header): opening an /ar page sets it in the same response.
+  const first = preferredTag(h.get("accept-language"));
+  if (!first) return null;
+  const prefers = localeFromTag(first);
+  // The cookie as the browser sent it (the proxy's header): opening an /ar or /zh page sets it in the same response.
   const saved = h.get(SAVED_HEADER) ?? c.get(LOCALE_COOKIE)?.value;
   if (prefers === locale || saved === locale) return null;
   return prefers;

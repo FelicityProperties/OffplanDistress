@@ -25,7 +25,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
-import { BRAND, FEES } from "@/lib/config";
+import { BRAND, brandName, brokerName, FEES } from "@/lib/config";
 import { BUYER_STEPS, FAQS, HERO_IMAGE, SELLER_STEPS } from "@/lib/content";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, refCode } from "@/lib/format";
@@ -316,10 +316,10 @@ export default async function Home() {
           <dl className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-primary-foreground/10 bg-primary-foreground/10 text-sm sm:grid-cols-2 lg:grid-cols-4">
             {(
               [
-                [t("licence.company"), locale === "ar" ? BRAND.companyAr : BRAND.company],
+                [t("licence.company"), brandName(locale)],
                 [t("licence.orn"), BRAND.orn],
                 [t("licence.tradeLicence"), BRAND.licence],
-                [t("licence.broker"), `${locale === "ar" ? BRAND.broker.nameAr : BRAND.broker.name} · ${BRAND.broker.brn}`],
+                [t("licence.broker"), `${brokerName(locale)} · ${BRAND.broker.brn}`],
               ] as const
             ).map(([k, v]) => (
               <div key={k} className="bg-ink/80 px-5 py-4">

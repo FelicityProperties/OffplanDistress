@@ -2,7 +2,7 @@ import Link from "@/components/LocaleLink";
 import { ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
-import { BRAND } from "@/lib/config";
+import { BRAND, brandName } from "@/lib/config";
 import { formatAEDCompact, formatNumber, formatPct } from "@/lib/format";
 import { MIN_LIVE, type DistressIndex } from "@/lib/market";
 import { formatAsOf, isoPct } from "./shared";
@@ -83,7 +83,7 @@ async function HeadlineCard({ index }: { index: DistressIndex }) {
   const md = s.medianDiscount;
   const publisher = (
     <p className="mt-6 border-t border-primary-foreground/10 pt-4 text-xs text-primary-foreground/60">
-      {t("hero.publishedBy", { company: locale === "ar" ? BRAND.companyAr : BRAND.company })}
+      {t("hero.publishedBy", { company: brandName(locale) })}
       <span aria-hidden> · </span>
       <span className="whitespace-nowrap tabular">{tc("reraOrn", { orn: BRAND.orn })}</span>
     </p>

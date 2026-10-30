@@ -61,4 +61,32 @@ export default defineMessages({
 
     "alert.more": "+{count} أخرى",
   },
+  zh: {
+    "meta.title": "已保存的搜索",
+    title: "已保存的搜索",
+    sub: "一键重新运行您常用的筛选条件，查看保存后新增的房源。开启提醒后，我们每天早上会告知您新的匹配房源。",
+    newSearch: "新建搜索",
+
+    "empty.title": "尚无已保存的搜索",
+    "empty.sub":
+      "在“浏览房源”页面设置筛选条件并点击“保存搜索”，即可将其保存在这里。有新房源匹配时，我们会提醒您。",
+
+    "matches.one": "在售匹配房源 {count} 套",
+    "matches.other": "在售匹配房源 {count} 套",
+    savedOn: "保存于 {date}",
+    fresh: "新增 {count} 套",
+
+    "alerts.label": "邮件及站内提醒",
+    "alerts.on": "提醒已开启。我们每天早上会向您发送新的匹配房源。",
+    "alerts.off": "此搜索的提醒已关闭。",
+
+    "delete.label": "删除已保存的搜索",
+    "delete.done": "搜索已删除",
+
+    "error.signIn": "请重新登录以继续。",
+    "error.notFound": "该搜索已不存在。",
+    "error.generic": "出了点问题，请重试。",
+
+    "alert.more": "另有 {count} 套",
+  },
 });

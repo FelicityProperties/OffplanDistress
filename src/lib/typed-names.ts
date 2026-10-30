@@ -23,9 +23,12 @@ const CONTACT = new RegExp(
 );
 /** Where something was taken out (a character no one types). */
 const CUT = "\u0000";
-/** "WhatsApp:", "call", "واتساب"… left in front of what was taken out. */
+/**
+ * "WhatsApp:", "call", "واتساب", "微信："… left in front of what was taken out. The Chinese cues (WeChat, phone, mobile,
+ * contact, add me, scan, tap) need no word boundary: Chinese is written without spaces.
+ */
 const CUE = new RegExp(
-  String.raw`(?<![\p{L}\p{N}])(?:whats\s?app|wa|call|tel|phone|mobile|mob|contact|e-?mail|mail|web\s?site|site|visit|واتس(?:اب)?|اتصل|اتصال|هاتف|جوال|موبايل|رقم|تواصل|[اإ]يميل|بريد|موقع)\s*[:\-–]?\s*${CUT}`,
+  String.raw`(?:(?<![\p{L}\p{N}])(?:whats\s?app|wa|call|tel|phone|mobile|mob|contact|e-?mail|mail|web\s?site|site|visit|vx|wx|qq|واتس(?:اب)?|اتصل|اتصال|هاتف|جوال|موبايل|رقم|تواصل|[اإ]يميل|بريد|موقع)|微信(?:号)?|威信|电话|手机(?:号)?|联系(?:方式|我|电话)?|加我|扫码|邮箱|网址|网站|点(?:击|此)?)\s*[:：\-–]?\s*${CUT}`,
   "giu",
 );
 
@@ -35,7 +38,7 @@ export function scrubTypedName(raw: string) {
   if (!marked.includes(CUT)) return { name: raw, removed: false };
   const name = marked
     // "call 050… or 055…" → one cut, then the cue word in front of it.
-    .replace(new RegExp(`${CUT}(?:\\s*(?:or|and|/|,|&|و|أو)\\s*${CUT})+`, "giu"), CUT)
+    .replace(new RegExp(`${CUT}(?:\\s*(?:or|and|/|,|&|و|أو|或|和|、|，)\\s*${CUT})+`, "giu"), CUT)
     .replace(CUE, CUT)
     .replaceAll(CUT, " ")
     // Brackets emptied by the cut ("Acme ( )"), or left without their other half ("Acme (050) 123…" → "Acme (").

@@ -171,4 +171,87 @@ export default defineMessages({
     "detail.about": "نبذة عن الوحدة",
     "results.showing": "عرض {from}–{to} من أصل {total}",
   },
+  zh: {
+    "meta.title": "浏览迪拜急售期房房源",
+    "meta.description":
+      "按社区、开发商、前期现金、已付比例、交房时间及较开发商当前售价的折扣，筛选已核实的期房转让房源。",
+
+    title: "浏览房源",
+    subtitle: "已核实的期房，售价低于开发商当前售价。",
+
+    "search.placeholder": "搜索项目、开发商或社区",
+    "search.label": "搜索房源",
+
+    "sort.label": "排序",
+    "sort.discount": "折扣最大",
+    "sort.cash": "过户所需现金最少",
+    "sort.handover": "最早交房",
+    "sort.newest": "最新发布",
+
+    "view.grid": "网格视图",
+    "view.list": "列表视图",
+
+    "filters.title": "筛选",
+    "filters.budget": "付给卖家的前期现金",
+    "filters.budgetLabel": "前期现金预算",
+    "filters.transfer": "过户所需现金（约）",
+    "filters.transferLabel": "过户所需现金预算",
+    "filters.transferHint": "卖家权益款 + 各项费用（DLD 及 NOC 费用为估算）+ 任何逾期分期款及滞纳金。",
+    "filters.any": "不限",
+    "filters.rangeMin": "{label}（最小值）",
+    "filters.rangeMax": "{label}（最大值）",
+    "filters.community": "社区",
+    "filters.developer": "开发商",
+    "filters.unitType": "户型",
+    "filters.minPaid": "最低已付开发商比例",
+    "filters.minDiscount": "较开发商当前售价的最低折扣",
+    "filters.atLeastPct": "{v}% 及以上",
+    "filters.handoverBy": "交房时间不晚于",
+    "filters.anyTime": "不限时间",
+    "filters.endOfYear": "{year} 年底",
+    "filters.motivation": "卖家出售意愿",
+    "filters.verifiedOnly": "仅显示已核实房源",
+    "filters.reset": "重置筛选",
+
+    "results.one": "找到 {count} 套房源",
+    "results.many": "找到 {count} 套房源",
+    empty:
+      "没有符合这些筛选条件的房源。请尝试放宽预算，或保存此搜索，新的匹配房源将显示在“我的账户”中。",
+
+    "pagination.label": "分页",
+    "pagination.previous": "上一页",
+    "pagination.next": "下一页",
+    "pagination.page": "第 {page} 页，共 {pages} 页",
+
+    "saveSearch.button": "保存搜索",
+    "saveSearch.needsAuth": "登录后即可保存搜索并接收提醒。",
+    "saveSearch.saved": "搜索已保存至“我的账户”",
+
+    "summary.all": "全部房源",
+    "summary.maxCash": "前期现金 ≤ {amount}",
+    "summary.maxTransfer": "过户所需现金 ≤ {amount}",
+    "summary.minDiscount": "折扣 {pct}% 及以上",
+    "summary.handoverBy": "不晚于 {year} 年交房",
+    "summary.query": "“{q}”",
+
+    "gallery.showPhoto": "显示第 {n} 张照片",
+
+    // Restyled browse + deal pages
+    eyebrow: "期房转让交易平台",
+    "filters.active": "已应用 {n} 项",
+    "chips.label": "已应用的筛选条件",
+    "chips.clearAll": "全部清除",
+    "chips.remove": "移除筛选条件：{label}",
+    "chips.cashFrom": "前期现金 {amount} 起",
+    "chips.cashRange": "前期现金 {min}–{max}",
+    "chips.transferFrom": "过户所需现金 {amount} 起",
+    "chips.transferRange": "过户所需现金 {min}–{max}",
+    "chips.minPaid": "已付 {pct}% 及以上",
+    "chips.handoverBy": "不晚于 {year} 年底交房",
+    "empty.title": "暂无匹配房源",
+    "empty.clear": "清除所有筛选条件",
+    "pagination.goTo": "第 {page} 页",
+    "detail.about": "关于此单元",
+    "results.showing": "显示第 {from}–{to} 条，共 {total} 条",
+  },
 });

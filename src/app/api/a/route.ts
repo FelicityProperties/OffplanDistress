@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LOCALES } from "@/i18n/config";
 import { localeOfPath, stripLocale } from "@/i18n/paths";
 import { getCurrentUser } from "@/lib/auth";
 import { SESSION_ID_RE } from "@/lib/attribution";
@@ -51,7 +52,7 @@ const Beacon = z.discriminatedUnion("t", [
     utm_medium: tag(100),
     utm_campaign: tag(150),
     ref: tag(60),
-    locale: z.enum(["en", "ar"]).nullish(),
+    locale: z.enum(LOCALES).nullish(),
   }),
   // The visitor left the page (or hid the tab): the time it was visible so far.
   z.object({ t: z.literal("l"), viewId: z.uuid(), sessionId, durationMs: z.number().finite().nonnegative().max(86_400_000) }),
@@ -131,12 +132,14 @@ async function handle(request: Request) {
 
   if (b.t === "l") return recordDuration(b.viewId, b.sessionId, b.durationMs);
   if (b.t !== "v") return;
-  // The same page in both languages is one page in the report: "/ar/deals" counts as "/deals", in Arabic.
+  // The same page in every language is one page in the report: "/ar/deals" and "/zh/deals" count as "/deals", in
+  // Arabic or Chinese.
   let path = cleanPath(b.path);
   let locale = b.locale ?? null;
-  if (localeOfPath(path) === "ar") {
+  const named = localeOfPath(path);
+  if (named) {
     path = stripLocale(path);
-    locale = "ar";
+    locale = named;
   }
   if (UNTRACKED_PATH.test(path)) return;
 

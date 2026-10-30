@@ -55,6 +55,7 @@ export async function notify(userIds: Ids, key: TemplateKey, params: TemplatePar
               // A public page (a deal, /sell) in the recipient's language; dashboard links have one address. The
               // in-app notice keeps the plain path: the bell opens it in the language of the page it is clicked on.
               cta: href ? { label: msg.cta, href: localePath(href, locale) } : undefined,
+              locale,
               dir: dirOf(locale),
             }),
           ),

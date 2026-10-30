@@ -495,7 +495,7 @@ export const pageViews = pgTable(
     device: text("device"),
     /** Browser family only, e.g. "Chrome", "Safari". */
     browser: text("browser"),
-    /** Site language when the page was shown: "en" | "ar". */
+    /** Site language when the page was shown: "en" | "ar" | "zh". */
     locale: text("locale"),
     /** Time the page was visible, set by the leave beacon (only ever increases, at most 30 minutes); null until then. */
     durationMs: integer("duration_ms"),

@@ -5,6 +5,7 @@ import { DistressReport } from "@/components/market/DistressReport";
 import { IndexPending } from "@/components/market/IndexPending";
 import { MarketHero } from "@/components/market/MarketHero";
 import { Methodology } from "@/components/market/Methodology";
+import { htmlLang } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import { getDistressIndex } from "@/lib/market";
@@ -36,7 +37,7 @@ export default async function MarketPage() {
     name: t("meta.title"),
     description: t("meta.description"),
     url: `${siteUrl()}${localePath("/market", locale)}`,
-    inLanguage: locale,
+    inLanguage: htmlLang(locale),
     isAccessibleForFree: true,
     dateModified: index.asOf.toISOString(),
     spatialCoverage: { "@type": "Place", name: "Dubai, United Arab Emirates" },

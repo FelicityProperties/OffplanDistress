@@ -93,6 +93,7 @@ async function issueReset(email: string) {
         heading: claim.title,
         body: claim.body,
         cta: { label: claim.cta, href: claimPath(claimToken, locale) },
+        locale,
         dir: dirOf(locale),
       });
       return;
@@ -108,8 +109,9 @@ async function issueReset(email: string) {
     subject: msg.title,
     heading: msg.title,
     body: msg.body,
-    // In the account's language (/ar/reset-password…), like the email itself.
+    // In the account's language (/ar/reset-password…, /zh/reset-password…), like the email itself.
     cta: { label: msg.cta, href: localePath(`/reset-password?token=${token}`, locale) },
+    locale,
     dir: dirOf(locale),
   });
 }

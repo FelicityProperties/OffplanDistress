@@ -1,3 +1,4 @@
+import { isLocale } from "@/i18n/config";
 import { getT } from "@/i18n/server";
 import { audit } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth";
@@ -23,7 +24,7 @@ export async function GET() {
   const columns: [string, (r: Row) => string | number | null][] = [
     [t("csv.email"), (r) => r.email],
     [t("csv.status"), (r) => t(`admin.status.${r.status}`)],
-    [t("csv.language"), (r) => t(r.locale === "ar" ? "admin.lang.ar" : "admin.lang.en")],
+    [t("csv.language"), (r) => t(`admin.lang.${isLocale(r.locale) ? r.locale : "en"}`)],
     [t("csv.source"), (r) => (isNewsletterSource(r.source) ? t(`admin.source.${r.source}`) : r.source)],
     [t("csv.subscribedAt"), (r) => dubaiDateTime(r.consentedAt)],
     [t("csv.consentIp"), (r) => r.consentIp],

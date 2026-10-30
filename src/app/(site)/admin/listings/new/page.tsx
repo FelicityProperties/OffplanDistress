@@ -5,6 +5,7 @@ import { StaffListingForm, type StaffPrefill } from "@/components/admin/StaffLis
 import { PageTitle } from "@/components/Kpi";
 import { db } from "@/db";
 import { sellerLeads } from "@/db/schema";
+import { isLocale } from "@/i18n/config";
 import { getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
 import { COMMUNITIES, DEVELOPERS } from "@/lib/config";
@@ -26,7 +27,7 @@ async function leadPrefill(id: string): Promise<{ prefill: StaffPrefill; ref: st
       sellerName: lead.name,
       sellerPhone: lead.phone,
       sellerEmail: lead.email ?? undefined,
-      sellerLocale: lead.locale === "ar" ? "ar" : "en",
+      sellerLocale: isLocale(lead.locale) ? lead.locale : "en",
       developer: listedDeveloper ? lead.developer : "Other",
       developerOther: listedDeveloper ? undefined : lead.developer,
       community: lead.community ? (listedCommunity ? lead.community : "Other") : undefined,

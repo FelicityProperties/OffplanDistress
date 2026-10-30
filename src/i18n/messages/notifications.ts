@@ -73,4 +73,39 @@ export default defineMessages({
     "shell.notifications": "الإشعارات",
     "shell.profile": "الملف الشخصي والتحقق من الهوية",
   },
+  zh: {
+    title: "通知",
+    "bell.label": "通知",
+    "bell.labelUnread": "通知（{count} 条未读）",
+    unreadCount: "{count} 条未读",
+    unread: "未读",
+    markAllRead: "全部标为已读",
+    markRead: "标为已读",
+    seeAll: "查看全部通知",
+    allMarked: "所有通知已标为已读",
+    "menu.hasUnread": "{count} 条未读通知",
+
+    "empty.title": "暂无新通知",
+    "empty.sub": "您的报价、房源或已保存的搜索有新动态时，我们会在此通知您。",
+
+    "page.title": "通知",
+    "page.sub": "您的报价、房源及已保存的搜索有新动态时，都会显示在这里。",
+    "page.subUnread": "您的报价、房源及已保存的搜索有新动态时，都会显示在这里。{count} 条未读。",
+    "page.emptyTitle": "暂无通知",
+    "page.emptySub":
+      "报价动态、房源审核结果以及与您已保存的搜索匹配的新房源将显示在这里。",
+    "page.limitNote": "显示您最近的 {count} 条通知。",
+
+    "error.signIn": "请重新登录以继续。",
+    "error.generic": "无法更新您的通知。请重试。",
+
+    "shell.greeting": "您好，{name}",
+    "shell.overview": "概览",
+    "shell.listings": "我的房源",
+    "shell.offers": "报价",
+    "shell.watchlist": "关注列表",
+    "shell.searches": "已保存的搜索",
+    "shell.notifications": "通知",
+    "shell.profile": "个人资料与 KYC",
+  },
 });

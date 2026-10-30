@@ -126,13 +126,14 @@ function quarterStart(day: string) {
   return `${y}-${String(Math.floor((m - 1) / 3) * 3 + 1).padStart(2, "0")}-01`;
 }
 
-// Sellers type milestone labels in English or Arabic. "Post-handover" / "after handover" are checked before "handover",
-// and "completion" only counts when it isn't a construction milestone ("on 50% completion").
-const POST_HANDOVER = /post[\s-]*hand\s*-?\s*over|after\s+hand\s*-?\s*over|بعد\s+(ال)?(تسليم|استلام)/i;
-const PRE_HANDOVER = /pre[\s-]*hand\s*-?\s*over|before\s+hand\s*-?\s*over|قبل\s+(ال)?(تسليم|استلام)/i;
-const HANDOVER_WORD = /hand\s*-?\s*over|تسليم|استلام/i;
-const COMPLETION_WORD = /\bcompletion\b|إنجاز|إكمال/i;
-const CONSTRUCTION = /construct|\d\s*%|٪|بناء|إنشاء/i;
+// Sellers type milestone labels in English, Arabic or Chinese (交房 / 交付 = handover, 完工 / 竣工 = completion, 施工 /
+// 建设 = construction). "Post-handover" / "after handover" / 交房后 are checked before "handover", and "completion" only
+// counts when it isn't a construction milestone ("on 50% completion", "完工 50%").
+const POST_HANDOVER = /post[\s-]*hand\s*-?\s*over|after\s+hand\s*-?\s*over|بعد\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?后/i;
+const PRE_HANDOVER = /pre[\s-]*hand\s*-?\s*over|before\s+hand\s*-?\s*over|قبل\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?前/i;
+const HANDOVER_WORD = /hand\s*-?\s*over|تسليم|استلام|交[房付楼]/i;
+const COMPLETION_WORD = /\bcompletion\b|إنجاز|إكمال|完工|竣工/i;
+const CONSTRUCTION = /construct|\d\s*[%％]|٪|بناء|إنشاء|施工|建设|工程/i;
 
 function isHandoverLabel(label: string) {
   if (POST_HANDOVER.test(label) || PRE_HANDOVER.test(label)) return false;

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n/client";
+import { LOCALES } from "@/i18n/config";
 
 /**
  * The Owner card of a listing our team entered, until ownership is confirmed (adminSetListingOwner): who it is filed
@@ -54,8 +55,11 @@ export function OwnerForm({ listingId, placeholder }: { listingId: string; place
         </Field>
         <Field label={ti("owner.locale")} htmlFor="ownerLocale">
           <select id="ownerLocale" name="sellerLocale" defaultValue="en" className={selectClass}>
-            <option value="en">{t("create.locale.en")}</option>
-            <option value="ar">{t("create.locale.ar")}</option>
+            {LOCALES.map((l) => (
+              <option key={l} value={l}>
+                {t(`create.locale.${l}`)}
+              </option>
+            ))}
           </select>
         </Field>
       </div>

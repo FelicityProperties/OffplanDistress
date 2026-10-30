@@ -27,7 +27,7 @@ export async function previewIssueAction(locale: unknown) {
   const p = await previewIssue(new Date(), l);
   return {
     subject: p.subject,
-    html: renderEmail({ subject: p.subject, heading: p.heading, html: p.html, text: p.text, dir: dirOf(l) }).html,
+    html: renderEmail({ subject: p.subject, heading: p.heading, html: p.html, text: p.text, locale: l, dir: dirOf(l) }).html,
     counts: p.counts,
     quiet: p.quiet,
     window: { since: dubaiTime(p.since, l), until: dubaiTime(p.until, l) },
@@ -45,6 +45,7 @@ export async function sendTestIssueAction(locale: unknown): Promise<{ ok: true; 
     heading: p.heading,
     html: p.html,
     text: p.text,
+    locale: l,
     dir: dirOf(l),
   });
   await audit({

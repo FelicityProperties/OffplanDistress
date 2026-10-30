@@ -5,12 +5,12 @@ import { NewsletterForm } from "@/components/NewsletterForm";
 import { richText } from "@/content/legal/rich-text";
 import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
-import { BRAND } from "@/lib/config";
+import { BRAND, brandName } from "@/lib/config";
 import { prefillEmail } from "@/lib/newsletter";
 import { alternatesFor, openGraphBase } from "@/lib/seo";
 
 // The daily deals newsletter's own page: what an issue contains, the sign-up form, a sample issue and the consent
-// line (src/lib/newsletter.ts). Indexed, in both languages.
+// line (src/lib/newsletter.ts). Indexed, in every language.
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([getT("newsletter"), getLocale()]);
@@ -36,7 +36,7 @@ const legalLink =
 export default async function NewsletterPage() {
   const [t, locale, user] = await Promise.all([getT("newsletter"), getLocale(), getCurrentUser()]);
   // Who sends the issues: the RERA details every advert (and every issue) carries.
-  const vars = { company: locale === "ar" ? BRAND.companyAr : BRAND.company, orn: BRAND.orn, brn: BRAND.broker.brn };
+  const vars = { company: brandName(locale), orn: BRAND.orn, brn: BRAND.broker.brn };
   return (
     <div className="relative isolate">
       <div className="relative overflow-hidden border-b border-border/60">

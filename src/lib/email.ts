@@ -1,4 +1,5 @@
 import "server-only";
+import { dirOf, htmlLang, type Locale } from "@/i18n/config";
 import { translator } from "@/i18n/translator";
 import { BRAND, OWNER_EMAILS } from "./config";
 import { siteUrl } from "./site-url";
@@ -91,6 +92,11 @@ export type Email = {
   heading: string;
   body?: string | null;
   cta?: { label: string; href: string };
+  /**
+   * The recipient's language: decides the direction (unless `dir` is given), the footer's wording and the faces a
+   * Chinese email asks the mail client for. English when left out.
+   */
+  locale?: Locale;
   dir?: "ltr" | "rtl";
   /**
    * A trusted block of inline-styled HTML shown in place of the body paragraph, inside the same layout (wordmark,
@@ -107,10 +113,15 @@ function escape(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-function render({ heading, body, cta, dir = "ltr", html: block, text: plain }: Email) {
+function render({ heading, body, cta, locale: given, dir: givenDir, html: block, text: plain }: Email) {
+  // Older callers only say `dir`: right-to-left meant Arabic.
+  const locale: Locale = given ?? (givenDir === "rtl" ? "ar" : "en");
+  const dir = givenDir ?? dirOf(locale);
   const href = cta ? (cta.href.startsWith("http") ? cta.href : `${siteUrl()}${cta.href}`) : null;
-  const location = translator("common", dir === "rtl" ? "ar" : "en")("location");
-  const html = `<!doctype html><html dir="${dir}"><body style="margin:0;background:#faf8f3;font-family:Inter,Segoe UI,Arial,sans-serif;color:#141c33">
+  const location = translator("common", locale)("location");
+  // Chinese glyphs come from the reader's system faces (as on the site); Latin text keeps Inter where it is installed.
+  const fonts = locale === "zh" ? "Inter,PingFang SC,Hiragino Sans GB,Microsoft YaHei,Noto Sans CJK SC,Segoe UI,Arial,sans-serif" : "Inter,Segoe UI,Arial,sans-serif";
+  const html = `<!doctype html><html dir="${dir}" lang="${htmlLang(locale)}"><body style="margin:0;background:#faf8f3;font-family:${fonts};color:#141c33">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
 <table role="presentation" width="100%" style="max-width:560px;background:#ffffff;border:1px solid #ebe6dc;border-radius:14px" cellpadding="0" cellspacing="0">
 <tr><td style="padding:24px 28px;border-bottom:1px solid #ebe6dc;font-family:Georgia,serif;font-size:20px;font-weight:600" dir="ltr">Offplan<span style="font-weight:400;opacity:.8">Distress</span></td></tr>

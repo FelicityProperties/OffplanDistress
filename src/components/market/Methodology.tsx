@@ -1,7 +1,7 @@
 import { Activity, Calculator, Clock, Database, EyeOff, Info, Layers, Percent, Sigma, Timer, Wallet } from "lucide-react";
 import { SectionHeading } from "@/components/badges";
 import { getLocale, getT } from "@/i18n/server";
-import { BRAND } from "@/lib/config";
+import { BRAND, brandName } from "@/lib/config";
 import { MIN_LIVE, MIN_SAMPLE } from "@/lib/market";
 
 const ITEMS = [
@@ -57,7 +57,7 @@ export async function Methodology() {
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("disclaimer.body", { brand: BRAND.name })}</p>
             <p className="mt-4 text-xs text-muted-foreground">
-              {t("hero.publishedBy", { company: locale === "ar" ? BRAND.companyAr : BRAND.company })}
+              {t("hero.publishedBy", { company: brandName(locale) })}
               <span aria-hidden> · </span>
               <span className="whitespace-nowrap tabular">{tc("reraOrn", { orn: BRAND.orn })}</span>
             </p>

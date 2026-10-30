@@ -7,13 +7,13 @@ import { previewIssueAction, sendTestIssueAction } from "@/app/actions/newslette
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useT } from "@/i18n/client";
-import { dirOf, type Locale } from "@/i18n/config";
+import { dirOf, isLocale, LOCALES, type Locale } from "@/i18n/config";
 
 type Preview = Awaited<ReturnType<typeof previewIssueAction>>;
 
 /**
  * Today's newsletter issue on /admin/newsletter: what the next daily run would send (src/lib/newsletter-issue.ts),
- * in English or Arabic, shown in an iframe sized to the email, with a test send to the admin's own address.
+ * in English, Arabic or Chinese, shown in an iframe sized to the email, with a test send to the admin's own address.
  */
 export function NewsletterPreview() {
   const t = useT("newsletter");
@@ -60,17 +60,16 @@ export function NewsletterPreview() {
           type="single"
           value={locale}
           onValueChange={(v) => {
-            if (v === "en" || v === "ar") setLocale(v);
+            if (isLocale(v)) setLocale(v);
           }}
           aria-label={t("preview.language")}
           className="rounded-lg border border-input p-0.5"
         >
-          <ToggleGroupItem value="en" className="h-8 px-3 text-xs">
-            {t("admin.lang.en")}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="ar" className="h-8 px-3 text-xs">
-            {t("admin.lang.ar")}
-          </ToggleGroupItem>
+          {LOCALES.map((l) => (
+            <ToggleGroupItem key={l} value={l} className="h-8 px-3 text-xs">
+              {t(`admin.lang.${l}`)}
+            </ToggleGroupItem>
+          ))}
         </ToggleGroup>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">

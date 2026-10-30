@@ -4,11 +4,11 @@ import { after } from "next/server";
 import { and, count, desc, eq, ilike, inArray, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { newsletterIssues, newsletterSubscribers, users } from "@/db/schema";
-import { dirOf, isLocale, type Locale } from "@/i18n/config";
+import { isLocale, type Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { tFor } from "@/i18n/server";
 import { isPlaceholderEmail } from "./claim";
-import { BRAND } from "./config";
+import { BRAND, brandName } from "./config";
 import { sendEmail } from "./email";
 import { hit } from "./throttle";
 
@@ -148,14 +148,14 @@ export async function subscribe({ email, locale, source, userId, ip }: Subscribe
 /** The double opt-in email: what the newsletter is, how often, who sends it (RERA details), and the confirmation button. */
 async function sendConfirmation(email: string, token: string, locale: Locale) {
   const t = tFor("newsletter", locale);
-  const vars = { company: locale === "ar" ? BRAND.companyAr : BRAND.company, orn: BRAND.orn, brn: BRAND.broker.brn };
+  const vars = { company: brandName(locale), orn: BRAND.orn, brn: BRAND.broker.brn };
   await sendEmail({
     to: email,
     subject: t("email.confirm.subject"),
     heading: t("email.confirm.heading"),
     body: t("email.confirm.body", vars),
     cta: { label: t("email.confirm.cta"), href: confirmPath(token, locale) },
-    dir: dirOf(locale),
+    locale,
   });
 }
 

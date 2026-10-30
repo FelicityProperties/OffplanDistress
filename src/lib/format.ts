@@ -1,12 +1,20 @@
 import { intlLocale, type Locale } from "@/i18n/config";
 import { AED_PER_USD } from "./config";
 
-// Digits stay Latin in both languages (UAE convention); Arabic swaps "AED" for "درهم" and localises words.
+// Digits stay Latin in every language (UAE convention); Arabic swaps "AED" for "درهم" and localises words. Chinese keeps
+// the English money style ("AED 2,186,173", "AED 2.19M"): it is what Chinese investors in Dubai see on every portal and
+// in every brochure, and the glossary keeps AED in Latin. Dates and relative times follow the language (zh-CN gives
+// "2027年3月11日", "3天前").
 
 const numberFmt = new Intl.NumberFormat("en-AE", { maximumFractionDigits: 0 });
 
 export function formatNumber(value: number) {
   return numberFmt.format(value);
+}
+
+/** The Intl locale for dates: British English ("11 Mar 2027") for English, the language's own tag otherwise. */
+export function dateLocale(locale: Locale) {
+  return locale === "en" ? "en-GB" : intlLocale(locale);
 }
 
 export function formatAED(value: number | null | undefined, locale: Locale = "en") {
@@ -21,6 +29,7 @@ export function formatUSDFromAED(aed: number | null | undefined, locale: Locale 
   return locale === "ar" ? `${numberFmt.format(usd)} دولار أمريكي` : `USD ${numberFmt.format(usd)}`;
 }
 
+/** "AED 2.19M" / "2.19 مليون درهم"; Chinese reads the English form (see the note at the top), not 万/亿. */
 export function formatAEDCompact(value: number | null | undefined, locale: Locale = "en") {
   if (value == null) return "—";
   const abs = Math.abs(value);
@@ -49,20 +58,27 @@ export function formatPct(value: number | null | undefined, digits = 0) {
   return `${(value * 100).toFixed(digits)}%`;
 }
 
+/** "11 Mar 2027" / "11 مارس 2027" / "2027年3月11日". */
 export function formatDate(value: string | Date | null | undefined, locale: Locale = "en") {
   if (!value) return "—";
   const d = typeof value === "string" ? new Date(value) : value;
-  return d.toLocaleDateString(locale === "ar" ? intlLocale("ar") : "en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return d.toLocaleDateString(dateLocale(locale), { day: "numeric", month: "short", year: "numeric" });
 }
 
 const AR_QUARTERS = ["الربع الأول", "الربع الثاني", "الربع الثالث", "الربع الرابع"];
+const ZH_QUARTERS = ["第一季度", "第二季度", "第三季度", "第四季度"];
+/** "To be confirmed", for a handover date the developer hasn't set. */
+const TBC: Record<Locale, string> = { en: "TBC", ar: "يُحدَّد لاحقاً", zh: "待定" };
 
-/** "2027-12-31" → "Q4 2027" / "الربع الرابع 2027" */
+/** "2027-12-31" → "Q4 2027" / "الربع الرابع 2027" / "2027 年第四季度" (as the sell form's own copy writes it). */
 export function formatQuarter(value: string | null | undefined, locale: Locale = "en") {
-  if (!value) return locale === "ar" ? "يُحدَّد لاحقاً" : "TBC";
+  if (!value) return TBC[locale];
   const d = new Date(value);
   const q = Math.floor(d.getUTCMonth() / 3);
-  return locale === "ar" ? `${AR_QUARTERS[q]} ${d.getUTCFullYear()}` : `Q${q + 1} ${d.getUTCFullYear()}`;
+  const year = d.getUTCFullYear();
+  if (locale === "ar") return `${AR_QUARTERS[q]} ${year}`;
+  if (locale === "zh") return `${year} 年${ZH_QUARTERS[q]}`;
+  return `Q${q + 1} ${year}`;
 }
 
 export function refCode(refNo: number) {

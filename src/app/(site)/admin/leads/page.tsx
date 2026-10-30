@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/badges";
 import { AedRange } from "@/components/exit/Aed";
 import { Button } from "@/components/ui/button";
 import { richText } from "@/content/legal/rich-text";
+import { isLocale } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import { userTabs } from "@/lib/admin";
 import { requireAdmin } from "@/lib/auth";
@@ -58,7 +59,7 @@ export default async function LeadsPage() {
                     {l.defaultNotice && <StatusPill tone="warning">{t("leads.notice")}</StatusPill>}
                     {l.missed !== "none" && <StatusPill tone="warning">{t(`leads.missed.${l.missed}`)}</StatusPill>}
                     <span className="text-xs text-muted-foreground">
-                      {timeAgo(l.createdAt, locale)} · {t(l.locale === "ar" ? "leads.locale.ar" : "leads.locale.en")}
+                      {timeAgo(l.createdAt, locale)} · {t(`leads.locale.${isLocale(l.locale) ? l.locale : "en"}`)}
                     </span>
                   </div>
                   <p className="text-sm">
