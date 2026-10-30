@@ -67,7 +67,13 @@ export const SPAM_VOCABULARY = [
   "into google",
   "index your site",
   "index your website",
-  "indexed",
+  // "indexed" on its own is ordinary English (a payment plan indexed to handover): only its SEO uses count.
+  "not indexed",
+  "get indexed",
+  "indexed by google",
+  "indexed on google",
+  "site indexed",
+  "website indexed",
   "seo",
   "backlink",
   "domain authority",
@@ -95,8 +101,8 @@ const PROPERTY_WORDS = /\b(?:project|community|unit|off-?plan|dubai|aed|price|vi
 const ARABIC = /[؀-ۿ]/;
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-// Whole words or phrases; the end tolerates a plural s ("backlinks", "keywords") but not "seoul" or "indexeddb".
-const VOCABULARY_RE = new RegExp(`(?<![a-z])(?:${SPAM_VOCABULARY.map(escape).join("|")})s?(?![a-z])`, "i");
+// Whole words or phrases; the end tolerates a plural s ("backlinks", "keywords") but not "seoul", "indexeddb" or "page 10".
+const VOCABULARY_RE = new RegExp(`(?<![a-z0-9])(?:${SPAM_VOCABULARY.map(escape).join("|")})s?(?![a-z0-9])`, "i");
 // http(s)://host, www.host, or a bare host.tld/ with a path: the host is captured.
 const LINK_RE = /(?:https?:\/\/|www\.)([a-z0-9.-]+\.[a-z]{2,})|(?<![\w@.-])([a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,})\//gi;
 
