@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-10-29T14:02:25Z",
+ "generatedAt": "2026-10-30T09:12:52Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -550,17 +550,12 @@
     "floor": "G+1",
     "view": null,
     "originalPrice": 2473050,
-    "amountPaid": 1905260,
-    "askingPrice": 1932210,
+    "amountPaid": 1954720,
+    "askingPrice": 1981670,
     "handoverDate": "2027-03-31",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
     "paymentPlan": [
-     {
-      "label": "80% Construction",
-      "dueDate": null,
-      "amount": 49460
-     },
      {
       "label": "90% Construction",
       "dueDate": null,
@@ -614,19 +609,14 @@
     "floor": "10-20",
     "view": "Canal, City",
     "originalPrice": 3144700,
-    "amountPaid": 2200528,
-    "askingPrice": 1955828,
+    "amountPaid": 2515252,
+    "askingPrice": 2270552,
     "handoverDate": "2028-12-31",
-    "nextInstalmentDate": "2026-10-23",
-    "nextInstalmentAmount": 314724,
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
     "paymentPlan": [
      {
-      "label": "23.10.2026",
-      "dueDate": "2026-10-23",
-      "amount": 314724
-     },
-     {
-      "label": "ON COMPLETION",
+      "label": "On Completion",
       "dueDate": null,
       "amount": 629448
      }
@@ -652,7 +642,7 @@
      "url": "https://distressonly.deals/media/units/384/6a6ea1feb605.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 24, 2026: DISTRESS DEAL: 1-BR IN SOBHA SEAHAVEN - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,270,492; selling price AED 2,900,000. 1 instalment(s) in the posted plan fall before today (23.10.2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock September 24, 2026: DISTRESS DEAL: 1-BR IN SOBHA SEAHAVEN - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,270,492; selling price AED 2,900,000."
   },
   {
    "ref": "6FDbrU",
@@ -738,22 +728,12 @@
     "floor": "2-8",
     "view": "Canal",
     "originalPrice": 5829000,
-    "amountPaid": 2273310,
-    "askingPrice": 2194310,
+    "amountPaid": 2623050,
+    "askingPrice": 2544050,
     "handoverDate": "2027-12-31",
     "nextInstalmentDate": "2026-11-16",
     "nextInstalmentAmount": 174870,
     "paymentPlan": [
-     {
-      "label": "16-SEP-2026",
-      "dueDate": "2026-09-16",
-      "amount": 174870
-     },
-     {
-      "label": "16-OCT-2026",
-      "dueDate": "2026-10-16",
-      "amount": 174870
-     },
      {
       "label": "16-NOV-2026",
       "dueDate": "2026-11-16",
@@ -806,7 +786,7 @@
      "url": "https://distressonly.deals/media/units/335/4dccad5f0304.webp"
     }
    ],
-   "notes": "Posted on DistressStock August 18, 2026: DISTRESS DEAL: 3-BR IN CANAL HEIGHTS 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 6,062,160; selling price AED 5,750,000. 2 instalment(s) in the posted plan fall before today (16-SEP-2026, 16-OCT-2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock August 18, 2026: DISTRESS DEAL: 3-BR IN CANAL HEIGHTS 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 6,062,160; selling price AED 5,750,000."
   },
   {
    "ref": "6tU9pf",
@@ -1271,17 +1251,12 @@
     "floor": "15-20",
     "view": "Full Dubai Ain, Sea",
     "originalPrice": 7800000,
-    "amountPaid": 2748200,
-    "askingPrice": 1818200,
+    "amountPaid": 3136800,
+    "askingPrice": 2206800,
     "handoverDate": "2028-12-31",
     "nextInstalmentDate": "2027-01-30",
     "nextInstalmentAmount": 388600,
     "paymentPlan": [
-     {
-      "label": "02-SEP-2026",
-      "dueDate": "2026-09-02",
-      "amount": 388600
-     },
      {
       "label": "30-JAN-2027",
       "dueDate": "2027-01-30",
@@ -1329,7 +1304,7 @@
      "url": "https://distressonly.deals/media/units/276/f0c9e65a065e.webp"
     }
    ],
-   "notes": "Posted on DistressStock June 18, 2026: DISTRESS DEAL: 2-BR IN W RESIDENCES - TOWER 1. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 8,112,000; selling price AED 6,870,000. 1 instalment(s) in the posted plan fall before today (02-SEP-2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock June 18, 2026: DISTRESS DEAL: 2-BR IN W RESIDENCES - TOWER 1. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 8,112,000; selling price AED 6,870,000."
   },
   {
    "ref": "DAtrIk",
@@ -1596,17 +1571,12 @@
     "floor": "G+2",
     "view": null,
     "originalPrice": 25316000,
-    "amountPaid": 13923800,
-    "askingPrice": 12107800,
+    "amountPaid": 15189600,
+    "askingPrice": 13373600,
     "handoverDate": "2027-09-30",
-    "nextInstalmentDate": "2026-09-01",
-    "nextInstalmentAmount": 1265800,
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
     "paymentPlan": [
-     {
-      "label": "01-SEP-2026",
-      "dueDate": "2026-09-01",
-      "amount": 1265800
-     },
      {
       "label": "On Handover",
       "dueDate": null,
@@ -1638,7 +1608,61 @@
      "url": "https://distressonly.deals/media/units/65/58d94eca3477.webp"
     }
    ],
-   "notes": "Posted on DistressStock April 18, 2026: DISTRESS DEAL: 7-BR IN KARL LAGERFELD VILLAS. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Checks pass: 12107800 + 11392200 = 23500000, the instalments add up to 11392200, the transfer rows add up to 13619230, and 13619230 + 11392200 = 25011430. The 01-SEP-2026 instalment date is earlier than today (2026-10-27), but it is transcribed as printed. Source: original price + DLD 4% = AED 26,328,640; selling price AED 23,500,000. 1 instalment(s) in the posted plan fall before today (01-SEP-2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock April 18, 2026: DISTRESS DEAL: 7-BR IN KARL LAGERFELD VILLAS. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 26,328,640; selling price AED 23,500,000."
+  },
+  {
+   "ref": "JySmis",
+   "url": "https://distressonly.deals/u/JySmis",
+   "posted": "2026-10-28",
+   "listing": {
+    "projectName": "Sobha One - Tower D",
+    "developer": "Sobha",
+    "developerOther": null,
+    "community": "Other",
+    "communityOther": "Ras Al Khor",
+    "unitType": "1br",
+    "sizeSqft": 540,
+    "floor": "30-38",
+    "view": "Canal",
+    "originalPrice": 1339350,
+    "amountPaid": 803611,
+    "askingPrice": 594261,
+    "handoverDate": "2027-02-28",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 535739
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "JySmis-ebe7e858.webp",
+     "url": "https://distressonly.deals/media/units/424/a8692dc61bad.webp"
+    },
+    {
+     "filename": "JySmis-586f0772.webp",
+     "url": "https://distressonly.deals/media/units/424/1b1b8cd9bf55.webp"
+    },
+    {
+     "filename": "JySmis-40a4aed0.webp",
+     "url": "https://distressonly.deals/media/units/424/5787adb75a02.webp"
+    },
+    {
+     "filename": "JySmis-6b2222df.webp",
+     "url": "https://distressonly.deals/media/units/424/aafcba363a27.webp"
+    },
+    {
+     "filename": "JySmis-k0.webp",
+     "url": "https://distressonly.deals/media/units/424/bb31fd0f4025.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock October 28, 2026: DISTRESS DEAL: 1-BR IN SOBHA ONE - TOWER D. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 1,392,920; selling price AED 1,130,000."
   },
   {
    "ref": "K1kdRE",
@@ -1902,9 +1926,9 @@
     "sizeSqft": 1292,
     "floor": "2-6",
     "view": "Backside",
-    "originalPrice": 2865350,
-    "amountPaid": 1431175,
-    "askingPrice": 1140825,
+    "originalPrice": 2868350,
+    "amountPaid": 1434175,
+    "askingPrice": 1090825,
     "handoverDate": "2028-12-31",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -1955,7 +1979,7 @@
      "url": "https://distressonly.deals/media/units/414/990268df9701.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 21, 2026: DISTRESS DEAL: 2-BR IN PIER POINT 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Construction-milestone plan, no dates. All checks pass: seller+remaining=unit price; instalments sum to total remaining; transfer items sum to total on transfer. Source: original price + DLD 4% = AED 2,983,084; selling price AED 2,575,000."
+   "notes": "Posted on DistressStock October 21, 2026: DISTRESS DEAL: 2-BR IN PIER POINT 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,983,084; selling price AED 2,525,000."
   },
   {
    "ref": "Nf34Mu",
@@ -3102,17 +3126,12 @@
     "floor": "7-12",
     "view": "Community, Pool",
     "originalPrice": 1271900,
-    "amountPaid": 788582,
-    "askingPrice": 661382,
+    "amountPaid": 801301,
+    "askingPrice": 674101,
     "handoverDate": "2028-06-30",
     "nextInstalmentDate": "2026-11-01",
     "nextInstalmentAmount": 12719,
     "paymentPlan": [
-     {
-      "label": "01.10.2026",
-      "dueDate": "2026-10-01",
-      "amount": 12719
-     },
      {
       "label": "01.11.2026",
       "dueDate": "2026-11-01",
@@ -3149,7 +3168,7 @@
      "url": "https://distressonly.deals/media/units/361/ce7baf3e94b1.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 10, 2026: DISTRESS DEAL: 1-BR IN THE CENTRAL DOWNTOWN - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Seller + remaining = unit price, and the instalments sum to total remaining. The image itself is inconsistent by 1 AED: its on-transfer lines (661382 + 50916 + 5250 + 24039) add up to 741587, but it prints Total on Transfer as 741586. The digits were re-checked on an enlarged crop, and the gap is probably spreadsheet rounding. Total costs (1224904) = printed 741586 + 483318. Dates are printed DD.MM.YYYY. The 01.10.2026 instalment falls before today (2026-10-27). Source: original price + DLD 4% = AED 1,322,764; selling price AED 1,144,700. 1 instalment(s) in the posted plan fall before today (01.10.2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock September 10, 2026: DISTRESS DEAL: 1-BR IN THE CENTRAL DOWNTOWN - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: On-transfer rows sum to 754 306 vs printed Total on Transfer 754 305 (1 AED rounding); kept printed total. Dates printed as DD.MM.YYYY (01.11.2026, 01.12.2026) read as 1 Nov 2026 and 1 Dec 2026. All other checks pass. Source: original price + DLD 4% = AED 1,322,764; selling price AED 1,144,700."
   },
   {
    "ref": "YDUnXd",
@@ -3166,17 +3185,12 @@
     "floor": "20-30",
     "view": "Full Sea",
     "originalPrice": 2161775,
-    "amountPaid": 972800,
-    "askingPrice": 811025,
+    "amountPaid": 1188977,
+    "askingPrice": 1027202,
     "handoverDate": "2027-03-31",
     "nextInstalmentDate": "2027-04-16",
     "nextInstalmentAmount": 108089,
     "paymentPlan": [
-     {
-      "label": "16-OCT-2026",
-      "dueDate": "2026-10-16",
-      "amount": 216177
-     },
      {
       "label": "16-APR-2027",
       "dueDate": "2027-04-16",
@@ -3223,7 +3237,7 @@
      "url": "https://distressonly.deals/media/units/353/e3053b19185e.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 03, 2026: DISTRESS DEAL: 1-BR IN ANWA ARIA. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,248,243; selling price AED 2,000,000. 1 instalment(s) in the posted plan fall before today (16-OCT-2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock September 03, 2026: DISTRESS DEAL: 1-BR IN ANWA ARIA. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,248,243; selling price AED 2,000,000."
   },
   {
    "ref": "Zgw7g9",
@@ -3885,17 +3899,12 @@
     "floor": "30-40",
     "view": "Full Сanal",
     "originalPrice": 2176625,
-    "amountPaid": 1393055,
-    "askingPrice": 1266430,
+    "amountPaid": 1414821,
+    "askingPrice": 1288196,
     "handoverDate": "2027-06-30",
     "nextInstalmentDate": "2026-11-06",
     "nextInstalmentAmount": 21766,
     "paymentPlan": [
-     {
-      "label": "06-OCT-2026",
-      "dueDate": "2026-10-06",
-      "amount": 21766
-     },
      {
       "label": "06-NOV-2026",
       "dueDate": "2026-11-06",
@@ -3952,7 +3961,7 @@
      "url": "https://distressonly.deals/media/units/373/d060c17e87d5.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 21, 2026: DISTRESS DEAL: 1-BR IN CANAL HEIGHTS. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,263,683; selling price AED 2,050,000. 1 instalment(s) in the posted plan fall before today (06-OCT-2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock September 21, 2026: DISTRESS DEAL: 1-BR IN CANAL HEIGHTS. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,263,683; selling price AED 2,050,000."
   },
   {
    "ref": "iU7DHC",
@@ -4514,17 +4523,12 @@
     "floor": "3-5",
     "view": "Water",
     "originalPrice": 3520875,
-    "amountPaid": 2112530,
-    "askingPrice": 1591655,
+    "amountPaid": 2464616,
+    "askingPrice": 1943741,
     "handoverDate": "2026-12-31",
-    "nextInstalmentDate": "2026-09-10",
-    "nextInstalmentAmount": 352086,
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
     "paymentPlan": [
-     {
-      "label": "10.09.2026",
-      "dueDate": "2026-09-10",
-      "amount": 352086
-     },
      {
       "label": "On Handover",
       "dueDate": null,
@@ -4556,7 +4560,7 @@
      "url": "https://distressonly.deals/media/units/301/2969437c556b.webp"
     }
    ],
-   "notes": "Posted on DistressStock July 20, 2026: DISTRESS DEAL: 3-BR IN ILUKA RESIDENCES. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: The first instalment date is printed as '10.09.2026'. I read it as DD.MM.YYYY, giving 2026-09-10. All checks pass: 1591655+1408345 = 3000000. The instalments add up to 1408345. Transfer rows add up to 1800780. 1800780+1408345 = 3209125. Source: original price + DLD 4% = AED 3,661,698; selling price AED 3,000,000. 1 instalment(s) in the posted plan fall before today (10.09.2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock July 20, 2026: DISTRESS DEAL: 3-BR IN ILUKA RESIDENCES. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,661,698; selling price AED 3,000,000."
   },
   {
    "ref": "oNFyi4",
@@ -4671,22 +4675,12 @@
     "floor": "1-5",
     "view": "Park",
     "originalPrice": 2850000,
-    "amountPaid": 1127468,
-    "askingPrice": 1127468,
+    "amountPaid": 1181298,
+    "askingPrice": 1181298,
     "handoverDate": "2027-12-31",
     "nextInstalmentDate": "2026-11-17",
     "nextInstalmentAmount": 26915,
     "paymentPlan": [
-     {
-      "label": "17.09.2026",
-      "dueDate": "2026-09-17",
-      "amount": 26915
-     },
-     {
-      "label": "17.10.2026",
-      "dueDate": "2026-10-17",
-      "amount": 26915
-     },
      {
       "label": "17.11.2026",
       "dueDate": "2026-11-17",
@@ -4774,7 +4768,7 @@
      "url": "https://distressonly.deals/media/units/318/28adb6070a11.webp"
     }
    ],
-   "notes": "Posted on DistressStock August 03, 2026: HOT LOT: 2-BR+STUDY IN AGUA 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Dates are printed DD.MM.YYYY. 14 monthly rows of 26915 plus a final 1345722 sum to 1722532. 1127468+1722532=2850000. Transfer lines sum to 1306608; total 3029140. All checks pass. 2 instalment(s) in the posted plan fall before today (17.09.2026, 17.10.2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock August 03, 2026: HOT LOT: 2-BR+STUDY IN AGUA 2. Figures are as posted — check the current statement of account with the listing broker before approval."
   },
   {
    "ref": "sEX15J",
@@ -4904,17 +4898,12 @@
     "floor": "10-15",
     "view": "Full Sea",
     "originalPrice": 6601900,
-    "amountPaid": 1980582,
-    "askingPrice": 978682,
+    "amountPaid": 2640770,
+    "askingPrice": 1638870,
     "handoverDate": "2029-12-31",
     "nextInstalmentDate": "2027-05-20",
     "nextInstalmentAmount": 660189,
     "paymentPlan": [
-     {
-      "label": "20-OCT-2026",
-      "dueDate": "2026-10-20",
-      "amount": 660189
-     },
      {
       "label": "20-MAY-2027",
       "dueDate": "2027-05-20",
@@ -4923,7 +4912,7 @@
      {
       "label": "24-NOV-2027",
       "dueDate": "2027-11-24",
-      "amount": 660188
+      "amount": 660189
      },
      {
       "label": "4-MAY-2028",
@@ -4966,7 +4955,7 @@
      "url": "https://distressonly.deals/media/units/323/3f446ab01d91.webp"
     }
    ],
-   "notes": "Posted on DistressStock August 06, 2026: DISTRESS DEAL: 3-BR+MAID'S IN BAYSTAR. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: The handover row prints its own date (31-DEC-2029), which is used as its dueDate. The instalments are not all equal (660189, 660189, 660188, 660189, 660187); they are transcribed as printed. They sum to 4621318. 978682+4621318=5600000; transfer lines sum to 1365648; total 5986966. All checks pass. Source: original price + DLD 4% = AED 6,865,964; selling price AED 5,600,000. 1 instalment(s) in the posted plan fall before today (20-OCT-2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock August 06, 2026: DISTRESS DEAL: 3-BR+MAID'S IN BAYSTAR. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 6,865,964; selling price AED 5,600,000."
   },
   {
    "ref": "vlK5pj",
@@ -5084,18 +5073,13 @@
     "sizeSqft": 2852,
     "floor": "10-15",
     "view": "Burj Khalifa, Canal",
-    "originalPrice": 18968675,
-    "amountPaid": 8905090,
-    "askingPrice": 6236415,
+    "originalPrice": 19727425,
+    "amountPaid": 10578711,
+    "askingPrice": 7151286,
     "handoverDate": "2027-05-31",
     "nextInstalmentDate": "2028-03-31",
     "nextInstalmentAmount": 9148714,
     "paymentPlan": [
-     {
-      "label": "20.10.2026",
-      "dueDate": "2026-10-20",
-      "amount": 914871
-     },
      {
       "label": "On Completion (31.03.2028)",
       "dueDate": "2028-03-31",
@@ -5127,7 +5111,7 @@
      "url": "https://distressonly.deals/media/units/268/4f9e61708ca5.webp"
     }
    ],
-   "notes": "Posted on DistressStock June 13, 2026: DISTRESS DEAL: 2-BR IN VELA VIENTO. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: The final row reads 'On Completion' rather than 'On Handover' and prints its own date (31.03.2028), which is used as its dueDate. 914871+9148714=10063585; 6236415+10063585=16300000; transfer lines sum to 7342752; total 17406337. All checks pass. Source: original price + DLD 4% = AED 19,727,430; selling price AED 16,300,000. 1 instalment(s) in the posted plan fall before today (20.10.2026): confirm whether they were paid."
+   "notes": "Posted on DistressStock June 13, 2026: DISTRESS DEAL: 2-BR IN VELA VIENTO. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 19,727,430; selling price AED 16,300,000."
   },
   {
    "ref": "wsag9R",
