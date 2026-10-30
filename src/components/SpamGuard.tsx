@@ -8,7 +8,7 @@ import { useLocale } from "@/i18n/client";
 // the Cloudflare Turnstile widget. Rendered inside a `relative` form; the fields post with the rest of it.
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-/** A token the page came with is replaced at mount once it is this old (a tab left open); tokens last two hours. */
+/** A token is replaced once it is this old (half of the two hours it lasts): a tab left open never posts a dead one. */
 const STALE_MS = 60 * 60 * 1000;
 
 export function SpamGuard({
@@ -29,25 +29,49 @@ export function SpamGuard({
           <input type="text" name="website" tabIndex={-1} autoComplete="off" defaultValue="" />
         </label>
       </div>
-      <FormToken token={token} />
+      <FormToken token={token} resetKey={resetKey} />
       {SITE_KEY && <Turnstile siteKey={SITE_KEY} resetKey={resetKey} />}
     </>
   );
 }
 
-function FormToken({ token }: { token?: string }) {
+/**
+ * The form token (src/lib/spam.ts): the one the page came with, replaced from /api/form-token once it is STALE_MS old.
+ * Checked at mount, every half hour, whenever the tab or window comes back into view (a laptop woken up, a page
+ * restored from the back/forward cache) and after a refused submission, so a form filled in slowly is never posted with
+ * a token that ran out. Without JavaScript the page's own token stays, good for two hours.
+ */
+function FormToken({ token, resetKey }: { token?: string; resetKey?: number }) {
   const [value, setValue] = useState(token ?? "");
+  const current = useRef(value);
   useEffect(() => {
-    if (token && Date.now() - Number(token.split(".")[0]) < STALE_MS) return;
     const ctrl = new AbortController();
-    fetch("/api/form-token", { cache: "no-store", signal: ctrl.signal })
-      .then((r) => r.json())
-      .then((d: { token?: unknown }) => {
-        if (typeof d.token === "string") setValue(d.token);
-      })
-      .catch(() => {});
-    return () => ctrl.abort();
-  }, [token]);
+    const refresh = () => {
+      const issuedAt = Number(current.current.split(".")[0]);
+      if (issuedAt && Date.now() - issuedAt < STALE_MS) return;
+      fetch("/api/form-token", { cache: "no-store", signal: ctrl.signal })
+        .then((r) => r.json())
+        .then((d: { token?: unknown }) => {
+          if (typeof d.token !== "string") return;
+          current.current = d.token;
+          setValue(d.token);
+        })
+        .catch(() => {});
+    };
+    const onVisible = () => document.visibilityState === "visible" && refresh();
+    refresh();
+    const timer = setInterval(refresh, STALE_MS / 2);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("pageshow", refresh);
+    return () => {
+      ctrl.abort();
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("pageshow", refresh);
+    };
+  }, [resetKey]);
   return <input type="hidden" name="formToken" value={value} />;
 }
 

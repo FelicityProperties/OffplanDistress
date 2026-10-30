@@ -17,7 +17,7 @@ import { notifyInquiryReceived } from "@/lib/inquiries";
 import { notify, notifyAdmins, type TemplateParams } from "@/lib/notify";
 import { settleOtherOffers } from "@/lib/offers";
 import { advertisedSql, isAdvertised } from "@/lib/permits";
-import { formTokenOk, honeypotTripped, SPAM_THRESHOLD, spamScore, verifyTurnstile } from "@/lib/spam";
+import { formTokenExpired, formTokenOk, honeypotTripped, SPAM_THRESHOLD, spamScore, verifyTurnstile } from "@/lib/spam";
 import { clientIp, DAY, hit, MINUTE } from "@/lib/throttle";
 import { contactKinds } from "@/lib/typed-names";
 import { isUuid } from "@/lib/utils";
@@ -396,15 +396,21 @@ export async function createInquiry(_prev: FormState, formData: FormData): Promi
     { error: fallbackErrors(t) },
   );
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
-  // Bots first (src/lib/spam.ts): a filled honeypot, or a form token that is missing, forged, stale or under three
-  // seconds old, gets the normal thank-you with nothing stored, so a script learns nothing from the answer.
-  if (honeypotTripped(formData) || !formTokenOk(formData.get("formToken"))) return { ok: true };
+  // Bots first (src/lib/spam.ts): a filled honeypot, or a form token that is missing, forged or under three seconds
+  // old, gets the normal thank-you with nothing stored, so a script learns nothing from the answer. A token of ours that
+  // ran out is a visitor's tab left open for hours: a clear error, and the form fetches a fresh token for the retry.
+  const token = formData.get("formToken");
+  if (honeypotTripped(formData)) return { ok: true };
+  if (formTokenExpired(token)) return { error: t("form.expired") };
+  if (!formTokenOk(token)) return { ok: true };
   const ip = await clientIp();
   if (!(await verifyTurnstile(formData.get("cf-turnstile-response"), ip))) return { error: t("form.verifyFailed") };
   const v = parsed.data;
-  // Per IP, then per address: the contact form is the one scrapers find first, so it gets the lower limit.
-  if (!(await hit(`inquiry-ip:${ip}`, v.type === "contact" ? 5 : 10, 60 * MINUTE))) return { error: t("tooMany") };
-  if (!(await hit(`inquiry-email:${v.email.toLowerCase()}`, 3, DAY))) return { error: t("tooMany") };
+  // Per IP, then per address: the contact form is the one scrapers find first, so it gets the lower limits; a buyer
+  // asking about several deals in a day is not a bot.
+  const contact = v.type === "contact";
+  if (!(await hit(`inquiry-ip:${ip}`, contact ? 5 : 10, 60 * MINUTE))) return { error: t("tooMany") };
+  if (!(await hit(`inquiry-email:${v.email.toLowerCase()}`, contact ? 3 : 10, DAY))) return { error: t("form.tooManyToday") };
 
   // A listing deleted while its page was open is no longer linked: the message itself is kept.
   let listing: { projectName: string; refNo: number } | null = null;

@@ -202,15 +202,19 @@ listing or account are deleted 24 months after the last update.
 The contact form (`/contact`) and the viewing / info request on each deal page land in `/admin/inquiries` and notify
 the admins; the free estimate's lead form shares the defences (`src/lib/spam.ts`). Every submission passes a honeypot
 nobody sees, then a server-signed timing token the page was rendered with (no JavaScript needed; a post without one,
-with a stale one or under three seconds after the page was served is a bot: the normal thank-you, nothing stored), then
-the limits: 5 contact messages an hour per IP (10 for deal-page requests, 5 estimates), 3 a day per address (per phone
-for estimates). A message is then scored — SEO / "into Google's index" wording, links to other sites, a one-word name, a
-fake address, a long off-topic text — and at 3 points it is stored flagged: the sender sees the thank-you, nobody is
-notified, and it sits on the **Spam** tab of `/admin/inquiries` with its reason; "Not spam" moves it to the inbox and
-sends the team the notice it skipped, "Spam" on an inbox row does the opposite. Spam never counts: not in the sidebar
-badge, the follow-ups, the daily digest or the analytics' leads line. Optional extra: Cloudflare Turnstile
-(`NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`) renders its widget on both forms and verifies every
-submission; without the keys nothing changes. The migration adding the columns also flags the SEO pitches already stored.
+with a forged one or under three seconds after the page was served is a bot: the normal thank-you, nothing stored; a
+token that ran out — the page open for over two hours — is a visitor: a clear "try again", the form keeps what was
+typed and, with JavaScript, replaces its token by itself every hour, when the tab comes back into view and after a
+refused submission), then the limits: 5 contact messages an hour per IP (10 for deal-page requests, 5 estimates), 3 a
+day per address (10 for deal-page requests; 3 per phone for estimates). A message is then scored — SEO / "into Google's
+index" wording in English or Arabic (full-width and look-alike letters folded first), links to other sites, a one-word
+name, a fake address, a long off-topic contact message — and at 3 points it is stored flagged: the sender sees the
+thank-you, nobody is notified, and it sits on the **Spam** tab of `/admin/inquiries` with its reason; "Not spam" moves
+it to the inbox and sends the team the notice it skipped, "Spam" on an inbox row does the opposite. Spam never counts:
+not in the sidebar badge, the follow-ups, the daily digest or the analytics' leads line. Optional extra: Cloudflare
+Turnstile (`NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`) renders its widget on both forms and verifies
+every submission (no answer from Cloudflare counts as a failed check: "please try again", nothing stored); without the
+keys nothing changes. The migration adding the columns also flags the SEO pitches already stored.
 
 ### Notifications
 

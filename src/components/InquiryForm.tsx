@@ -41,6 +41,13 @@ export function InquiryFields({
   const [state, action] = useActionState(createInquiry, {});
   // Counts refused submissions, so the anti-spam widget (if any) issues a fresh token for the next try.
   const [attempt, setAttempt] = useState(0);
+  // What was typed, fed back as the fields' defaults: React resets a form once its action has answered, errors
+  // included, and a reset puts the defaults back, so a message survives a "too many" or an expired form token.
+  const [typed, setTyped] = useState<Record<string, string>>({});
+  const keepTyped = (e: React.FormEvent<HTMLFormElement>) => {
+    const el = e.target as HTMLInputElement;
+    if (el.name && el.type !== "hidden") setTyped((v) => ({ ...v, [el.name]: el.value }));
+  };
   const done = useRef(onDone);
   done.current = onDone;
   useEffect(() => {
@@ -60,14 +67,14 @@ export function InquiryFields({
   }
 
   return (
-    <form action={action} className="relative space-y-4">
+    <form action={action} onInput={keepTyped} className="relative space-y-4">
       {listingId && <input type="hidden" name="listingId" value={listingId} />}
       <input type="hidden" name="type" value={type} />
       <AttributionField />
       <SpamGuard token={formToken} resetKey={attempt} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t("inquiry.name")} htmlFor="inq-name" error={fe.name}>
-          <Input id="inq-name" name="name" defaultValue={defaults?.name} required autoComplete="name" />
+          <Input id="inq-name" name="name" defaultValue={typed.name ?? defaults?.name} required autoComplete="name" />
         </Field>
         <Field label={t("inquiry.phone")} htmlFor="inq-phone" error={fe.phone}>
           <Input
@@ -76,7 +83,7 @@ export function InquiryFields({
             type="tel"
             dir="ltr"
             className="rtl:text-end"
-            defaultValue={defaults?.phone ?? ""}
+            defaultValue={typed.phone ?? defaults?.phone ?? ""}
             autoComplete="tel"
           />
         </Field>
@@ -88,13 +95,13 @@ export function InquiryFields({
           type="email"
           dir="ltr"
           className="rtl:text-end"
-          defaultValue={defaults?.email}
+          defaultValue={typed.email ?? defaults?.email}
           required
           autoComplete="email"
         />
       </Field>
       <Field label={t("inquiry.message")} htmlFor="inq-message" error={fe.message}>
-        <Textarea id="inq-message" name="message" rows={4} placeholder={messagePlaceholder} />
+        <Textarea id="inq-message" name="message" rows={4} placeholder={messagePlaceholder} defaultValue={typed.message} />
       </Field>
       <FormMessage state={state} />
       <SubmitButton className="w-full" pendingText={tc("sending")}>
