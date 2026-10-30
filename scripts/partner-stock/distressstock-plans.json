@@ -321,21 +321,16 @@
    "notes": "The image adds up. It has no Payment Plan section and no Total Remaining Payment Plan row, so totalRemaining is null (in effect 0) and there are no instalments. This is a ready or fully paid unit: payment to seller equals the unit price, so paymentToSeller + 0 = unitPrice. Transfer rows: 41250000 + 1650040 + 4200 + 866250 + 580 = 43771070, which matches Total on Transfer and TOTAL COSTS FOR BUYER. The commission label reads (2%+VAT)."
   },
   "43JF8G": {
-   "image": "https://distressonly.deals/media/units/351/e743b83dd034.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/351/71062f1b2782.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 2500000,
-   "paymentToSeller": 1932210,
+   "paymentToSeller": 1981670,
    "dldFee": 98962,
    "trusteeFee": 5250,
    "commission": 52500,
    "otherOnTransfer": [],
    "instalments": [
-    {
-     "label": "80% Construction",
-     "dueDate": null,
-     "amount": 49460
-    },
     {
      "label": "90% Construction",
      "dueDate": null,
@@ -347,37 +342,32 @@
      "amount": 494600
     }
    ],
-   "totalOnTransfer": 2088922,
-   "totalRemaining": 567790,
+   "totalOnTransfer": 2138382,
+   "totalRemaining": 518330,
    "totalCosts": 2656712,
-   "notes": "All checks pass. The instalments are tied to construction milestones, not calendar dates."
+   "notes": "All checks pass; both instalments are undated milestones (90% Construction, On Handover), so dueDate is null for each."
   },
   "4DG7dQ": {
-   "image": "https://distressonly.deals/media/units/384/7ec75a82e39f.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/384/08b1b8291158.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 2900000,
-   "paymentToSeller": 1955828,
+   "paymentToSeller": 2270552,
    "dldFee": 125828,
    "trusteeFee": 5250,
    "commission": 60900,
    "otherOnTransfer": [],
    "instalments": [
     {
-     "label": "23.10.2026",
-     "dueDate": "2026-10-23",
-     "amount": 314724
-    },
-    {
-     "label": "ON COMPLETION",
+     "label": "On Completion",
      "dueDate": null,
      "amount": 629448
     }
    ],
-   "totalOnTransfer": 2147806,
-   "totalRemaining": 944172,
+   "totalOnTransfer": 2462530,
+   "totalRemaining": 629448,
    "totalCosts": 3091978,
-   "notes": "All checks pass. The date is printed as DD.MM.YYYY (23.10.2026), converted to 2026-10-23. That instalment is already past (today is 2026-10-27)."
+   "notes": "All checks pass (2270552+629448=2900000; on-transfer rows sum to 2462530; 2462530+629448=3091978). Single undated 'On Completion' instalment. DLD fee 125828 implies OP of 3144700 rather than the 2900000 unit price (4% of OP + 40), consistent with the row's label."
   },
   "6FDbrU": {
    "image": "https://distressonly.deals/media/units/278/312c7478419b.webp",
@@ -417,26 +407,16 @@
    "notes": "The image itself is off by 1 AED: the four transfer rows (554632 + 103944 + 5250 + 49840) add up to 713666, but Total on Transfer is printed as 713667. I checked this digit by digit on a zoomed crop, so it is probably a rounding artifact in the source spreadsheet. TOTAL COSTS (2532384) equals the printed 713667 + 1818717. The other checks pass: seller + remaining = 2373349, and the instalments sum to 1818717. Dates are printed as DD.MM.YYYY (31.08.2028 confirms the day-first order)."
   },
   "6eEks7": {
-   "image": "https://distressonly.deals/media/units/335/2641c0022f2f.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/335/8f38d27751da.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 5750000,
-   "paymentToSeller": 2194310,
+   "paymentToSeller": 2544050,
    "dldFee": 233200,
    "trusteeFee": 5250,
    "commission": 120750,
    "otherOnTransfer": [],
    "instalments": [
-    {
-     "label": "16-SEP-2026",
-     "dueDate": "2026-09-16",
-     "amount": 174870
-    },
-    {
-     "label": "16-OCT-2026",
-     "dueDate": "2026-10-16",
-     "amount": 174870
-    },
     {
      "label": "16-NOV-2026",
      "dueDate": "2026-11-16",
@@ -468,10 +448,10 @@
      "amount": 2331600
     }
    ],
-   "totalOnTransfer": 2553510,
-   "totalRemaining": 3555690,
+   "totalOnTransfer": 2903250,
+   "totalRemaining": 3205950,
    "totalCosts": 6109200,
-   "notes": "All checks pass: seller + remaining = unit price; 7 x 174,870 + 2,331,600 = 3,555,690; transfer rows sum to 2,553,510; total 6,109,200. Final row is printed 'On Completion' (not 'On Handover'). The printed DLD fee (233,200) is not 4% of the unit price + 40 (that would be 230,040), so OP probably refers to a different price. Transcribed as printed."
+   "notes": "All checks pass; DLD fee 233 200 implies an original price of about 5 829 000 rather than the 5 750 000 unit price (consistent with OP = developer's original price), while commission matches 2%+VAT of the unit price exactly."
   },
   "6tU9pf": {
    "image": "https://distressonly.deals/media/units/423/e76423cf4374.webp",
@@ -684,21 +664,16 @@
    "notes": "All checks pass: 19,680,000 + 12,320,000 = 32,000,000; transfer rows (including the Title Deed Fee of 580) sum to 21,588,822; total 33,908,822. The printed DLD fee (1,232,042) is not 4% of the unit price + 40 (that would be 1,280,040), and it ends in 42 rather than 40. Transcribed as printed."
   },
   "CSCjsl": {
-   "image": "https://distressonly.deals/media/units/276/f3c3a99b9861.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/276/be1fca99b6d2.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 6870000,
-   "paymentToSeller": 1818200,
+   "paymentToSeller": 2206800,
    "dldFee": 312040,
    "trusteeFee": 5250,
    "commission": 144270,
    "otherOnTransfer": [],
    "instalments": [
-    {
-     "label": "02-SEP-2026",
-     "dueDate": "2026-09-02",
-     "amount": 388600
-    },
     {
      "label": "30-JAN-2027",
      "dueDate": "2027-01-30",
@@ -725,10 +700,10 @@
      "amount": 3108800
     }
    ],
-   "totalOnTransfer": 2279760,
-   "totalRemaining": 5051800,
+   "totalOnTransfer": 2668360,
+   "totalRemaining": 4663200,
    "totalCosts": 7331560,
-   "notes": "All checks pass: 1,818,200 + 5,051,800 = 6,870,000; 5 x 388,600 + 3,108,800 = 5,051,800; transfer rows sum to 2,279,760; total 7,331,560. The printed DLD fee (312,040) is not 4% of the unit price + 40 (that would be 274,840). Transcribed as printed."
+   "notes": "All checks pass; DLD fee 312 040 implies an original price (OP) of 7 800 000, above the 6 870 000 unit price, consistent with a below-OP resale."
   },
   "DAtrIk": {
    "image": "https://distressonly.deals/media/units/306/7c0d4bf5ce99.webp",
@@ -848,31 +823,48 @@
    "notes": "The handover row prints an expected date in brackets, \"On Handover (30-SEP-2027)\". I set its dueDate to 2027-09-30, but the instalment is due at handover, not on a fixed date. Checks pass: 766018 + 953982 = 1720000, the instalments add up to 953982, the transfer rows add up to 883747, and 883747 + 953982 = 1837729. The DLD fee is 4% of the original price (OP), so it does not match 4% of the unit price."
   },
   "JmGyzh": {
-   "image": "https://distressonly.deals/media/units/65/81186dccac41.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/65/b881c07bd2fa.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 23500000,
-   "paymentToSeller": 12107800,
+   "paymentToSeller": 13373600,
    "dldFee": 1012680,
    "trusteeFee": 5250,
    "commission": 493500,
    "otherOnTransfer": [],
    "instalments": [
     {
-     "label": "01-SEP-2026",
-     "dueDate": "2026-09-01",
-     "amount": 1265800
-    },
-    {
      "label": "On Handover",
      "dueDate": null,
      "amount": 10126400
     }
    ],
-   "totalOnTransfer": 13619230,
-   "totalRemaining": 11392200,
+   "totalOnTransfer": 14885030,
+   "totalRemaining": 10126400,
    "totalCosts": 25011430,
-   "notes": "Checks pass: 12107800 + 11392200 = 23500000, the instalments add up to 11392200, the transfer rows add up to 13619230, and 13619230 + 11392200 = 25011430. The 01-SEP-2026 instalment date is earlier than today (2026-10-27), but it is transcribed as printed."
+   "notes": "All checks pass (13373600+10126400=23500000; 13373600+1012680+5250+493500=14885030; 14885030+10126400=25011430); single 'On Handover' instalment; DLD fee implies original price 25,316,000, above the unit price."
+  },
+  "JySmis": {
+   "image": "https://distressonly.deals/media/units/424/4642d240f637.webp",
+   "transcribedAt": "2026-10-30",
+   "legible": true,
+   "unitPrice": 1130000,
+   "paymentToSeller": 594261,
+   "dldFee": 53614,
+   "trusteeFee": 5250,
+   "commission": 23730,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 535739
+    }
+   ],
+   "totalOnTransfer": 676855,
+   "totalRemaining": 535739,
+   "totalCosts": 1212594,
+   "notes": "All checks pass; single undated 'On Handover' instalment; DLD fee implies an original price of ~1,339,350 (above the 1,130,000 unit price), consistent with a below-OP resale."
   },
   "K1kdRE": {
    "image": "https://distressonly.deals/media/units/402/eaa3bd1d7baa.webp",
@@ -982,14 +974,14 @@
    "notes": "Checks pass: 2666000 + 834000 = 3500000, the one instalment equals the total remaining, the transfer rows add up to 2911590, and 2911590 + 834000 = 3745590. There is no On Handover row: the only payment plan row is 31-DEC-2026."
   },
   "NRDFPA": {
-   "image": "https://distressonly.deals/media/units/414/e2cc0c1b9556.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/414/dea3302ddf01.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
-   "unitPrice": 2575000,
-   "paymentToSeller": 1140825,
-   "dldFee": 114654,
+   "unitPrice": 2525000,
+   "paymentToSeller": 1090825,
+   "dldFee": 114774,
    "trusteeFee": 5250,
-   "commission": 54075,
+   "commission": 53025,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -1013,10 +1005,10 @@
      "amount": 573670
     }
    ],
-   "totalOnTransfer": 1314804,
+   "totalOnTransfer": 1263874,
    "totalRemaining": 1434175,
-   "totalCosts": 2748979,
-   "notes": "Construction-milestone plan, no dates. All checks pass: seller+remaining=unit price; instalments sum to total remaining; transfer items sum to total on transfer."
+   "totalCosts": 2698049,
+   "notes": "All checks pass; instalments are undated construction-percentage milestones (DLD fee implies original price 2 868 350, consistent with 10%/20% instalment amounts)."
   },
   "Nf34Mu": {
    "image": "https://distressonly.deals/media/units/386/57737279f1eb.webp",
@@ -1641,21 +1633,16 @@
    "notes": "All checks pass. The plan has only an On Handover instalment."
   },
   "XTiyQ5": {
-   "image": "https://distressonly.deals/media/units/361/5537ecc3b110.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/361/e83e6846e7d9.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 1144700,
-   "paymentToSeller": 661382,
+   "paymentToSeller": 674101,
    "dldFee": 50916,
    "trusteeFee": 5250,
    "commission": 24039,
    "otherOnTransfer": [],
    "instalments": [
-    {
-     "label": "01.10.2026",
-     "dueDate": "2026-10-01",
-     "amount": 12719
-    },
     {
      "label": "01.11.2026",
      "dueDate": "2026-11-01",
@@ -1667,27 +1654,22 @@
      "amount": 457880
     }
    ],
-   "totalOnTransfer": 741586,
-   "totalRemaining": 483318,
+   "totalOnTransfer": 754305,
+   "totalRemaining": 470599,
    "totalCosts": 1224904,
-   "notes": "Seller + remaining = unit price, and the instalments sum to total remaining. The image itself is inconsistent by 1 AED: its on-transfer lines (661382 + 50916 + 5250 + 24039) add up to 741587, but it prints Total on Transfer as 741586. The digits were re-checked on an enlarged crop, and the gap is probably spreadsheet rounding. Total costs (1224904) = printed 741586 + 483318. Dates are printed DD.MM.YYYY. The 01.10.2026 instalment falls before today (2026-10-27)."
+   "notes": "On-transfer rows sum to 754 306 vs printed Total on Transfer 754 305 (1 AED rounding); kept printed total. Dates printed as DD.MM.YYYY (01.11.2026, 01.12.2026) read as 1 Nov 2026 and 1 Dec 2026. All other checks pass."
   },
   "YDUnXd": {
-   "image": "https://distressonly.deals/media/units/353/8534430dbb6c.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/353/21b1cfc66d49.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 2000000,
-   "paymentToSeller": 811025,
+   "paymentToSeller": 1027202,
    "dldFee": 86511,
    "trusteeFee": 5250,
    "commission": 42000,
    "otherOnTransfer": [],
    "instalments": [
-    {
-     "label": "16-OCT-2026",
-     "dueDate": "2026-10-16",
-     "amount": 216177
-    },
     {
      "label": "16-APR-2027",
      "dueDate": "2027-04-16",
@@ -1709,10 +1691,10 @@
      "amount": 216177
     }
    ],
-   "totalOnTransfer": 944786,
-   "totalRemaining": 1188975,
+   "totalOnTransfer": 1160963,
+   "totalRemaining": 972798,
    "totalCosts": 2133761,
-   "notes": "All checks pass. Two instalments are due after handover (180 and 360 days post completion). The 16-OCT-2026 instalment falls before today (2026-10-27)."
+   "notes": "All checks pass: seller+remaining=unit price, 4 instalments sum to 972 798, transfer rows sum to 1 160 963, transfer+remaining=2 133 761; two post-completion milestones are undated."
   },
   "Zgw7g9": {
    "image": "https://distressonly.deals/media/units/413/5ae170d56a0c.webp",
@@ -2031,21 +2013,16 @@
    "notes": "All checks pass: 1763724+436276 = 2200000. The instalments add up to 436276. Transfer rows add up to 1902599. 1902599+436276 = 2338875."
   },
   "hMaqAX": {
-   "image": "https://distressonly.deals/media/units/373/3a77dff5c027.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/373/175691212803.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 2050000,
-   "paymentToSeller": 1266430,
+   "paymentToSeller": 1288196,
    "dldFee": 87105,
    "trusteeFee": 5250,
    "commission": 43050,
    "otherOnTransfer": [],
    "instalments": [
-    {
-     "label": "06-OCT-2026",
-     "dueDate": "2026-10-06",
-     "amount": 21766
-    },
     {
      "label": "06-NOV-2026",
      "dueDate": "2026-11-06",
@@ -2077,10 +2054,10 @@
      "amount": 544145
     }
    ],
-   "totalOnTransfer": 1401835,
-   "totalRemaining": 783570,
+   "totalOnTransfer": 1423601,
+   "totalRemaining": 761804,
    "totalCosts": 2185405,
-   "notes": "All checks pass: 1266430+783570 = 2050000. The instalments add up to 783570 (5x21766 + 130595 + 544145). Transfer rows add up to 1401835. 1401835+783570 = 2185405."
+   "notes": "All checks pass (seller+remaining=2050000; instalments sum 761804; on-transfer rows sum 1423601; 1423601+761804=2185405). DLD fee implies an original price of ~2176625, above the 2050000 resale price."
   },
   "iU7DHC": {
    "image": "https://distressonly.deals/media/units/349/a3cdba516409.webp",
@@ -2468,31 +2445,26 @@
    "notes": "The table runs across 3 images (-0, -1, -2), with no overlap between them. Dates are printed as DD/MM/YYYY. There is no 23/08/2026 row: the plan goes from 23/07/2026 straight to 23/09/2026. Three rows are double instalments (29344): Jun, Jul and Aug 2027. Printed labels differ from the usual ones: row 3 reads '3. DLD Registration Trustee fee + 5%VAT' (mapped to trusteeFee) and row 4 reads \"4. Buyer's agent comission 2% + 5%VAT\" (mapped to commission). The totals use different wording: 'Total remaining Payment Plan' and 'TOTAL COST FOR BUYER'. There is no On Handover row. All checks pass: 369680+880320 = 1250000. The 48 instalments add up to 880320 (146720 + 44x14672 + 3x29344). Transfer rows add up to 459908. 459908+880320 = 1340228."
   },
   "oHS4q1": {
-   "image": "https://distressonly.deals/media/units/301/c4154116774d.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/301/513c42508d45.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 3000000,
-   "paymentToSeller": 1591655,
+   "paymentToSeller": 1943741,
    "dldFee": 140875,
    "trusteeFee": 5250,
    "commission": 63000,
    "otherOnTransfer": [],
    "instalments": [
     {
-     "label": "10.09.2026",
-     "dueDate": "2026-09-10",
-     "amount": 352086
-    },
-    {
      "label": "On Handover",
      "dueDate": null,
      "amount": 1056259
     }
    ],
-   "totalOnTransfer": 1800780,
-   "totalRemaining": 1408345,
+   "totalOnTransfer": 2152866,
+   "totalRemaining": 1056259,
    "totalCosts": 3209125,
-   "notes": "The first instalment date is printed as '10.09.2026'. I read it as DD.MM.YYYY, giving 2026-09-10. All checks pass: 1591655+1408345 = 3000000. The instalments add up to 1408345. Transfer rows add up to 1800780. 1800780+1408345 = 3209125."
+   "notes": "All checks pass; single undated 'On Handover' instalment equals Total Remaining Payment Plan."
   },
   "oNFyi4": {
    "image": "https://distressonly.deals/media/units/294/3ea167f0cb81.webp",
@@ -2538,26 +2510,16 @@
    "notes": "All checks pass: 1095000+730000=1825000; transfer lines sum to 1211615; total costs 1941615."
   },
   "owg28r": {
-   "image": "https://distressonly.deals/media/units/318/50f3d85b1240.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/318/5213d354af3d.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 2850000,
-   "paymentToSeller": 1127468,
+   "paymentToSeller": 1181298,
    "dldFee": 114040,
    "trusteeFee": 5250,
    "commission": 59850,
    "otherOnTransfer": [],
    "instalments": [
-    {
-     "label": "17.09.2026",
-     "dueDate": "2026-09-17",
-     "amount": 26915
-    },
-    {
-     "label": "17.10.2026",
-     "dueDate": "2026-10-17",
-     "amount": 26915
-    },
     {
      "label": "17.11.2026",
      "dueDate": "2026-11-17",
@@ -2624,10 +2586,10 @@
      "amount": 1345722
     }
    ],
-   "totalOnTransfer": 1306608,
-   "totalRemaining": 1722532,
+   "totalOnTransfer": 1360438,
+   "totalRemaining": 1668702,
    "totalCosts": 3029140,
-   "notes": "Dates are printed DD.MM.YYYY. 14 monthly rows of 26915 plus a final 1345722 sum to 1722532. 1127468+1722532=2850000. Transfer lines sum to 1306608; total 3029140. All checks pass."
+   "notes": "All checks pass: seller + remaining = unit price; 12 × 26 915 + 1 345 722 = 1 668 702; transfer rows sum to 1 360 438; total costs = 1 360 438 + 1 668 702."
   },
   "sEX15J": {
    "image": "https://distressonly.deals/media/units/297/5a3397c7e4fc.webp",
@@ -3008,21 +2970,16 @@
    "notes": "The instalments are construction milestones with no dates. 4x690905+4145440=6909060; 5190940+6909060=12100000; transfer lines sum to 6003056; total 12912116. All checks pass."
   },
   "vJhtvU": {
-   "image": "https://distressonly.deals/media/units/323/e6197c2c0a73.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/323/e063a01a92dd.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 5600000,
-   "paymentToSeller": 978682,
+   "paymentToSeller": 1638870,
    "dldFee": 264116,
    "trusteeFee": 5250,
    "commission": 117600,
    "otherOnTransfer": [],
    "instalments": [
-    {
-     "label": "20-OCT-2026",
-     "dueDate": "2026-10-20",
-     "amount": 660189
-    },
     {
      "label": "20-MAY-2027",
      "dueDate": "2027-05-20",
@@ -3031,7 +2988,7 @@
     {
      "label": "24-NOV-2027",
      "dueDate": "2027-11-24",
-     "amount": 660188
+     "amount": 660189
     },
     {
      "label": "4-MAY-2028",
@@ -3049,10 +3006,10 @@
      "amount": 1320376
     }
    ],
-   "totalOnTransfer": 1365648,
-   "totalRemaining": 4621318,
+   "totalOnTransfer": 2025836,
+   "totalRemaining": 3961130,
    "totalCosts": 5986966,
-   "notes": "The handover row prints its own date (31-DEC-2029), which is used as its dueDate. The instalments are not all equal (660189, 660189, 660188, 660189, 660187); they are transcribed as printed. They sum to 4621318. 978682+4621318=5600000; transfer lines sum to 1365648; total 5986966. All checks pass."
+   "notes": "All checks pass: seller + remaining = unit price; instalments sum to 3 961 130; transfer rows sum to 2 025 836; total costs = 2 025 836 + 3 961 130."
   },
   "vlK5pj": {
    "image": "https://distressonly.deals/media/units/380/a3ae6fd295cf.webp",
@@ -3098,31 +3055,26 @@
    "notes": "1092500+607500=1700000; transfer lines sum to 1214490; total 1821990. All checks pass."
   },
   "wiLLaU": {
-   "image": "https://distressonly.deals/media/units/268/bb27ef35ae69.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/268/debcfaedb7f0.webp",
+   "transcribedAt": "2026-10-30",
    "legible": true,
    "unitPrice": 16300000,
-   "paymentToSeller": 6236415,
-   "dldFee": 758787,
+   "paymentToSeller": 7151286,
+   "dldFee": 789137,
    "trusteeFee": 5250,
    "commission": 342300,
    "otherOnTransfer": [],
    "instalments": [
-    {
-     "label": "20.10.2026",
-     "dueDate": "2026-10-20",
-     "amount": 914871
-    },
     {
      "label": "On Completion (31.03.2028)",
      "dueDate": "2028-03-31",
      "amount": 9148714
     }
    ],
-   "totalOnTransfer": 7342752,
-   "totalRemaining": 10063585,
-   "totalCosts": 17406337,
-   "notes": "The final row reads 'On Completion' rather than 'On Handover' and prints its own date (31.03.2028), which is used as its dueDate. 914871+9148714=10063585; 6236415+10063585=16300000; transfer lines sum to 7342752; total 17406337. All checks pass."
+   "totalOnTransfer": 8287973,
+   "totalRemaining": 9148714,
+   "totalCosts": 17436687,
+   "notes": "All checks pass: seller + remaining = unit price; one instalment equals the remaining plan; transfer rows sum to 8 287 973; total costs = 8 287 973 + 9 148 714."
   },
   "wsag9R": {
    "image": "https://distressonly.deals/media/units/52/618c04beb1a4.webp",
