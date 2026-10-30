@@ -1,5 +1,6 @@
 "use server";
 
+import { randomInt, randomUUID } from "node:crypto";
 import { refresh } from "next/cache";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -14,7 +15,8 @@ import { DEVELOPERS } from "@/lib/config";
 import { leadCode, quarterEndOf, sellerEstimate } from "@/lib/estimate";
 import { formatPct } from "@/lib/format";
 import { notifyAdmins, type TemplateParam } from "@/lib/notify";
-import { clientIp, hit, MINUTE } from "@/lib/throttle";
+import { formTokenExpired, formTokenOk, honeypotTripped, pitchIn, verifyTurnstile } from "@/lib/spam";
+import { clientIp, DAY, hit, MINUTE } from "@/lib/throttle";
 import type { FormState } from "./auth";
 
 type T = TFn<"errors">;
@@ -89,9 +91,26 @@ export async function createSellerLead(_prev: SellerLeadState, formData: FormDat
     { error: fallbackErrors(t) },
   );
   if (!parsed.success) return { error: t("form.fixDetails"), fieldErrors: z.flattenError(parsed.error).fieldErrors };
-  if (!(await hit(`lead-ip:${await clientIp()}`, 5, 60 * MINUTE))) return { error: ts("estimate.error.tooMany"), throttled: true };
-
+  // Bots first (src/lib/spam.ts): a filled honeypot or a bad form token gets the thank-you, with a reference that
+  // exists nowhere, and nothing is stored or sent. A token of ours that ran out is a visitor's page left open for hours:
+  // a clear error (the form fetches a fresh token for the retry), never the silent thank-you.
+  const token = formData.get("formToken");
+  const silent = (): SellerLeadState => ({ ok: true, id: randomUUID(), ref: leadCode(10_000 + randomInt(90_000)), urgent: false });
+  if (honeypotTripped(formData)) return silent();
+  if (formTokenExpired(token)) return { error: t("form.expired") };
+  if (!formTokenOk(token)) return silent();
+  const ip = await clientIp();
+  if (!(await verifyTurnstile(formData.get("cf-turnstile-response"), ip))) return { error: t("form.verifyFailed") };
   const v = parsed.data;
+  // The SEO pitch, or a link, where the name or the project should be: the lead would reach the team's inbox as a
+  // "new seller lead" notice, so it gets the bots' thank-you too.
+  if (pitchIn([v.name, v.project, v.developerOther].filter(Boolean).join(" "))) return silent();
+  // Per IP, then per number (a lead has no address of its own): the estimate is open to anyone, once in a while.
+  const digits = v.phone.replace(/\D/g, "");
+  if (!(await hit(`lead-ip:${ip}`, 5, 60 * MINUTE)) || !(await hit(`lead-phone:${digits}`, 3, DAY))) {
+    return { error: ts("estimate.error.tooMany"), throttled: true };
+  }
+
   const user = await getCurrentUser();
   const developer = v.developer === "Other" ? v.developerOther! : v.developer;
   const defaultNotice = v.defaultNotice === "yes";

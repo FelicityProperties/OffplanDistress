@@ -577,6 +577,8 @@ async function viewingsRule(now: Date): Promise<FollowUpItem[]> {
       and(
         eq(inquiries.type, "viewing"),
         eq(inquiries.handled, false),
+        // Caught as spam (src/lib/spam.ts): nobody follows those up.
+        eq(inquiries.spam, false),
         lte(inquiries.createdAt, ago(now, FOLLOW_UP.viewingHours * HOUR)),
         sql`(${listings.id} is null or not ${listings.isSample})`,
         sql`(${users.id} is null or ${users.role} = 'user')`,

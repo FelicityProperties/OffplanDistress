@@ -11,6 +11,9 @@ export default defineMessages({
 
     "form.fixDetails": "Some details need fixing.",
     "form.checkFields": "Check the highlighted fields.",
+    "form.verifyFailed": "Please try again — the anti-spam check did not pass.",
+    "form.expired": "This page had been open for over two hours, so nothing was sent. Please try again — if that fails too, reload the page.",
+    "form.tooManyToday": "Too many messages from this address today — please call or WhatsApp us, or try again tomorrow.",
 
     "field.invalid": "Check this field.",
     "field.tooLong": "Too long — {max} characters maximum.",
@@ -153,6 +156,9 @@ export default defineMessages({
 
     "form.fixDetails": "بعض البيانات بحاجة إلى تصحيح.",
     "form.checkFields": "راجِع الحقول المحددة.",
+    "form.verifyFailed": "يُرجى المحاولة مرة أخرى، فلم يجتز النموذج فحص مكافحة الرسائل المزعجة.",
+    "form.expired": "بقيت هذه الصفحة مفتوحة أكثر من ساعتين، فلم يُرسَل شيء. يُرجى المحاولة مرة أخرى، وإن تعذّر ذلك فأعِد تحميل الصفحة.",
+    "form.tooManyToday": "رسائل كثيرة جداً من هذا العنوان اليوم. يُرجى الاتصال بنا أو مراسلتنا عبر واتساب، أو المحاولة مرة أخرى غداً.",
 
     "field.invalid": "تحقق من هذا الحقل.",
     "field.tooLong": "النص طويل جداً — الحد الأقصى لعدد الأحرف: {max}.",

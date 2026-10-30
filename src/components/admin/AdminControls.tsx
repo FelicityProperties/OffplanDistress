@@ -10,6 +10,7 @@ import {
   rejectListing,
   resetUserPassword,
   setInquiryHandled,
+  setInquirySpam,
   setKycStatus,
   setUserRole,
 } from "@/app/actions/admin";
@@ -512,6 +513,28 @@ export function HandledToggle({ id, handled }: { id: string; handled: boolean })
   return (
     <Button size="sm" variant={handled ? "ghost" : "outline"} disabled={pending} onClick={() => start(() => setInquiryHandled(id, !handled).then(() => {}))}>
       {handled ? t("inquiry.reopen") : t("inquiry.markHandled")}
+    </Button>
+  );
+}
+
+/** "Spam" on an inbox row, "Not spam" on the Spam tab (src/lib/spam.ts caught it; the team is notified once it is back). */
+export function SpamToggle({ id, spam }: { id: string; spam: boolean }) {
+  const t = useT("admin");
+  const [pending, start] = useTransition();
+  return (
+    <Button
+      size="sm"
+      variant={spam ? "outline" : "ghost"}
+      disabled={pending}
+      onClick={() =>
+        start(async () => {
+          const res = await setInquirySpam(id, !spam);
+          if ("error" in res && res.error) toast.error(res.error);
+          else toast.success(spam ? t("inquiry.spamCleared") : t("inquiry.spamMarked"));
+        })
+      }
+    >
+      {spam ? t("inquiry.notSpam") : t("inquiry.markSpam")}
     </Button>
   );
 }

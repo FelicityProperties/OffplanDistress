@@ -52,8 +52,9 @@ export async function adminStats() {
       samples: sql<number>`count(*) filter (where ${listings.isSample})::int`,
     })
     .from(listings);
+  // The sidebar badge: what still needs an answer; messages caught as spam (src/lib/spam.ts) never count.
   const [{ openInquiries }] = await db
-    .select({ openInquiries: sql<number>`count(*) filter (where not ${inquiries.handled})::int` })
+    .select({ openInquiries: sql<number>`count(*) filter (where not ${inquiries.handled} and not ${inquiries.spam})::int` })
     .from(inquiries);
   const [{ pendingOffers }] = await db
     .select({ pendingOffers: sql<number>`count(*) filter (where ${offers.status} = 'pending')::int` })
@@ -188,7 +189,8 @@ export async function adminOffers(listingId?: string) {
     .limit(500);
 }
 
-export async function adminInquiries() {
+/** The inbox (open ones first) or, for the Spam tab, what the content score caught (src/lib/spam.ts), newest first. */
+export async function adminInquiries(view: "inbox" | "spam" = "inbox") {
   return db
     .select({
       inquiry: inquiries,
@@ -197,8 +199,20 @@ export async function adminInquiries() {
     })
     .from(inquiries)
     .leftJoin(listings, eq(listings.id, inquiries.listingId))
+    .where(eq(inquiries.spam, view === "spam"))
     .orderBy(inquiries.handled, desc(inquiries.createdAt))
     .limit(500);
+}
+
+/** The two tabs' counts on /admin/inquiries. */
+export async function inquiryCounts() {
+  const [row] = await db
+    .select({
+      inbox: sql<number>`count(*) filter (where not ${inquiries.spam})::int`,
+      spam: sql<number>`count(*) filter (where ${inquiries.spam})::int`,
+    })
+    .from(inquiries);
+  return row;
 }
 
 /** The outer query's user id inside a subquery (qualified, so it can't be read as the subquery's own "id"). */

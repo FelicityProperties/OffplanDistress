@@ -2,6 +2,7 @@ import { CheckCircle2 } from "lucide-react";
 import { SectionHeading } from "@/components/badges";
 import { getT } from "@/i18n/server";
 import { BRAND, FEES } from "@/lib/config";
+import { issueFormToken } from "@/lib/spam";
 import { QuickEstimate } from "./QuickEstimate";
 
 /** Home page seller column: the pitch above the free estimate, so an owner sees a number before any sign-up. */
@@ -27,7 +28,7 @@ export async function SellerEstimateSection({ signedIn }: { signedIn: boolean })
           ))}
         </ul>
       </div>
-      <QuickEstimate signedIn={signedIn} showHeader={false} className="mt-10" />
+      <QuickEstimate signedIn={signedIn} showHeader={false} className="mt-10" formToken={issueFormToken()} />
     </section>
   );
 }
