@@ -43,7 +43,7 @@ export async function record(key: string) {
   after(purgeOldAttempts);
 }
 
-const DAY = 24 * 60 * 60 * 1000;
+export const DAY = 24 * 60 * 60 * 1000;
 
 /** Delete attempt records older than a day (also run from the daily cron, in case nobody logs in for a while). */
 export async function purgeOldAttempts() {

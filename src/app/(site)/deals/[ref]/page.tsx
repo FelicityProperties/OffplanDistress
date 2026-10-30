@@ -47,6 +47,7 @@ import { richText } from "@/content/legal/rich-text";
 import { analyzeDeal, planSchedule } from "@/lib/deal-math";
 import { formatAED, formatDate, formatPct, formatQuarter, formatUSDFromAED, parseRefCode, refCode } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
+import { issueFormToken } from "@/lib/spam";
 import { siteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 import { getListingByRef, similarDeals, watchedIds } from "@/lib/listings";
@@ -532,6 +533,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       project={l.projectName}
                       defaults={user ? { name: user.fullName, email: user.email, phone: user.phone } : undefined}
                       triggerClassName="h-12 text-muted-foreground hover:text-foreground"
+                      formToken={issueFormToken()}
                     />
                   )}
                   {!l.isSample && (BRAND.whatsapp || BRAND.phone) && (

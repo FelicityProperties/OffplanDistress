@@ -7,6 +7,7 @@ import { createSellerLead } from "@/app/actions/leads";
 import { Aed, AedRange } from "@/components/exit/Aed";
 import { quickSalePct } from "@/components/exit/exit-math";
 import { ltr } from "@/components/exit/ltr";
+import { SpamGuard } from "@/components/SpamGuard";
 import { Button } from "@/components/ui/button";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
@@ -141,6 +142,7 @@ export function QuickEstimate({
   showHeader = true,
   id,
   className,
+  formToken,
 }: {
   initial?: EstimatePrefill;
   signedIn: boolean;
@@ -148,6 +150,8 @@ export function QuickEstimate({
   showHeader?: boolean;
   id?: string;
   className?: string;
+  /** issueFormToken() from the page that renders the form (src/lib/spam.ts). */
+  formToken?: string;
 }) {
   const t = useT("sell");
   const tc = useT("common");
@@ -175,6 +179,10 @@ export function QuickEstimate({
   const [formError, setFormError] = useState<{ text: string; throttled?: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ id: string; ref: string; urgent: boolean } | null>(null);
+  // The form element, for the anti-spam fields it carries (src/components/SpamGuard.tsx): the other fields are
+  // controlled here and posted by hand in submit(). `attempt` counts refused submissions for the widget's reset.
+  const form = useRef<HTMLFormElement>(null);
+  const [attempt, setAttempt] = useState(0);
   // The submit button disappears with the form: move focus to the thank-you so keyboard and screen-reader users
   // land on it (a live region inserted together with its text is often not announced).
   const doneHeading = useRef<HTMLHeadingElement>(null);
@@ -228,6 +236,8 @@ export function QuickEstimate({
     fd.set("name", name);
     fd.set("phone", phone);
     fd.set("source", readAttribution());
+    // The honeypot, form token and (if rendered) Turnstile token: the only named fields in the form element.
+    if (form.current) for (const [k, v] of new FormData(form.current)) if (typeof v === "string") fd.set(k, v);
     setBusy(true);
     setFormError(null);
     try {
@@ -236,6 +246,7 @@ export function QuickEstimate({
         setDone({ id: res.id, ref: res.ref, urgent: !!res.urgent });
         return;
       }
+      setAttempt((n) => n + 1);
       const fe: Record<string, string> = {};
       for (const [k, v] of Object.entries(res.fieldErrors ?? {})) if (v?.[0]) fe[SERVER_FIELD[k] ?? k] = v[0];
       setErrors(fe);
@@ -323,8 +334,9 @@ export function QuickEstimate({
           </div>
         ) : (
           <form
+            ref={form}
             noValidate
-            className={showHeader ? "mt-6" : undefined}
+            className={cn("relative", showHeader && "mt-6")}
             onSubmit={(e) => {
               e.preventDefault();
               if (busy) return;
@@ -526,6 +538,7 @@ export function QuickEstimate({
               </div>
             )}
 
+            <SpamGuard token={formToken} resetKey={attempt} />
             {formError && (
               <p role="alert" className="mt-5 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {formError.text}

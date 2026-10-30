@@ -74,7 +74,7 @@ const leadsIn = (p: Period) => sql`
     union all
     select 'inquiry', i.id::text, i.created_at, i.source, i.name, l.ref_no, i.listing_id::text
       from inquiries i left join users u on u.id = i.user_id left join listings l on l.id = i.listing_id
-      where u.role is distinct from 'admin'
+      where u.role is distinct from 'admin' and not i.spam
     union all
     select 'signup', u.id::text, u.created_at, u.source, u.full_name, null, u.id::text
       from users u where u.role = 'user' and u.password_hash is not null

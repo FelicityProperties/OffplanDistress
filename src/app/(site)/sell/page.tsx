@@ -10,6 +10,7 @@ import { BRAND, DEVELOPERS } from "@/lib/config";
 import { nextQuarters, prefillFromParams } from "@/lib/estimate";
 import { formatNumber } from "@/lib/format";
 import { leadForSeller } from "@/lib/leads";
+import { issueFormToken } from "@/lib/spam";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("sell");
@@ -152,7 +153,7 @@ export default async function SellPage({ searchParams }: PageProps<"/sell">) {
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
             {/* Free estimate first: a number before any sign-up wall. #estimate is where the exit calculator links to. */}
-            <QuickEstimate id="estimate" initial={prefill} signedIn={false} className="lg:col-span-2" />
+            <QuickEstimate id="estimate" initial={prefill} signedIn={false} className="lg:col-span-2" formToken={issueFormToken()} />
             <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-lift sm:p-10">
               <h2 className="text-2xl font-semibold sm:text-3xl">{t("pitch.title")}</h2>
               <p className="mt-3 max-w-xl leading-relaxed text-muted-foreground">{t("pitch.body")}</p>
