@@ -31,6 +31,8 @@ const cashToClose = sql<number>`(${listings.askingPrice}::numeric${
   listings.overdueAmount
 }, 0), 0) + greatest(coalesce(${listings.overduePenalty}, 0), 0))::bigint`;
 const discount = sql<number | null>`case when ${listings.launchPrice} > 0 then 1 - (${saleValue})::float / ${listings.launchPrice} end`;
+/** How far below the original SPA price the unit sells for (negative when above it); null without an original price. */
+const belowOriginal = sql<number | null>`case when ${listings.originalPrice} > 0 then 1 - (${saleValue})::float / ${listings.originalPrice} end`;
 const paidPct = sql<number>`case when ${listings.originalPrice} > 0 then ${listings.amountPaid}::float / ${listings.originalPrice} else 0 end`;
 const watchers = sql<number>`(select count(*)::int from ${watchlist} w where w.listing_id = ${listings.id})`;
 // Qualified: in a select from listings alone Drizzle writes ${listings.id} as a bare "id", which inside the subquery
@@ -299,6 +301,10 @@ export async function marketStats() {
       value: sql<number>`coalesce(sum(${saleValue}) filter (where ${onMarket}), 0)::bigint`,
       avgDiscount: sql<number | null>`avg(${discount}) filter (where ${onMarket})`,
       withLaunch: sql<number>`count(${discount}) filter (where ${onMarket})::int`,
+      // How far below what the seller paid the developer (the SPA price) the unit sells for: known for every real
+      // listing, unlike today's launch price, so the home page can always show it.
+      belowOriginal: sql<number | null>`avg(${belowOriginal}) filter (where ${onMarket})`,
+      withOriginal: sql<number>`count(${belowOriginal}) filter (where ${onMarket})::int`,
       transferred: sql<number>`count(*) filter (where ${listings.status} = 'transferred')::int`,
     })
     .from(listings)
@@ -313,6 +319,8 @@ export async function marketStats() {
     value: Number(row.value),
     avgDiscount: row.avgDiscount == null ? null : Number(row.avgDiscount),
     withLaunch: row.withLaunch,
+    belowOriginal: row.belowOriginal == null ? null : Number(row.belowOriginal),
+    withOriginal: row.withOriginal,
     transferred: row.transferred,
     buyers,
   };

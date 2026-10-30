@@ -121,14 +121,19 @@ export default async function Home() {
   // Live figures on the same terms as the Distress Index (enough real listings, averages from at least MIN_SAMPLE
   // units); until then the strip shows facts about the service instead of numbers from a handful of units.
   const liveData = stats.live >= MIN_LIVE;
+  // The saving: against what the sellers paid the developer (known for every listing), or, when enough units carry
+  // today's launch price, against that; with neither, the cell is left out rather than shown empty.
+  const saving: [string, string] | null =
+    stats.belowOriginal != null && stats.withOriginal >= MIN_SAMPLE
+      ? [t("stats.belowOriginal"), `${(stats.belowOriginal * 100).toFixed(1)}%`]
+      : stats.avgDiscount != null && stats.withLaunch >= MIN_SAMPLE
+        ? [t("stats.discount"), `${(stats.avgDiscount * 100).toFixed(1)}%`]
+        : null;
   const strip: [string, string][] = liveData
     ? [
         [t("stats.live"), stats.live.toLocaleString("en-AE")],
         [t("stats.value"), stats.value ? formatAEDCompact(stats.value, locale) : "—"],
-        [
-          t("stats.discount"),
-          stats.avgDiscount != null && stats.withLaunch >= MIN_SAMPLE ? `${(stats.avgDiscount * 100).toFixed(1)}%` : "—",
-        ],
+        ...(saving ? [saving] : []),
         [t("stats.fee"), t("stats.feeValue")],
       ]
     : [
