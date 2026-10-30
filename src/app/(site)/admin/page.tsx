@@ -293,7 +293,7 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
                       <span
                         key={k}
                         className={
-                          ok ? "inline-flex items-center gap-0.5 text-success" : "inline-flex items-center gap-0.5 text-destructive"
+                          ok ? "inline-flex items-center gap-0.5 whitespace-nowrap text-success" : "inline-flex items-center gap-0.5 whitespace-nowrap text-destructive"
                         }
                       >
                         {ok ? <FileCheck2 className="h-3.5 w-3.5" /> : <FileX2 className="h-3.5 w-3.5" />}

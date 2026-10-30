@@ -93,7 +93,8 @@ export async function SiteHeader() {
           activeClassName="bg-ink text-primary-foreground hover:bg-ink hover:text-primary-foreground"
         />
         <div className="hidden items-center gap-2 lg:flex">
-          <LocaleSwitcher compact />
+          {/* Signed in, the bar also holds the admin link, the bell and the account button: the language name waits for 2xl. */}
+          <LocaleSwitcher compact dense={!!user} />
           {user ? (
             <>
               {user.role === "admin" && (

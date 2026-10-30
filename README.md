@@ -17,7 +17,7 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Marketplace | Browse deals (filters incl. cash at transfer, sort, search by project, developer or community in English or Arabic, saved searches), deal page (cash needed on transfer day, arrears with the developer, dated cash timeline, payment plan, true-cost breakdown, offer, watchlist, viewing request) |
 | Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; "Prefer WhatsApp?" card; 5-step "Sell my unit" form (saved on the device between sittings, type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline), deal milestones |
 | Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts |
-| Everyone | Notification bell + notifications page, email notifications, self-service password reset, daily deals newsletter (`/newsletter`, no account needed, double opt-in, one-click unsubscribe), English / العربية (full right-to-left layout) |
+| Everyone | Notification bell + notifications page, email notifications, self-service password reset, daily deals newsletter (`/newsletter`, no account needed, double opt-in, one-click unsubscribe), English / العربية (full right-to-left layout) / 中文 |
 | Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, bulk import of a partner network's units (`/admin/listings/import`, owner set later, claim link or signed Form A), daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), newsletter subscribers and issues (`/admin/newsletter`, CSV export), remove sample data |
 
 Buyers stay anonymous to sellers in the app — every negotiation goes through our team, so neither side can
@@ -32,7 +32,7 @@ Next.js app. Brand name, contact details and fee terms live in `src/lib/config.t
 ### Legal
 
 `/terms`, `/privacy` and `/cookies` render the Terms of Use, Privacy Policy (UAE PDPL) and Cookie Policy in
-English and Arabic from `src/content/legal/`; company name, email, phone, RERA ORN, licence number, address and
+English, Arabic and Simplified Chinese from `src/content/legal/`; company name, email, phone, RERA ORN, licence number, address and
 fee rates are pulled from `src/lib/config.ts`, so the texts follow the config. Consent is collected at three
 points: a required "I agree to the Terms of Use and Privacy Policy" box at sign-up (stored as
 `users.terms_accepted_at`), a required ownership / authority / genuine-documents confirmation on the last step
@@ -267,12 +267,26 @@ today's issue, the counts, the subscribers (search, status filter, 50 a page), t
 (`/api/admin/export/newsletter.csv`, admins only, audited); confirmations count as leads on `/admin/analytics`. Needs
 nothing beyond email (`RESEND_API_KEY`, `EMAIL_FROM`) and `CRON_SECRET`.
 
-### Arabic addresses and SEO
+### Languages
 
-Every public page has an Arabic address (`/ar`, `/ar/deals`, `/ar/deals/OD-…`), linked to the English one by
-hreflang and listed in `/sitemap.xml`; `src/proxy.ts` serves them. Visitors who chose Arabic are sent from plain links
-to the `/ar` address; the browser's language never redirects anyone (it only shows a "عرض بالعربية / View in English"
-bar). `/dashboard` and `/admin` keep one address and follow the visitor's chosen language. Filtered `/deals` views,
+The site is published in English, Arabic (`/ar`, right-to-left) and Simplified Chinese (`/zh`). The language a visitor
+picks in the language menu is kept in the `od_locale` cookie (`en` / `ar` / `zh`): plain links then open the `/ar` or
+`/zh` address, and the dashboard, the admin console and the emails follow it. Copy lives in three places, each string
+with an `en`, `ar` and `zh` block: the UI dictionaries in `src/i18n/messages/*.ts` (`defineMessages` fails the build
+when a language misses a key or has an extra one), the legal documents in `src/content/legal/*.ts` and the
+notification / email templates in `src/lib/notification-templates.ts`. Every translated string keeps each
+`{placeholder}` of the English one, and a Chinese string never holds Arabic letters or bidi isolate characters. Chinese
+style for new copy: Latin for the brand and legal names, project, developer and community names and the DLD / RERA /
+SPA / NOC / Oqood / KYC terms (a Chinese gloss in full-width parentheses on first use: 迪拜土地局（DLD）); one
+half-width space between a Chinese character and an adjacent Latin word, number, % or `{placeholder}` (找到 {count}
+套房源, 服务费 2% + 增值税) and none next to full-width punctuation; `……` in prose, a single `…` in short loading labels.
+
+### Arabic and Chinese addresses and SEO
+
+Every public page has an Arabic and a Chinese address (`/ar`, `/zh`, `/ar/deals`, `/zh/deals/OD-…`), linked to the
+English one and to each other by hreflang and listed in `/sitemap.xml`; `src/proxy.ts` serves them. Visitors who chose
+Arabic or Chinese are sent from plain links to the `/ar` or `/zh` address; the browser's language never redirects anyone
+(it only shows a "عرض بالعربية / 查看中文版 / View in English" bar). `/dashboard` and `/admin` keep one address and follow the visitor's chosen language. Filtered `/deals` views,
 login and sign-up are `noindex`; `robots.txt` names the sitemap and lets search engines see listing photos. Production
 sends every other host name (the `*.vercel.app` address) to the site's own domain (308): `NEXT_PUBLIC_SITE_URL` when
 set, else the domain assigned to the project on Vercel; an address Vercel doesn't serve yet is never redirected to. After deploying, submit
@@ -291,8 +305,9 @@ the page covers a browser you use signed out. Page views are deleted after 13 mo
 - Next.js 16 (App Router, server actions) + Tailwind CSS 4 + shadcn/ui
 - Neon Postgres via Drizzle ORM (`@neondatabase/serverless` HTTP driver on Vercel, `pg` for any other Postgres)
 - Email + password auth with database sessions (httpOnly cookie, no extra secret needed)
-- i18n: typed English/Arabic dictionaries per area in `src/i18n/messages/`; public pages take the language from
-  the address (`/ar/…`), the dashboard and admin console from a cookie or the browser's `Accept-Language`
+- i18n: typed English / Arabic / Chinese dictionaries per area in `src/i18n/messages/`; public pages take the
+  language from the address (`/ar/…`, `/zh/…`), the dashboard and admin console from a cookie or the browser's
+  `Accept-Language`
 - Documents and photos stored in Postgres (`files` table, 4 MB per file)
 - Vercel Cron for saved-search alerts and the daily ops job (`vercel.json`)
 
@@ -346,8 +361,8 @@ npm run dev
 Change the schema in `src/db/schema.ts`, then `npm run db:generate` to create a new SQL migration in `drizzle/`.
 Migrations apply automatically on the next deploy.
 
-Adding copy: put it in the right namespace under `src/i18n/messages/` (English and Arabic side by side — the build
-fails if a translation is missing) and read it with `getT("ns")` on the server or `useT("ns")` in client components.
+Adding copy: put it in the right namespace under `src/i18n/messages/` (English, Arabic and Chinese side by side — the
+build fails if a translation is missing) and read it with `getT("ns")` on the server or `useT("ns")` in client components.
 
 ## Later
 
