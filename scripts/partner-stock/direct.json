@@ -1,0 +1,340 @@
+{
+ "format": "offplandistress-import/1",
+ "source": {
+  "key": "direct",
+  "name": "Direct sellers",
+  "url": null
+ },
+ "generatedAt": "2026-11-01T13:00:00Z",
+ "units": [
+  {
+   "ref": "amaal8-1104",
+   "url": null,
+   "posted": "2026-10-31",
+   "listing": {
+    "projectName": "Amaal 8",
+    "developer": "Other",
+    "developerOther": "Amaal Emirates",
+    "community": "Meydan",
+    "communityOther": null,
+    "unitType": "1br",
+    "sizeSqft": 878,
+    "floor": "11",
+    "view": null,
+    "originalPrice": 1808888,
+    "amountPaid": 633111,
+    "askingPrice": 325000,
+    "handoverDate": "2028-12-31",
+    "nextInstalmentDate": "2027-01-09",
+    "nextInstalmentAmount": 180889,
+    "paymentPlan": [
+     {
+      "label": "09-JUL-2026",
+      "dueDate": "2026-07-09",
+      "amount": 90444
+     },
+     {
+      "label": "09-JAN-2027",
+      "dueDate": "2027-01-09",
+      "amount": 180889
+     },
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 904444
+     }
+    ],
+    "motivation": "urgent",
+    "description": "1-bedroom apartment on the 11th floor of Amaal 8 (Mansory Residences by Amaal) at Meydan Horizon, Ras Al Khor. 878 sq ft: an 805 sq ft suite with a walk-in wardrobe, powder room and laundry, plus a 73 sq ft balcony; one covered parking bay. Registered with the Dubai Land Department (Oqood) in June 2025. Developer plan: 10% in January 2027 and 50% on handover (the July 2026 instalment is shown in the plan — confirm it with the statement of account). The owner needs an immediate exit and is asking roughly half of what he has paid in."
+   },
+   "photos": [
+    {
+     "filename": "amaal8-1104-1.jpg",
+     "url": "https://cloud.famproperties.com/project/large/-506307-172351.jpg"
+    },
+    {
+     "filename": "amaal8-1104-2.webp",
+     "url": "https://raw.githubusercontent.com/FelicityProperties/OffplanDistress/main/scripts/partner-stock/direct-photos/amaal8-1104-model.webp"
+    },
+    {
+     "filename": "amaal8-1104-plan.jpg",
+     "url": "https://cdn.offplan-properties.ae/floor-plans/445d1f2e-8bf8-48db-a3f3-9378dd5aa6aa/amaal-8-8.jpg"
+    }
+   ],
+   "notes": "Direct seller (WhatsApp intake, 31 Oct 2026); documents received: DLD initial contract of sale (June 2025) and SPA pages (unit 1104, 878 sq ft, 1 parking bay, payment schedule). The seller states approximately AED 650,000 paid; the figures follow the SPA schedule through 9 Mar 2026 — the 9 Jul 2026 instalment (AED 90,444) falls before today: confirm with the statement of account. Asking price set at half of the paid amount on the owner's instruction; the seller wants an immediate exit. Photos: project render and the 1BR Type 8 (878 sq ft) floor plan from the developer's marketing material, plus the seller's photo of the sales-centre model."
+  },
+  {
+   "ref": "reef998-704",
+   "url": null,
+   "posted": "2026-10-31",
+   "listing": {
+    "projectName": "Reef 998",
+    "developer": "Other",
+    "developerOther": "Reef Luxury Developments",
+    "community": "Dubai Land Residence Complex",
+    "communityOther": null,
+    "unitType": "studio",
+    "sizeSqft": 478,
+    "floor": "7",
+    "view": null,
+    "originalPrice": 858381,
+    "amountPaid": 343345,
+    "askingPrice": 180000,
+    "handoverDate": "2028-06-30",
+    "nextInstalmentDate": "2026-11-25",
+    "nextInstalmentAmount": 8584,
+    "paymentPlan": [
+     {
+      "label": "27-AUG-2026",
+      "dueDate": "2026-08-27",
+      "amount": 34335
+     },
+     {
+      "label": "26-SEP-2026",
+      "dueDate": "2026-09-26",
+      "amount": 8584
+     },
+     {
+      "label": "26-OCT-2026",
+      "dueDate": "2026-10-26",
+      "amount": 8584
+     },
+     {
+      "label": "25-NOV-2026",
+      "dueDate": "2026-11-25",
+      "amount": 8584
+     },
+     {
+      "label": "25-DEC-2026",
+      "dueDate": "2026-12-25",
+      "amount": 8584
+     },
+     {
+      "label": "24-JAN-2027",
+      "dueDate": "2027-01-24",
+      "amount": 34335
+     },
+     {
+      "label": "23-FEB-2027",
+      "dueDate": "2027-02-23",
+      "amount": 8584
+     },
+     {
+      "label": "25-MAR-2027",
+      "dueDate": "2027-03-25",
+      "amount": 8584
+     },
+     {
+      "label": "24-APR-2027",
+      "dueDate": "2027-04-24",
+      "amount": 8584
+     },
+     {
+      "label": "24-MAY-2027",
+      "dueDate": "2027-05-24",
+      "amount": 8584
+     },
+     {
+      "label": "23-JUN-2027",
+      "dueDate": "2027-06-23",
+      "amount": 34335
+     },
+     {
+      "label": "23-JUL-2027",
+      "dueDate": "2027-07-23",
+      "amount": 8584
+     },
+     {
+      "label": "22-AUG-2027",
+      "dueDate": "2027-08-22",
+      "amount": 8584
+     },
+     {
+      "label": "21-SEP-2027",
+      "dueDate": "2027-09-21",
+      "amount": 8584
+     },
+     {
+      "label": "21-OCT-2027",
+      "dueDate": "2027-10-21",
+      "amount": 8584
+     },
+     {
+      "label": "20-NOV-2027",
+      "dueDate": "2027-11-20",
+      "amount": 34335
+     },
+     {
+      "label": "20-DEC-2027",
+      "dueDate": "2027-12-20",
+      "amount": 8584
+     },
+     {
+      "label": "19-JAN-2028",
+      "dueDate": "2028-01-19",
+      "amount": 8584
+     },
+     {
+      "label": "18-FEB-2028",
+      "dueDate": "2028-02-18",
+      "amount": 8584
+     },
+     {
+      "label": "19-MAR-2028",
+      "dueDate": "2028-03-19",
+      "amount": 8584
+     },
+     {
+      "label": "18-APR-2028",
+      "dueDate": "2028-04-18",
+      "amount": 8584
+     },
+     {
+      "label": "18-MAY-2028",
+      "dueDate": "2028-05-18",
+      "amount": 8584
+     },
+     {
+      "label": "17-JUN-2028",
+      "dueDate": "2028-06-17",
+      "amount": 8584
+     },
+     {
+      "label": "17-JUL-2028",
+      "dueDate": "2028-07-17",
+      "amount": 8584
+     },
+     {
+      "label": "16-AUG-2028",
+      "dueDate": "2028-08-16",
+      "amount": 8584
+     },
+     {
+      "label": "15-SEP-2028",
+      "dueDate": "2028-09-15",
+      "amount": 8584
+     },
+     {
+      "label": "15-OCT-2028",
+      "dueDate": "2028-10-15",
+      "amount": 8584
+     },
+     {
+      "label": "14-NOV-2028",
+      "dueDate": "2028-11-14",
+      "amount": 8584
+     },
+     {
+      "label": "14-DEC-2028",
+      "dueDate": "2028-12-14",
+      "amount": 8584
+     },
+     {
+      "label": "13-JAN-2029",
+      "dueDate": "2029-01-13",
+      "amount": 8584
+     },
+     {
+      "label": "12-FEB-2029",
+      "dueDate": "2029-02-12",
+      "amount": 8584
+     },
+     {
+      "label": "14-MAR-2029",
+      "dueDate": "2029-03-14",
+      "amount": 8584
+     },
+     {
+      "label": "13-APR-2029",
+      "dueDate": "2029-04-13",
+      "amount": 8584
+     },
+     {
+      "label": "13-MAY-2029",
+      "dueDate": "2029-05-13",
+      "amount": 8584
+     },
+     {
+      "label": "12-JUN-2029",
+      "dueDate": "2029-06-12",
+      "amount": 8584
+     },
+     {
+      "label": "12-JUL-2029",
+      "dueDate": "2029-07-12",
+      "amount": 8584
+     },
+     {
+      "label": "11-AUG-2029",
+      "dueDate": "2029-08-11",
+      "amount": 8584
+     },
+     {
+      "label": "10-SEP-2029",
+      "dueDate": "2029-09-10",
+      "amount": 8584
+     },
+     {
+      "label": "10-OCT-2029",
+      "dueDate": "2029-10-10",
+      "amount": 8584
+     },
+     {
+      "label": "09-NOV-2029",
+      "dueDate": "2029-11-09",
+      "amount": 8584
+     },
+     {
+      "label": "09-DEC-2029",
+      "dueDate": "2029-12-09",
+      "amount": 8584
+     },
+     {
+      "label": "08-JAN-2030",
+      "dueDate": "2030-01-08",
+      "amount": 8584
+     },
+     {
+      "label": "07-FEB-2030",
+      "dueDate": "2030-02-07",
+      "amount": 8584
+     },
+     {
+      "label": "09-MAR-2030",
+      "dueDate": "2030-03-09",
+      "amount": 8584
+     },
+     {
+      "label": "08-APR-2030",
+      "dueDate": "2030-04-08",
+      "amount": 8584
+     },
+     {
+      "label": "08-MAY-2030",
+      "dueDate": "2030-05-08",
+      "amount": 8584
+     },
+     {
+      "label": "07-JUN-2030",
+      "dueDate": "2030-06-07",
+      "amount": 8584
+     },
+     {
+      "label": "07-JUL-2030",
+      "dueDate": "2030-07-07",
+      "amount": 8584
+     }
+    ],
+    "motivation": "urgent",
+    "description": "Studio on the 7th floor of Reef 998, Dubai Land Residence Complex (DLRC): 477.71 sq ft with the project's climate-controlled sunken balcony (an air-conditioned balcony). Developer plan: 1% a month with 4% every fifth month until July 2030, with handover expected in June 2028 — the instalments from August to October 2026 are shown in the plan; confirm them with the statement of account. The owner needs an immediate exit and is asking roughly half of what he has paid in."
+   },
+   "photos": [
+    {
+     "filename": "reef998-704-1.webp",
+     "url": "https://cloud.famproperties.com/project/large/-662898-152027.webp"
+    }
+   ],
+   "notes": "Direct seller (WhatsApp intake, 31 Oct 2026); document received: the developer's Offer to Purchase dated 3 Jun 2025 (unit 704, studio, floor 7, 477.71 sq ft, purchase price AED 858,381.10; 20% deposit then 1% monthly with 4% every fifth month, 63 instalments to 7 Jul 2030). The seller states approximately AED 360,000 paid; the figures follow the schedule through 28 Jul 2026 — the 27 Aug, 26 Sep and 26 Oct 2026 instalments fall before today: confirm with the statement of account. Asking price set at half of the paid amount on the owner's instruction; the seller wants an immediate exit. Photo: project render from the developer's marketing material."
+  }
+ ]
+}

@@ -229,7 +229,8 @@ export async function searchDeals(f: DealFilters) {
         ? [sql`${listings.handoverDate} asc nulls last`]
         : f.sort === "newest"
           ? [desc(sql`coalesce(${listings.publishedAt}, ${listings.createdAt})`)]
-          : [sql`${discount} desc nulls last`];
+          : // The default view: sellers who need out now come first, then the deepest discounts.
+            [sql`(${listings.motivation} = 'urgent') desc`, sql`${discount} desc nulls last`];
 
   const condition = and(...where);
   const [rows, [{ total }]] = await Promise.all([
