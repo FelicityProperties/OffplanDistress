@@ -140,6 +140,17 @@ names (a url the unit had keeps its name, a new one is `<ref>-<sha1 prefix>.webp
 twice), and the import then puts the listing's gallery in that order — nothing deleted, other entries kept after them —
 unless our team rearranged it by hand since the last sync (left as they made it, reported once, like a synced field).
 
+**Direct sellers.** Units owners send us directly (WhatsApp intake) that should go out through the same build-time path
+live in `scripts/partner-stock/direct.json` (source key `direct`, "Direct sellers"), written by hand in the same format:
+the figures from the owner's documents (the plan rows as the developer's schedule lists them, the instalments already
+due but not confirmed paid kept in the plan so the deal page shows them as "dated before today"), `motivation: "urgent"`
+when the owner needs out now (the default /deals order puts urgent sellers first, then the deepest discounts), the
+photos as public URLs — developer renders, and a photo of our own hosted in the repository under
+`scripts/partner-stock/direct-photos/` through its raw.githubusercontent.com address — and the owner's documents never
+committed (they carry personal data; they go into the deal file on the listing's admin page). The import files them
+under "Owner to be added (Direct sellers)" like a partner network's; the account owner publishes them from the Imported
+tab and enters the real owner on each.
+
 ### Cash at transfer
 
 Cards, the deal page, the "Cash at transfer" filter (`minTransfer` / `maxTransfer`) and `sort=cash` show what the
