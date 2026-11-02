@@ -1,8 +1,9 @@
 "use client";
 
-import { useTransition, type MouseEvent } from "react";
+import { useState, useTransition, type MouseEvent } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Check, ChevronDown, Languages } from "lucide-react";
+import { keepPageView } from "@/components/analytics/PageViewTracker";
 import { setLocale } from "@/i18n/actions";
 import { useDir, useLocale, useT } from "@/i18n/client";
 import { htmlLang, LOCALE_NAMES, LOCALES, type Locale } from "@/i18n/config";
@@ -37,13 +38,19 @@ export function useSwitchLocale() {
         await setLocale(to, !localized);
       } catch {
         // Offline or the action failed: the /ar/…, /zh/… or /en/… address alone still switches (the proxy remembers it).
-        if (localized) window.location.assign(switchHref(current, to));
+        if (localized) {
+          keepPageView();
+          window.location.assign(switchHref(current, to));
+        }
         return;
       }
       // Read the address now: the filters may have changed since the last render. The #section is kept too (section ids
       // are the same in every language: a Terms clause, /market#methodology), so the reader stays where they were.
       const { pathname: path, search: query, hash } = window.location;
-      if (localized) window.location.assign(localePath(`${path}${query}${hash}`, to));
+      if (!localized) return;
+      // The same page in another language is not a new page view: the load goes on with this one.
+      keepPageView();
+      window.location.assign(localePath(`${path}${query}${hash}`, to));
     },
   };
 }
@@ -66,10 +73,14 @@ export function LocaleSwitcher({ className, full, compact, dense }: { className?
   const dir = useDir();
   const t = useT("common");
   const [pending, start] = useTransition();
+  const [open, setOpen] = useState(false);
   const { href, go } = useSwitchLocale();
   const pick = (e: MouseEvent, to: Locale) => {
     if (!isPlainClick(e)) return;
     e.preventDefault();
+    // preventDefault also skips the menu's own close-on-select: close it here, or a page that re-renders in place (the
+    // consoles, or the language already shown) keeps it open over the page and swallows the next click.
+    setOpen(false);
     if (to === locale || pending) return;
     start(() => go(to));
   };
@@ -105,14 +116,16 @@ export function LocaleSwitcher({ className, full, compact, dense }: { className?
   }
 
   return (
-    <DropdownMenu dir={dir}>
+    // Not reopened while a switch is on its way; the button stays focusable meanwhile (aria-disabled, not disabled), so
+    // the menu can give focus back to it on closing.
+    <DropdownMenu open={open} onOpenChange={(o) => setOpen(o && !pending)} dir={dir}>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          disabled={pending}
-          className={cn("gap-1.5", className)}
+          aria-disabled={pending || undefined}
+          className={cn("gap-1.5", pending && "cursor-not-allowed opacity-50", className)}
           title={compact ? t("langMenu.label") : undefined}
           data-testid="locale-menu"
         >

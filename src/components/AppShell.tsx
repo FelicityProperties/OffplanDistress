@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import Link from "@/components/LocaleLink";
 import { usePathname } from "next/navigation";
 import {
@@ -46,6 +46,8 @@ export type ShellItem = { href: string; label: string; icon: keyof typeof ICONS;
 
 export function AppShell({ items, title, children }: { items: ShellItem[]; title: string; children: React.ReactNode }) {
   const pathname = usePathname();
+  // The title above the links names their navigation landmark, apart from the header's (src/components/NavLinks.tsx).
+  const titleId = useId();
   // Below lg the nav is one scrolling row: the current section is scrolled into view (else it can sit cut off at the end).
   const activeRef = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
@@ -61,8 +63,10 @@ export function AppShell({ items, title, children }: { items: ShellItem[]; title
     <div className="container-page grid grid-cols-[minmax(0,1fr)] gap-8 py-8 lg:grid-cols-[230px_minmax(0,1fr)]">
       <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
         <div className="lg:rounded-2xl lg:border lg:border-border/80 lg:bg-card lg:p-2 lg:shadow-card">
-          <p className="mb-2 px-3 pt-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{title}</p>
-          <nav className="flex gap-1 overflow-x-auto pb-2 lg:flex-col lg:pb-0">
+          <p id={titleId} className="mb-2 px-3 pt-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            {title}
+          </p>
+          <nav aria-labelledby={titleId} className="flex gap-1 overflow-x-auto pb-2 lg:flex-col lg:pb-0">
             {items.map((it) => {
               const Icon = ICONS[it.icon];
               const active = it.exact ? pathname === it.href : pathname === it.href || pathname.startsWith(`${it.href}/`);
