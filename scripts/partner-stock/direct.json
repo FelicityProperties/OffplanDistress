@@ -5,7 +5,7 @@
   "name": "Direct sellers",
   "url": null
  },
- "generatedAt": "2026-11-02T13:00:00Z",
+ "generatedAt": "2026-11-02T10:30:00Z",
  "units": [
   {
    "ref": "amaal8-1104",
@@ -62,6 +62,196 @@
     }
    ],
    "notes": "Direct seller (WhatsApp intake, 31 Oct 2026); documents received: DLD initial contract of sale (June 2025), SPA pages (unit 1104, 878 sq ft, 1 parking bay, payment schedule) and the developer's statement of account (received 2 Nov 2026): total collection AED 711,000.00 = AED 633,394.48 towards the unit price + DLD 4% AED 72,355.52 + admin fee AED 5,250; the 4th instalment due 9 Oct 2026 has AED 283.68 received and AED 90,160.72 outstanding (overdue — enter it as the arrears figure on the listing); 5th instalment AED 180,888.80 due 9 Jan 2027; AED 904,444 on handover 31 Dec 2028. Asking price set at half of the paid amount on the owner's instruction; the seller wants an immediate exit. Photos: project render and the 1BR Type 8 (878 sq ft) floor plan from the developer's marketing material, plus the seller's photo of the sales-centre model."
+  },
+  {
+   "ref": "damac-bali-ba0525",
+   "url": null,
+   "posted": "2026-11-02",
+   "listing": {
+    "projectName": "DAMAC Islands - Bali 3",
+    "developer": "DAMAC",
+    "developerOther": null,
+    "community": "Other",
+    "communityOther": "DAMAC Islands",
+    "unitType": "townhouse",
+    "sizeSqft": 3178,
+    "floor": null,
+    "view": "Corner plot",
+    "originalPrice": 3387000,
+    "amountPaid": 1216100,
+    "askingPrice": 729100,
+    "handoverDate": "2028-12-31",
+    "nextInstalmentDate": "2026-11-05",
+    "nextInstalmentAmount": 33870,
+    "paymentPlan": [
+     {
+      "label": "12th instalment (balance)",
+      "dueDate": "2026-07-05",
+      "amount": 138700
+     },
+     {
+      "label": "05-AUG-2026",
+      "dueDate": "2026-08-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-SEP-2026",
+      "dueDate": "2026-09-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-OCT-2026",
+      "dueDate": "2026-10-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-NOV-2026",
+      "dueDate": "2026-11-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-DEC-2026",
+      "dueDate": "2026-12-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-JAN-2027",
+      "dueDate": "2027-01-05",
+      "amount": 169350
+     },
+     {
+      "label": "05-FEB-2027",
+      "dueDate": "2027-02-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-MAR-2027",
+      "dueDate": "2027-03-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-APR-2027",
+      "dueDate": "2027-04-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-MAY-2027",
+      "dueDate": "2027-05-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-JUN-2027",
+      "dueDate": "2027-06-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-JUL-2027",
+      "dueDate": "2027-07-05",
+      "amount": 169350
+     },
+     {
+      "label": "05-AUG-2027",
+      "dueDate": "2027-08-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-SEP-2027",
+      "dueDate": "2027-09-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-OCT-2027",
+      "dueDate": "2027-10-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-NOV-2027",
+      "dueDate": "2027-11-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-DEC-2027",
+      "dueDate": "2027-12-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-JAN-2028",
+      "dueDate": "2028-01-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-FEB-2028",
+      "dueDate": "2028-02-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-MAR-2028",
+      "dueDate": "2028-03-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-APR-2028",
+      "dueDate": "2028-04-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-MAY-2028",
+      "dueDate": "2028-05-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-JUN-2028",
+      "dueDate": "2028-06-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-JUL-2028",
+      "dueDate": "2028-07-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-AUG-2028",
+      "dueDate": "2028-08-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-SEP-2028",
+      "dueDate": "2028-09-05",
+      "amount": 33870
+     },
+     {
+      "label": "05-OCT-2028",
+      "dueDate": "2028-10-05",
+      "amount": 33870
+     },
+     {
+      "label": "On Completion",
+      "dueDate": null,
+      "amount": 846750
+     }
+    ],
+    "motivation": "urgent",
+    "description": "5-bedroom townhouse with maid's room (type DITH-E) on a corner, back-to-back plot in Bali 3, DAMAC Islands: 3,178 sq ft built up on a 2,364 sq ft plot. Ground floor with living and dining room, kitchen, a bedroom, laundry and a covered car port opening onto a garden and patio; first floor with the master bedroom and balcony plus two bedrooms and a terrace; roof floor with an extra bedroom, the maid's room and a roof terrace. Figures from the developer's statement of account (18 September 2026): AED 1,216,100 paid towards the AED 3,387,000 price; the instalments from July to October 2026 (AED 240,310) are outstanding and shown in the plan; then 1% a month with 5% every sixth month to October 2028 and 25% on completion (December 2028). Selling at AED 2.9 million all in: AED 729,100 to the owner for the equity, and the buyer takes over the remaining AED 2,170,900 of the plan."
+   },
+   "photos": [
+    {
+     "filename": "damac-bali-ba0525-1.webp",
+     "url": "https://cloud.famproperties.com/project/large/-560471-135102.webp"
+    },
+    {
+     "filename": "damac-bali-ba0525-2.webp",
+     "url": "https://cloud.famproperties.com/project/large/-792521-174248.webp"
+    },
+    {
+     "filename": "damac-bali-ba0525-floorplan.webp",
+     "url": "https://raw.githubusercontent.com/FelicityProperties/OffplanDistress/main/scripts/partner-stock/direct-photos/damac-bali-ba0525-floorplan.webp"
+    },
+    {
+     "filename": "damac-bali-ba0525-plot.webp",
+     "url": "https://raw.githubusercontent.com/FelicityProperties/OffplanDistress/main/scripts/partner-stock/direct-photos/damac-bali-ba0525-plot.webp"
+    }
+   ],
+   "notes": "Direct seller (WhatsApp intake, 2 Nov 2026); documents received: the developer's statement of account as on 18 Sep 2026, the floor plan (plot BA0525, villa type DITH-E, 3,178.04 sq ft saleable), the plot plan (219.60 sq m / 2,363.75 sq ft) and the cluster map. Statement: base price AED 3,387,000 (+ DLD registration AED 135,480 paid separately); AED 1,216,099.94 paid towards the price; outstanding at the statement date AED 240,310.06 (12th instalment balance AED 138,700.06 due 5 Jul 2026, then 5 Aug, 5 Sep and 5 Oct 2026 at AED 33,870) — enter it as the arrears figure; the 5 Nov 2026 instalment fell due after the statement; no penalties on the statement. The owner has paid most instalments late (the statement's delay-days table). Owner's price: selling price AED 2,900,000 all in, i.e. AED 729,100 to the seller plus the AED 2,170,900 balance of the plan; original price AED 3,387,000 (the owner rounds it to 3.4 million). Joint buyer on the developer's record: both owners must sign the Form A and the MOU. Photos: two DAMAC Islands renders from marketing material, the developer's floor plan and the plot location on the cluster map (both from the owner's documents, no personal data on them)."
   },
   {
    "ref": "reef998-704",
