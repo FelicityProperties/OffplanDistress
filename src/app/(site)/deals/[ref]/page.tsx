@@ -60,7 +60,7 @@ async function load(ref: string) {
   return getListingByRef(refNo);
 }
 
-/** "40%" in "40% paid": the whole percentage the "Paid at least" filter compares (wholePct), so the two agree. */
+/** "40%" in "40% paid": the whole percentage the "Min. % paid" filter compares (wholePct), so the two agree. */
 const paidText = (ratio: number) => `${wholePct(ratio)}%`;
 
 export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): Promise<Metadata> {

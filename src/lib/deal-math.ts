@@ -134,12 +134,15 @@ function quarterStart(day: string) {
 
 // Sellers type milestone labels in English, Arabic or Chinese (交房 / 交付 = handover, 完工 / 竣工 = completion, 施工 /
 // 建设 = construction). Developers' plans call the handover "completion" too ("On completion", "180 days post
-// completion"), so "post-/after …" (بعد التسليم, 竣工后) and "pre-/before/until …" (قبل الإنجاز, 完工前) are checked before
-// the word itself, for both words. "Completion" only counts when it isn't a construction milestone: a percentage next to
-// it is how far the building has got ("on 50% completion", "completion of 70%", "完工 50%"), while one before "on /
-// upon completion" is the payment's share of the price ("40% on completion": the handover payment).
-const POST_HANDOVER = /post[\s-]*hand\s*-?\s*over|after\s+(the\s+)?hand\s*-?\s*over|بعد\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?后/i;
-const POST_COMPLETION = /post[\s-]*completion|after\s+(the\s+)?completion|بعد\s+(ال)?(إنجاز|إكمال)|(?:完工|竣工)(?:之)?后/i;
+// completion"), so "post-/after …" ("6 months from handover", "Completion + 12 months", بعد التسليم, 竣工后) and "pre-/
+// before/until …" (قبل الإنجاز, 完工前) are checked before the word itself, for both words. "Completion" only counts when it
+// isn't a construction milestone: a percentage next to it is how far the building has got ("on 50% completion",
+// "completion of 70%", "完工 50%"), while one before "on / upon completion" is the payment's share of the price ("40% on
+// completion": the handover payment).
+const POST_HANDOVER =
+  /post[\s-]*hand\s*-?\s*over|after\s+(the\s+)?hand\s*-?\s*over|(days?|weeks?|months?|years?)\s+from\s+(the\s+)?hand\s*-?\s*over|hand\s*-?\s*over\s*\+\s*\d|بعد\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?后/i;
+const POST_COMPLETION =
+  /post[\s-]*completion|after\s+(the\s+)?completion|(days?|weeks?|months?|years?)\s+from\s+(the\s+)?completion|completion\s*\+\s*\d|بعد\s+(ال)?(إنجاز|إكمال)|(?:完工|竣工)(?:之)?后/i;
 const PRE_HANDOVER = /(?:pre|before|until|till|prior\s+to|up\s+to)[\s-]*(the\s+)?hand\s*-?\s*over|(?:قبل|حتى)\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?前/i;
 const PRE_COMPLETION = /(?:pre|before|until|till|prior\s+to|up\s+to)[\s-]*(the\s+)?completion|(?:قبل|حتى)\s+(ال)?(إنجاز|إكمال)|(?:完工|竣工)(?:之)?前/i;
 const HANDOVER_WORD = /hand\s*-?\s*over|تسليم|استلام|交[房付楼]/i;
@@ -263,7 +266,7 @@ export function planSchedule(
 /**
  * A unit already handed over, shown as "Ready" instead of a handover quarter: its handover date is today or past (Dubai
  * dates), or it has no date but is fully paid with no plan rows, as a partner network's ready units come. The "Handover
- * by" filter and sort count those dateless ones as ready too (readyUndatedSql in src/lib/listings.ts).
+ * by" filter and sort count those dateless ones as ready too (readyUndated in src/lib/listings.ts).
  */
 export function isReady(
   l: { handoverDate: string | null; originalPrice: number; amountPaid: number; planRows: number },

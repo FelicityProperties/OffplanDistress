@@ -70,24 +70,17 @@ export default async function NewStaffListingPage({
         <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden /> {t(fromLead ? "nav.leads" : "nav.queue")}
       </Link>
       <PageTitle title={t("create.title")} sub={t("create.sub")} />
-      {fromLead?.listing ? (
-        // Opened again (Back, a second tab): the lead's unit is entered already, so no second form to fill in.
-        <p role="note" className="rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-foreground" data-testid="lead-has-listing">
-          {t("create.leadHasListing", { lead: fromLead.ref, ref: refCode(fromLead.listing.refNo) })}{" "}
-          <Link href={`/admin/listings/${fromLead.listing.id}`} className="font-medium underline underline-offset-4 hover:no-underline">
-            {t("users.openListing", { ref: refCode(fromLead.listing.refNo) })}
-          </Link>
+      {fromLead && !fromLead.listing && (
+        <p role="note" className="rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-foreground">
+          {t("create.fromLead", { ref: fromLead.ref })}
         </p>
-      ) : (
-        <>
-          {fromLead && (
-            <p role="note" className="rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-foreground">
-              {t("create.fromLead", { ref: fromLead.ref })}
-            </p>
-          )}
-          <StaffListingForm prefill={fromLead?.prefill} quarters={nextQuarters()} />
-        </>
       )}
+      {/* A lead already turned into a listing: the form says so instead (opened again with Back, or a second tab). */}
+      <StaffListingForm
+        prefill={fromLead?.prefill}
+        quarters={nextQuarters()}
+        converted={fromLead?.listing ? { id: fromLead.listing.id, ref: refCode(fromLead.listing.refNo), lead: fromLead.ref } : null}
+      />
     </div>
   );
 }

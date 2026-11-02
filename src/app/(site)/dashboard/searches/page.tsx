@@ -23,11 +23,13 @@ export default async function SearchesPage() {
     searches.map(async (s) => {
       // One search that can't be counted (an old or hand-made query) loses its counts, not the page and its delete
       // buttons.
-      const counts = await searchCounts(filtersFromQuery(s.query), s.createdAt).catch((e) => {
+      try {
+        const { total, fresh } = await searchCounts(filtersFromQuery(s.query), s.createdAt);
+        return { ...s, total: total as number | null, fresh };
+      } catch (e) {
         console.error("saved search counts", s.id, e);
-        return null;
-      });
-      return { ...s, total: counts?.total ?? null, fresh: counts?.fresh ?? 0 };
+        return { ...s, total: null, fresh: 0 };
+      }
     }),
   );
 

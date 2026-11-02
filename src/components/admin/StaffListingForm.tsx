@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { adminCreateListing } from "@/app/actions/admin";
@@ -37,9 +38,17 @@ export type StaffPrefill = {
  * Staff-assisted intake (/admin/listings/new): a listing entered from the documents a seller sent. The same listing
  * fields and server rules as the sell form (listingSchema), plus who the seller is. Submitted without the browser's
  * own validation so every message comes from the server in the page's language, and without resetting the form when
- * a field needs fixing.
+ * a field needs fixing. `converted`: the seller lead it starts from is a listing already (one per lead).
  */
-export function StaffListingForm({ prefill = {}, quarters }: { prefill?: StaffPrefill; quarters: string[] }) {
+export function StaffListingForm({
+  prefill = {},
+  quarters,
+  converted = null,
+}: {
+  prefill?: StaffPrefill;
+  quarters: string[];
+  converted?: { id: string; ref: string; lead: string } | null;
+}) {
   const t = useT("admin");
   const tc = useT("common");
   const locale = useLocale();
@@ -66,6 +75,20 @@ export function StaffListingForm({ prefill = {}, quarters }: { prefill?: StaffPr
   const communities = sorted(COMMUNITIES, (v) => communityName(tc, v));
   const quarterOptions = prefill.handoverDate && !quarters.includes(prefill.handoverDate) ? [prefill.handoverDate, ...quarters] : quarters;
   const invalid = (k: string) => (fe[k] ? true : undefined);
+
+  // Opened again (Back, a second tab) once the lead's unit is entered: a note, not a second form to fill in. Not right
+  // after this form created it, though: the page then refreshes with the lead converted while the effect above opens
+  // the new listing.
+  if (converted && !state.ok) {
+    return (
+      <p role="note" className="rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-foreground" data-testid="lead-has-listing">
+        {t("create.leadHasListing", { lead: converted.lead, ref: converted.ref })}{" "}
+        <Link href={`/admin/listings/${converted.id}`} className="font-medium underline underline-offset-4 hover:no-underline">
+          {t("users.openListing", { ref: converted.ref })}
+        </Link>
+      </p>
+    );
+  }
 
   return (
     // `action` for a Create clicked before the page's scripts have loaded: the browser posts it to the server action (a

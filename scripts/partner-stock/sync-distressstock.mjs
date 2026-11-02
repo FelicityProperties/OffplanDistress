@@ -67,7 +67,94 @@ const MASS_REMOVAL_MIN = 3;
 const ROUNDING_AED = 2;
 const INT_MAX = 2_147_483_647;
 const UNIT_TYPES = ["studio", "1br", "2br", "3br", "4br", "5br", "townhouse", "villa", "penthouse"];
-const NON_DUBAI = ["Saadiyat Island", "Yas Island", "Al Reem Island", "Abu Dhabi", "Sharjah", "Ras Al Khaimah", "Ajman"];
+/** Areas outside the emirate of Dubai (matched anywhere in the posted area): never listed, no DLD permit applies there. */
+const NON_DUBAI = [
+  "Saadiyat Island",
+  "Yas Island",
+  "Yas Bay",
+  "Al Reem Island",
+  "Al Maryah Island",
+  "Hudayriyat",
+  "Jubail Island",
+  "Al Raha",
+  "Abu Dhabi",
+  "Al Ain",
+  "Sharjah",
+  "Aljada",
+  "Ajman",
+  "Umm Al Quwain",
+  "Ras Al Khaimah",
+  "Marjan",
+  "Mina Al Arab",
+  "Fujairah",
+];
+/**
+ * Posted areas in Dubai that are neither on our list (src/lib/config.ts COMMUNITIES) nor in COM_MAP / COM_NAMES below,
+ * lower case: listed as "Other" with the posted name. Any other area is not listed until someone checks where it is
+ * (assess: skipped, and the summary says so) — a Dubai area is added here, one outside Dubai to NON_DUBAI; a unit
+ * outside Dubai can't carry a Trakheesi permit, so it must never reach "Publish all N on Felicity's permits".
+ */
+const DUBAI_AREAS = [
+  "al barsha",
+  "al barsha south",
+  "al habtoor city",
+  "al khail heights",
+  "al quoz",
+  "al satwa",
+  "al sufouh",
+  "al warqa",
+  "al wasl",
+  "arabian ranches",
+  "arabian ranches 2",
+  "arabian ranches 3",
+  "barsha heights",
+  "bluewaters",
+  "bluewaters island",
+  "bur dubai",
+  "city walk",
+  "deira",
+  "discovery gardens",
+  "district one",
+  "dubai design district",
+  "dubai festival city",
+  "dubai harbour",
+  "dubai healthcare city",
+  "dubai science park",
+  "dubai silicon oasis",
+  "dubai studio city",
+  "emaar south",
+  "emirates hills",
+  "golf city",
+  "international city",
+  "jebel ali",
+  "jumeirah",
+  "jumeirah bay",
+  "jumeirah beach residence",
+  "jumeirah garden city",
+  "jumeirah golf estates",
+  "jumeirah heights",
+  "jumeirah islands",
+  "jumeirah park",
+  "la mer",
+  "mina rashid",
+  "mirdif",
+  "mudon",
+  "nad al sheba",
+  "palm jebel ali",
+  "ras al khor",
+  "sobha hartland 2",
+  "the greens",
+  "the lakes",
+  "the meadows",
+  "the springs",
+  "the views",
+  "the world islands",
+  "tilal al ghaf",
+  "umm suqeim",
+  "wadi al safa 3",
+  "wasl 1",
+  "zabeel",
+];
 
 // Posted names → our lists (src/lib/config.ts); anything else becomes "Other" with the posted name (DEV_NAMES / COM_NAMES
 // fix its spelling). Same tables as the first import.
@@ -382,6 +469,12 @@ export function exclusion(u) {
   return null;
 }
 
+/** Whether a posted area is one we know to be in Dubai: on our list, mapped onto it (COM_MAP, COM_NAMES), or in DUBAI_AREAS. */
+export function knownDubaiArea(area, rules) {
+  const low = pyStrip(area).toLowerCase();
+  return rules.COM.some((c) => c !== "Other" && c.toLowerCase() === low) || Object.hasOwn(COM_MAP, low) || Object.hasOwn(COM_NAMES, low) || DUBAI_AREAS.includes(low);
+}
+
 /** A ready / fully paid plan has no remaining section: the whole price goes to the seller on transfer. */
 const remainingOf = (p) => (p.totalRemaining == null && p.paymentToSeller === p.unitPrice ? 0 : p.totalRemaining);
 
@@ -510,8 +603,12 @@ export function buildEntry(u, plan, today, rules) {
   const sellingLine = pyStrip(f["Selling price"]);
   if (sellingLine && !money(sellingLine)) return { skip: `the posted selling price can't be read (${sellingLine})` };
   const handoverText = pyStrip(f.Handover);
-  const handoverDate = handover(handoverText);
-  if (!handoverDate && /\d{4}/.test(handoverText) && !/^READY/i.test(handoverText)) return { skip: `the posted handover can't be read (${handoverText})` };
+  const handedOver = /^READY/i.test(handoverText);
+  // A ready unit ("READY", "READY AND VACANT", "READY, RENTED (…)") was handed over before it was posted: its handover
+  // date is the day it was posted — in the past, and the same from one day to the next — so the site shows it as ready
+  // (not "Handover TBC") and the "Handover by" filter finds it.
+  const handoverDate = handover(handoverText) ?? (handedOver ? postedDay(u.posted) : null);
+  if (!handoverDate && /\d{4}/.test(handoverText) && !handedOver) return { skip: `the posted handover can't be read (${handoverText})` };
   const ready = p.totalRemaining === 0;
   let op = null;
   if (ready) {
@@ -527,7 +624,9 @@ export function buildEntry(u, plan, today, rules) {
   const dated = paymentPlan.filter((i) => i.dueDate);
   const next = dated.find((i) => i.dueDate >= today) ?? dated[dated.length - 1] ?? null;
   let [dev, devOther] = canon(f.Developer, rules.DEV, DEV_MAP, DEV_NAMES);
-  if (dev == null) [dev, devOther] = ["Other", "Not stated"]; // the ready villas name no developer: our team fills it in before approval
+  // The ready villas name no developer: our team fills it in before approval; until then the site shows "Developer not
+  // stated" in the visitor's language (src/lib/place-names.ts developerNotStated knows this placeholder).
+  if (dev == null) [dev, devOther] = ["Other", "Not stated"];
   const [com, comOther] = canon(f.Area, rules.COM, COM_MAP, COM_NAMES);
   if (com == null) return { skip: "no area" };
   const floor = cut(pyStrip(f.Floor).replace(/^[() ]+|[() ]+$/g, ""), 40) || null;
@@ -634,6 +733,11 @@ function entryChanges(before, after) {
 export function assess(u, was, plans, rules, today) {
   const excluded = exclusion(u);
   if (excluded) return { kind: "excluded", reason: excluded };
+  // Any other area must be one we know to be in Dubai; an unknown one waits (no plan to read yet) until someone checks.
+  const area = pyStrip(u.fields.Area);
+  if (area && !knownDubaiArea(area, rules)) {
+    return { kind: "skip", reason: `area not known to be in Dubai (${area}): add it to DUBAI_AREAS in the sync script if it is in Dubai, to NON_DUBAI if not` };
+  }
   const images = planImages(u);
   const image = images[0] ?? null;
   if (!image) return { kind: "skip", reason: "no payment-plan image on the page", image };

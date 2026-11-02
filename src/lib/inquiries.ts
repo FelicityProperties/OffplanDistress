@@ -14,8 +14,9 @@ export type InquiryNotice = {
 
 /**
  * The admins' "inquiry.received" notice, sent when a message arrives (src/app/actions/market.ts createInquiry) and
- * when an admin moves one caught as spam back to the inbox (src/app/actions/admin.ts setInquirySpam). Project names
- * and reference codes read the same in both languages, so the deal line goes in as-is.
+ * when an admin moves one the score caught back to the inbox (src/app/actions/admin.ts setInquirySpam), once: never
+ * for a message that already had it. Project names and reference codes read the same in both languages, so the deal
+ * line goes in as-is.
  */
 export function notifyInquiryReceived(q: InquiryNotice, except?: (string | null | undefined)[]) {
   const about = q.listing ? `${q.listing.projectName} · ${refCode(q.listing.refNo)}` : null;
