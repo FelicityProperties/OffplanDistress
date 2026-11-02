@@ -52,8 +52,8 @@ live again. A seller who changes the asking price or description of a live listi
 the advert never shows a price or text the permit and our team haven't seen; with an accepted offer those two
 fields are fixed. Nor can an admin page opened before a change publish it unseen: Approve, or a save in "Manage
 listing", from a page loaded before the listing last changed (the seller's new price or photo, another admin's save)
-is refused; Approve then shows the listing as it is now, and the editor keeps what was typed for a reloaded page. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each
-real deal page adds a `RealEstateListing` with its price. The emails that list units carry the same details: each
+is refused; Approve then shows the listing as it is now, and the editor keeps what was typed for a reloaded page.
+The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each real deal page adds a `RealEstateListing` with its price. The emails that list units carry the same details: each
 deal in the newsletter, in a saved-search alert and in a price-drop notice to watchers has its permit line (the
 deal page's wording), followed by our ORN and the broker's BRN.
 
@@ -87,7 +87,7 @@ code) and/or email plus the unit figures, and creates the seller's account witho
 upload the documents on the listing page. A lead becomes one listing: opened again, the page links to it instead,
 and a second submit (another tab) is refused. The staff forms (intake, Owner card, Form A, deal file) post to the
 server even when sent before the page's scripts have loaded, never as a GET with the seller's details in the
-address, and every admin control answers "Please sign in again" once the session has ended, keeping what was typed.
+address, and every admin control asks to sign in again once the session has ended, keeping what was typed.
 "Copy link for WhatsApp" opens a chat to the seller with a confirmation
 link in their language ("Email claim link" when they have an email and email is on). The link works once, for 7
 days, and a new one cancels the old. The seller opens it without logging in, ticks the same ownership / authority /
@@ -387,8 +387,10 @@ set, else the domain assigned to the project on Vercel; an address Vercel doesn'
 `/admin/analytics` shows visitors, visits, page views, time per visit, bounce rate, leads and conversion (today / 7 /
 30 / 90 Dubai days), live visitors, top and entry pages, sources, campaigns and partner codes, countries, devices,
 languages and each lead's journey. A small beacon records page views without cookies; IP addresses and user agents
-are never stored (a daily-rotating anonymous id instead). Signed-in admins are never counted; "Ignore this device" on
-the page covers a browser you use signed out. Page views are deleted after 13 months.
+are never stored (a daily-rotating anonymous id instead). A page view is one page shown: filtering `/deals`, clearing
+the filters of a campaign link (its tags go too) or switching the page's language doesn't count another one (after a
+switch the view is recorded in the language chosen); new campaign tags on the same page do. Signed-in admins are never
+counted; "Ignore this device" on the page covers a browser you use signed out. Page views are deleted after 13 months.
 
 ## Stack
 

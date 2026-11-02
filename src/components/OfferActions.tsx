@@ -73,13 +73,17 @@ export function SellerOfferActions({
   const [open, setOpen] = useState(false);
   const counterButton = useRef<HTMLButtonElement>(null);
   // Suggested: 5% over the offer, but no more than the seller's own asking price (rarely what a seller means to ask),
-  // unless the offer already meets it: a counter is always above the offer.
+  // unless the offer already meets it: a counter is always above the offer. Until the seller types a figure the box
+  // follows the offer shown, so after a buyer's revision (the page refreshes to it) the suggestion is made anew.
   const meetsAsking = askingPrice != null && amount >= askingPrice;
   const suggested = Math.round(amount * 1.05);
-  const [counter, setCounter] = useState(String(askingPrice != null && !meetsAsking ? Math.min(askingPrice, suggested) : suggested));
-  const aboveAsking = askingPrice != null && !meetsAsking && Number(counter) > askingPrice;
+  const [typed, setTyped] = useState<string | null>(null);
+  const counter = typed ?? String(askingPrice != null && !meetsAsking ? Math.min(askingPrice, suggested) : suggested);
+  // Whole dirhams, as the server rounds it.
+  const figure = Math.round(Number(counter));
+  const aboveAsking = askingPrice != null && !meetsAsking && figure > askingPrice;
   // At or below the offer it isn't a counter (the server refuses it too): accepting gets the seller that price.
-  const notAbove = !(Number(counter) > amount);
+  const notAbove = !(figure > amount);
 
   const run = (action: "accept" | "decline" | "counter", value?: number) =>
     start(async () => {
@@ -139,7 +143,7 @@ export function SellerOfferActions({
             // Any whole dirham, as the asking price can be (the server rounds to one).
             step={1}
             value={counter}
-            onChange={(e) => setCounter(e.target.value)}
+            onChange={(e) => setTyped(e.target.value)}
             aria-label={t("offerAction.counterAria")}
           />
           {meetsAsking && (

@@ -58,7 +58,7 @@ export default defineMessages({
     "offer.alreadyAccepted": "Your offer on this unit has already been accepted. Follow the deal in your dashboard under Offers.",
     // The page showed an older figure than the offer now holds (the other party revised it meanwhile).
     "offer.changed": "The buyer has just changed this offer to {amount}. Check the new figure before you answer.",
-    "offer.counterChanged": "The seller's counter-offer is now {amount}. Check it before you accept.",
+    "offer.counterChanged": "The seller's counter-offer is now {amount}. Check it before you answer.",
     "search.defaultName": "My search",
     "search.tooMany": "You already have {max} saved searches. Delete one to save another.",
 
@@ -213,7 +213,7 @@ export default defineMessages({
     "offer.unitTaken": "يوجد بالفعل عرض مقبول على هذه الوحدة.",
     "offer.alreadyAccepted": "سبق أن قُبل عرضك على هذه الوحدة. تابع الصفقة من قسم العروض في لوحة التحكم.",
     "offer.changed": "عدّل المشتري هذا العرض للتو إلى ⁨{amount}⁩. راجِع المبلغ الجديد قبل أن تردّ عليه.",
-    "offer.counterChanged": "أصبح العرض المقابل من البائع ⁨{amount}⁩. راجِعه قبل أن تقبله.",
+    "offer.counterChanged": "أصبح العرض المقابل من البائع ⁨{amount}⁩. راجِعه قبل أن تردّ عليه.",
     "search.defaultName": "بحثي",
     "search.tooMany": "بلغتَ الحد الأقصى لعمليات البحث المحفوظة (⁨{max}⁩). احذف إحداها لحفظ بحث جديد.",
 

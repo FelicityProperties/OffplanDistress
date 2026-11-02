@@ -16,7 +16,7 @@ import { DEVELOPERS } from "@/lib/config";
 import { leadCode, quarterEndOf, sellerEstimate } from "@/lib/estimate";
 import { formatPct } from "@/lib/format";
 import { notifyAdmins, type TemplateParam } from "@/lib/notify";
-import { formTokenExpired, formTokenOk, honeypotTripped, pitchIn, verifyTurnstile } from "@/lib/spam";
+import { formTokenExpired, formTokenOk, honeypotTripped, pitchIn, spamReasons, spamScore, verifyTurnstile } from "@/lib/spam";
 import { clientIp, DAY, hit, MINUTE } from "@/lib/throttle";
 import type { FormState } from "./auth";
 
@@ -69,10 +69,14 @@ const leadSchema = (t: T, ts: TS) =>
 export type SellerLeadState = FormState & { id?: string; ref?: string; urgent?: boolean; throttled?: boolean };
 
 /**
- * A link in a lead's name: http(s)://, www. or a bare host with a path, as the spam checks read links (src/lib/spam.ts).
- * The name is read for links only, not for the SEO pitch's words: "Seo" is a common Korean surname (Min-jun Seo).
+ * Whether a lead's name holds an outside link, read as the spam score reads links (src/lib/spam.ts: look-alike letters
+ * and zero-width characters folded first, our own hosts allowed). The name is read for links only, not for the SEO
+ * pitch's words: "Seo" is a common Korean surname (Min-jun Seo).
  */
-const NAME_LINK = /(?:https?:\/\/|www\.)[a-z0-9.-]+\.[a-z]{2,}|(?<![\w@.-])[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}\//i;
+function linkInName(name: string) {
+  const { reasons } = spamScore({ name, email: "", message: name });
+  return spamReasons(reasons.join("; ")).some((r) => r.code === "link");
+}
 
 /** The free estimate's second step: no account needed. Five per IP per hour. */
 export async function createSellerLead(_prev: SellerLeadState, formData: FormData): Promise<SellerLeadState> {
@@ -112,7 +116,7 @@ export async function createSellerLead(_prev: SellerLeadState, formData: FormDat
   const v = parsed.data;
   // The SEO pitch, or a link, where the project should be, or a link where the name should be: the lead would reach the
   // team's inbox as a "new seller lead" notice, so it gets the bots' thank-you too. A real seller's name never does.
-  if (pitchIn([v.project, v.developerOther].filter(Boolean).join(" ")) || NAME_LINK.test(v.name.normalize("NFKC"))) return silent();
+  if (pitchIn([v.project, v.developerOther].filter(Boolean).join(" ")) || linkInName(v.name)) return silent();
   // Per IP, then per number (a lead has no address of its own): the estimate is open to anyone, once in a while.
   const digits = v.phone.replace(/\D/g, "");
   if (!(await hit(`lead-ip:${ip}`, 5, 60 * MINUTE)) || !(await hit(`lead-phone:${digits}`, 3, DAY))) {

@@ -113,7 +113,9 @@ export async function SiteFooter() {
         <div
           className={cn(
             "container-page flex flex-col gap-3 py-6 text-xs text-primary-foreground/60 lg:flex-row lg:items-center lg:justify-between",
-            BRAND.whatsapp && "pb-24 sm:pb-6", // clear of the floating WhatsApp button
+            // Clear of the floating WhatsApp button (56 px at the end corner): room below it on phones, beside it from sm
+            // up, where the row's end (the licence numbers, the estimates note) would otherwise sit under it.
+            BRAND.whatsapp && "pb-24 sm:pb-6 sm:pe-24",
           )}
         >
           <p>

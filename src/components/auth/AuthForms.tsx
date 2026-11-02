@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition, type FormEvent, type RefObject } from "react";
 import Link from "@/components/LocaleLink";
 import { Building2, ExternalLink, KeyRound, Repeat } from "lucide-react";
-import { login, signup } from "@/app/actions/auth";
+import { login, signup, type FormState } from "@/app/actions/auth";
 import { AttributionField } from "@/components/Attribution";
 import { Field, FormMessage, SubmitButton } from "@/components/forms";
 import { Input } from "@/components/ui/input";
@@ -12,14 +12,41 @@ import { richText } from "@/content/legal/rich-text";
 import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
+/**
+ * Both forms are sent from onSubmit, so a refused try (a wrong password, an address that already has an account) keeps
+ * what was typed: React empties a form once its own action has run. The action stays on the form for a submit before
+ * the page's script has loaded, which then posts to the server as without script. SubmitButton still shows the
+ * pending state (React marks the form pending for a transition its submit event started).
+ */
+function useSubmit(action: (fd: FormData) => void) {
+  const [, start] = useTransition();
+  return (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    start(() => action(fd));
+  };
+}
+
+/** After a refusal, focus goes to the first field to fix, where a screen reader reads its error (Field). */
+function useFocusFirstError(form: RefObject<HTMLFormElement | null>, state: FormState) {
+  useEffect(() => {
+    if (state.fieldErrors && Object.values(state.fieldErrors).some((e) => e?.length)) {
+      form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+    }
+  }, [form, state]);
+}
+
 export function LoginForm({ next, lead }: { next?: string; lead?: string }) {
   const t = useT("auth");
   const tc = useT("common");
   const [state, action] = useActionState(login, {});
+  const submit = useSubmit(action);
+  const formRef = useRef<HTMLFormElement>(null);
+  useFocusFirstError(formRef, state);
   const fe = state.fieldErrors ?? {};
   const passwordError = fe.password?.[0];
   return (
-    <form action={action} className="space-y-4">
+    <form ref={formRef} action={action} onSubmit={submit} className="space-y-4">
       {next && <input type="hidden" name="next" value={next} />}
       {lead && <input type="hidden" name="lead" value={lead} />}
       <Field label={t("field.email")} htmlFor="email" error={fe.email}>
@@ -35,8 +62,20 @@ export function LoginForm({ next, lead }: { next?: string; lead?: string }) {
             {t("login.forgot")}
           </Link>
         </div>
-        <Input id="password" name="password" type="password" required autoComplete="current-password" />
-        {passwordError && <p className="text-xs font-medium text-destructive">{passwordError}</p>}
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          required
+          autoComplete="current-password"
+          aria-invalid={passwordError ? true : undefined}
+          aria-describedby={passwordError ? "password-msg" : undefined}
+        />
+        {passwordError && (
+          <p id="password-msg" className="text-xs font-medium text-destructive">
+            {passwordError}
+          </p>
+        )}
       </div>
       <FormMessage state={state} />
       <SubmitButton className="w-full" size="lg" pendingText={t("login.pending")}>
@@ -56,9 +95,11 @@ export function SignupForm({ next, intent, lead }: { next?: string; intent?: str
   const t = useT("auth");
   const tl = useT("legal");
   const [state, action] = useActionState(signup, {});
+  const submit = useSubmit(action);
+  const formRef = useRef<HTMLFormElement>(null);
+  useFocusFirstError(formRef, state);
   const [role, setRole] = useState<string>(roles.some((r) => r.v === intent) ? intent! : "buy");
-  // Checked in the browser first so a forgotten tick doesn't cost a round trip (and the typed-in fields);
-  // the server action enforces it too.
+  // Checked in the browser first so a forgotten tick doesn't cost a round trip; the server action enforces it too.
   const termsRef = useRef<HTMLInputElement>(null);
   const [termsError, setTermsError] = useState<string | null>(null);
   const fe = state.fieldErrors ?? {};
@@ -66,6 +107,7 @@ export function SignupForm({ next, intent, lead }: { next?: string; intent?: str
   const legalLink = "font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
   return (
     <form
+      ref={formRef}
       action={action}
       className="space-y-4"
       onSubmit={(e) => {
@@ -73,7 +115,9 @@ export function SignupForm({ next, intent, lead }: { next?: string; intent?: str
           e.preventDefault();
           setTermsError(t("signup.acceptTerms.error"));
           termsRef.current.focus();
+          return;
         }
+        submit(e);
       }}
     >
       {next && <input type="hidden" name="next" value={next} />}
@@ -99,7 +143,7 @@ export function SignupForm({ next, intent, lead }: { next?: string; intent?: str
         ))}
       </div>
       <Field label={t("field.fullName")} htmlFor="fullName" error={fe.fullName}>
-        <Input id="fullName" name="fullName" required autoComplete="name" />
+        <Input id="fullName" name="fullName" required maxLength={120} autoComplete="name" />
       </Field>
       <Field label={t("field.email")} htmlFor="email" error={fe.email}>
         <Input id="email" name="email" type="email" dir="ltr" required autoComplete="email" />
