@@ -92,6 +92,8 @@ export async function findClaim(token: string) {
       originalPrice: listings.originalPrice,
       amountPaid: listings.amountPaid,
       handoverDate: listings.handoverDate,
+      // With the dates and amounts above, whether the unit is already handed over (isReady in src/lib/deal-math.ts).
+      paymentPlan: listings.paymentPlan,
       createdByStaff: listings.createdByStaff,
       ownershipConfirmedAt: listings.ownershipConfirmedAt,
     })

@@ -126,6 +126,8 @@ export default defineMessages({
     "developer.Meydan": "Meydan",
     "developer.Al Habtoor": "Al Habtoor",
     "developer.Other": "Other",
+    // In place of the partner sync's placeholder developer (developerNotStated in src/lib/place-names.ts).
+    developerNotStated: "Developer not stated",
 
     verified: "Verified",
     sample: "Sample",
@@ -160,6 +162,8 @@ export default defineMessages({
     floor: "Floor {n}",
     handover: "Handover",
     tbc: "TBC",
+    // A unit already handed over, in place of its handover quarter (isReady in src/lib/deal-math.ts).
+    handoverReady: "Ready",
     upfrontToSeller: "Upfront to seller",
     remainingPlan: "Remaining plan",
     cashAtTransfer: "Cash at transfer",
@@ -355,6 +359,7 @@ export default defineMessages({
     "developer.Meydan": "ميدان",
     "developer.Al Habtoor": "الحبتور",
     "developer.Other": "أخرى",
+    developerNotStated: "المطوّر غير محدّد",
 
     verified: "موثّق",
     sample: "توضيحي",
@@ -388,6 +393,7 @@ export default defineMessages({
     floor: "الطابق {n}",
     handover: "التسليم",
     tbc: "يُحدَّد لاحقاً",
+    handoverReady: "جاهز",
     upfrontToSeller: "المبلغ المقدّم للبائع",
     remainingPlan: "المتبقي من خطة الدفع",
     cashAtTransfer: "النقد يوم نقل الملكية",
@@ -582,6 +588,7 @@ export default defineMessages({
     "developer.Meydan": "Meydan",
     "developer.Al Habtoor": "Al Habtoor",
     "developer.Other": "其他",
+    developerNotStated: "开发商未注明",
 
     verified: "已核实",
     sample: "示例",
@@ -614,6 +621,7 @@ export default defineMessages({
     floor: "第 {n} 层",
     handover: "交房",
     tbc: "待定",
+    handoverReady: "现房",
     upfrontToSeller: "付给卖家的前期现金",
     remainingPlan: "剩余付款",
     cashAtTransfer: "过户所需现金",

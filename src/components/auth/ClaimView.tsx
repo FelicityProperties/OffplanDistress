@@ -10,7 +10,9 @@ import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser, isOwnerEmail } from "@/lib/auth";
 import { type Claim, claimPath, findClaim, isPlaceholderEmail } from "@/lib/claim";
 import { BRAND } from "@/lib/config";
+import { isReady } from "@/lib/deal-math";
 import { formatAED, formatNumber, formatQuarter, refCode } from "@/lib/format";
+import { dubaiToday } from "@/lib/permits";
 import { communityName, developerName } from "@/lib/place-names";
 
 /** "m•••@gmail.com": enough for the seller to recognise their account, without spelling it out to anyone else. */
@@ -46,7 +48,13 @@ async function Summary({ claim }: { claim: Claim }) {
     ],
     [ts("review.purchasePrice"), formatAED(claim.originalPrice, locale)],
     [ts("review.paid"), formatAED(claim.amountPaid, locale)],
-    [tc("handover"), formatQuarter(claim.handoverDate, locale)],
+    // "Ready" for a unit already handed over, as on its deal page.
+    [
+      tc("handover"),
+      isReady({ ...claim, planRows: (claim.paymentPlan ?? []).length }, dubaiToday())
+        ? tc("handoverReady")
+        : formatQuarter(claim.handoverDate, locale),
+    ],
     [t("claim.summary.asking"), formatAED(claim.askingPrice, locale)],
   ];
   const fix = BRAND.whatsapp ? `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(tm("whatsapp.prefill.claimFix", { ref }))}` : null;
@@ -121,7 +129,9 @@ async function LanguageOffer({ claim }: { claim: Claim }) {
  */
 export async function ClaimView({ token }: { token: string }) {
   const [t, claim, me] = await Promise.all([getT("password"), token ? findClaim(token) : null, getCurrentUser()]);
-  const usable = claim && claim.role === "user" && !isOwnerEmail(claim.email) && !claim.ownershipConfirmedAt;
+  // A listing our team confirmed without its owner still takes the link while its account has no password (claimListing).
+  const usable =
+    claim && claim.role === "user" && !isOwnerEmail(claim.email) && !(claim.ownershipConfirmedAt && claim.hasPassword);
   if (!usable) {
     return (
       <AuthShell title={t("claim.invalidTitle")} sub={t("claim.invalidBody")}>
@@ -167,6 +177,7 @@ export async function ClaimView({ token }: { token: string }) {
         token={token}
         existing={claim.hasPassword}
         email={isPlaceholderEmail(claim.email) ? "" : claim.email}
+        confirmed={claim.ownershipConfirmedAt != null}
       />
     </AuthShell>
   );

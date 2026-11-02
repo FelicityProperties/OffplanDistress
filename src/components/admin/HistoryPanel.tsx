@@ -5,6 +5,7 @@ import { getLocale, getT } from "@/i18n/server";
 import type { TKey } from "@/i18n/translator";
 import { HISTORY_LIMIT, listingHistory, type HistoryEvent } from "@/lib/audit";
 import { formatAED, formatDate } from "@/lib/format";
+import { cleanFileName } from "@/lib/uploads";
 
 // The History panel of the admin listing page (admins only; the page checks): the audit trail of the listing, its deal
 // files, offers and documents, newest first (src/lib/audit.ts listingHistory).
@@ -86,6 +87,8 @@ export async function HistoryPanel({ listingId }: { listingId: string }) {
     if (Array.isArray(v)) return v.map((x) => value(e, key, x)).join(", ") || "—";
     if (isInstalment(v)) return `${v.label}: ${v.dueDate ? formatDate(v.dueDate, locale) : "—"} · ${formatAED(v.amount, locale)}`;
     if (typeof v !== "string") return JSON.stringify(v);
+    // A document's name as uploaded before names were cleaned: without the characters that could disguise it.
+    if (key === "filename") return cleanFileName(v);
     const lookup = (k: string, ns: "admin" | "common") => {
       if (ns === "admin") return isAdminKey(k) ? t(k) : null;
       return k in messages.common.en ? tc(k as TKey<"common">) : null;

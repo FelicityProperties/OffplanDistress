@@ -28,11 +28,12 @@ import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND, brandName, brokerName, FEES } from "@/lib/config";
 import { BUYER_STEPS, FAQS, HERO_IMAGE, SELLER_STEPS } from "@/lib/content";
-import { analyzeDeal } from "@/lib/deal-math";
+import { analyzeDeal, isReady } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, refCode } from "@/lib/format";
 import { featuredDeals, marketStats, watchedIds, type ListingCard } from "@/lib/listings";
 import { MIN_LIVE, MIN_SAMPLE } from "@/lib/market";
 import { prefillEmail } from "@/lib/newsletter";
+import { dubaiToday } from "@/lib/permits";
 import type { Locale } from "@/i18n/config";
 
 const TRUST = [
@@ -81,18 +82,21 @@ async function HeroDeal({ deal, locale }: { deal: ListingCard; locale: Locale })
         </div>
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{t("preview.remaining")}</p>
-          <p className="mt-0.5 text-2xl font-semibold leading-none text-foreground/75 tabular">{formatAEDCompact(a.remaining, locale)}</p>
+          {/* As on the unit's card: overdue instalments are paid on transfer day, so they leave the plan. */}
+          <p className="mt-0.5 text-2xl font-semibold leading-none text-foreground/75 tabular">
+            {formatAEDCompact(a.remainingAfterTransfer, locale)}
+          </p>
         </div>
       </div>
       <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/70 px-2 pb-1 pt-3 text-xs">
         <span className="inline-flex items-center gap-1.5 text-muted-foreground">
           <CalendarClock className="h-3.5 w-3.5" />
-          {t("preview.handover", { q: formatQuarter(deal.handoverDate, locale) })}
+          {isReady(deal, dubaiToday()) ? tc("handoverReady") : t("preview.handover", { q: formatQuarter(deal.handoverDate, locale) })}
         </span>
         {a.savingVsLaunch != null && a.savingVsLaunch > 0 ? (
           <span className="inline-flex items-center gap-1 font-semibold text-success tabular">
-            <TrendingDown className="h-3.5 w-3.5" />
-            {formatAEDCompact(a.savingVsLaunch, locale)}
+            <TrendingDown className="h-3.5 w-3.5" aria-hidden />
+            {tc("saveVsNew", { amount: formatAEDCompact(a.savingVsLaunch, locale) })}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1 font-semibold text-foreground">

@@ -10,6 +10,10 @@ import { useT } from "@/i18n/client";
 type LeadStatus = "new" | "contacted" | "converted" | "lost";
 const STATUSES: LeadStatus[] = ["new", "contacted", "converted", "lost"];
 
+// The lead actions (src/app/actions/leads.ts) answer "Please sign in again." once the admin's session has ended; a
+// request that fails outright (offline) is caught here too, so the control says so and keeps what was typed, rather than
+// the whole page giving way to the error screen.
+
 export function LeadStatusSelect({ id, value }: { id: string; value: LeadStatus }) {
   const t = useT("admin");
   const [pending, start] = useTransition();
@@ -19,13 +23,18 @@ export function LeadStatusSelect({ id, value }: { id: string; value: LeadStatus 
       defaultValue={value}
       disabled={pending}
       className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-      onChange={(e) =>
+      onChange={(e) => {
+        const select = e.currentTarget;
+        const next = select.value as LeadStatus;
         start(async () => {
-          const res = await setLeadStatus(id, e.target.value as LeadStatus);
-          if (res.error) toast.error(res.error);
-          else toast.success(t("leads.status.updated"));
-        })
-      }
+          const res = await setLeadStatus(id, next).catch(() => ({ error: t("leads.saveFailed") }));
+          if (res.error) {
+            toast.error(res.error);
+            // Not saved: back to the status as stored.
+            select.value = value;
+          } else toast.success(t("leads.status.updated"));
+        });
+      }}
     >
       {STATUSES.map((s) => (
         <option key={s} value={s}>
@@ -48,7 +57,7 @@ export function LeadNotes({ id, notes }: { id: string; notes: string | null }) {
       onSubmit={(e) => {
         e.preventDefault();
         start(async () => {
-          const res = await saveLeadNotes(id, value);
+          const res = await saveLeadNotes(id, value).catch(() => ({ error: t("leads.saveFailed") }));
           if (res.error) toast.error(res.error);
           else toast.success(t("leads.notes.saved"));
         });

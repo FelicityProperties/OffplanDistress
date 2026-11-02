@@ -26,6 +26,13 @@ import { readSellDraft, removeSellDraft, writeSellDraft, type SellDraft } from "
 
 const STEPS = ["step.unit", "step.payment", "step.price", "step.documents", "step.review"] as const;
 const DOCS: (keyof typeof FILE_KINDS)[] = ["spa", "oqood", "soa", "id"];
+/** The document formats the upload route takes (src/app/api/listings/[id]/files/route.ts): not every image. */
+const DOC_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+const DOC_ACCEPT = [...DOC_TYPES, ".pdf", ".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"].join(",");
+/** The server's limits (listingSchema in src/lib/listing-schema.ts), so the boxes stop where it would refuse. */
+const MAX_LEN = { floor: 40, view: 80, description: 3000, milestone: 80 };
+/** Dates the date inputs take: a year typed with a digit too many or too few is caught at the field. */
+const DATE_RANGE = { min: "2000-01-01", max: "9999-12-31" };
 const UNIT_KEYS = Object.keys(UNIT_TYPES) as UnitTypeKey[];
 const MOTIVATION_KEYS = Object.keys(MOTIVATION) as (keyof typeof MOTIVATION)[];
 /** Which step each server-side field error belongs to, so a rejected submit opens the right step. */
@@ -194,6 +201,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
   const t = useT("sell");
   const tc = useT("common");
   const tl = useT("legal");
+  const te = useT("errors");
   const locale = useLocale();
   const dir = useDir();
   const [step, setStep] = useState(0);
@@ -207,7 +215,8 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
   const [confirmed, setConfirmed] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
-  const [done, setDone] = useState<{ id: string; failed: string[] } | null>(null);
+  /** The listing created, and the files that didn't upload with why (the route's reason, say a format it doesn't take). */
+  const [done, setDone] = useState<{ id: string; failed: { name: string; error: string }[] } | null>(null);
   const qs = useMemo(quarters, []);
 
   // Saved draft: restored after the first render (the server has no localStorage, so restoring in useState would not
@@ -218,6 +227,8 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
   /** When the restored draft was last saved; shows the "Continue where you left off · Start over" banner. */
   const [restoredAt, setRestoredAt] = useState<number | null>(null);
   const submitted = useRef(false);
+  /** A saved draft of another unit, not restored because this visit's link brings an estimate (see below). */
+  const otherDraft = useRef(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const applyDraft = (d: SellDraft) => {
@@ -229,7 +240,11 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
 
   useEffect(() => {
     const d = userId ? readSellDraft(userId, DRAFT_FIELDS) : null;
-    if (d) {
+    // The estimate's "Continue to full listing" link (?lead=) opens on that estimate's numbers, as it promises. A draft
+    // begun from another estimate, or from none, is about another unit: restoring it would show that unit and then link
+    // this estimate to its listing. It is left saved, untouched, until this form is changed.
+    if (d && leadId && d.leadId !== leadId) otherDraft.current = true;
+    else if (d) {
       applyDraft(d);
       setRestoredAt(d.savedAt);
     }
@@ -242,9 +257,11 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
     if (!userId || !draftReady || submitted.current) return;
     const fresh: State = { ...EMPTY_STATE, ...prefill };
     const untouched = step === 0 && plan.length === 0 && DRAFT_FIELDS.every((k) => s[k] === fresh[k]);
-    // Nothing typed yet (or the seller started over): nothing to keep.
-    if (untouched) removeSellDraft(userId);
-    else {
+    // Nothing typed yet (or the seller started over): nothing to keep, nor to save over another unit's draft.
+    if (untouched) {
+      if (!otherDraft.current) removeSellDraft(userId);
+    } else {
+      otherDraft.current = false;
       writeSellDraft(userId, {
         step,
         state: Object.fromEntries(DRAFT_FIELDS.map((k) => [k, s[k]])),
@@ -323,13 +340,24 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
     }
   };
 
-  /** Documents are checked when picked: a file over the limit is refused straight away, not at the last step. */
+  /**
+   * Documents are checked when picked: a file over the limit, or in a format the upload route refuses (GIF, TIFF, BMP,
+   * AVIF…), is refused straight away, not after the listing exists. A type the browser can't name (a HEIC outside
+   * Apple devices) is left to the route.
+   */
   function pickDoc(k: keyof typeof FILE_KINDS, input: HTMLInputElement) {
     const f = input.files?.[0];
-    if (f && f.size > MAX_UPLOAD_BYTES) {
+    const refused = !f
+      ? null
+      : f.size > MAX_UPLOAD_BYTES
+        ? t("error.docTooLarge", { name: f.name })
+        : f.type && !DOC_TYPES.includes(f.type)
+          ? t("upload.badType", { name: f.name })
+          : null;
+    if (refused) {
       input.value = "";
       setDocs((d) => ({ ...d, [k]: undefined }));
-      setErrors((e) => ({ ...e, [k]: t("error.docTooLarge", { name: f.name }) }));
+      setErrors((e) => ({ ...e, [k]: refused }));
       return;
     }
     setDocs((d) => ({ ...d, [k]: f }));
@@ -365,6 +393,12 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
     launchPrice: null,
   });
 
+  // The description as sent: the seller's text, then our note on missed instalments. The server's 3,000 characters
+  // cover both, so the box leaves room for the note.
+  const arrearsNote = s.arrears === "one" ? t("arrears.note.one") : s.arrears === "more" ? t("arrears.note.more") : "";
+  const description = [s.description.trim(), arrearsNote].filter(Boolean).join("\n\n");
+  const descriptionRoom = MAX_LEN.description - (arrearsNote ? arrearsNote.length + 2 : 0);
+
   function validate(i: number) {
     const e: Record<string, string> = {};
     if (i === 0) {
@@ -387,6 +421,8 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
     if (i === 2) {
       if (s.askingPrice === "") e.askingPrice = t("error.asking");
       if (needsPhone && s.phone.trim().length < 7) e.phone = t("error.phone");
+      // Longer than the box allows: a restored draft, or missed instalments reported after the text was typed.
+      if (description.length > MAX_LEN.description) e.description = te("field.tooLong", { max: descriptionRoom });
     }
     if (i === 3) {
       for (const [k, f] of Object.entries(docs)) if (f && f.size > MAX_UPLOAD_BYTES) e[k] = t("error.docTooLarge", { name: f.name });
@@ -418,9 +454,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
     const lead = leadId ?? draftLeadId;
     if (lead) fd.set("leadId", lead);
     fd.set("source", readAttribution());
-    const arrearsNote =
-      s.arrears === "one" ? t("arrears.note.one") : s.arrears === "more" ? t("arrears.note.more") : "";
-    fd.set("description", [s.description.trim(), arrearsNote].filter(Boolean).join("\n\n"));
+    fd.set("description", description);
     fd.set(
       "paymentPlan",
       JSON.stringify(
@@ -445,7 +479,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
     submitted.current = true;
     if (userId) removeSellDraft(userId);
 
-    const failed: string[] = [];
+    const failed: { name: string; error: string }[] = [];
     const uploads: [File, keyof typeof FILE_KINDS][] = [
       ...(Object.entries(docs).filter(([, f]) => f) as [keyof typeof FILE_KINDS, File][]).map(([k, f]) => [f, k] as [File, keyof typeof FILE_KINDS]),
       ...photos.map((f) => [f, "photo"] as [File, keyof typeof FILE_KINDS]),
@@ -454,8 +488,8 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
       setBusy(t("submit.uploading", { i: i + 1, n: uploads.length }));
       try {
         await uploadListingFile(res.listingId, file, kind, locale);
-      } catch {
-        failed.push(file.name);
+      } catch (e) {
+        failed.push({ name: file.name, error: e instanceof Error && e.message ? e.message : t("uploader.failed") });
       }
     }
     setBusy(null);
@@ -472,9 +506,18 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
         <h2 className="mt-6 text-3xl font-semibold">{t("done.title")}</h2>
         <p className="mt-3 text-muted-foreground">{t("done.body")}</p>
         {done.failed.length > 0 && (
-          <p className="mt-4 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning">
-            {t("done.failed", { files: done.failed.join(listSeparator(locale)) })}
-          </p>
+          // wrap-anywhere: file names are often one long word.
+          <div className="mt-4 rounded-lg bg-warning-soft px-3 py-2 text-start text-sm text-warning wrap-anywhere">
+            <p>{t("done.failed")}</p>
+            <ul className="mt-1 list-disc space-y-0.5 ps-4">
+              {done.failed.map((f, i) => (
+                <li key={i}>
+                  {/* Most messages already name the file (as in the dashboard's uploader); the others get it in front. */}
+                  {f.error.includes(f.name) ? f.error : t("uploader.fileError", { name: f.name, error: f.error })}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
         <div className="mt-8 flex justify-center gap-2">
           <Button asChild>
@@ -631,11 +674,23 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                     placeholder="1,180"
                   />
                 </Field>
-                <Field id="floor" label={t("field.floor")}>
-                  <Input id="floor" value={s.floor} onChange={(e) => set("floor")(e.target.value)} placeholder="24" />
+                <Field id="floor" label={t("field.floor")} error={errors.floor}>
+                  <Input
+                    {...control("floor", errors.floor)}
+                    maxLength={MAX_LEN.floor}
+                    value={s.floor}
+                    onChange={(e) => set("floor")(e.target.value)}
+                    placeholder="24"
+                  />
                 </Field>
-                <Field id="view" label={t("field.view")} className="sm:col-span-2">
-                  <Input id="view" value={s.view} onChange={(e) => set("view")(e.target.value)} placeholder={t("field.view.placeholder")} />
+                <Field id="view" label={t("field.view")} error={errors.view} className="sm:col-span-2">
+                  <Input
+                    {...control("view", errors.view)}
+                    maxLength={MAX_LEN.view}
+                    value={s.view}
+                    onChange={(e) => set("view")(e.target.value)}
+                    placeholder={t("field.view.placeholder")}
+                  />
                 </Field>
               </>
             )}
@@ -660,8 +715,14 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                     placeholder="940,000"
                   />
                 </Field>
-                <Field id="nextInstalmentDate" label={t("field.nextDate")}>
-                  <Input id="nextInstalmentDate" type="date" value={s.nextInstalmentDate} onChange={(e) => set("nextInstalmentDate")(e.target.value)} />
+                <Field id="nextInstalmentDate" label={t("field.nextDate")} error={errors.nextInstalmentDate}>
+                  <Input
+                    {...control("nextInstalmentDate", errors.nextInstalmentDate)}
+                    type="date"
+                    {...DATE_RANGE}
+                    value={s.nextInstalmentDate}
+                    onChange={(e) => set("nextInstalmentDate")(e.target.value)}
+                  />
                 </Field>
                 <Field id="nextInstalmentAmount" label={t("field.nextAmount")} error={errors.nextInstalmentAmount}>
                   <Input
@@ -742,8 +803,8 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                       key={i}
                       className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2 border-b border-border/60 pb-3 last:border-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:border-0 sm:pb-0"
                     >
-                      <Input aria-label={t("plan.milestone")} className="col-span-3 sm:col-span-1" value={p.label} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
-                      <Input aria-label={t("plan.dueDate")} type="date" className="min-w-0 sm:w-40" value={p.dueDate} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, dueDate: e.target.value } : x)))} />
+                      <Input aria-label={t("plan.milestone")} maxLength={MAX_LEN.milestone} className="col-span-3 sm:col-span-1" value={p.label} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
+                      <Input aria-label={t("plan.dueDate")} type="date" {...DATE_RANGE} className="min-w-0 sm:w-40" value={p.dueDate} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, dueDate: e.target.value } : x)))} />
                       <Input aria-label={t("plan.amount")} inputMode="numeric" className="min-w-0 sm:w-32" placeholder={t("plan.amount.placeholder")} value={p.amount} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} />
                       <Button type="button" size="icon" variant="ghost" aria-label={tc("remove")} onClick={() => setPlan((all) => all.filter((_, j) => j !== i))}>
                         <Trash2 />
@@ -803,9 +864,10 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                     ))}
                   </RadioGroup>
                 </div>
-                <Field id="description" label={t("field.description")} className="sm:col-span-2">
+                <Field id="description" label={t("field.description")} error={errors.description} className="sm:col-span-2">
                   <Textarea
-                    id="description"
+                    {...control("description", errors.description)}
+                    maxLength={descriptionRoom}
                     value={s.description}
                     onChange={(e) => set("description")(e.target.value)}
                     placeholder={t("field.description.placeholder")}
@@ -829,7 +891,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                     <span className="text-sm font-medium">{tc(`file.${k}`)}</span>
                     <span className="line-clamp-1 text-xs text-muted-foreground">{docs[k]?.name ?? t("docs.tileHint")}</span>
                     {errors[k] && <span className="text-xs font-medium text-destructive">{errors[k]}</span>}
-                    <input type="file" accept="application/pdf,image/*" className="sr-only" onChange={(e) => pickDoc(k, e.currentTarget)} />
+                    <input type="file" accept={DOC_ACCEPT} className="sr-only" onChange={(e) => pickDoc(k, e.currentTarget)} />
                   </label>
                 ))}
                 <label

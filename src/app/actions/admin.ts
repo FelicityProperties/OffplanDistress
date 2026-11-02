@@ -2,10 +2,10 @@
 
 import { randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
-import { and, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { files, inquiries, listings, offers, passwordResets, sellerLeads, sessions, users, type Source } from "@/db/schema";
+import { auditEvents, files, inquiries, listings, offers, passwordResets, sellerLeads, sessions, users, type Source } from "@/db/schema";
 import { dirOf, isLocale, LOCALES } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
@@ -27,6 +27,7 @@ import { notify, notifyPriceDrop } from "@/lib/notify";
 import { cancelAcceptedOffers, closeOpenOffers, DEAL_STATUSES, reopenUnit } from "@/lib/offers";
 import { dubaiToday, expiryDateBounds, isAdvertised, isDldPermitUrl, publishBlocker } from "@/lib/permits";
 import { siteUrl } from "@/lib/site-url";
+import { flaggedOnArrival, TEAM_MARK } from "@/lib/spam";
 import { scrubTypedName } from "@/lib/typed-names";
 import type { FormState } from "./auth";
 import { parseListingFields } from "./listings";
@@ -44,11 +45,27 @@ function fallbackErrors(t: T): z.core.$ZodErrorMap {
   };
 }
 
-async function assertAdmin() {
+/** The signed-in admin, or null: the action then answers refused() and does nothing. */
+async function currentAdmin() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "admin") throw new Error((await getT("errors"))("auth.notAuthorised"));
-  return user;
+  return user && user.role === "admin" ? user : null;
 }
+
+/**
+ * An admin control used once the session has ended (signed out in another tab, expired) or the admin role was removed
+ * meanwhile: answered, not thrown, so the control says so and keeps what was typed rather than the page giving way to
+ * the error screen.
+ */
+async function refused() {
+  const t = await getT("errors");
+  return { error: t((await getCurrentUser()) ? "auth.notAuthorised" : "auth.signInAgain") };
+}
+
+/**
+ * The listing is still as read at `at`, its updated_at, compared to the millisecond a JavaScript date keeps (an accepted
+ * offer writes now(), with microseconds).
+ */
+const unchangedSince = (at: Date) => sql`date_trunc('milliseconds', ${listings.updatedAt}) = ${at.toISOString()}::timestamptz`;
 
 type ListingForNotice = {
   id: string;
@@ -126,10 +143,24 @@ function awaitsSellerConfirmation(l: { isSample: boolean; createdByStaff: boolea
   return !l.isSample && l.createdByStaff && l.ownershipConfirmedAt == null;
 }
 
-/** Why such a listing can't be published yet: still under an import's placeholder (set the owner first), or unconfirmed. */
-async function unconfirmedMessage(sellerId: string) {
+/**
+ * A listing our team entered and confirmed without its owner (their signed Form A, our record of their authority)
+ * whose account can't sign in yet (no password): its owner still needs their claim link to get in, and until then our
+ * team can still correct who it is filed under (adminSetListingOwner).
+ */
+function awaitsSellerAccount(l: { isSample: boolean; createdByStaff: boolean; passwordHash: string | null }) {
+  return !l.isSample && l.createdByStaff && l.passwordHash == null;
+}
+
+/**
+ * Why such a listing can't be published yet: still under an import's placeholder (set the owner first, or publish it on
+ * Felicity's permits; not once a permit number is entered, which is then its record: see publishAttested), or
+ * unconfirmed.
+ */
+async function unconfirmedMessage(sellerId: string, dldPermit: string | null) {
   const [seller] = await db.select({ email: users.email, passwordHash: users.passwordHash }).from(users).where(eq(users.id, sellerId)).limit(1);
-  return seller && isImportOwner(seller) ? (await getT("intake"))("approve.setOwnerFirst") : (await getT("errors"))("listing.ownershipUnconfirmed");
+  if (!seller || !isImportOwner(seller)) return (await getT("errors"))("listing.ownershipUnconfirmed");
+  return (await getT("intake"))(dldPermit ? "approve.setOwnerFirstNumbered" : "approve.setOwnerFirst");
 }
 
 /** "Before “NOC in progress”, the deal file needs the date Form F … and the buyer's KYC verified." */
@@ -154,14 +185,25 @@ async function hasVerificationDocs(listingId: string) {
   return Boolean(row?.title && row?.soa);
 }
 
-export async function approveListing(listingId: string) {
-  const me = await assertAdmin();
-  const [before] = await db.select(listingNoticeColumns).from(listings).where(eq(listings.id, listingId)).limit(1);
+/**
+ * "Approve" in the review queue and on the listing's page. `savedAt` is the listing's updated_at as that page showed it:
+ * a listing changed since (the seller's new price or text, a photo, another admin's save) isn't published unseen.
+ */
+export async function approveListing(listingId: string, savedAt: string) {
+  const me = await currentAdmin();
+  if (!me) return refused();
+  const [before] = await db
+    .select({ ...listingNoticeColumns, updatedAt: listings.updatedAt })
+    .from(listings)
+    .where(eq(listings.id, listingId))
+    .limit(1);
   if (!before) return { error: (await getT("errors"))("listing.notFound") };
   // Only a listing waiting for review: a page opened before the seller withdrew it (or another admin published or
   // rejected it) mustn't advertise it again without its owner.
   if (before.status !== "pending_review") return reviewedMeanwhile();
-  if (awaitsSellerConfirmation(before)) return { error: await unconfirmedMessage(before.sellerId) };
+  // Nor at a price our team hasn't seen: the page is refreshed to show the listing as it is now, to approve from there.
+  if (savedAt !== before.updatedAt.toISOString()) return reviewedMeanwhile("listing.reviewChanged");
+  if (awaitsSellerConfirmation(before)) return { error: await unconfirmedMessage(before.sellerId, before.dldPermit) };
   // RERA: no property advert without a current DLD (Trakheesi) permit and Form A. Sample listings aren't adverts.
   const blocker = publishBlocker(before);
   if (blocker) return { error: (await getT("errors"))(blocker) };
@@ -178,9 +220,9 @@ export async function approveListing(listingId: string) {
       updatedAt: now,
     })
     // …and the same if it changes between the read above and this write.
-    .where(and(eq(listings.id, listingId), eq(listings.status, "pending_review")))
+    .where(and(eq(listings.id, listingId), eq(listings.status, "pending_review"), unchangedSince(before.updatedAt)))
     .returning({ id: listings.id });
-  if (!approved) return reviewedMeanwhile();
+  if (!approved) return reviewedMeanwhile("listing.reviewChanged");
   await audit({
     actorId: me.id,
     action: "listing.approve",
@@ -197,14 +239,15 @@ export async function approveListing(listingId: string) {
   return { ok: true };
 }
 
-/** The review buttons' listing isn't waiting for review any more: the page is refreshed to show what it is now. */
-async function reviewedMeanwhile() {
+/** The review buttons' listing isn't waiting for review any more, or changed: the page is refreshed to show what it is now. */
+async function reviewedMeanwhile(message: "listing.statusChanged" | "listing.reviewChanged" = "listing.statusChanged") {
   refresh();
-  return { error: (await getT("errors"))("listing.statusChanged") };
+  return { error: (await getT("errors"))(message) };
 }
 
 export async function rejectListing(listingId: string, reason: string) {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const [before] = await db
     .select({ ...listingNoticeColumns, rejectionReason: listings.rejectionReason })
     .from(listings)
@@ -317,7 +360,8 @@ async function transferCompleted(l: { id: string; status: ListingStatusKey }) {
 }
 
 export async function adminUpdateListing(_prev: FormState, formData: FormData): Promise<FormState> {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const [t, locale] = await Promise.all([getT("errors"), getLocale()]);
   const range = expiryDateBounds();
   const rangeMessage = t("field.expiryRange", { from: formatDate(range.min, locale), to: formatDate(range.max, locale) });
@@ -383,6 +427,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       developerOther: listings.developerOther,
       communityOther: listings.communityOther,
       images: listings.images,
+      updatedAt: listings.updatedAt,
     })
     .from(listings)
     .where(eq(listings.id, v.listingId))
@@ -426,6 +471,10 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   // back: the unit would go live again with an accepted offer, and its backup bidders be told the deal fell through.
   const statusWas = formData.get("statusWas");
   if (typeof statusWas === "string" && statusWas !== current.status) return { error: t("listing.statusChanged") };
+  // The same for any other change since it was opened (`savedAt`, the listing's updated_at then): the form would write
+  // its older values over the seller's new price or photo, or another admin's save. Refused, what was typed kept.
+  const savedAt = formData.get("savedAt");
+  if (typeof savedAt === "string" && savedAt !== current.updatedAt.toISOString()) return { error: t("listing.changedMeanwhile") };
   // A unit transferred at DLD is sold: its deal completed, the buyer owns it and our fee is earned. It may be taken down
   // (withdrawn, its deal file kept) and shown as transferred again, never put back on the market or into an earlier
   // stage, which would close the completed deal as fallen through and tell the buyer so.
@@ -468,7 +517,7 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   }
   // Publishing from the editor is an approval too: not before the seller has confirmed a listing our team entered.
   if (PUBLIC_STATUSES.includes(v.status) && awaitsSellerConfirmation(current)) {
-    const message = await unconfirmedMessage(current.sellerId);
+    const message = await unconfirmedMessage(current.sellerId, saving.dldPermit);
     return { error: message, fieldErrors: { status: [message] } };
   }
   // Stage gates (src/lib/deals.ts): moving on to the NOC or the transfer needs the deal file to have what that step
@@ -483,7 +532,9 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   const now = new Date();
   const values = {
     status: v.status,
-    pausedByAdmin: v.status === "paused",
+    // "Paused by our team" (only our team lifts it) when our team pauses it: a listing the seller paused stays theirs to
+    // resume after a save for something else (a note, the arrears), as a team pause stays one.
+    pausedByAdmin: v.status === "paused" && (current.status !== "paused" || current.pausedByAdmin),
     verified: v.verified,
     nocEligible: v.nocEligible,
     launchPrice: v.launchPrice ?? null,
@@ -515,9 +566,9 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
     .update(listings)
     .set({ ...values, ...attestation, updatedAt: now })
     // …and the same if it changes between the read above and this write.
-    .where(and(eq(listings.id, v.listingId), eq(listings.status, current.status)))
+    .where(and(eq(listings.id, v.listingId), eq(listings.status, current.status), unchangedSince(current.updatedAt)))
     .returning({ id: listings.id });
-  if (!saved) return { error: t("listing.statusChanged") };
+  if (!saved) return { error: t("listing.changedMeanwhile") };
   const diff = changes(current, { ...values, ...(unattest ? { permitAttestedAt: null } : {}) });
   if (Object.keys(diff).length) await audit({ actorId: me.id, action: "listing.update", entityType: "listing", entityId: v.listingId, diff });
   // The statement itself, with its exact text and version, is its own event (src/lib/attestation.ts).
@@ -566,7 +617,8 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
 }
 
 export async function setKycStatus(userId: string, status: "not_started" | "pending" | "verified") {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const [before] = await db.select({ kycStatus: users.kycStatus }).from(users).where(eq(users.id, userId)).limit(1);
   // Who verified the person, and when (the deal file shows it; the NOC stage needs both parties verified).
   const verifiedNow = status === "verified" && before?.kycStatus !== "verified";
@@ -588,7 +640,8 @@ export async function setKycStatus(userId: string, status: "not_started" | "pend
 }
 
 export async function setUserRole(userId: string, role: "user" | "admin") {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const t = await getT("errors");
   if (me.id === userId && role !== "admin") return { error: t("admin.ownAccess") };
   const [target] = await db.select({ email: users.email, role: users.role }).from(users).where(eq(users.id, userId));
@@ -603,7 +656,8 @@ export async function setUserRole(userId: string, role: "user" | "admin") {
 
 /** Admins can hand a temporary password to a user directly (e.g. when email isn't set up). */
 export async function resetUserPassword(userId: string) {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const t = await getT("errors");
   const [target] = await db.select({ email: users.email }).from(users).where(eq(users.id, userId));
   if (!target) return { error: t("admin.userNotFound") };
@@ -617,7 +671,8 @@ export async function resetUserPassword(userId: string) {
 }
 
 export async function setInquiryHandled(id: string, handled: boolean) {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const [before] = await db.select({ handled: inquiries.handled }).from(inquiries).where(eq(inquiries.id, id)).limit(1);
   await db.update(inquiries).set({ handled }).where(eq(inquiries.id, id));
   if (before && before.handled !== handled) {
@@ -628,11 +683,28 @@ export async function setInquiryHandled(id: string, handled: boolean) {
 }
 
 /**
+ * Whether the team never had a message's "inquiry.received" notice: the content score flagged it as it arrived
+ * (flaggedOnArrival in src/lib/spam.ts: not marked by hand, not the migration's backfill) and nobody has moved it to the
+ * inbox before (that sent the notice).
+ */
+async function arrivalNoticeSkipped(q: { id: string; spamReason: string | null }) {
+  if (!flaggedOnArrival(q.spamReason)) return false;
+  const [released] = await db
+    .select({ id: auditEvents.id })
+    .from(auditEvents)
+    .where(and(eq(auditEvents.entityType, "inquiry"), eq(auditEvents.entityId, q.id), eq(auditEvents.action, "inquiry.not_spam")))
+    .limit(1);
+  return !released;
+}
+
+/**
  * "Spam" on an inbox row, "Not spam" on the Spam tab of /admin/inquiries. A message the content score caught
- * (src/lib/spam.ts) notified nobody; moved back to the inbox, the team gets the "inquiry.received" notice it skipped.
+ * (src/lib/spam.ts) notified nobody; moved back to the inbox, the team gets the "inquiry.received" notice it skipped,
+ * once (`notified`). One that reached the inbox on arrival, and so the team, gets none.
  */
 export async function setInquirySpam(id: string, spam: boolean) {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   if (!isUuid(id)) return { error: (await getT("errors"))("field.invalid") };
   const [q] = await db
     .select({ inquiry: inquiries, projectName: listings.projectName, refNo: listings.refNo })
@@ -641,28 +713,39 @@ export async function setInquirySpam(id: string, spam: boolean) {
     .where(eq(inquiries.id, id))
     .limit(1);
   if (!q) return { error: (await getT("errors"))("field.invalid") };
+  let notified = false;
   if (q.inquiry.spam !== spam) {
     // A row marked by hand keeps the score's reason if it had one; the reason only shows on the Spam tab.
-    const spamReason = spam ? (q.inquiry.spamReason ?? "marked by the team") : q.inquiry.spamReason;
-    await db.update(inquiries).set({ spam, spamReason }).where(eq(inquiries.id, id));
-    await audit({
-      actorId: me.id,
-      action: spam ? "inquiry.spam" : "inquiry.not_spam",
-      entityType: "inquiry",
-      entityId: id,
-      diff: { spam: [q.inquiry.spam, spam] },
-    });
-    if (!spam) {
-      const listing = q.refNo != null && q.projectName ? { projectName: q.projectName, refNo: q.refNo } : null;
-      await notifyInquiryReceived({ ...q.inquiry, listing });
+    const spamReason = spam ? (q.inquiry.spamReason ?? TEAM_MARK) : q.inquiry.spamReason;
+    // From the state read above only: two admins clicking at once move it (and notify) once.
+    const [changed] = await db
+      .update(inquiries)
+      .set({ spam, spamReason })
+      .where(and(eq(inquiries.id, id), eq(inquiries.spam, q.inquiry.spam)))
+      .returning({ id: inquiries.id });
+    if (changed) {
+      // Read before this event is recorded.
+      notified = !spam && (await arrivalNoticeSkipped(q.inquiry));
+      await audit({
+        actorId: me.id,
+        action: spam ? "inquiry.spam" : "inquiry.not_spam",
+        entityType: "inquiry",
+        entityId: id,
+        diff: { spam: [q.inquiry.spam, spam] },
+      });
+      if (notified) {
+        const listing = q.refNo != null && q.projectName ? { projectName: q.projectName, refNo: q.refNo } : null;
+        await notifyInquiryReceived({ ...q.inquiry, listing });
+      }
     }
   }
   refresh();
-  return { ok: true };
+  return { ok: true as const, notified };
 }
 
 export async function deleteSampleListings() {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   // Samples don't take offers, but any open one left on them (from before that rule) is closed and its buyer told
   // before the offers go with the listings.
   const withOpenOffers = await db
@@ -683,7 +766,16 @@ export async function deleteSampleListings() {
  * What the staff forms' person checks say, worded for the form: the intake form's seller, or the Owner card's owner
  * (an imported unit's owner may not be the one selling it to the buyer, and staff are entering someone else's name).
  */
-type PersonMessages = { name: string; contact: string; phone: string; isStaff: string; phoneShared: string; phoneHasAccount: string };
+type PersonMessages = {
+  name: string;
+  contact: string;
+  phone: string;
+  isStaff: string;
+  phoneShared: string;
+  phoneHasAccount: string;
+  /** The account found by the email has another mobile number on it ({phone}, as stored). */
+  phoneMismatch: (phone: string) => string;
+};
 
 function sellerMessages(t: T): PersonMessages {
   return {
@@ -693,6 +785,7 @@ function sellerMessages(t: T): PersonMessages {
     isStaff: t("admin.sellerIsStaff"),
     phoneShared: t("admin.phoneShared"),
     phoneHasAccount: t("admin.phoneHasAccount"),
+    phoneMismatch: (phone) => t("admin.phoneMismatch", { phone }),
   };
 }
 
@@ -705,6 +798,7 @@ async function ownerMessages(): Promise<PersonMessages> {
     isStaff: ti("owner.error.isStaff"),
     phoneShared: ti("owner.error.phoneShared"),
     phoneHasAccount: ti("owner.error.phoneHasAccount"),
+    phoneMismatch: (phone) => ti("owner.error.phoneMismatch", { phone }),
   };
 }
 
@@ -717,7 +811,19 @@ const staffSellerSchema = (t: T, m: PersonMessages = sellerMessages(t)) =>
     leadId: z.uuid().optional(),
   });
 
-export type StaffListingState = FormState & { listingId?: string };
+export type StaffListingState = FormState & {
+  listingId?: string;
+  /**
+   * adminSetListingOwner: the account a confirmed listing would be filed under can already sign in, so it would have
+   * the listing, its offers and documents at once: staff confirm that account by name first (the form sends its id).
+   */
+  confirmAccess?: { id: string; name: string; email: string };
+  /**
+   * adminSetListingOwner, on a listing confirmed already: what the owner does next — sign in with their claim link,
+   * or nothing (the account can sign in and has the listing now).
+   */
+  ownerNext?: "claim" | "account";
+};
 
 type StaffSeller = z.output<ReturnType<typeof staffSellerSchema>>;
 type FieldErrors = Record<string, string[] | undefined>;
@@ -758,7 +864,10 @@ function readStaffSeller(formData: FormData, t: T, m: PersonMessages = sellerMes
 async function staffListingSeller(email: string | undefined, phoneDigits: string | null) {
   if (email) {
     const user = await findUserByEmail(email);
-    if (user) return { user: { id: user.id, role: user.role, email: user.email, phone: user.phone } };
+    if (user) {
+      const { id, role, email: address, phone, fullName, passwordHash } = user;
+      return { user: { id, role, email: address, phone, fullName, hasPassword: passwordHash != null } };
+    }
     return { user: null };
   }
   if (!phoneDigits) return { user: null };
@@ -769,6 +878,7 @@ async function staffListingSeller(email: string | undefined, phoneDigits: string
       role: users.role,
       email: users.email,
       phone: users.phone,
+      fullName: users.fullName,
       hasPassword: sql<boolean>`${users.passwordHash} is not null`,
     })
     .from(users)
@@ -787,6 +897,19 @@ async function staffListingSeller(email: string | undefined, phoneDigits: string
 }
 
 /**
+ * The account staffSellerAccount files a listing under: `canSignIn` when it has a password; its name and address.
+ * `fillPhone`: the mobile staff typed for a found account that has none, put on it only once the listing is filed under
+ * it (fillAccountPhone) — not while staff are still asked to confirm that account (adminSetListingOwner).
+ */
+type StaffAccount = { id: string; created: boolean; canSignIn: boolean; name: string; email: string; fillPhone?: string };
+
+/** The mobile staff typed, on the account a listing was just filed under, if it still has none (StaffAccount). */
+async function fillAccountPhone(account: StaffAccount) {
+  if (!account.fillPhone) return;
+  await db.update(users).set({ phone: account.fillPhone }).where(and(eq(users.id, account.id), isNull(users.phone)));
+}
+
+/**
  * The account a staff-created listing is filed under: the seller's (staffListingSeller), or a new one without a
  * password. Staff accounts and our own placeholder addresses are refused, as field errors. `created` when none matched.
  */
@@ -796,7 +919,7 @@ async function staffSellerAccount(
   phoneDigits: string | null,
   source: Source | null,
   m: PersonMessages = sellerMessages(t),
-): Promise<{ id: string; created: boolean } | { error: string; fieldErrors?: FieldErrors }> {
+): Promise<StaffAccount | { error: string; fieldErrors?: FieldErrors }> {
   if (s.sellerEmail && isOwnerEmail(s.sellerEmail)) {
     return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [m.isStaff] } };
   }
@@ -813,10 +936,16 @@ async function staffSellerAccount(
     return { error: t("form.checkFields"), fieldErrors: { [s.sellerEmail ? "sellerEmail" : "sellerPhone"]: [m.isStaff] } };
   }
   if (found.user) {
-    if (!found.user.phone && s.sellerPhone) {
-      await db.update(users).set({ phone: s.sellerPhone }).where(eq(users.id, found.user.id));
+    // Found by the email: "Copy link for WhatsApp" opens a chat with the number on that account, which nobody verified
+    // (an old number, or the number of whoever registered the seller's email first). Another number typed here is
+    // refused rather than dropped, so staff check with the seller which is theirs before a claim link goes anywhere.
+    const theirs = found.user.phone ? whatsappNumber(found.user.phone) : null;
+    if (phoneDigits && theirs && theirs !== phoneDigits) {
+      return { error: t("form.checkFields"), fieldErrors: { sellerPhone: [m.phoneMismatch(found.user.phone!)] } };
     }
-    return { id: found.user.id, created: false };
+    const { id, hasPassword, fullName, email } = found.user;
+    const fillPhone = !found.user.phone && s.sellerPhone ? s.sellerPhone : undefined;
+    return { id, created: false, canSignIn: hasPassword, name: fullName, email, fillPhone };
   }
   // No password: the seller sets one (and their email, if we only have a phone number) with the claim link.
   const email = s.sellerEmail?.toLowerCase() ?? placeholderEmail(phoneDigits!);
@@ -833,14 +962,28 @@ async function staffSellerAccount(
     })
     .onConflictDoNothing()
     .returning({ id: users.id });
+  if (created) return { id: created.id, created: true, canSignIn: false, name: s.sellerName, email };
   // Created at the same moment by someone else (a sign-up with this email): use that account.
-  const id = created?.id ?? (await findUserByEmail(email))?.id;
-  if (!id) return { error: t("form.fixDetails") };
-  return { id, created: Boolean(created) };
+  const other = await findUserByEmail(email);
+  if (!other) return { error: t("form.fixDetails") };
+  const canSignIn = other.passwordHash != null;
+  return { id: other.id, created: false, canSignIn, name: other.fullName, email: other.email };
+}
+
+/** The listing a seller lead was already turned into, by its reference (for the message refusing a second one). */
+async function leadListingRef(leadId: string) {
+  const [row] = await db
+    .select({ refNo: listings.refNo })
+    .from(sellerLeads)
+    .innerJoin(listings, eq(listings.id, sellerLeads.listingId))
+    .where(eq(sellerLeads.id, leadId))
+    .limit(1);
+  return row ? refCode(row.refNo) : "—";
 }
 
 export async function adminCreateListing(_prev: StaffListingState, formData: FormData): Promise<StaffListingState> {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const t = await getT("errors");
   const { seller, fieldErrors: sellerErrors, phoneDigits } = readStaffSeller(formData, t);
   const fields = await parseListingFields(formData);
@@ -851,13 +994,28 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
   const v = fields.data;
 
   const lead = s.leadId
-    ? (await db.select({ id: sellerLeads.id, source: sellerLeads.source }).from(sellerLeads).where(eq(sellerLeads.id, s.leadId)).limit(1))[0]
+    ? (
+        await db
+          .select({ id: sellerLeads.id, source: sellerLeads.source, listingId: sellerLeads.listingId })
+          .from(sellerLeads)
+          .where(eq(sellerLeads.id, s.leadId))
+          .limit(1)
+      )[0]
     : undefined;
   if (s.leadId && !lead) return { error: t("admin.leadNotFound") };
+  // One listing per lead: the form opened again (Back, a second tab, another admin) mustn't enter the unit twice.
+  if (lead?.listingId) return { error: t("admin.leadHasListing", { ref: await leadListingRef(lead.id) }) };
 
   const account = await staffSellerAccount(t, s, phoneDigits, lead?.source ?? null);
   if ("error" in account) return account;
   const sellerId = account.id;
+  const dropNewAccount = async () => {
+    if (!account.created) return;
+    await db
+      .delete(users)
+      .where(and(eq(users.id, sellerId), isNull(users.passwordHash), sql`not exists (select 1 from ${listings} l where l.seller_id = ${sellerId}::uuid)`))
+      .catch(() => {});
+  };
 
   // The account is made just before the listing (no transactions over Neon's HTTP driver): if the listing can't be
   // stored, the account made for it goes too, rather than being left behind with no listing, in neither Users tab.
@@ -894,18 +1052,14 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
     [row] = await insertListing();
   } catch (err) {
     console.error("[admin] staff listing insert failed", err);
-    if (account.created) {
-      await db
-        .delete(users)
-        .where(and(eq(users.id, sellerId), isNull(users.passwordHash), sql`not exists (select 1 from ${listings} l where l.seller_id = ${sellerId}::uuid)`))
-        .catch(() => {});
-    }
+    await dropNewAccount();
     return { error: t("form.fixDetails") };
   }
 
-  // From a seller lead: the lead becomes this listing's (unless it already has one) and this seller's.
+  // From a seller lead: the lead becomes this listing's and this seller's — unless it was turned into a listing at the
+  // same moment (another tab): that one stands, and this listing goes again with the account made for it.
   if (lead) {
-    await db
+    const [linked] = await db
       .update(sellerLeads)
       .set({
         listingId: row.id,
@@ -913,8 +1067,15 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
         status: "converted",
         updatedAt: new Date(),
       })
-      .where(and(eq(sellerLeads.id, lead.id), sql`${sellerLeads.listingId} is null`));
+      .where(and(eq(sellerLeads.id, lead.id), isNull(sellerLeads.listingId)))
+      .returning({ id: sellerLeads.id });
+    if (!linked) {
+      await db.delete(listings).where(eq(listings.id, row.id));
+      await dropNewAccount();
+      return { error: t("admin.leadHasListing", { ref: await leadListingRef(lead.id) }) };
+    }
   }
+  await fillAccountPhone(account);
   await audit({
     actorId: me.id,
     action: "listing.create",
@@ -936,12 +1097,16 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
 
 /**
  * A claim link for a staff-created listing: emailed to the seller (via "email"), or returned for the admin to send on
- * WhatsApp (via "copy"), with a wa.me link to the seller's number carrying the same words as the email. Each new link
- * replaces the previous one. The raw token is in the link only: it is never stored, logged or kept in this response
- * beyond the admin's screen.
+ * WhatsApp (via "copy"), with a wa.me link to the seller's number carrying the same words as the email (and that
+ * number, for the dialog to show where the chat opens). Each new link replaces the previous one. The raw token is in
+ * the link only: it is never stored, logged or kept in this response beyond the admin's screen.
+ * Needed while the seller hasn't confirmed the listing, and also once our team has (from the owner's signed Form A, or
+ * on our record of their authority) while the account it is filed under can't sign in: the link is how its owner sets
+ * a password and gets in (an owner entered by mobile number has no other way).
  */
 export async function claimLink(listingId: string, via: "email" | "copy") {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const t = await getT("errors");
   if (!z.uuid().safeParse(listingId).success) return { error: t("listing.notFound") };
   const [l] = await db
@@ -965,7 +1130,7 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
     .where(eq(listings.id, listingId))
     .limit(1);
   if (!l) return { error: t("listing.notFound") };
-  if (!awaitsSellerConfirmation(l)) return { error: t("admin.claim.notNeeded") };
+  if (!awaitsSellerConfirmation(l) && !awaitsSellerAccount(l)) return { error: t("admin.claim.notNeeded") };
   if (l.role === "admin" || isOwnerEmail(l.email)) return { error: t("admin.sellerIsStaff") };
   // Imported and still filed under the network's placeholder owner: nobody to send it to yet.
   if (isImportOwner(l)) return { error: (await getT("intake"))("claim.setOwnerFirst") };
@@ -993,7 +1158,12 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
   const url = `${siteUrl()}${claimPath(token, locale)}`;
   const wa = l.phone ? whatsappNumber(l.phone) : null;
   const text = `${msg.title}\n\n${msg.body}\n\n${url}`;
-  return { ok: true as const, url, whatsapp: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(text)}` : null };
+  return {
+    ok: true as const,
+    url,
+    whatsapp: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(text)}` : null,
+    phone: wa ? l.phone : null,
+  };
 }
 
 /** Unused claim links of a listing: they went to the account it was filed under, or are no longer needed. */
@@ -1007,11 +1177,14 @@ async function cancelClaimLinks(listingId: string) {
 
 /**
  * The Owner card of a listing our team entered (an imported one under its placeholder owner, or one filed under the
- * wrong account): files it under the owner staff give, by the intake form's rules (staffSellerAccount). Only until
- * ownership is confirmed; any claim link already sent stops working, and the change is audited (account ids only).
+ * wrong account): files it under the owner staff give, by the intake form's rules (staffSellerAccount). Until ownership
+ * is confirmed, and after that while the account it is filed under can't sign in (confirmed without its owner, from
+ * their signed Form A or our record of their authority, and not claimed yet), so a mistyped number or email can be
+ * corrected. Any claim link already sent stops working, and the change is audited (account ids only).
  */
 export async function adminSetListingOwner(_prev: StaffListingState, formData: FormData): Promise<StaffListingState> {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const [t, ti] = await Promise.all([getT("errors"), getT("intake")]);
   const id = z.uuid().safeParse(formData.get("listingId"));
   if (!id.success) return { error: t("listing.notFound") };
@@ -1031,32 +1204,65 @@ export async function adminSetListingOwner(_prev: StaffListingState, formData: F
     .limit(1);
   if (!l) return { error: t("listing.notFound") };
   if (!l.createdByStaff || l.isSample) return { error: ti("owner.notStaff") };
-  // A confirmed listing keeps its owner — unless it is still filed under an import's placeholder (ownership confirmed
-  // on our team's record of the owner's authority, before the owner was entered): the real owner can still be set.
-  const [current] = await db.select({ email: users.email, passwordHash: users.passwordHash }).from(users).where(eq(users.id, l.sellerId)).limit(1);
-  const placeholder = current ? isImportOwner(current) : false;
-  if (l.ownershipConfirmedAt && !placeholder) return { error: ti("owner.locked") };
+  // A confirmed listing keeps its owner once that owner can sign in (a password set through their claim link, or one
+  // they had). Until then — still under an import's placeholder, or under an owner our team entered and confirmed
+  // without them — a mistyped number or email would otherwise be final.
+  const [current] = await db
+    .select({ passwordHash: users.passwordHash })
+    .from(users)
+    .where(eq(users.id, l.sellerId))
+    .limit(1);
+  if (l.ownershipConfirmedAt && current?.passwordHash != null) return { error: ti("owner.locked") };
   const account = await staffSellerAccount(t, seller, phoneDigits, null, m);
   if ("error" in account) return account;
-  if (account.id === l.sellerId) return { error: ti("owner.same"), fieldErrors: { sellerName: [ti("owner.same")] } };
+  if (account.id === l.sellerId) {
+    // Already its account: a mobile typed for it (it had none) is still kept, for the claim link's WhatsApp chat.
+    await fillAccountPhone(account);
+    return { error: ti("owner.same"), fieldErrors: { sellerName: [ti("owner.same")] } };
+  }
+  // A confirmed listing is on its account's dashboard at once, with its offers and documents. An account that can
+  // already sign in (registered by someone, whose email nobody verified: a typo can match a stranger's) gets it only
+  // once staff confirm that account by name, the form sending its id back; it is then final (above).
+  const accessConfirmed = formData.get("confirmAccount") === account.id;
+  if (l.ownershipConfirmedAt && account.canSignIn && !accessConfirmed) {
+    return { confirmAccess: { id: account.id, name: account.name, email: account.email } };
+  }
+  const ownerCantSignIn = sql`not exists (select 1 from ${users} u where u.id = ${l.sellerId}::uuid
+    and u.password_hash is not null)`;
   const [moved] = await db
     .update(listings)
     .set({ sellerId: account.id, updatedAt: new Date() })
-    // Not if it was confirmed (under a real owner), or re-filed by someone else, in the meantime.
-    .where(and(eq(listings.id, l.id), eq(listings.sellerId, l.sellerId), placeholder ? undefined : isNull(listings.ownershipConfirmedAt)))
+    .where(
+      and(
+        eq(listings.id, l.id),
+        // Not if someone else re-filed it meanwhile, or its owner confirmed it and can sign in now…
+        eq(listings.sellerId, l.sellerId),
+        or(isNull(listings.ownershipConfirmedAt), ownerCantSignIn),
+        // …nor, unconfirmed when read, if it was confirmed since and the account can sign in (it wasn't asked above).
+        account.canSignIn && !accessConfirmed ? isNull(listings.ownershipConfirmedAt) : undefined,
+      ),
+    )
     .returning({ id: listings.id });
   if (!moved) return { error: ti("owner.locked") };
+  await fillAccountPhone(account);
   const cancelled = await cancelClaimLinks(l.id);
   await audit({
     actorId: me.id,
     action: "listing.owner",
     entityType: "listing",
     entityId: l.id,
-    // claimsCancelled: the unused claim links that stopped working (scrubDiff drops any key with "link" in it).
-    diff: { sellerId: [l.sellerId, account.id], newSellerAccount: account.created, claimsCancelled: cancelled },
+    // claimsCancelled: the unused claim links that stopped working (scrubDiff drops any key with "link" in it);
+    // accessConfirmed: staff confirmed giving a confirmed listing to an account that can sign in.
+    diff: {
+      sellerId: [l.sellerId, account.id],
+      newSellerAccount: account.created,
+      claimsCancelled: cancelled,
+      ...(l.ownershipConfirmedAt && account.canSignIn ? { accessConfirmed: true } : {}),
+    },
   });
   refresh();
-  return { ok: true, listingId: l.id };
+  const ownerNext = account.canSignIn ? ("account" as const) : ("claim" as const);
+  return { ok: true, listingId: l.id, ...(l.ownershipConfirmedAt ? { ownerNext } : {}) };
 }
 
 /**
@@ -1066,7 +1272,8 @@ export async function adminSetListingOwner(_prev: StaffListingState, formData: F
  * are: the Trakheesi permit is still required.
  */
 export async function adminConfirmFormA(_prev: FormState, formData: FormData): Promise<FormState> {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const [t, ti] = await Promise.all([getT("errors"), getT("intake")]);
   const id = z.uuid().safeParse(formData.get("listingId"));
   if (!id.success) return { error: t("listing.notFound") };
@@ -1104,8 +1311,9 @@ export async function adminConfirmFormA(_prev: FormState, formData: FormData): P
     .where(and(eq(listings.id, l.id), eq(listings.sellerId, l.sellerId), isNull(listings.ownershipConfirmedAt)))
     .returning({ id: listings.id });
   if (!confirmed) return { error: ti("formA.notNeeded") };
-  // The claim link isn't needed any more (it would refuse a confirmed listing anyway).
-  await cancelClaimLinks(l.id);
+  // A seller who can sign in doesn't need the claim link any more (it refuses their confirmed listing). One who can't
+  // yet keeps it: it is how they set a password and get into their account (claimListing).
+  if (l.passwordHash) await cancelClaimLinks(l.id);
   // Which document it rests on, and who checked it (the actor): the record a dispute over the owner's authority needs.
   await audit({
     actorId: me.id,
@@ -1132,7 +1340,8 @@ export type PublishSkipped = { hasPermit: number; formAExpired: number; changed:
  * number as its record (with the expiry rules) and is approved from its own page, like one whose Form A has run out.
  */
 export async function adminPublishAttested(sourceKey: string) {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const t = await getT("errors");
   if (typeof sourceKey !== "string" || !IMPORT_KEY_RE.test(sourceKey)) return { error: t("listing.notFound") };
   const result = await publishAttested(me.id, sql`(${listings.source}->>'import') = ${sourceKey}`, BULK_ATTESTATION);
@@ -1146,7 +1355,8 @@ export async function adminPublishAttested(sourceKey: string) {
  * under the placeholder owner, so this is how a single unit goes live without its permit number.
  */
 export async function adminPublishAttestedListing(listingId: string) {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const t = await getT("errors");
   if (!isUuid(listingId)) return { error: t("listing.notFound") };
   const result = await publishAttested(me.id, eq(listings.id, listingId), LISTING_ATTESTATION);
@@ -1232,7 +1442,8 @@ async function publishAttested(actorId: string, where: SQL, statement: string) {
 
 /** Saves the deal file card on the admin listing page; the change goes in the audit trail. */
 export async function updateDealFile(_prev: DealFileState, formData: FormData): Promise<DealFileState> {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const res = await saveDealFile(me.id, formData, await getT("errors"));
   if (res.ok) refresh();
   return res;
@@ -1240,7 +1451,8 @@ export async function updateDealFile(_prev: DealFileState, formData: FormData): 
 
 /** One note on the deal file. */
 export async function addDealNote(_prev: DealFileState, formData: FormData): Promise<DealFileState> {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const res = await addNote(me.id, String(formData.get("dealId") ?? ""), String(formData.get("body") ?? ""), await getT("errors"));
   if (res.ok) refresh();
   return res;

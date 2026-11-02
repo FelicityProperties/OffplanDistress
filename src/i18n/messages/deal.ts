@@ -10,6 +10,12 @@ export default defineMessages({
     "meta.titleOriginal": "{unit} in {project} — {pct}% below original price",
     "meta.description":
       "{developer}, {community}. {paid} paid, handover {handover}. Take over the payment plan for {upfront} upfront.",
+    // A unit already handed over (isReady in src/lib/deal-math.ts), and / or one with no plan left to take over.
+    "meta.descriptionReady": "{developer}, {community}. Ready unit, {paid} paid. Take over the payment plan for {upfront} upfront.",
+    "meta.descriptionPaid":
+      "{developer}, {community}. Fully paid, handover {handover}. {upfront} to the seller, with nothing left to pay the developer.",
+    "meta.descriptionReadyPaid":
+      "{developer}, {community}. Ready unit, fully paid. {upfront} to the seller, with nothing left to pay the developer.",
 
     back: "Back to deals",
     "banner.underOffer": "The seller has accepted an offer on this unit. You can still save it or send a backup offer.",
@@ -160,6 +166,12 @@ export default defineMessages({
     "meta.titleOriginal": "{unit} في {project} — أقل من السعر الأصلي بنسبة ⁨{pct}%⁩",
     "meta.description":
       "{developer}، {community}. نسبة المدفوع {paid}، والتسليم {handover}. تولَّ خطة الدفع مقابل دفعة مقدّمة قدرها {upfront}.",
+    "meta.descriptionReady":
+      "{developer}، {community}. وحدة جاهزة، نسبة المدفوع {paid}. تولَّ خطة الدفع مقابل دفعة مقدّمة قدرها {upfront}.",
+    "meta.descriptionPaid":
+      "{developer}، {community}. مدفوعة بالكامل، والتسليم {handover}. تدفع للبائع {upfront}، ولا يتبقى أي مبلغ للمطوّر.",
+    "meta.descriptionReadyPaid":
+      "{developer}، {community}. وحدة جاهزة ومدفوعة بالكامل. تدفع للبائع {upfront}، ولا يتبقى أي مبلغ للمطوّر.",
 
     back: "العودة إلى الصفقات",
     "banner.underOffer": "قبل البائع عرضاً على هذه الوحدة. لا يزال بإمكانك حفظها أو إرسال عرض احتياطي.",
@@ -303,11 +315,14 @@ export default defineMessages({
   },
   zh: {
     "meta.unavailable": "房源不可用",
-    "meta.title": "{project} {unit}",
-    "meta.titleDiscount": "{project} {unit}（较开发商当前售价低 {pct}%）",
-    "meta.titleOriginal": "{project} {unit}（较原始合同价低 {pct}%）",
+    "meta.title": "{project} · {unit}",
+    "meta.titleDiscount": "{project} · {unit}（较开发商当前售价低 {pct}%）",
+    "meta.titleOriginal": "{project} · {unit}（较原始合同价低 {pct}%）",
     "meta.description":
       "{developer}，{community}。已付 {paid}，交房时间：{handover}。支付 {upfront} 即可接手剩余付款计划。",
+    "meta.descriptionReady": "{developer}，{community}。现房，已付 {paid}。支付 {upfront} 即可接手剩余付款计划。",
+    "meta.descriptionPaid": "{developer}，{community}。已全额付清，交房时间：{handover}。向卖家支付 {upfront}，无需再向开发商付款。",
+    "meta.descriptionReadyPaid": "{developer}，{community}。现房，已全额付清。向卖家支付 {upfront}，无需再向开发商付款。",
 
     back: "返回房源列表",
     "banner.underOffer": "卖家已接受该单元的一份报价。您仍可将其加入关注列表，或提交备选报价。",

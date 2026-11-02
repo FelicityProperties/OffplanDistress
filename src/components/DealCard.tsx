@@ -5,9 +5,10 @@ import { DiscountBadges } from "@/components/DiscountBadges";
 import { WatchButton } from "@/components/WatchButton";
 import { MotivationBadge, SampleBadge, StatusPill } from "@/components/badges";
 import { getLocale, getT } from "@/i18n/server";
-import { analyzeDeal } from "@/lib/deal-math";
+import { analyzeDeal, isReady } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, refCode } from "@/lib/format";
 import type { ListingCard } from "@/lib/listings";
+import { dubaiToday } from "@/lib/permits";
 import { communityName, developerName } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
 
@@ -102,9 +103,9 @@ export async function DealCard({
             <Maximize2 className="h-3.5 w-3.5" />
             {tc("sqft", { n: deal.sizeSqft.toLocaleString("en-AE") })}
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1" data-handover>
             <CalendarClock className="h-3.5 w-3.5" />
-            {formatQuarter(deal.handoverDate, locale)}
+            {isReady(deal, dubaiToday()) ? tc("handoverReady") : formatQuarter(deal.handoverDate, locale)}
           </span>
         </div>
         {/* @container: in a narrow card (a phone, the 2- and 3-column grids) both figures step down to text-lg, so

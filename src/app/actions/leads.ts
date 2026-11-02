@@ -11,11 +11,12 @@ import type { TFn, TKey } from "@/i18n/translator";
 import { sourceFromForm } from "@/lib/attribution";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
+import { formText } from "@/lib/clean-text";
 import { DEVELOPERS } from "@/lib/config";
 import { leadCode, quarterEndOf, sellerEstimate } from "@/lib/estimate";
 import { formatPct } from "@/lib/format";
 import { notifyAdmins, type TemplateParam } from "@/lib/notify";
-import { formTokenExpired, formTokenOk, honeypotTripped, pitchIn, verifyTurnstile } from "@/lib/spam";
+import { formTokenExpired, formTokenOk, honeypotTripped, pitchIn, spamReasons, spamScore, verifyTurnstile } from "@/lib/spam";
 import { clientIp, DAY, hit, MINUTE } from "@/lib/throttle";
 import type { FormState } from "./auth";
 
@@ -67,17 +68,28 @@ const leadSchema = (t: T, ts: TS) =>
 
 export type SellerLeadState = FormState & { id?: string; ref?: string; urgent?: boolean; throttled?: boolean };
 
+/**
+ * Whether a lead's name holds an outside link, read as the spam score reads links (src/lib/spam.ts: look-alike letters
+ * and zero-width characters folded first, our own hosts allowed). The name is read for links only, not for the SEO
+ * pitch's words: "Seo" is a common Korean surname (Min-jun Seo).
+ */
+function linkInName(name: string) {
+  const { reasons } = spamScore({ name, email: "", message: name });
+  return spamReasons(reasons.join("; ")).some((r) => r.code === "link");
+}
+
 /** The free estimate's second step: no account needed. Five per IP per hour. */
 export async function createSellerLead(_prev: SellerLeadState, formData: FormData): Promise<SellerLeadState> {
   const [t, ts] = await Promise.all([getT("errors"), getT("sell")]);
+  // Without the control characters Postgres can't store (a NUL byte pasted with the text would be a server error).
   const opt = (k: string) => {
-    const v = formData.get(k);
+    const v = formText(formData.get(k));
     return v == null || v === "" ? undefined : String(v);
   };
   const parsed = leadSchema(t, ts).safeParse(
     {
-      name: formData.get("name"),
-      phone: formData.get("phone"),
+      name: formText(formData.get("name")),
+      phone: formText(formData.get("phone")),
       developer: formData.get("developer"),
       developerOther: opt("developerOther"),
       project: opt("project"),
@@ -102,9 +114,9 @@ export async function createSellerLead(_prev: SellerLeadState, formData: FormDat
   const ip = await clientIp();
   if (!(await verifyTurnstile(formData.get("cf-turnstile-response"), ip))) return { error: t("form.verifyFailed") };
   const v = parsed.data;
-  // The SEO pitch, or a link, where the name or the project should be: the lead would reach the team's inbox as a
-  // "new seller lead" notice, so it gets the bots' thank-you too.
-  if (pitchIn([v.name, v.project, v.developerOther].filter(Boolean).join(" "))) return silent();
+  // The SEO pitch, or a link, where the project should be, or a link where the name should be: the lead would reach the
+  // team's inbox as a "new seller lead" notice, so it gets the bots' thank-you too. A real seller's name never does.
+  if (pitchIn([v.project, v.developerOther].filter(Boolean).join(" ")) || linkInName(v.name)) return silent();
   // Per IP, then per number (a lead has no address of its own): the estimate is open to anyone, once in a while.
   const digits = v.phone.replace(/\D/g, "");
   if (!(await hit(`lead-ip:${ip}`, 5, 60 * MINUTE)) || !(await hit(`lead-phone:${digits}`, 3, DAY))) {
@@ -165,13 +177,25 @@ export async function createSellerLead(_prev: SellerLeadState, formData: FormDat
   return { ok: true, id: row.id, ref: leadCode(row.refNo), urgent };
 }
 
-async function assertAdmin() {
+/** The signed-in admin, or null: the lead controls then answer refused() and change nothing. */
+async function currentAdmin() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "admin") throw new Error((await getT("errors"))("auth.notAuthorised"));
-  return user;
+  return user && user.role === "admin" ? user : null;
+}
+
+/**
+ * A lead control used once the session has ended (signed out in another tab, expired) or the admin role was removed
+ * meanwhile: answered, not thrown (as in admin.ts), so the control says to sign in again and keeps what was typed.
+ */
+async function refused() {
+  const t = await getT("errors");
+  return { error: t((await getCurrentUser()) ? "auth.notAuthorised" : "auth.signInAgain") };
 }
 
 const STATUSES = ["new", "contacted", "converted", "lost"] as const;
+
+/** What the lead controls (src/components/admin/LeadControls.tsx) get back: done, or the message to show. */
+type LeadResult = { ok?: true; error?: string };
 
 /** The lead's status and notes before an admin changes them, for the audit trail (src/lib/audit.ts). */
 async function leadBefore(id: string) {
@@ -179,8 +203,9 @@ async function leadBefore(id: string) {
   return row;
 }
 
-export async function setLeadStatus(id: string, status: (typeof STATUSES)[number]) {
-  const me = await assertAdmin();
+export async function setLeadStatus(id: string, status: (typeof STATUSES)[number]): Promise<LeadResult> {
+  const me = await currentAdmin();
+  if (!me) return refused();
   if (!STATUSES.includes(status) || !z.uuid().safeParse(id).success) return { error: (await getT("errors"))("field.invalid") };
   const before = await leadBefore(id);
   await db.update(sellerLeads).set({ status, updatedAt: new Date() }).where(eq(sellerLeads.id, id));
@@ -191,8 +216,9 @@ export async function setLeadStatus(id: string, status: (typeof STATUSES)[number
   return { ok: true };
 }
 
-export async function saveLeadNotes(id: string, notes: string) {
-  const me = await assertAdmin();
+export async function saveLeadNotes(id: string, notes: string): Promise<LeadResult> {
+  const me = await currentAdmin();
+  if (!me) return refused();
   if (!z.uuid().safeParse(id).success) return { error: (await getT("errors"))("field.invalid") };
   const before = await leadBefore(id);
   const next = notes.trim().slice(0, 3000) || null;

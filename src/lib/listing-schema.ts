@@ -27,19 +27,41 @@ export function fallbackErrors(t: T): z.core.$ZodErrorMap {
 const INT4_MAX = 2_147_483_647;
 
 export const money = (t: T) => z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX);
+
+/**
+ * A listing's date as the sell form's date inputs take it (DATE_RANGE in src/components/sell/SellForm.tsx), checked
+ * again here for a post that skipped the browser: YYYY-MM-DD, a real calendar day ("2027-02-31" is not) and a year
+ * from 2000 to 9999 ("0277-03-15" is a typo).
+ */
+export function isListingDay(v: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  if (!m || v < "2000-01-01" || v > "9999-12-31") return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const day = new Date(Date.UTC(y, mo - 1, d));
+  return day.getUTCFullYear() === y && day.getUTCMonth() === mo - 1 && day.getUTCDate() === d;
+}
+
 export const optionalDate = (t: T) =>
   z
     .string()
     .trim()
     .optional()
     .transform((v) => (v ? v : null))
-    .refine((v) => v == null || /^\d{4}-\d{2}-\d{2}$/.test(v), t("field.date"));
+    .refine((v) => v == null || isListingDay(v), t("field.date"));
 
-const instalment = z.object({
-  label: z.string().trim().min(1).max(80),
-  dueDate: z.string().nullable(),
-  amount: z.number().int().nonnegative().max(INT4_MAX),
-});
+const instalment = (t: T) =>
+  z.object({
+    label: z.string().trim().min(1).max(80),
+    // A day or none, as optionalDate: a date input lets a five-digit year through ("20277-03-15"), which would be
+    // stored, then read as undated and shown as "Invalid Date".
+    dueDate: z
+      .string()
+      .trim()
+      .transform((v) => v || null)
+      .refine((v) => v == null || isListingDay(v), t("field.planDueDate"))
+      .nullable(),
+    amount: z.number().int().nonnegative().max(INT4_MAX),
+  });
 
 export const listingSchema = (t: T) =>
   z
@@ -66,7 +88,7 @@ export const listingSchema = (t: T) =>
       overdueAmount: money(t).optional(),
       motivation: z.enum(["urgent", "motivated", "flexible"]),
       description: z.string().trim().max(3000).optional(),
-      paymentPlan: z.array(instalment).max(60),
+      paymentPlan: z.array(instalment(t)).max(60),
     })
     .refine((v) => v.amountPaid <= v.originalPrice, {
       path: ["amountPaid"],

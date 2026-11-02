@@ -1,6 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { DEFAULT_LOCALE, isLocale, LOCALE_COOKIE, type Locale } from "@/i18n/config";
-import { isLocalizedPath, LOCALE_HEADER, localeOfPath, localePath, PATH_HEADER, QUERY_HEADER, SAVED_HEADER, stripLocale } from "@/i18n/paths";
+import {
+  isLocalizedPath,
+  LOCALE_HEADER,
+  localeOfPath,
+  localePath,
+  METHOD_HEADER,
+  PATH_HEADER,
+  QUERY_HEADER,
+  SAVED_HEADER,
+  stripLocale,
+} from "@/i18n/paths";
 import { canonicalSiteUrl } from "@/lib/site-url";
 
 // Runs before every page (not the API, Next's files or static files; see `config` below).
@@ -75,6 +85,7 @@ export function proxy(request: NextRequest) {
   headers.delete(QUERY_HEADER);
   headers.delete(SAVED_HEADER);
   headers.set(QUERY_HEADER, request.nextUrl.search);
+  headers.set(METHOD_HEADER, request.method);
   const saved = request.cookies.get(LOCALE_COOKIE)?.value;
 
   // The language the address names: /ar/…, /zh/… (a page in that language) or /en/… (the switch back to English).

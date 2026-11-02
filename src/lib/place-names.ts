@@ -16,8 +16,18 @@ export function communityName(tc: TFn<"common">, name: string, other?: string | 
   return label(tc, "community", name, other);
 }
 
+/**
+ * The partner sync's stand-in for a developer the partner's page doesn't name ("Other" + "Not stated",
+ * scripts/partner-stock/sync-distressstock.mjs). Our team names the developer before approval; an advert published
+ * without that step says "Developer not stated" in the visitor's language rather than show the placeholder.
+ */
+export function developerNotStated(name: string, other?: string | null) {
+  return name === "Other" && /^not stated$/i.test(other?.trim() ?? "");
+}
+
 /** Arabic/English developer name, or the seller's own name for "Other". */
 export function developerName(tc: TFn<"common">, name: string, other?: string | null) {
+  if (developerNotStated(name, other)) return tc("developerNotStated");
   return label(tc, "developer", name, other);
 }
 

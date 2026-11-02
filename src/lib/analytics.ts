@@ -159,9 +159,20 @@ export type NewView = {
   locale: string | null;
 };
 
-/** Records a page view; a repeated beacon for the same view id is ignored. */
+/**
+ * Records a page view. A repeated beacon for the same view id changes nothing but the language, and only from the same
+ * tab and page within a day: the page loaded again by a language switch goes on with its view (PageViewTracker's
+ * keepPageView), now in the language chosen.
+ */
 export async function recordView(v: NewView) {
-  await db.insert(pageViews).values(v).onConflictDoNothing({ target: pageViews.viewId });
+  await db
+    .insert(pageViews)
+    .values(v)
+    .onConflictDoUpdate({
+      target: pageViews.viewId,
+      set: { locale: v.locale },
+      setWhere: and(eq(pageViews.sessionId, v.sessionId), eq(pageViews.path, v.path), gt(pageViews.createdAt, sql`now() - interval '1 day'`)),
+    });
 }
 
 /**

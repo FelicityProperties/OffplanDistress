@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { files, listings, offers, savedSearches, users, watchlist } from "@/db/schema";
+import { deals, files, listings, offers, savedSearches, users, watchlist } from "@/db/schema";
 import { cardColumns, offerCountSql, watchersSql, type ListingCard } from "./listings";
 import { isAdvertised } from "./permits";
 
@@ -36,6 +36,12 @@ export async function myListings(userId: string) {
       offers: offerCountSql,
       pendingOffers: sql<number>`(select count(*)::int from ${offers} o where o.listing_id = ${LISTING_ID} and o.status = 'pending')`,
       docs: sql<number>`(select count(*)::int from ${files} f where f.listing_id = ${LISTING_ID} and f.kind <> 'photo')`,
+      // For the card's own Resume / Withdraw (ListingActions), as on the listing's page: a pause by our team that only
+      // our team lifts, and an agreed deal that withdrawing ends (an accepted offer or the open deal file, as
+      // hasAgreedDeal in src/app/actions/listings.ts).
+      pausedByAdmin: listings.pausedByAdmin,
+      hasDeal: sql<boolean>`(exists (select 1 from ${offers} o where o.listing_id = ${LISTING_ID} and o.status = 'accepted')
+        or exists (select 1 from ${deals} d where d.listing_id = ${LISTING_ID} and d.cancelled_at is null))`,
     })
     .from(listings)
     .where(ownListingSql(userId))

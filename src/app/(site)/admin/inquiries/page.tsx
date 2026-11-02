@@ -6,6 +6,7 @@ import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
 import { adminInquiries, inquiryCounts } from "@/lib/admin";
 import { refCode, timeAgo } from "@/lib/format";
+import { spamReasons } from "@/lib/spam";
 import { cn } from "@/lib/utils";
 
 // Typed by hand (not PageProps<"/admin/inquiries">) so it compiles before Next regenerates its route types.
@@ -15,6 +16,11 @@ export default async function InquiriesPage({ searchParams }: { searchParams: Pr
   const view = (await searchParams).view === "spam" ? "spam" : "inbox";
   const spam = view === "spam";
   const [rows, counts, t, locale] = await Promise.all([adminInquiries(view), inquiryCounts(), getT("admin"), getLocale()]);
+  // Why it was caught, in the admin's language: the stored reasons are codes, with the phrase or host they found.
+  const reasons = (stored: string) =>
+    spamReasons(stored)
+      .map((r) => t(`inquiry.reason.${r.code}`, { value: r.value }))
+      .join(t("inquiry.reason.sep"));
   const tabs = (
     <nav aria-label={t("inquiries.tabs")} className="flex flex-wrap gap-1 rounded-lg bg-secondary p-1 text-sm" data-testid="inquiry-tabs">
       {(
@@ -83,7 +89,7 @@ export default async function InquiriesPage({ searchParams }: { searchParams: Pr
                 {q.message && <p dir="auto" className="max-w-2xl whitespace-pre-line text-sm text-muted-foreground wrap-anywhere">{q.message}</p>}
                 {spam && q.spamReason && (
                   <p className="text-xs font-medium text-warning wrap-anywhere" data-testid="spam-reason">
-                    {t("inquiry.spamReason", { reason: q.spamReason })}
+                    {t("inquiry.spamReason", { reason: reasons(q.spamReason) })}
                   </p>
                 )}
               </div>

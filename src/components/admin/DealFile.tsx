@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState, useTransition } from "reac
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { addDealNote, updateDealFile } from "@/app/actions/admin";
-import { Field, FormMessage, SubmitButton } from "@/components/forms";
+import { Field, FormMessage } from "@/components/forms";
 import { selectClass } from "@/components/form-styles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -146,8 +146,10 @@ export function DealFileForm(p: Props) {
   const legend = "px-1 text-sm font-semibold";
 
   return (
-    // noValidate: the server checks every field and answers in the page's language, next to the field.
+    // noValidate: the server checks every field and answers in the page's language, next to the field. `action` for a
+    // Save clicked before the page's scripts have loaded: posted to the server action, never as a GET to this page.
     <form
+      action={action}
       noValidate
       className="space-y-4"
       aria-label={t("dealFile.title")}
@@ -353,11 +355,15 @@ export function DealFileForm(p: Props) {
   );
 }
 
-/** Adds a note to the deal file. */
+/**
+ * Adds a note to the deal file. Submitted from onSubmit once the page is interactive, as the form above: React's reset
+ * after a form action would clear a note that was refused (the session had ended, say); it is cleared once added.
+ */
 export function DealNoteForm({ dealId }: { dealId: string }) {
   const t = useT("admin");
   const tc = useT("common");
   const [state, action] = useActionState(addDealNote, {});
+  const [pending, start] = useTransition();
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state.ok) {
@@ -367,7 +373,17 @@ export function DealNoteForm({ dealId }: { dealId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
   return (
-    <form ref={ref} action={action} noValidate className="space-y-2">
+    <form
+      ref={ref}
+      action={action}
+      noValidate
+      className="space-y-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        start(() => action(fd));
+      }}
+    >
       <input type="hidden" name="dealId" value={dealId} />
       <Field label={t("dealFile.notes.label")} htmlFor="deal-note" error={state.fieldErrors?.body} messageId="deal-note-msg">
         <Textarea
@@ -381,9 +397,14 @@ export function DealNoteForm({ dealId }: { dealId: string }) {
           aria-describedby={state.fieldErrors?.body ? "deal-note-msg" : undefined}
         />
       </Field>
-      <SubmitButton size="sm" variant="outline" pendingText={tc("saving")}>
-        {t("dealFile.notes.add")}
-      </SubmitButton>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" size="sm" variant="outline" disabled={pending}>
+          {pending && <Loader2 className="animate-spin" aria-hidden />}
+          {pending ? tc("saving") : t("dealFile.notes.add")}
+        </Button>
+        {/* A refusal that isn't about the note (the session ended): the note's own message shows under it. */}
+        {!state.fieldErrors?.body && <FormMessage state={state} />}
+      </div>
     </form>
   );
 }

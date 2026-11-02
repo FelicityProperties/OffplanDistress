@@ -1,5 +1,6 @@
 import type { TFn, TKey } from "@/i18n/translator";
 import { fallbackErrors, listingSchema, type ListingFields } from "./listing-schema";
+import { cleanFileName } from "./uploads";
 
 // The bulk import file (/admin/listings/import): units a partner network shared with the owners' written permission,
 // prepared by us as JSON. The page checks every unit in the browser for its preview, then sends them one at a time to
@@ -198,6 +199,8 @@ export function checkPhotos(v: unknown, ti: TI): { ok: true; photos: ImportPhoto
 
 /**
  * A photo's name without its extension, as the upload stores it: re-encoded as JPEG, so "a.png" is stored as "a.jpg"
- * (and a name that is only an extension as "photo.jpg", src/components/DocumentUploader.tsx preparePhoto).
+ * (and a name that is only an extension as "photo.jpg", src/components/DocumentUploader.tsx preparePhoto), and cleaned
+ * as the upload route cleans every name (cleanFileName in src/lib/uploads.ts: "a  b.png" is stored as "a b.jpg"), so a
+ * photo uploaded before is recognised, not uploaded again.
  */
-export const photoStem = (filename: string) => (filename.replace(/\.[^.]+$/, "") || "photo").toLowerCase();
+export const photoStem = (filename: string) => (cleanFileName(filename.replace(/\.[^.]+$/, "")) || "photo").toLowerCase();

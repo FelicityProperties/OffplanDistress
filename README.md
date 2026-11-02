@@ -16,7 +16,7 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Legal | Terms of Use, Privacy Policy, Cookie Policy (`/terms`, `/privacy`, `/cookies`) |
 | Marketplace | Browse deals (filters incl. cash at transfer, sort, search by project, developer or community in English or Arabic, saved searches), deal page (cash needed on transfer day, arrears with the developer, dated cash timeline, payment plan, true-cost breakdown, offer, watchlist, viewing request) |
 | Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; "Prefer WhatsApp?" card; 5-step "Sell my unit" form (saved on the device between sittings, type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline), deal milestones |
-| Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts |
+| Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts (the same filters are saved once, keeping only what the deals page reads) |
 | Everyone | Notification bell + notifications page, email notifications, self-service password reset, daily deals newsletter (`/newsletter`, no account needed, double opt-in, one-click unsubscribe), English / العربية (full right-to-left layout) / 中文 |
 | Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, bulk import of a partner network's units (`/admin/listings/import`, owner set later, claim link or signed Form A), daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), newsletter subscribers and issues (`/admin/newsletter`, CSV export), remove sample data |
 
@@ -50,8 +50,13 @@ listings carry no permit and say so, invite no viewings or calls, and are `noind
 team") any real listing that was already live without a permit; enter its permit in the admin editor and set it
 live again. A seller who changes the asking price or description of a live listing sends it back to review, so
 the advert never shows a price or text the permit and our team haven't seen; with an accepted offer those two
-fields are fixed. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each
-real deal page adds a `RealEstateListing` with its price.
+fields are fixed. Nor can an admin page opened before a change publish it unseen: Approve, or a save in "Manage
+listing", from a page loaded before the listing last changed (the seller's new price or photo, a build's new photos,
+another admin's save) is refused; Approve then shows the listing as it is now, and the editor keeps what was typed for
+a reloaded page. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each real deal page adds a
+`RealEstateListing` with its price. The emails that list units carry the same details: each deal in the newsletter,
+in a saved-search alert and in a price-drop notice to watchers has its permit line (the deal page's wording),
+followed by our ORN and the broker's BRN.
 
 Each permit also has an expiry date, and optionally its DLD verification link (`https://…dubailand.gov.ae/…`),
 shown on the deal page as "Verify this advert with DLD" with a QR code; Form A has an expiry date too. A listing
@@ -59,31 +64,45 @@ can only go live with a permit valid in the future (dates must fall between a ye
 advert whose permit or Form A has lapsed disappears from every public page at once (deals, home, Distress Index,
 sitemap, share image); the daily `ops-daily` job then pauses live ones, tells the seller, and reminds admins 7
 days and 1 day before expiry. Deals already under offer or in NOC keep their status; admins are told to renew.
-Listings that were live before expiry dates existed keep running until a date is entered (admin banner).
+Listings that were live before expiry dates existed keep running until a date is entered (admin banner). A reminder
+or renewal notice that couldn't be stored is sent again by the next run; it, or a seller's pause notice that couldn't
+be stored (not retried: tell the seller), counts as a failed item of the run, so the admins get the job alert.
 
 **Attestation (no permit number).** When Felicity holds a unit's Trakheesi permit and the owner's signed Form A
 off-platform, the account owner can publish on their recorded statement instead of entering the number: tick "Felicity
 Properties holds a valid Trakheesi permit for this advert (number not entered)" in the listing editor and approve, or
 "Publish all N on Felicity's permits" on the Imported tab of `/admin`, which publishes a whole import at once (and
-confirms ownership on the same statement). It is the actor's own statement, recorded in the listing's History as
-`listing.permit_attested` with the time, IP and the statement's exact text; the deal page then says the permit is held
-by Felicity Properties L.L.C (RERA ORN 33951), with no QR code; nothing is paused (there is no expiry to track) and
-`/admin` lists these units under their own banner. Entering the number later (in the editor or through
-`<key>-permits.json`) replaces the attestation and enables DLD verification and expiry tracking.
+confirms ownership on the same statement; a unit with its permit number entered keeps the number as its record, is
+left out of N and is approved from its own page once its owner is entered and confirmed). It is the actor's own
+statement, recorded in the listing's History as `listing.permit_attested` with the time, IP and the statement's exact
+text; the deal page then says the permit is held by Felicity Properties L.L.C (RERA ORN 33951), with no QR code;
+nothing is paused (there is no expiry to track) and `/admin` lists these units under their own banner. Entering the
+number later (in the editor or through `<key>-permits.json`) replaces the attestation and enables DLD verification and
+expiry tracking.
 
 ### Staff intake (WhatsApp)
 
 Sellers who send their SPA and statement on WhatsApp don't have to fill in the form: Admin → Verification queue →
 "New listing" (or "Create listing from this lead" on `/admin/leads`) takes the seller's name and mobile (with country
 code) and/or email plus the unit figures, and creates the seller's account without a password if there isn't one;
-upload the documents on the listing page. "Copy link for WhatsApp" opens a chat to the seller with a confirmation
-link in their language ("Email claim link" when they have an email and email is on). The link works once, for 7
+upload the documents on the listing page. A lead becomes one listing: opened again, the page links to it instead,
+and a second submit (another tab) is refused. The staff forms (intake, Owner card, Form A, deal file) post to the
+server even when sent before the page's scripts have loaded, never as a GET with the seller's details in the
+address, and every admin control asks to sign in again once the session has ended, keeping what was typed.
+"Copy link for WhatsApp" opens a chat to the seller with a confirmation
+link in their language ("Email claim link" when they have an email and email is on); the dialog names the number the
+chat opens with, the one on the seller's account. A mobile typed for a seller found by their email that differs from
+the number on that account (an old one, or a stranger's who registered the seller's email first: neither is verified)
+is refused until staff check with the seller which is theirs. The link works once, for 7
 days, and a new one cancels the old. The seller opens it without logging in, ticks the same ownership / authority /
 Terms confirmation as the sell form and chooses an email and password. Until then a staff-created listing can't be
-approved (the Trakheesi permit is still required too); `/admin/users` → "Pending claim" lists those sellers. A link
-never sets a password on an account that already has one. The admin listing page flags descriptions that seem to
-contain a phone number, email, link or WhatsApp handle ("Contact details in text"); the text is never changed
-automatically.
+approved (the Trakheesi permit is still required too); `/admin/users` → "Pending claim" lists those sellers. A listing
+whose ownership our team confirmed without the seller (their signed Form A, or our record of their authority on an
+import) still gets a link while its account has no password — an owner entered by mobile number has no other way in
+— and its seller stays on "Pending claim" until they use it (the claim keeps the confirmation's date and notifies
+nobody); a seller who can sign in doesn't need one. A link never sets a password on an account that already has one.
+The admin listing page flags descriptions that seem to contain a phone number, email, link or WhatsApp handle
+("Contact details in text"); the text is never changed automatically.
 
 **Bulk import.** Units a partner network shared with the owners' written permission come as one or more JSON files we
 prepare (`offplandistress-import/1`, documented in `src/lib/import-format.ts`: the source, then per unit its ref, link,
@@ -95,26 +114,42 @@ JPEG), then imports one unit per request and uploads its photos one by one; fail
 choosing the files again after a reload skips what is done (a unit is imported once per source + ref, enforced by a
 unique index; a retry first asks which photos the listing already has, so none is stored twice). Stock we prepare as
 files in `scripts/partner-stock/` (the same format, with each photo's source URL instead of its bytes) is imported by
-the production build itself (`scripts/import-partner-stock.mjs`, run from `scripts/migrate.mjs`): the same rules and
-placeholder owner, photos fetched and resized at build time, run again on every build, and an in-app notice to admins
-when units arrive. Each build also syncs the units already imported with the file, which is regenerated from the
-network: a synced field (prices, paid, instalments, plan, handover, size, floor, view, description) takes the file's
-value unless our team edited it since the last sync (the snapshot in `listings.source.synced` tells; their edit stands
-and is reported once as a conflict); a price change on a live advert updates the advertised price and tells the
-watchers; a unit marked `"removed": "YYYY-MM-DD"` (gone from the network) is withdrawn as a seller's withdrawal is
-(open offers closed, `listing.sync_withdrawn` in History) and put back when it is listed again (live if it was live and
-can still be published, else into review); a unit with a deal in progress is never touched, only reported; a build that
-would withdraw more than 3 and more than a quarter of a source's listed units withdraws none (the valve, unless the
-file's `sync.allowMassRemoval` is true); one `listing.synced` notice per build gives the admins the counts, the
-conflicts and what was left alone. Their DLD advertising permits can come the same way:
+the production build itself (`scripts/import-partner-stock.mjs`, run from `scripts/migrate.mjs`): the same rules (a
+source key of lowercase letters, digits and dashes, each unit's ref once per file, at most 6 photos whose names differ
+before the extension — a file or unit that breaks one is refused, with the reason in the build log) and placeholder
+owner, photos fetched and resized at build time and stored as JPEG, as the app's uploads are (the share image and
+Outlook can't show WebP: a photo stored as WebP, by an earlier build or an import file, is converted once, in place, by
+the next build; until then the share image converts it as it draws), run again on every
+build (one build at a time: a second production build waits for the first, so no photo is stored twice), and an
+in-app notice to admins when units arrive. Each build
+also syncs the units already imported with the file, which is regenerated from the network: a synced field (prices,
+paid, instalments, plan, handover, size, floor, view, description) takes the file's value unless our team edited it
+since the last sync (the snapshot in `listings.source.synced` tells; their edit stands and is reported once as a
+conflict), recorded in History as `listing.sync_update` (apart from our team's own edits); a price change on a live
+advert updates the advertised price and tells the watchers; a unit marked `"removed": "YYYY-MM-DD"` (gone from the
+network) is withdrawn as a seller's withdrawal is (open offers closed and their buyers told, `listing.sync_withdrawn` in
+History) and put back when it is listed again (live if it was live and can still be published, else into review); the
+buyers and watchers get these notices in the app and by email, as the app's own (in their language; the price drop
+with the advert's permit line and our ORN / BRN); new photos are added only to a unit the sync may change: a unit
+with a deal in progress is never touched, only reported, and one sold, rejected or withdrawn by our team is left
+alone; a build that would
+withdraw more than 3 and more than a quarter of a source's listed units withdraws none (the valve, unless the file's
+`sync.allowMassRemoval` is true); one `listing.synced` notice per build gives the admins the counts, the conflicts,
+what was left alone and the refs of units that failed, in their language. Their DLD advertising permits can come the
+same way:
 `scripts/partner-stock/<key>-permits.json` (`offplandistress-permits/1`: ref, permit number, expiry, optional Form A
 expiry and verification link) records each permit as the editor would, confirms ownership on our record of the owner's
 written authority (the account owner's statement; the real owner is still entered afterwards from the Owner card) and
 publishes the unit at its asking price — never without a current permit. **Nothing goes public:** each listing is in
-review, filed under one placeholder owner per source ("Owner to be added (…)", no password, never emailed or
+review, filed under one placeholder owner per source ("Owner to be added (…)", shown in the admin's language and
+never with its internal address — on the listing, `/admin/offers` and the deal file; no password, never emailed or
 nudged; sign-ups refuse `.invalid` addresses, so nobody can register it first), under "Imported — owner to add" on
 `/admin`, its photos private. On its page, enter the owner in the Owner
-card (same matching as "New listing"; changing it cancels any claim link), then confirm ownership with the claim link
+card (same matching as "New listing"; changing it cancels any claim link; the card stays until ownership is confirmed
+and the owner can sign in, so a mistyped mobile or email can be corrected, and filing a confirmed listing under an
+account that can already sign in — it has the listing, its offers and documents at once, and the choice is final —
+first asks to confirm that account by name, ticked again for any other account, and changes nothing on the listing or
+that account until then), then confirm ownership with the claim link
 or, for co-broker stock, upload the owner's signed Form A ("Form A (signed by the owner)") and tick "The owner's
 signed Form A is uploaded and checked"; enter the Trakheesi permit, then approve — or publish the whole import at once on
 the account owner's attestation (see Advertising compliance); the tab then lists what is live without an owner yet.
@@ -128,7 +163,11 @@ entry per ref with the image URL it was read from; the build checks that seller 
 instalments = remaining, the transfer rows = total, and that the page's selling price still matches); `build --raw <dir>`
 then rewrites the manifest deterministically (units by ref, 1-space indent): a unit gone from the site keeps its entry
 with `"removed": "YYYY-MM-DD"` for 90 days (the import withdraws it, and restores it if it comes back); bulk deals, shops
-and units outside Dubai are never listed (one listed before keeps its previous entry until it leaves the site); a unit
+and units outside Dubai are never listed (one listed before keeps its previous entry until it leaves the site), and a
+unit's area must be one we know to be in Dubai — on our communities list or in the script's `DUBAI_AREAS` (areas known
+to be outside are in `NON_DUBAI`, each name matched as a whole word, not as a road's name such as "Al Ain Road", and
+never in an area known to be in Dubai): one in an unknown area is skipped until someone adds the area to either list; a
+ready unit ("READY…") takes the day it was posted as its handover date, so the site shows it as ready; a unit
 whose plan is missing, illegible or inconsistent keeps its previous entry and is flagged (exit 2), as does one whose
 page's size, prices or handover can no longer be read as before (the site's wording changed: fix the parser, never the
 figures); a run that would mark more than a quarter of the listed units removed writes nothing (exit 3;
@@ -138,7 +177,8 @@ The site's first gallery image is usually a location map, so `scripts/partner-st
 agent picks from `sheet --raw <dir>`'s contact sheets; the build lists those urls + the page's keyplan under stable file
 names (a url the unit had keeps its name, a new one is `<ref>-<sha1 prefix>.webp`, so the import never fetches a photo
 twice), and the import then puts the listing's gallery in that order — nothing deleted, other entries kept after them —
-unless our team rearranged it by hand since the last sync (left as they made it, reported once, like a synced field).
+unless our team rearranged it, or put a photo of their own into it, since the last sync (left as they made it, reported
+once, like a synced field).
 
 **Direct sellers.** Units owners send us directly (WhatsApp intake) that should go out through the same build-time path
 live in `scripts/partner-stock/direct.json` (source key `direct`, "Direct sellers"), written by hand in the same format:
@@ -172,9 +212,28 @@ with the same figure (the launch one only for a unit at or above its original pr
 half up (19.5% → "20% below"). The default sort ("Most below original price", urgent sellers first) and the
 `minDiscount` filter ("Min. below original price"; the URL parameter is unchanged, so saved searches and their alerts
 still work) use the original-price figure, the filter on the whole percentage, so "15%+" finds every unit whose chip
-says 15% or more; the Distress Index keeps its launch-price discount. The seller chip is spelled out — "Urgent exit",
-"Motivated seller", "Flexible seller" — with the hint as its tooltip; the filter chips keep the short labels. One
-component renders the chips everywhere: `src/components/DiscountBadges.tsx`.
+says 15% or more; the Distress Index keeps its launch-price discount. The "Min. % paid to developer" filter (`minPaid`)
+likewise compares the whole percentage the deal page shows ("40% paid", `wholePct` in `src/lib/format.ts`), and 0 or
+less in either filter is no filter. The seller chip is spelled out — "Urgent exit", "Motivated seller", "Flexible seller" — with
+the hint as its tooltip; the filter chips keep the short labels. One component renders the chips everywhere:
+`src/components/DiscountBadges.tsx`.
+
+### Handover, cash timeline and photos
+
+A unit whose handover date is today or past (Dubai dates), or that has no date but is fully paid with no plan rows (how
+a partner network's ready units come), shows "Ready" (جاهز, 现房) instead of a quarter or "TBC" on its card, the deal
+page and its description, the home hero and the share image (`isReady` in `src/lib/deal-math.ts`); "Handover by"
+includes it and "Handover soonest" lists it first. With nothing left to pay the developer after transfer, the price
+panel has no "then … per plan" line and the description offers no plan to take over. The cash timeline reads the plan's
+milestone labels in English, Arabic or Chinese: "On handover" or "On completion" (عند التسليم / الإنجاز, 交房 / 竣工) is
+the handover payment, even when dated after the listing's handover date (the step then shows that row's quarter);
+"post / after handover or completion" (بعد…, …后) comes after it and "pre / before / until …" before it; a percentage
+next to "completion" is a construction stage ("on 50% completion", "completion of 70%", "完工 50%"), one before "on
+completion" or right after "on / post completion" (عند الإنجاز) the payment's share ("40% on completion" and "On
+completion 40%" are the handover payment, "Post completion 10%" comes after it). The partner sync's placeholder developer
+("Other" / "Not stated") reads "Developer not stated" in the visitor's language. The deal page's gallery reaches every
+photo (previous / next and the arrow keys; the fourth thumbnail says how many more there are), and dates on the site
+are Dubai calendar dates.
 
 ### Follow-ups and reminders
 
@@ -192,7 +251,9 @@ Samples, staff and sellers who haven't claimed a staff-created listing are never
 Once an offer is accepted, the Deal file card on the admin listing page records Forms A, B, F and I, the deposit,
 any co-broker, the NOC, the trustee office, the transfer and the invoice, with the agreed price as written in Form F
 (sale value, our fee and the buyer's ≈ cash at transfer update as you type). Stage gates in "Manage listing": "NOC in
-progress" needs Form F signed and both parties' KYC verified (Admin → Users); "Transferred" needs the NOC issue date,
+progress" needs Form F signed and both parties' KYC verified (on the deal file's party cards, or Admin → Users,
+which also lists the sellers our team added and confirmed from their signed Form A, without a password);
+"Transferred" needs the NOC issue date,
 the DLD transfer date and the agreed price. A transferred unit stays sold: it can be taken down (Withdrawn, its deal
 file kept) and shown as transferred again, never put back on the market or into an earlier stage. Deals that were already under offer get their deal file the first time
 it is opened, a gate is checked or the CSV is exported. A deal set to under offer by hand (a buyer found off the
@@ -211,7 +272,11 @@ One accepted offer per unit, enforced in a single database statement, so a doubl
 two. The other bidders keep their offers as backups and are told; if the deal falls through and the unit goes
 live again, the accepted offer is declined and backups are told the unit is available. A unit that is withdrawn,
 rejected or transferred closes its open offers; a seller who withdraws a unit under offer ends the deal (the buyer
-and admins are told). `OFFERS.keepBackups` in `src/lib/config.ts` switches backups off.
+and admins are told; My listings warns as the listing's page does, and offers no Resume on a unit our team paused).
+`OFFERS.keepBackups` in `src/lib/config.ts` switches backups off. Every answer is about the offer on the page: if the
+buyer revised it after the page loaded (its amount, or only its financing or message), or the seller's counter changed,
+Accept, Counter or Decline decides nothing and the page shows the offer as it now is. A counter has to be above the
+buyer's offer; the counter box suggests 5% over it, capped at the asking price only while that is still above the offer.
 
 ### Seller leads and attribution
 
@@ -220,8 +285,11 @@ seller, using the exit calculator's maths, then asks for a name and mobile / Wha
 `/admin/leads` and notifies admins (marked urgent when the seller has had a default notice or missed more than one
 instalment). The link the visitor arrived on (utm tags, a partner's `ref` code, landing page, referring site) is
 kept in session storage, not a cookie, and saved with the lead, sign-up, listing or viewing request. Signing up or
-logging in from the thank-you link attaches the lead to the account and pre-fills the sell form. Leads with no
-listing or account are deleted 24 months after the last update.
+logging in from the thank-you link attaches the lead to the account and pre-fills the sell form with its numbers (an
+unfinished form saved on the device for another unit isn't restored over them; it stays saved until the pre-filled
+form is changed). The SEO pitch or a link in the project, or a link in the name, gets the bots' thank-you and nothing
+is stored; the name isn't read for the pitch's words (Seo is a common Korean surname). Leads with no listing or account
+are deleted 24 months after the last update.
 
 ### Contact form and spam protection
 
@@ -234,9 +302,12 @@ typed and, with JavaScript, replaces its token by itself every hour, when the ta
 refused submission), then the limits: 5 contact messages an hour per IP (10 for deal-page requests, 5 estimates), 3 a
 day per address (10 for deal-page requests; 3 per phone for estimates). A message is then scored — SEO / "into Google's
 index" wording in English or Arabic (full-width and look-alike letters folded first), links to other sites, a one-word
-name, a fake address, a long off-topic contact message — and at 3 points it is stored flagged: the sender sees the
-thank-you, nobody is notified, and it sits on the **Spam** tab of `/admin/inquiries` with its reason; "Not spam" moves
-it to the inbox and sends the team the notice it skipped, "Spam" on an inbox row does the opposite. Spam never counts:
+name (a Chinese, Japanese or Korean name, written without a space, is a full name), a fake address, a long off-topic
+contact message — and at 3 points it is stored flagged: the sender sees the
+thank-you, nobody is notified, and it sits on the **Spam** tab of `/admin/inquiries` with its reason (in the admin's
+language); "Not spam" moves it to the inbox and sends the team the notice it skipped, once (none for a message that
+reached the inbox when it arrived, or that the migration flagged: the team had that one's), "Spam" on an inbox row does
+the opposite. Spam never counts:
 not in the sidebar badge, the follow-ups, the daily digest or the analytics' leads line. Optional extra: Cloudflare
 Turnstile (`NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`) renders its widget on both forms and verifies
 every submission (no answer from Cloudflare counts as a failed check: "please try again", nothing stored); without the
@@ -268,6 +339,11 @@ keys nothing changes. The migration adding the columns also flags the SEO pitche
 | Offer waiting for your answer (48 h) / counter-offer waiting (48 h) | Seller / buyer |
 | Today's follow-ups (daily, 07:00 Dubai) | Admins |
 
+Saved-search alerts list each new deal with its price to the seller and its permit line. Each search's window (since
+its last alert) is claimed before it is alerted, so two runs at once (a cron call delivered twice, a manual run during
+the 09:00 one) alert it once; an alert that couldn't be stored goes out with the next run, and a stored search whose
+query Postgres refuses is skipped with a log line (`skipped` in the run's summary) rather than counted as a failed item.
+
 In-app notifications always work. Emails go out through [Resend](https://resend.com) once `RESEND_API_KEY` and
 `EMAIL_FROM` are set; each user gets them in the language they last used on the site. In production, sellers and
 buyers only get emails when `EMAIL_FROM` is a sender on a domain verified in Resend (Resend's `onboarding@resend.dev`
@@ -284,12 +360,16 @@ sample issue). Double opt-in: the address is `pending` until the link in the con
 (`src/lib/newsletter-issue.ts`): the adverts that went live, price drops with the old and new price, how many units are
 no longer available, the RERA details every advert carries, and a one-click unsubscribe link: `List-Unsubscribe` /
 `List-Unsubscribe-Post` headers (RFC 8058) naming `POST /api/newsletter/unsubscribe?t=…`, while the footer link opens
-`/newsletter/unsubscribe?t=…`, which shows the masked address and asks first (a GET never unsubscribes). Consent is
+`/newsletter/unsubscribe?t=…`, which shows the masked address and asks first (a GET never unsubscribes). A day with
+no new advert and no price drop sends nothing and doesn't close the window: the next issue that goes out also counts
+the units that left the market on those days. A price drop is measured from the price advertised when the window
+opened, so a unit raised and then cut by less isn't one. Consent is
 recorded with the row: when, from which IP and where on the site; a signed-in subscriber is linked to their account
 (the Privacy Policy's newsletter bullets — data, consent, retention, emails — describe exactly that record).
 The forms say "check your inbox" whatever the address's state (only a non-address is refused), a filled honeypot is
 ignored, and sign-ups are limited to 5 an hour per IP and 3 a day per address. `/admin/newsletter`: a preview of
-today's issue, the counts, the subscribers (search, status filter, 50 a page), the last 14 issues and "Export CSV"
+today's issue in English, Arabic or Chinese (its counts and time window in the admin's own language), the counts,
+the subscribers (search, status filter, 50 a page), the last 14 issues and "Export CSV"
 (`/api/admin/export/newsletter.csv`, admins only, audited); confirmations count as leads on `/admin/analytics`. Needs
 nothing beyond email (`RESEND_API_KEY`, `EMAIL_FROM`) and `CRON_SECRET`.
 
@@ -323,8 +403,13 @@ set, else the domain assigned to the project on Vercel; an address Vercel doesn'
 `/admin/analytics` shows visitors, visits, page views, time per visit, bounce rate, leads and conversion (today / 7 /
 30 / 90 Dubai days), live visitors, top and entry pages, sources, campaigns and partner codes, countries, devices,
 languages and each lead's journey. A small beacon records page views without cookies; IP addresses and user agents
-are never stored (a daily-rotating anonymous id instead). Signed-in admins are never counted; "Ignore this device" on
-the page covers a browser you use signed out. Page views are deleted after 13 months.
+are never stored (a daily-rotating anonymous id instead). A page view is one page shown: filtering `/deals`, clearing
+the filters of a campaign link (its tags go too) or switching the page's language doesn't count another one (after a
+switch the view is recorded in the language chosen); new campaign tags on the same page do. Signed-in admins are never
+counted; "Ignore this device" on the page covers a browser you use signed out. Page views are deleted after 13 months.
+A listing's own view count (the seller's "Listing views", the admin page, the 21-day no-offers nudge) counts a person
+opening its deal page: not the same crawlers, link previews and scripts, a HEAD request, the page drawn again after
+Watch or an offer, the listing's seller or our team.
 
 ## Stack
 
@@ -334,7 +419,11 @@ the page covers a browser you use signed out. Page views are deleted after 13 mo
 - i18n: typed English / Arabic / Chinese dictionaries per area in `src/i18n/messages/`; public pages take the
   language from the address (`/ar/…`, `/zh/…`), the dashboard and admin console from a cookie or the browser's
   `Accept-Language`
-- Documents and photos stored in Postgres (`files` table, 4 MB per file)
+- Documents and photos stored in Postgres (`files` table, 4 MB per file), each as the type its first bytes show (PDF,
+  JPEG, PNG, WebP or HEIC / HEIF; photos JPEG, PNG or WebP), whatever its name or which of those types the browser gave
+  it (one the browser couldn't name, a HEIC on some Windows and Android phones, is judged by its bytes alone); anything
+  else is refused. The name is stored and served without invisible or direction-changing characters, with that type's
+  extension (`src/lib/uploads.ts`; the import page recognises a photo it uploaded by that cleaned name)
 - Vercel Cron for saved-search alerts and the daily ops job (`vercel.json`)
 
 ## Deploying on Vercel

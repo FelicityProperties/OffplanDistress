@@ -193,6 +193,14 @@ async function claimNotice(listingId: string, notice: string) {
   return claimed.length > 0;
 }
 
+/** Gives a claimed notice back when it couldn't be stored, so the next run sends it. */
+async function releaseNotice(listingId: string, notice: string) {
+  await db
+    .update(listings)
+    .set({ expiryNotices: sql`array_remove(${listings.expiryNotices}, ${notice}::text)` })
+    .where(eq(listings.id, listingId));
+}
+
 /**
  * The daily permit run:
  * 1. pauses live real listings whose permit or Form A has run out (as our team, so the seller can't resume them; the
@@ -200,8 +208,11 @@ async function claimNotice(listingId: string, notice: string) {
  * 2. leaves a unit with an agreed deal (under offer, NOC in progress) as it is, and asks the admins to renew the
  *    document or decide, once per listing and expiry date (the public pages already stopped showing it);
  * 3. reminds the admins of an expiry within the next 7 days, then again the day before, each once.
+ * A notice that couldn't be stored is counted in `failed` (the cron then alerts the admins); an admin notice isn't
+ * recorded as sent either, so the next run sends it.
  */
 export async function enforcePermitExpiry(today = dubaiToday()) {
+  let failed = 0;
   const lapsedSql = or(lt(listings.dldPermitExpiresAt, today), lt(listings.formAExpiresAt, today));
   // Matching on "live" makes a second run harmless: a listing it already paused isn't picked up again.
   const paused = await db
@@ -218,12 +229,18 @@ export async function enforcePermitExpiry(today = dubaiToday()) {
   for (const l of paused) {
     // A lapsed Form A comes first: a new one is needed before the permit can be renewed.
     const lapsed = l.formAExpiresAt != null && l.formAExpiresAt < today ? "formA" : "permit";
-    await notify(
+    const told = await notify(
       [l.sellerId],
       "listing.paused_permit",
       { project: l.projectName, reason: { t: "errors", key: `notify.paused.${lapsed}`, vars: { ref: refCode(l.refNo) } } },
       `/dashboard/listings/${l.id}`,
     );
+    // The advert stays down either way, and the next run won't pick it up again: counted, so the admins are alerted
+    // and can tell the seller themselves.
+    if (!told) {
+      failed++;
+      console.error(`[permits] the seller of listing ${l.id} wasn't told it was paused`);
+    }
   }
 
   const columns = {
@@ -236,18 +253,20 @@ export async function enforcePermitExpiry(today = dubaiToday()) {
   };
   let flagged = 0;
   let reminded = 0;
-  let failed = 0;
-  /** Sends one admin notice unless it already went out; a failure is counted and the run carries on. */
-  const once = async (l: { id: string }, notice: string, send: () => Promise<unknown>) => {
+  /**
+   * Sends one admin notice unless it already went out. One that couldn't be stored (notifyAdmins logged why) is given
+   * back, so the next run sends it; a failure is counted and the run carries on.
+   */
+  const once = async (l: { id: string }, notice: string, send: () => Promise<boolean>) => {
     try {
       if (!(await claimNotice(l.id, notice))) return false;
-      await send();
-      return true;
+      if (await send()) return true;
+      await releaseNotice(l.id, notice);
     } catch (err) {
-      failed++;
       console.error(`[permits] ${notice} for listing ${l.id} failed`, err);
-      return false;
     }
+    failed++;
+    return false;
   };
 
   const inDeal = await db

@@ -9,7 +9,7 @@ import { getLocale, getT } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import { mySearches } from "@/lib/dashboard";
 import { formatDate } from "@/lib/format";
-import { filtersFromQuery, searchDeals } from "@/lib/listings";
+import { filtersFromQuery, searchCounts } from "@/lib/listings";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("searches");
@@ -21,9 +21,15 @@ export default async function SearchesPage() {
   const [t, tc, locale, searches] = await Promise.all([getT("searches"), getT("common"), getLocale(), mySearches(user.id)]);
   const withCounts = await Promise.all(
     searches.map(async (s) => {
-      const { rows, total } = await searchDeals({ ...filtersFromQuery(s.query), sort: "newest", page: 1 });
-      const fresh = rows.filter((r) => (r.publishedAt ?? r.createdAt) > s.createdAt).length;
-      return { ...s, total, fresh };
+      // One search that can't be counted (an old or hand-made query) loses its counts, not the page and its delete
+      // buttons.
+      try {
+        const { total, fresh } = await searchCounts(filtersFromQuery(s.query), s.createdAt);
+        return { ...s, total: total as number | null, fresh };
+      } catch (e) {
+        console.error("saved search counts", s.id, e);
+        return { ...s, total: null, fresh: 0 };
+      }
     }),
   );
 
@@ -50,7 +56,7 @@ export default async function SearchesPage() {
                     {s.name}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {t(s.total === 1 ? "matches.one" : "matches.other", { count: s.total })} ·{" "}
+                    {s.total != null && <>{t(s.total === 1 ? "matches.one" : "matches.other", { count: s.total })} · </>}
                     {t("savedOn", { date: formatDate(s.createdAt, locale) })}
                   </p>
                 </div>

@@ -13,7 +13,9 @@ import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
 import { cleanText, formText } from "@/lib/clean-text";
 import { startDeal } from "@/lib/deals";
+import { formatAED } from "@/lib/format";
 import { notifyInquiryReceived } from "@/lib/inquiries";
+import { filtersFromQuery, type DealFilters } from "@/lib/listings";
 import { notify, notifyAdmins, type TemplateParams } from "@/lib/notify";
 import { settleOtherOffers } from "@/lib/offers";
 import { advertisedSql, isAdvertised } from "@/lib/permits";
@@ -224,13 +226,15 @@ const TAKEN_STATUSES: ListingStatus[] = ["under_offer", "noc_in_progress", "tran
  * accepted offer (one from a deal that fell through is closed as the unit goes live again, reopenUnit in
  * src/lib/offers.ts), so a unit never has two. Returns whether this call accepted the offer.
  */
-async function acceptOffer(offerId: string, listingId: string, from: "pending" | "countered", amount: number) {
-  // A buyer revising their offer at the same moment must not be accepted at the old amount.
+async function acceptOffer(offerId: string, listingId: string, from: "pending" | "countered", amount: number, at: Date) {
+  // A buyer revising their offer at the same moment must not be accepted at the old amount, nor at the old financing
+  // or message: the row is still the one read (`at`, its updated_at).
   const seen = from === "pending" ? sql`amount = ${amount}` : sql`counter_amount = ${amount}`;
   const { rows } = await db.execute<{ accepted: number }>(sql`
     with target as (
       select id from offers
       where id = ${offerId} and listing_id = ${listingId} and status = ${from} and ${seen}
+        and date_trunc('milliseconds', updated_at) = ${at.toISOString()}::timestamptz
       for update
     ), unit as (
       update listings set status = 'under_offer', updated_at = now()
@@ -246,7 +250,13 @@ async function acceptOffer(offerId: string, listingId: string, from: "pending" |
   return Number(rows[0]?.accepted) === 1;
 }
 
-export async function respondToOffer(offerId: string, action: OfferAction, counterAmount?: number) {
+/**
+ * `seen`: the figure the user's page showed with the button (the offer; for the buyer, the seller's counter), and
+ * `seenAt`: the offer's updated_at as that page showed it (ISO, milliseconds). An answer is about the offer as shown:
+ * if the other party has changed it since the page loaded (the figure, or the financing or message at the same
+ * figure), nothing is decided and the page refreshes to show it.
+ */
+export async function respondToOffer(offerId: string, action: OfferAction, counterAmount?: number, seen?: number, seenAt?: string) {
   const t = await getT("errors");
   const user = await getCurrentUser();
   if (!user) return { error: t("auth.signInAgain") };
@@ -301,12 +311,25 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
   const notLive = (status: ListingStatus | undefined) => ({
     error: t(status && TAKEN_STATUSES.includes(status) ? "offer.unitTaken" : "offer.closed"),
   });
-  /** Moves this offer out of `from`, unless something else (another tab, the other party) moved it first. */
-  const move = async (from: OfferStatus[], set: Partial<typeof offers.$inferInsert>) => {
+  /**
+   * The error when the offer on file isn't the one the page showed (`seen`, `seenAt`), with the page refreshed to show
+   * it: the figure changed, or something else did (a buyer's new financing or message at the same amount).
+   */
+  const changed = async (onFile: number | null, key: "offer.changed" | "offer.counterChanged") => {
+    if ((seen == null || seen === onFile) && (seenAt == null || seenAt === offer.updatedAt.toISOString())) return null;
+    refresh();
+    return { error: t(key, { amount: formatAED(onFile, await getLocale()) }) };
+  };
+  /**
+   * Moves this offer out of `from` (still at `amount`, when given: the figure the answer is about, and as read above),
+   * unless something else (another tab, the other party) moved or revised it first.
+   */
+  const move = async (from: OfferStatus[], set: Partial<typeof offers.$inferInsert>, amount?: number) => {
+    const asRead = sql`date_trunc('milliseconds', ${offers.updatedAt}) = ${offer.updatedAt.toISOString()}::timestamptz`;
     const [moved] = await db
       .update(offers)
       .set({ ...set, updatedAt: now })
-      .where(and(eq(offers.id, offerId), inArray(offers.status, from)))
+      .where(and(eq(offers.id, offerId), inArray(offers.status, from), amount == null ? undefined : and(eq(offers.amount, amount), asRead)))
       .returning({ id: offers.id });
     if (!moved) refresh(); // the page this came from is out of date: show the offer as it now is, next to the error
     return Boolean(moved);
@@ -317,7 +340,9 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
       refresh();
       return notLive(row.listingStatus);
     }
-    if (await acceptOffer(offerId, offer.listingId, from, amount)) return null;
+    const stale = await changed(amount, from === "pending" ? "offer.changed" : "offer.counterChanged");
+    if (stale) return stale;
+    if (await acceptOffer(offerId, offer.listingId, from, amount, offer.updatedAt)) return null;
     refresh();
     const [latest] = await db.select({ status: listings.status }).from(listings).where(eq(listings.id, offer.listingId)).limit(1);
     // Still live: this offer itself changed in the meantime (withdrawn, declined, revised).
@@ -342,12 +367,18 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
     if (Math.round(counterAmount) > INT4_MAX) return { error: t("field.amountTooLarge") };
     // A counter is an acceptance waiting on the buyer, so a backup offer can't be countered either.
     if (row.listingStatus !== "live") return notLive(row.listingStatus);
+    const stale = await changed(offer.amount, "offer.changed");
+    if (stale) return stale;
     const counter = Math.round(counterAmount);
-    if (!(await move(["pending"], { status: "countered", counterAmount: counter }))) return unavailable;
+    // A counter asks the buyer for more: at or below their own offer it could only cost the seller (accept it instead).
+    if (counter <= offer.amount) return { error: t("field.counterNotAbove", { amount: formatAED(offer.amount, await getLocale()) }) };
+    if (!(await move(["pending"], { status: "countered", counterAmount: counter }, offer.amount))) return unavailable;
     await onSellersBehalf({ status: ["pending", "countered"], amount: offer.amount, counterAmount: [null, counter] });
     await toBuyer("offer.countered", { project, original: { aed: offer.amount }, amount: { aed: counter } });
   } else if (action === "decline" && isSeller && offer.status === "pending") {
-    if (!(await move(["pending"], { status: "declined" }))) return unavailable;
+    const stale = await changed(offer.amount, "offer.changed");
+    if (stale) return stale;
+    if (!(await move(["pending"], { status: "declined" }, offer.amount))) return unavailable;
     await onSellersBehalf({ status: ["pending", "declined"], amount: offer.amount });
     await toBuyer("offer.declined", { project, amount: { aed: offer.amount } });
   } else if (action === "accept_counter" && isBuyer && offer.status === "countered" && offer.counterAmount) {
@@ -357,6 +388,8 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
     await dealAgreed(offer.counterAmount);
     await settleOtherOffers(unit, offerId);
   } else if (action === "decline" && isBuyer && offer.status === "countered") {
+    const stale = await changed(offer.counterAmount, "offer.counterChanged");
+    if (stale) return stale;
     if (!(await move(["countered"], { status: "declined" }))) return unavailable;
     await toSeller("offer.counter_declined", { project, amount: { aed: offer.counterAmount ?? offer.amount } });
   } else if (action === "withdraw" && isBuyer && (offer.status === "pending" || offer.status === "countered")) {
@@ -442,39 +475,45 @@ export async function createInquiry(_prev: FormState, formData: FormData): Promi
   return { ok: true };
 }
 
-/** The /deals query parameters a saved search keeps (parseFilters reads them); anything else is dropped. */
-const SEARCH_PARAMS = new Set([
-  "q",
-  "community",
-  "developer",
-  "type",
-  "motivation",
-  "minCash",
-  "maxCash",
-  "minTransfer",
-  "maxTransfer",
-  "minPaid",
-  "handoverBy",
-  "minDiscount",
-  "verified",
-  "sort",
-  "view",
-]);
+const LIST_FILTERS = ["community", "developer", "type", "motivation"] as const;
+const NUMBER_FILTERS = ["minCash", "maxCash", "minTransfer", "maxTransfer", "minPaid", "handoverBy", "minDiscount"] as const;
 const MAX_SAVED_SEARCHES = 50;
+
+/**
+ * A saved search's filters as a /deals query, rebuilt from what parseFilters (src/lib/listings.ts) accepted: a value it
+ * drops (an unknown unit type, a NUL byte in the search text) is never stored. `canonical`: the same deals give the same
+ * text (values sorted, the search text in lower case, as it matches), to find a search saved before.
+ */
+function filtersQuery(f: DealFilters, canonical = false) {
+  const p = new URLSearchParams();
+  if (f.q) p.set("q", canonical ? f.q.toLowerCase() : f.q);
+  for (const k of LIST_FILTERS) {
+    const values = [...new Set<string>(f[k])];
+    for (const v of canonical ? values.sort() : values) p.append(k, v);
+  }
+  for (const k of NUMBER_FILTERS) if (f[k] != null) p.set(k, String(f[k]));
+  if (f.verified) p.set("verified", "1");
+  return p;
+}
 
 export async function saveSearch(name: unknown, query: unknown) {
   const user = await getCurrentUser();
   if (!user) return { needsAuth: true };
   const t = await getT("errors");
-  // Called from the page, but any signed-in user can call it with anything: the daily alerts job runs every saved query,
-  // so one Postgres can't run (a NUL byte in the search text) would fail that job on every run.
-  const clean = new URLSearchParams();
-  for (const [k, v] of new URLSearchParams(typeof query === "string" ? query.slice(0, 2000) : "")) {
-    const value = cleanText(v).trim().slice(0, 200);
-    if (SEARCH_PARAMS.has(k) && value) clean.append(k, value);
-  }
-  const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(savedSearches).where(eq(savedSearches.userId, user.id));
-  if (n >= MAX_SAVED_SEARCHES) return { error: t("search.tooMany", { max: MAX_SAVED_SEARCHES }) };
+  // Called from the page, but any signed-in user can call it with anything: the daily alerts job and the saved-searches
+  // page run every saved query, so one Postgres can't run would fail them on every run. Only the filters parseFilters
+  // accepts are kept, plus the sort and the view the visitor chose ("Open" brings them back).
+  const raw = typeof query === "string" ? query.slice(0, 2000) : "";
+  const f = filtersFromQuery(raw);
+  const clean = filtersQuery(f);
+  if (f.sort !== "discount") clean.set("sort", f.sort);
+  if (new URLSearchParams(raw).get("view") === "list") clean.set("view", "list");
+  // The same deals saved again (a second click, or the alert's own "See matches" page with its sort) would send each
+  // daily alert twice: it is the search already saved, whatever its sort, view or page.
+  const mine = await db.select({ query: savedSearches.query }).from(savedSearches).where(eq(savedSearches.userId, user.id));
+  const key = filtersQuery(f, true).toString();
+  if (mine.some((s) => filtersQuery(filtersFromQuery(s.query), true).toString() === key)) return { ok: true, existing: true };
+  if (mine.length >= MAX_SAVED_SEARCHES) return { error: t("search.tooMany", { max: MAX_SAVED_SEARCHES }) };
   await db.insert(savedSearches).values({
     userId: user.id,
     name: cleanText(typeof name === "string" ? name : "").trim().slice(0, 80) || t("search.defaultName"),

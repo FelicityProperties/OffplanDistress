@@ -58,11 +58,24 @@ export function formatPct(value: number | null | undefined, digits = 0) {
   return `${(value * 100).toFixed(digits)}%`;
 }
 
-/** "11 Mar 2027" / "11 مارس 2027" / "2027年3月11日". */
+/**
+ * A ratio as the whole percentage the site shows and filters on (0.196 → 20), rounded half up; null when it is unknown.
+ * The ratio is a double (0.195 × 100 lands at 19.499999999999996), so a nudge far below any real difference between two
+ * listings' ratios (prices are whole dirhams) keeps an exact .5 rounding up, as the SQL filters do on exact numerics
+ * (belowOriginalPct and paidWholePct in src/lib/listings.ts): "40% paid" and "40%+ paid" always agree.
+ */
+export function wholePct(ratio: number | null | undefined) {
+  return ratio == null ? null : Math.round(ratio * 100 + 1e-9);
+}
+
+/**
+ * "11 Mar 2027" / "11 مارس 2027" / "2027年3月11日", the Dubai calendar date: a notice sent at 01:30 in Dubai is dated
+ * that day whatever the server's time zone. A date-only string ("2027-03-11", UTC midnight) is 04:00 that day in Dubai.
+ */
 export function formatDate(value: string | Date | null | undefined, locale: Locale = "en") {
   if (!value) return "—";
   const d = typeof value === "string" ? new Date(value) : value;
-  return d.toLocaleDateString(dateLocale(locale), { day: "numeric", month: "short", year: "numeric" });
+  return d.toLocaleDateString(dateLocale(locale), { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Dubai" });
 }
 
 const AR_QUARTERS = ["الربع الأول", "الربع الثاني", "الربع الثالث", "الربع الرابع"];

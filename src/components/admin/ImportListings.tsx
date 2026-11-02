@@ -381,12 +381,16 @@ export function ImportListings() {
     <div className="space-y-4">
       <section className="space-y-3 rounded-xl border bg-card p-5 shadow-card">
         <div className="flex flex-wrap items-center gap-3">
+          {/* The button below opens it: out of the tab order and hidden from screen readers, so keyboard and screen-reader
+              users meet one named control, not a second, unnamed one. */}
           <input
             ref={input}
             id="import-files"
             type="file"
             multiple
             accept=".json,application/json"
+            tabIndex={-1}
+            aria-hidden
             className="sr-only"
             onChange={(e) => onFiles(e.target.files)}
             disabled={busy}

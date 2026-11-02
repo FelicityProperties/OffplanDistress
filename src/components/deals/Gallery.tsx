@@ -1,25 +1,43 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DealImage } from "@/components/DealImage";
-import { useT } from "@/i18n/client";
+import { useDir, useT } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
 // Static class names so Tailwind sees them: thumbnails share the row (mobile) / column (desktop) evenly.
 const COLS = { 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" } as const;
 const ROWS = { 2: "md:grid-rows-2", 3: "md:grid-rows-3", 4: "md:grid-rows-4" } as const;
 
+const arrow =
+  "absolute top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-ink/55 text-primary-foreground backdrop-blur transition-colors hover:bg-ink/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold";
+
+/**
+ * The deal page's photos: the main one with up to four thumbnails beside it. Every photo is reachable — an import's
+ * keyplan comes fifth and sellers may upload up to 20 — through previous / next on the main photo (and the arrow keys
+ * from any of the gallery's buttons); with more than four, the last thumbnail says how many more there are.
+ */
 export function Gallery({ images, alt, badge }: { images: string[]; alt: string; badge?: React.ReactNode }) {
   const t = useT("deals");
+  const rtl = useDir() === "rtl";
   const [img, setImg] = useState(0);
   const thumbs = images.slice(0, 4);
   const n = thumbs.length as 2 | 3 | 4;
+  const more = images.length - thumbs.length;
+  const go = (step: number) => setImg((i) => (i + step + images.length) % images.length);
   return (
     <div
       className={cn(
         "mt-5 grid gap-3",
         thumbs.length > 1 && "md:grid-cols-[minmax(0,1fr)_10rem] md:gap-4 lg:grid-cols-[minmax(0,1fr)_12.5rem]",
       )}
+      onKeyDown={(e) => {
+        // The start side is "previous" (the right in Arabic), as the arrow buttons are placed.
+        if (images.length < 2 || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+        e.preventDefault();
+        go((e.key === "ArrowRight") !== rtl ? 1 : -1);
+      }}
     >
       <div
         className={cn(
@@ -33,6 +51,26 @@ export function Gallery({ images, alt, badge }: { images: string[]; alt: string;
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/55 via-ink/0 to-ink/25"
         />
         {badge}
+        {images.length > 1 && (
+          <>
+            <button type="button" onClick={() => go(-1)} aria-label={t("gallery.previous")} className={cn(arrow, "start-3")}>
+              <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden />
+            </button>
+            <button type="button" onClick={() => go(1)} aria-label={t("gallery.next")} className={cn(arrow, "end-3")}>
+              <ChevronRight className="h-5 w-5 rtl:-scale-x-100" aria-hidden />
+            </button>
+            <p
+              aria-live="polite"
+              data-gallery-position={img + 1}
+              className="absolute bottom-3 end-3 rounded-full bg-ink/60 px-2.5 py-1 text-xs font-semibold text-primary-foreground backdrop-blur tabular"
+            >
+              <span className="sr-only">{t("gallery.position", { n: img + 1, total: images.length })}</span>
+              <span aria-hidden dir="ltr">
+                {img + 1} / {images.length}
+              </span>
+            </p>
+          </>
+        )}
       </div>
       {thumbs.length > 1 && (
         <div className={cn("grid gap-3 md:grid-cols-1 md:gap-4", COLS[n], ROWS[n])}>
@@ -58,6 +96,15 @@ export function Gallery({ images, alt, badge }: { images: string[]; alt: string;
                   alt=""
                   className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
                 />
+                {i === thumbs.length - 1 && more > 0 && (
+                  <span
+                    aria-hidden
+                    dir="ltr"
+                    className="absolute inset-0 grid place-items-center bg-ink/55 text-lg font-semibold text-primary-foreground tabular"
+                  >
+                    +{more}
+                  </span>
+                )}
               </button>
             );
           })}

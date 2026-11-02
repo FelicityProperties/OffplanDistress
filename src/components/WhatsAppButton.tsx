@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useT } from "@/i18n/client";
+import { stripLocale } from "@/i18n/paths";
 import { BRAND } from "@/lib/config";
 
 type Prefill = {
@@ -11,11 +12,11 @@ type Prefill = {
 
 /**
  * The first message the chat opens with, by page: sellers on /sell say they want to sell, the exit calculator asks for
- * advice, a deal page names the deal. Copy: marketing `whatsapp.prefill.*`. A leading language segment (/ar/…) is
- * ignored, so localised URLs pick the same message.
+ * advice, a deal page names the deal. Copy: marketing `whatsapp.prefill.*`. The language segment (/ar/…, /zh/…) is
+ * ignored, so every language's address picks the same message.
  */
 function whatsappPrefill(pathname: string): Prefill {
-  const path = pathname.replace(/^\/(?:ar|en)(?=\/|$)/, "") || "/";
+  const path = stripLocale(pathname);
   if (path === "/sell" || path.startsWith("/sell/")) return { key: "whatsapp.prefill.sell" };
   if (path === "/exit-calculator" || path.startsWith("/exit-calculator/")) return { key: "whatsapp.prefill.exit" };
   const deal = /^\/deals\/([^/]+)\/?$/.exec(path);

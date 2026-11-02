@@ -39,6 +39,14 @@ const belowOriginal = sql<number | null>`case when ${listings.originalPrice} > 0
  */
 const belowOriginalPct = sql<number | null>`case when ${listings.originalPrice} > 0 then floor((${listings.originalPrice} - ${saleValue})::numeric * 100 / ${listings.originalPrice} + 0.5) end`;
 const paidPct = sql<number>`case when ${listings.originalPrice} > 0 then ${listings.amountPaid}::float / ${listings.originalPrice} else 0 end`;
+/** The paid share as the whole percentage the deal page shows ("40% paid", wholePct in src/lib/format.ts), likewise. */
+const paidWholePct = sql<number>`case when ${listings.originalPrice} > 0 then floor(${listings.amountPaid}::numeric * 100 / ${listings.originalPrice} + 0.5) else 0 end`;
+const planRows = sql<number>`(case when jsonb_typeof(${listings.paymentPlan}) = 'array' then jsonb_array_length(${listings.paymentPlan}) else 0 end)`;
+/**
+ * No handover date, but fully paid with no plan rows: a ready unit (isReady in src/lib/deal-math.ts, which also counts a
+ * handover date today or past). "Handover by" includes it and "Handover soonest" puts it first.
+ */
+const readyUndated = sql`(${listings.handoverDate} is null and ${listings.originalPrice} > 0 and ${listings.amountPaid} >= ${listings.originalPrice} and ${planRows} = 0)`;
 const watchers = sql<number>`(select count(*)::int from ${watchlist} w where w.listing_id = ${listings.id})`;
 // Qualified: in a select from listings alone Drizzle writes ${listings.id} as a bare "id", which inside the subquery
 // would be the offer's own id (and the count always 0).
@@ -64,6 +72,7 @@ export const cardColumns = {
   overdueAmount: listings.overdueAmount,
   overduePenalty: listings.overduePenalty,
   handoverDate: listings.handoverDate,
+  planRows,
   motivation: listings.motivation,
   images: listings.images,
   isSample: listings.isSample,
@@ -94,6 +103,8 @@ export type ListingCard = {
   overdueAmount: number | null;
   overduePenalty: number | null;
   handoverDate: string | null;
+  /** How many rows the listed payment plan has (isReady in src/lib/deal-math.ts). */
+  planRows: number;
   motivation: "urgent" | "motivated" | "flexible";
   images: string[];
   isSample: boolean;
@@ -125,9 +136,13 @@ export type DealFilters = {
 
 type RawParams = Record<string, string | string[] | undefined>;
 
+/** Repeated keys (type=1br&type=2br), comma-joined values (type=1br,2br) or both; DealFilters' panel reads them alike. */
 function list(v: string | string[] | undefined) {
   if (v == null) return [];
-  return (Array.isArray(v) ? v : v.split(",")).map((s) => s.trim()).filter(Boolean);
+  return (Array.isArray(v) ? v : [v])
+    .flatMap((s) => s.split(","))
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 /** A number from the query string clamped to [min, max]; hand-edited links can hold anything. */
@@ -155,15 +170,18 @@ export function parseFilters(params: RawParams): DealFilters {
     q: (q == null ? "" : cleanText(q)).trim().slice(0, 100) || undefined,
     community: list(params.community).filter((c) => COMMUNITIES.includes(c)),
     developer: list(params.developer).filter((d) => DEVELOPERS.includes(d)),
-    type: list(params.type).filter((t): t is UnitTypeKey => t in UNIT_TYPES),
+    // Own keys only: "toString" or "constructor" is `in` every object, and Postgres refuses it as a unit type (a 500).
+    type: list(params.type).filter((t): t is UnitTypeKey => Object.hasOwn(UNIT_TYPES, t)),
     motivation: list(params.motivation).filter((m) => ["urgent", "motivated", "flexible"].includes(m)),
     minCash: !minCash ? undefined : Math.ceil(minCash), // price >= 1.5 ⇔ price >= 2
     maxCash: !maxCash ? undefined : Math.floor(maxCash), // 0 would match nothing: treat as "no limit"
     minTransfer: !minTransfer ? undefined : Math.ceil(minTransfer),
     maxTransfer: !maxTransfer ? undefined : Math.floor(maxTransfer),
-    minPaid: num(params.minPaid, 0, 100),
+    // 0 (or a negative value, clamped to 0) is no filter for these two, as the panel and the chips read it: "0%+ below
+    // original" would otherwise hide the units priced above their original price, with no chip saying so.
+    minPaid: num(params.minPaid, 0, 100) || undefined,
+    minDiscount: num(params.minDiscount, 0, 100) || undefined,
     handoverBy: handoverBy == null ? undefined : Math.floor(handoverBy),
-    minDiscount: num(params.minDiscount, 0, 100),
     verified: params.verified === "1" ? true : undefined,
     sort: ["discount", "cash", "handover", "newest"].includes(sort) ? sort : "discount",
     page: Math.floor(num(params.page, 1, 10_000) ?? 1),
@@ -217,8 +235,9 @@ function dealConditions(f: DealFilters): SQL[] {
   // Bound as text with an explicit cast: both drivers (Neon HTTP, node-postgres) send it the same way.
   if (f.minTransfer != null) where.push(sql`${cashToClose} >= ${String(f.minTransfer)}::bigint`);
   if (f.maxTransfer != null) where.push(sql`${cashToClose} <= ${String(f.maxTransfer)}::bigint`);
-  if (f.minPaid != null) where.push(sql`${paidPct} >= ${f.minPaid / 100}`);
-  if (f.handoverBy != null) where.push(lte(listings.handoverDate, `${f.handoverBy}-12-31`));
+  if (f.minPaid != null) where.push(sql`${paidWholePct} >= ${f.minPaid}`);
+  // A unit handed over (a past date, or none but fully paid: readyUndated) is ready by any of the years offered.
+  if (f.handoverBy != null) where.push(or(lte(listings.handoverDate, `${f.handoverBy}-12-31`), readyUndated)!);
   if (f.minDiscount != null) where.push(sql`${belowOriginalPct} >= ${f.minDiscount}`);
   // sample listings are illustrations: never "verified", whatever the column says
   if (f.verified) where.push(eq(listings.verified, true), eq(listings.isSample, false));
@@ -232,7 +251,7 @@ export async function searchDeals(f: DealFilters) {
     f.sort === "cash"
       ? [sql`${cashToClose} asc`]
       : f.sort === "handover"
-        ? [sql`${listings.handoverDate} asc nulls last`]
+        ? [sql`${readyUndated} desc`, sql`${listings.handoverDate} asc nulls last`]
         : f.sort === "newest"
           ? [desc(sql`coalesce(${listings.publishedAt}, ${listings.createdAt})`)]
           : // The default view: sellers who need out now come first, then the furthest below the original price.
@@ -263,7 +282,8 @@ const publishedOrCreated = sql`coalesce(${listings.publishedAt}, ${listings.crea
 
 /**
  * Live listings (no samples) matching the filters that went public after `since` — and, when given,
- * no later than `until` — newest first, plus how many there are in total. Used by saved-search alerts.
+ * no later than `until` — newest first, plus how many there are in total. Used by saved-search alerts, which list each
+ * deal with its permit line (permitLine in src/lib/notification-templates.ts), hence the two permit columns.
  */
 export async function newDealsSince(f: DealFilters, since: Date, opts: { until?: Date; limit?: number } = {}) {
   const condition = and(
@@ -276,14 +296,29 @@ export async function newDealsSince(f: DealFilters, since: Date, opts: { until?:
   );
   const [rows, [{ total }]] = await Promise.all([
     db
-      .select(cardColumns)
+      .select({ ...cardColumns, dldPermit: listings.dldPermit, permitAttestedAt: listings.permitAttestedAt })
       .from(listings)
       .where(condition)
       .orderBy(desc(publishedOrCreated), desc(listings.createdAt))
       .limit(opts.limit ?? 10),
     db.select({ total: sql<number>`count(*)::int` }).from(listings).where(condition),
   ]);
-  return { rows: rows as ListingCard[], total };
+  return { rows: rows as (ListingCard & { dldPermit: string | null; permitAttestedAt: Date | null })[], total };
+}
+
+/**
+ * For the saved-searches page: how many adverts match the filters, and how many of those went public after `since`
+ * (when the search was saved), both counted in SQL rather than on a page of results.
+ */
+export async function searchCounts(f: DealFilters, since: Date) {
+  const [row] = await db
+    .select({
+      total: sql<number>`count(*)::int`,
+      fresh: sql<number>`(count(*) filter (where ${publishedOrCreated} > ${since.toISOString()}::timestamptz))::int`,
+    })
+    .from(listings)
+    .where(and(...dealConditions(f)));
+  return row;
 }
 
 export async function featuredDeals(limit = 6) {

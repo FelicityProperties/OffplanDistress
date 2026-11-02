@@ -1,22 +1,23 @@
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { savedSearches, users } from "@/db/schema";
 import { isLocale, type Locale } from "@/i18n/config";
 import { tFor } from "@/i18n/server";
 import { runCron } from "@/lib/cron";
 import { formatAEDCompact } from "@/lib/format";
-import { filtersFromQuery, newDealsSince, type ListingCard } from "@/lib/listings";
+import { filtersFromQuery, newDealsSince } from "@/lib/listings";
 import { sendIssue, type SendResult } from "@/lib/newsletter-issue";
+import { advertiserLines, permitLine } from "@/lib/notification-templates";
 import { notify } from "@/lib/notify";
 import { communityName } from "@/lib/place-names";
 import { purgeOldAttempts } from "@/lib/throttle";
 
 // Daily saved-search alerts, run by Vercel Cron (see vercel.json) at 09:00 Dubai: for every saved search with alerts
-// on, tell its owner about deals that went live since the last run, in their language. Then the newsletter's daily
-// issue (src/lib/newsletter-issue.ts): the day's new adverts, price drops and units gone, to every confirmed
-// subscriber, on days something changed. Each step fails on its own and is reported on its own in the run's summary.
-// runCron checks CRON_SECRET and alerts the admins when a run fails; HEARTBEAT_URL (optional) is pinged after every
-// clean run.
+// on, tell its owner about deals that went live since the last run, in their language, each with its DLD permit line
+// and the advertiser's ORN and BRN, as every advert carries. Then the newsletter's daily issue
+// (src/lib/newsletter-issue.ts): the day's new adverts, price drops and units gone, to every confirmed subscriber, on
+// days something changed. Each step fails on its own and is reported on its own in the run's summary. runCron checks
+// CRON_SECRET and alerts the admins when a run fails; HEARTBEAT_URL (optional) is pinged after every clean run.
 
 export const maxDuration = 60;
 
@@ -30,9 +31,10 @@ type SearchRow = {
   userId: string;
   name: string;
   query: string;
-  lastAlertedAt: Date;
   locale: string;
 };
+
+type AlertDeal = Awaited<ReturnType<typeof newDealsSince>>["rows"][number];
 
 export async function GET(request: Request) {
   return runCron("saved-search-alerts", request, run, { heartbeatUrl: process.env.HEARTBEAT_URL });
@@ -61,6 +63,7 @@ async function run() {
   return {
     searches: alerts?.searches ?? 0,
     notified: alerts?.notified ?? 0,
+    skipped: alerts?.skipped ?? 0,
     alertsFailed: alerts ? alerts.failed : 1,
     newsletter: newsletter ?? { error: true },
     failed: (alerts ? alerts.failed : 1) + (newsletter ? newsletter.failed : 1),
@@ -77,7 +80,6 @@ async function sendAlerts(runAt: Date) {
       userId: savedSearches.userId,
       name: savedSearches.name,
       query: savedSearches.query,
-      lastAlertedAt: savedSearches.lastAlertedAt,
       locale: users.locale,
     })
     .from(savedSearches)
@@ -85,54 +87,116 @@ async function sendAlerts(runAt: Date) {
     .where(eq(savedSearches.alerts, true));
 
   let notified = 0;
+  let skipped = 0;
   let failed = 0;
   for (let i = 0; i < searches.length; i += CONCURRENCY) {
     const batch = searches.slice(i, i + CONCURRENCY);
     const results = await Promise.allSettled(batch.map((s) => processSearch(s, runAt)));
     results.forEach((r, j) => {
       if (r.status === "fulfilled") {
-        if (r.value) notified++;
+        if (r.value === "notified") notified++;
+        else if (r.value === "skipped") skipped++;
       } else {
-        // Left unmarked, so the next run picks these matches up again.
+        // Its window was given back, so the next run picks these matches up again.
         failed++;
         console.error(`[cron] saved search ${batch[j].id} failed`, r.reason);
       }
     });
   }
 
-  return { searches: searches.length, notified, failed };
+  return { searches: searches.length, notified, skipped, failed };
 }
 
-/** Alerts the owner if there are new matches; returns whether they were notified. */
-async function processSearch(s: SearchRow, runAt: Date): Promise<boolean> {
-  const { rows, total } = await newDealsSince(filtersFromQuery(s.query), s.lastAlertedAt, {
-    until: runAt,
-    limit: LIST_LINES,
-  });
-  if (total > 0) {
+/**
+ * Alerts the owner about the deals that went live in the search's window, (lastAlertedAt, runAt]. The window is claimed
+ * first, so of two runs at once (a cron event delivered twice, a manual run during the 09:00 one) only one alerts. It is
+ * given back when the alert doesn't go out, so the next run picks those matches up again: a failure (the query, or a
+ * notice that couldn't be stored) is thrown and counted. A stored query Postgres refuses outright (a value no column
+ * can hold, from a forged request) can't succeed on any run: counting it would tell the admins the job failed, and hold
+ * back its heartbeat, every day, so it is skipped with one log line instead.
+ */
+async function processSearch(s: SearchRow, runAt: Date): Promise<"notified" | "none" | "skipped"> {
+  const since = await claimWindow(s.id, runAt);
+  // Another run has this window, or alerts were switched off since the run read the search.
+  if (!since) return "none";
+  try {
+    const { rows, total } = await newDealsSince(filtersFromQuery(s.query), since, { until: runAt, limit: LIST_LINES });
+    // Nothing matched: the window stays claimed, so the next run only looks forward.
+    if (!total) return "none";
     const locale: Locale = isLocale(s.locale) ? s.locale : "en";
-    await notify(
+    const stored = await notify(
       [s.userId],
       "search.matches",
-      { count: total, name: s.name, list: matchList(rows, total, locale) },
+      { count: total, name: unquoted(s.name), list: matchList(rows, total, locale), advertiser: advertiserLines(locale) },
       dealsHref(s.query),
     );
+    // notify() logged why: not stored, so not sent.
+    if (!stored) throw new Error("the alert couldn't be stored");
+    return "notified";
+  } catch (err) {
+    await db
+      .update(savedSearches)
+      .set({ lastAlertedAt: since })
+      // Unless a later run has moved it since.
+      .where(and(eq(savedSearches.id, s.id), eq(savedSearches.lastAlertedAt, runAt)))
+      .catch((e: unknown) => console.error(`[cron] giving saved search ${s.id} its window back failed`, e));
+    const refused = dataException(err);
+    if (!refused) throw err;
+    console.warn(`[cron] saved search ${s.id} skipped: Postgres can't run its query "${s.query}" (${refused.message})`);
+    return "skipped";
   }
-  // Also when nothing matched, so the next run only looks forward.
-  await db.update(savedSearches).set({ lastAlertedAt: runAt }).where(eq(savedSearches.id, s.id));
-  return total > 0;
 }
 
-/** "Project — Community — AED 1.2M" per deal, in the recipient's language, plus "+N more". */
-function matchList(rows: ListingCard[], total: number, locale: Locale) {
+/**
+ * Moves the search's lastAlertedAt to runAt and returns where its window starts, in one statement that locks the row
+ * first (atomic on both drivers; neon-http has no transactions): a second run at the same time waits for the first,
+ * then finds the window already moved to the first run's cut-off and claims only what came after it, if anything.
+ * Null when there is nothing to claim, or alerts were switched off meanwhile.
+ */
+async function claimWindow(id: string, runAt: Date): Promise<Date | null> {
+  const at = runAt.toISOString();
+  const { rows } = await db.execute<{ since: number }>(sql`
+    with seen as (select id, last_alerted_at from ${savedSearches} where id = ${id} and alerts for update)
+    update ${savedSearches} s set last_alerted_at = ${at}::timestamptz from seen
+    where s.id = seen.id and seen.last_alerted_at < ${at}::timestamptz
+    returning (extract(epoch from seen.last_alerted_at) * 1000)::float8 as since`);
+  return rows.length ? new Date(Number(rows[0].since)) : null;
+}
+
+/**
+ * The driver's error when Postgres refused the query's own values (SQLSTATE class 22, "data exception": an enum value
+ * that doesn't exist, a number out of range), so no retry can succeed; null for anything else. Drizzle wraps it.
+ */
+function dataException(err: unknown): Error | null {
+  let e = err;
+  for (let depth = 0; e instanceof Error && depth < 4; depth++) {
+    const code = (e as { code?: unknown }).code;
+    if (typeof code === "string" && code.startsWith("22")) return e;
+    e = e.cause;
+  }
+  return null;
+}
+
+/** The search's name without its own quotation marks: /deals quotes the search text in it ("“Creek Rise”"), and the alert's title quotes the whole name. */
+function unquoted(name: string) {
+  return name.replace(/["“”„«»]/g, "").trim() || name;
+}
+
+/**
+ * Each deal as the newsletter lists it: "Project · Community — AED 1.2M to seller" (the equity, as the cards say it),
+ * then its DLD permit line; in the recipient's language, plus "+N more". The template adds the advertiser's ORN and BRN.
+ */
+function matchList(rows: AlertDeal[], total: number, locale: Locale) {
   const tc = tFor("common", locale);
   const t = tFor("searches", locale);
-  const lines = rows.slice(0, LIST_LINES).map((r) => {
-    const community = communityName(tc, r.community, r.communityOther);
-    return [r.projectName, community, formatAEDCompact(r.askingPrice, locale)].join(" — ");
+  const deals = rows.slice(0, LIST_LINES).map((r) => {
+    // In Arabic the (mostly Latin) project name is isolated, so "Creek Edge 2 · مرسى خور دبي" keeps its order.
+    const name = locale === "ar" ? `⁨${r.projectName}⁩` : r.projectName;
+    const price = tc("toSeller", { amount: formatAEDCompact(r.askingPrice, locale) });
+    return `${name} · ${communityName(tc, r.community, r.communityOther)} — ${price}\n${permitLine(r, locale)}`;
   });
-  if (total > lines.length) lines.push(t("alert.more", { count: total - lines.length }));
-  return lines.join("\n");
+  if (total > deals.length) deals.push(t("alert.more", { count: total - deals.length }));
+  return deals.join("\n\n");
 }
 
 /** The saved search on /deals, newest first so the new matches are at the top. */

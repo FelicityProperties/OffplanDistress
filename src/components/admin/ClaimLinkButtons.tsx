@@ -11,13 +11,13 @@ import { useT } from "@/i18n/client";
 
 /**
  * "Send claim link" on a staff-created listing (src/lib/claim.ts): by email when the seller has a real address and
- * email is set up, or copied for WhatsApp, with a chat to the seller's number that already holds the message.
- * Every new link cancels the previous one.
+ * email is set up, or copied for WhatsApp, with a chat to the seller's number that already holds the message (the
+ * dialog says which number: the one on the seller's account). Every new link cancels the previous one.
  */
 export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingId: string; sellerName: string; canEmail: boolean }) {
   const t = useT("admin");
   const [pending, start] = useTransition();
-  const [link, setLink] = useState<{ url: string; whatsapp: string | null } | null>(null);
+  const [link, setLink] = useState<{ url: string; whatsapp: string | null; phone: string | null } | null>(null);
   const copyButton = useRef<HTMLButtonElement>(null);
 
   return (
@@ -51,7 +51,8 @@ export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingI
             }
             const url = "url" in res ? res.url : undefined;
             if (!url) return;
-            setLink({ url, whatsapp: ("whatsapp" in res && res.whatsapp) || null });
+            const whatsapp = ("whatsapp" in res && res.whatsapp) || null;
+            setLink({ url, whatsapp, phone: ("phone" in res && res.phone) || null });
             try {
               await navigator.clipboard.writeText(url);
               toast.success(t("claim.copied"));
@@ -88,11 +89,19 @@ export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingI
             />
           </div>
           {link?.whatsapp && (
-            <Button asChild className="w-full sm:w-auto">
-              <a href={link.whatsapp} target="_blank" rel="noopener noreferrer" data-testid="claim-whatsapp">
-                <MessageCircle aria-hidden /> {t("claim.openWhatsApp")}
-              </a>
-            </Button>
+            <div className="space-y-1.5">
+              <Button asChild className="w-full sm:w-auto">
+                <a href={link.whatsapp} target="_blank" rel="noopener noreferrer" data-testid="claim-whatsapp">
+                  <MessageCircle aria-hidden /> {t("claim.openWhatsApp")}
+                </a>
+              </Button>
+              {/* Check it is the seller's: an account's own number, never verified, may be old (or not theirs). */}
+              {link.phone && (
+                <p className="text-xs text-muted-foreground" data-testid="claim-whatsapp-to">
+                  {t("claim.whatsappTo", { phone: link.phone })}
+                </p>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>

@@ -144,7 +144,8 @@ export default defineMessages({
     "publish.done": "{n} listings published",
     "publish.doneOne": "1 listing published",
     "publish.none": "Nothing published: these listings were already published or changed in the meantime.",
-    "publish.skipped.hasPermit": "{n} left in review with a permit number entered — the number is their record, so approve them from their pages.",
+    "publish.skipped.hasPermit":
+      "{n} left in review with a permit number entered: the number is their record, so each one is approved from its own page once its owner is entered and confirmed.",
     "publish.skipped.formAExpired": "{n} left in review: their Form A has run out.",
     "publish.skipped.changed": "{n} left as they are: changed in the meantime.",
     "publish.failed": "Couldn't publish. Try again.",
@@ -176,7 +177,7 @@ export default defineMessages({
     "owner.pendingHint":
       "Filed under a placeholder until you enter the owner. An account with this email (or, with no email, this mobile) is used; otherwise one is created without a password.",
     "owner.changeHint":
-      "You can change the owner until ownership is confirmed. Changing it cancels any claim link already sent.",
+      "You can change the owner until ownership is confirmed and the owner can sign in. Changing it cancels any claim link already sent.",
     "owner.name": "Owner's full name",
     "owner.phone": "Mobile / WhatsApp",
     "owner.phoneHint": "With the country code, e.g. +971 50 123 4567.",
@@ -186,8 +187,15 @@ export default defineMessages({
     "owner.submitChange": "Change owner",
     "owner.saving": "Saving…",
     "owner.saved": "Owner saved. Now send the claim link, or confirm with their signed Form A.",
+    // On a listing confirmed already: the owner signs in with their claim link, or has it in their account at once.
+    "owner.savedClaim": "Owner saved. Now send them their claim link: it is how they sign in and see the listing.",
+    "owner.savedAccount": "Owner saved. The listing is in their account now.",
+    // A confirmed listing about to be filed under an account that can already sign in (adminSetListingOwner).
+    "owner.confirmAccess":
+      "{name} ({email}) already has an account that can sign in. Ownership of this listing is confirmed, so filing it under that account gives them the listing, its offers and its documents at once, and the owner can't be changed here afterwards.",
+    "owner.confirmAccess.check": "File it under {name}'s account",
     "owner.same": "This listing is already filed under that owner.",
-    "owner.locked": "Ownership is already confirmed, so the owner can't be changed here.",
+    "owner.locked": "Ownership is confirmed and the listing's account can sign in, so the owner can't be changed here.",
     "owner.notStaff": "Only a listing our team entered can be filed under another owner.",
     // The Owner card's checks (adminSetListingOwner), worded for the owner rather than the intake form's seller.
     "owner.error.name": "Enter the owner's full name.",
@@ -197,13 +205,21 @@ export default defineMessages({
     "owner.error.phoneShared": "More than one account uses this mobile number. Enter the owner's email so the right account is used.",
     "owner.error.phoneHasAccount":
       "This mobile number is on an account someone registered on the site, and numbers aren't verified. Ask the owner for the email they log in with and enter it, so the listing goes to their own account.",
+    "owner.error.phoneMismatch":
+      "The account with this email has another mobile number ({phone}), and numbers aren't verified. Check with the owner: if that number is theirs, enter it (or leave the mobile empty); if not, that account may not be the owner's.",
 
     "claim.setOwnerFirst": "Set the owner first: the claim link goes to the owner, and this listing is still filed under a placeholder.",
     "claim.confirmedFormA": "Ownership confirmed on {date} from the owner's signed Form A.",
     "claim.confirmedBroker": "Ownership confirmed on {date} on our record of the owner's written authority.",
     "claim.ownerStillPlaceholder": "The listing is still filed under a placeholder: enter the real owner below so they can see it in their account.",
+    // Confirmed without its owner (Form A, our record of their authority), filed under an account with no password.
+    "claim.ownerCantSignIn":
+      "The owner can't sign in yet: send them their claim link so they set a password and see the listing in their account. Until then, the owner can still be corrected in the Owner card.",
     "approve.setOwnerFirst":
       "Set the owner first: this listing is still filed under a placeholder. Then confirm ownership (claim link or the owner's signed Form A) and enter the permit before approving. Or publish it now on Felicity's permits, with the button next to Approve.",
+    // The same with a permit number entered: the number is its record, so there is no attestation button (publishAttested).
+    "approve.setOwnerFirstNumbered":
+      "Set the owner first: this listing is still filed under a placeholder. Then confirm ownership (claim link or the owner's signed Form A) and approve it: with its permit number entered, the number is its record, so it isn't published on Felicity's permits.",
 
     "formA.title": "Or confirm with the owner's signed Form A",
     "formA.hint":
@@ -356,7 +372,8 @@ export default defineMessages({
     "publish.done": "نُشر ⁨{n}⁩ من الإعلانات",
     "publish.doneOne": "نُشر إعلان واحد",
     "publish.none": "لم يُنشر شيء: هذه الإعلانات نُشرت أو تغيّرت في هذه الأثناء.",
-    "publish.skipped.hasPermit": "بقي ⁨{n}⁩ قيد المراجعة لأن رقم التصريح مُدخَل لها، فالرقم هو سجلّها؛ وافق عليها من صفحاتها.",
+    "publish.skipped.hasPermit":
+      "بقي ⁨{n}⁩ قيد المراجعة لأن رقم التصريح مُدخَل لها، فالرقم هو سجلّها: يُوافَق على كلٍّ منها من صفحته بعد إدخال مالكه وتأكيد ملكيته.",
     "publish.skipped.formAExpired": "بقي ⁨{n}⁩ قيد المراجعة: انتهت صلاحية النموذج (A) الخاص بها.",
     "publish.skipped.changed": "تُرك ⁨{n}⁩ على حاله: تغيّر في هذه الأثناء.",
     "publish.failed": "تعذّر النشر. حاول مرة أخرى.",
@@ -386,7 +403,8 @@ export default defineMessages({
     "owner.title": "المالك",
     "owner.pendingHint":
       "الإعلان مسجّل باسم مالك مؤقت إلى أن تُدخل المالك. يُستخدم الحساب المسجّل بهذا البريد الإلكتروني (أو بهذا الرقم عند عدم إدخال بريد)، وإلا يُنشأ حساب بلا كلمة مرور.",
-    "owner.changeHint": "يمكنك تغيير المالك ما دامت الملكية لم تُؤكَّد بعد. ويُلغي التغيير أي رابط تأكيد أُرسل من قبل.",
+    "owner.changeHint":
+      "يمكنك تغيير المالك ما لم تُؤكَّد الملكية ويتمكّن المالك من تسجيل الدخول. ويُلغي التغيير أي رابط تأكيد أُرسل من قبل.",
     "owner.name": "الاسم الكامل للمالك",
     "owner.phone": "رقم الجوال / واتساب",
     "owner.phoneHint": "مع رمز الدولة، مثل ⁦+971 50 123 4567⁩.",
@@ -396,8 +414,14 @@ export default defineMessages({
     "owner.submitChange": "تغيير المالك",
     "owner.saving": "جارٍ الحفظ…",
     "owner.saved": "حُفظ المالك. أرسل له الآن رابط التأكيد، أو أكّد الملكية بالنموذج (A) الموقّع منه.",
+    "owner.savedClaim": "حُفظ المالك. أرسل له الآن رابط التأكيد، فبه يسجّل الدخول ويرى الإعلان.",
+    "owner.savedAccount": "حُفظ المالك. أصبح الإعلان الآن في حسابه.",
+    "owner.confirmAccess":
+      "لدى ⁨{name}⁩ (⁦{email}⁩) حساب يستطيع تسجيل الدخول به. وبما أن ملكية هذا الإعلان مؤكَّدة، فإن تسجيله في هذا الحساب يتيح له الإعلان والعروض المقدَّمة عليه ومستنداته فوراً، ولا يمكن بعد ذلك تغيير المالك من هنا.",
+    "owner.confirmAccess.check": "سجّل الإعلان في حساب ⁨{name}⁩",
     "owner.same": "هذا الإعلان مسجّل باسم هذا المالك أصلاً.",
-    "owner.locked": "الملكية مؤكَّدة، لذا لا يمكن تغيير المالك من هنا.",
+    "owner.locked":
+      "الملكية مؤكَّدة ويستطيع صاحب الحساب المسجَّل فيه الإعلان تسجيل الدخول، لذا لا يمكن تغيير المالك من هنا.",
     "owner.notStaff": "لا يمكن تسجيل إعلان باسم مالك آخر إلا إذا كان فريقنا هو من أدخله.",
     "owner.error.name": "أدخل الاسم الكامل للمالك.",
     "owner.error.contact": "أدخل رقم جوال المالك أو بريده الإلكتروني.",
@@ -406,13 +430,19 @@ export default defineMessages({
     "owner.error.phoneShared": "يستخدم أكثر من حساب رقم الجوال هذا. أدخل البريد الإلكتروني للمالك ليُستخدم الحساب الصحيح.",
     "owner.error.phoneHasAccount":
       "رقم الجوال هذا مسجَّل في حساب أنشأه أحد المستخدمين على الموقع، ولا يجري التحقق من أرقام الجوال. اطلب من المالك البريد الإلكتروني الذي يسجّل به الدخول وأدخله، ليُضاف الإعلان إلى حسابه هو.",
+    "owner.error.phoneMismatch":
+      "للحساب المسجَّل بهذا البريد الإلكتروني رقم جوال آخر (⁦{phone}⁩)، ولا يجري التحقق من أرقام الجوال. تحقّق مع المالك: إن كان ذلك الرقم رقمه فأدخله (أو اترك حقل الجوال فارغاً)، وإلا فقد لا يكون ذلك الحساب حساب المالك.",
 
     "claim.setOwnerFirst": "حدّد المالك أولاً: يُرسَل رابط التأكيد إلى المالك، وهذا الإعلان ما زال مسجّلاً باسم مالك مؤقت.",
     "claim.confirmedFormA": "أُكّدت الملكية في ⁨{date}⁩ بالنموذج (A) الموقّع من المالك.",
     "claim.confirmedBroker": "أُكّدت الملكية في ⁨{date}⁩ بناءً على سجلنا لتفويض المالك الخطي.",
     "claim.ownerStillPlaceholder": "ما زال الإعلان مسجّلاً باسم مالك مؤقت: أدخل المالك الفعلي أدناه ليراه في حسابه.",
+    "claim.ownerCantSignIn":
+      "لا يستطيع المالك تسجيل الدخول بعد: أرسل له رابط التأكيد ليعيّن كلمة مرور ويرى الإعلان في حسابه. وحتى ذلك الحين يمكن تصحيح المالك من بطاقة «المالك».",
     "approve.setOwnerFirst":
       "حدّد المالك أولاً: ما زال هذا الإعلان مسجّلاً باسم مالك مؤقت. ثم أكّد الملكية (برابط التأكيد أو بالنموذج (A) الموقّع من المالك) وأدخل التصريح قبل الموافقة عليه. أو انشره الآن بتصاريح فيليسيتي بالزر المجاور لزر الموافقة.",
+    "approve.setOwnerFirstNumbered":
+      "حدّد المالك أولاً: ما زال هذا الإعلان مسجّلاً باسم مالك مؤقت. ثم أكّد الملكية (برابط التأكيد أو بالنموذج (A) الموقّع من المالك) ووافق عليه: رقم التصريح مُدخَل له، فالرقم هو سجلّه، ولذلك لا يُنشر بتصاريح فيليسيتي.",
 
     "formA.title": "أو أكّد الملكية بالنموذج (A) الموقّع من المالك",
     "formA.hint":
@@ -565,7 +595,7 @@ export default defineMessages({
     "publish.done": "已发布 {n} 套房源",
     "publish.doneOne": "已发布 1 套房源",
     "publish.none": "未发布任何房源：这些房源已被发布，或在此期间已有变动。",
-    "publish.skipped.hasPermit": "{n} 套已录入许可编号，仍留在审核中——编号即为其记录，请从各自页面批准。",
+    "publish.skipped.hasPermit": "{n} 套已录入许可编号，仍留在审核中：编号即为其记录，须在各自页面录入并确认业主后再批准。",
     "publish.skipped.formAExpired": "{n} 套仍留在审核中：其 A 表已过期。",
     "publish.skipped.changed": "{n} 套保持原状：在此期间已有变动。",
     "publish.failed": "无法发布。请重试。",
@@ -595,7 +625,7 @@ export default defineMessages({
     "owner.title": "业主",
     "owner.pendingHint":
       "在您录入业主之前暂记在占位业主名下。系统将使用与此邮箱（未填写邮箱时则为此手机号）对应的账户；若没有，则创建一个无密码的账户。",
-    "owner.changeHint": "在业主身份确认之前，您可以更改业主。更改会使已发送的确认链接失效。",
+    "owner.changeHint": "在业主身份确认且业主能够登录之前，您可以更改业主。更改会使已发送的确认链接失效。",
     "owner.name": "业主全名",
     "owner.phone": "手机 / WhatsApp",
     "owner.phoneHint": "含国家代码，例如 +971 50 123 4567。",
@@ -605,8 +635,13 @@ export default defineMessages({
     "owner.submitChange": "更改业主",
     "owner.saving": "正在保存…",
     "owner.saved": "业主已保存。现在请发送确认链接，或凭其签署的 A 表确认。",
+    "owner.savedClaim": "业主已保存。现在请向其发送确认链接，对方需通过该链接登录并查看房源。",
+    "owner.savedAccount": "业主已保存。该房源现已在其账户中。",
+    "owner.confirmAccess":
+      "{name}（{email}）已有可以登录的账户。此房源的业主身份已确认，记入该账户后，对方将立即看到该房源、收到的报价及其文件，之后也无法在此更改业主。",
+    "owner.confirmAccess.check": "记入 {name} 的账户",
     "owner.same": "此房源已记在该业主名下。",
-    "owner.locked": "业主身份已确认，因此无法在此更改业主。",
+    "owner.locked": "业主身份已确认，且该房源所在的账户可以登录，因此无法在此更改业主。",
     "owner.notStaff": "只有我们团队录入的房源才能记到其他业主名下。",
     "owner.error.name": "请输入业主全名。",
     "owner.error.contact": "请输入业主的手机号或电子邮箱。",
@@ -615,13 +650,19 @@ export default defineMessages({
     "owner.error.phoneShared": "有多个账户使用此手机号。请输入业主的电子邮箱，以便匹配正确的账户。",
     "owner.error.phoneHasAccount":
       "此手机号已关联到某人在网站上注册的账户，而手机号未经验证。请向业主索取其登录所用的电子邮箱并录入，以便房源归入其本人账户。",
+    "owner.error.phoneMismatch":
+      "使用此邮箱的账户登记了另一个手机号（{phone}），而手机号未经验证。请与业主核实：如果该号码是其本人的，请输入该号码（或将手机号留空）；如果不是，该账户可能并非业主本人的。",
 
     "claim.setOwnerFirst": "请先设置业主：确认链接会发送给业主，而此房源仍记在占位业主名下。",
     "claim.confirmedFormA": "业主身份已于 {date}凭业主签署的 A 表确认。",
     "claim.confirmedBroker": "业主身份已于 {date}依据我们存档的业主书面授权确认。",
     "claim.ownerStillPlaceholder": "此房源仍记在占位业主名下：请在下方录入真实业主，以便其在自己的账户中看到该房源。",
+    "claim.ownerCantSignIn":
+      "业主尚无法登录：请向其发送确认链接，以便其设置密码并在账户中查看房源。在此之前，仍可在“业主”卡片中更正业主。",
     "approve.setOwnerFirst":
       "请先设置业主：此房源仍记在占位业主名下。然后确认业主身份（确认链接或业主签署的 A 表），并在批准前录入许可。或者使用“批准”旁边的按钮，立即凭 Felicity 的许可发布。",
+    "approve.setOwnerFirstNumbered":
+      "请先设置业主：此房源仍记在占位业主名下。然后确认业主身份（确认链接或业主签署的 A 表）并批准：已录入许可编号，编号即为其记录，因此不会凭 Felicity 的许可发布。",
 
     "formA.title": "或凭业主签署的 A 表确认",
     "formA.hint":

@@ -40,24 +40,26 @@ export async function DemandPanel({ index }: { index: DistressIndex }) {
         <SectionHeading tone="dark" eyebrow={t("demand.eyebrow")} title={t("demand.title")} sub={t("demand.sub")} />
         <dl className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {tiles.map((k) => (
-            <div key={k.label} className="glass-dark flex min-w-0 flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-start sm:gap-4 sm:p-5">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-foreground/10 text-gold ring-1 ring-primary-foreground/15 sm:h-10 sm:w-10">
-                <k.icon className="h-5 w-5" aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <dt className="text-xs leading-snug text-primary-foreground/75 sm:text-sm">{k.label}</dt>
-                <dd className="mt-1">
-                  <span className="block text-2xl font-semibold leading-tight tabular sm:text-3xl">
-                    {/* without a value the hint below says why */}
-                    {k.value ?? (
-                      <span aria-hidden className="text-primary-foreground/50">
-                        —
-                      </span>
-                    )}
-                  </span>
-                  <span className="mt-1 block text-xs leading-snug text-primary-foreground/60">{k.hint}</span>
-                </dd>
-              </div>
+            // One term and its value per tile, straight under the <dl>: the icon sits in the term, above it on phones
+            // and in the tile's start column from sm up (out of the flow, the tile's padding leaving it room).
+            <div key={k.label} className="glass-dark relative min-w-0 rounded-2xl p-4 sm:p-5 sm:ps-[4.75rem]">
+              <dt className="text-xs leading-snug text-primary-foreground/75 sm:text-sm">
+                <span className="mb-3 grid h-9 w-9 place-items-center rounded-xl bg-primary-foreground/10 text-gold ring-1 ring-primary-foreground/15 sm:absolute sm:start-5 sm:top-5 sm:mb-0 sm:h-10 sm:w-10">
+                  <k.icon className="h-5 w-5" aria-hidden />
+                </span>
+                {k.label}
+              </dt>
+              <dd className="mt-1">
+                <span className="block text-2xl font-semibold leading-tight tabular sm:text-3xl">
+                  {/* without a value the hint below says why */}
+                  {k.value ?? (
+                    <span aria-hidden className="text-primary-foreground/50">
+                      —
+                    </span>
+                  )}
+                </span>
+                <span className="mt-1 block text-xs leading-snug text-primary-foreground/60">{k.hint}</span>
+              </dd>
             </div>
           ))}
         </dl>

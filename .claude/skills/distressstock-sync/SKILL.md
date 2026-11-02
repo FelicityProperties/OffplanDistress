@@ -121,7 +121,12 @@ file is written; go back to step 2, then build again — repeat until 0); **3** 
 written); **1** a problem with the inputs (message says). Units are excluded for good when they are bulk deals, shops or outside Dubai.
 A unit is *skipped* (previous entry kept, a new one left out) when its page can't be read as before — size not in sq ft,
 a price line or the handover the parser can't read: the site's wording changed, so the parser needs updating; never
-"fix" it by editing the manifest or the plans file.
+"fix" it by editing the manifest or the plans file. A unit is also skipped while its area is not one the script knows
+to be in Dubai (`area not known to be in Dubai (…)`; our communities list, `COM_MAP` / `COM_NAMES` and `DUBAI_AREAS`
+are the known ones, `NON_DUBAI` the known outside ones): never add the area yourself — name the unit and its area in
+the report, so the user can check where it is (a unit outside Dubai can't carry a Trakheesi permit); adding it to
+either list is a change to the script, made on their word. A ready unit ("READY…" as its handover) gets the day it was
+posted as its handover date, so the site shows it as ready.
 
 ## 5. Review
 
@@ -148,18 +153,22 @@ no changes (N units on the site, all already listed)" in one line.
    summary, so the owner can open and merge the PR; never push the sync straight to `main`.
 5. Report to the user in 5 lines: the counts (new / removed / updated / skipped); the new and removed units by title;
    when N > 0: "press Publish all N on Felicity's permits at https://offplandistress.vercel.app/admin?tab=imported";
-   anything skipped (illegible plans, excluded units) and why; anything the valves stopped.
+   anything skipped (illegible plans, excluded units, an area not known to be in Dubai) and why; anything the valves
+   stopped.
 
 ## 7. What the production build then does
 
-`scripts/import-partner-stock.mjs` runs on the deploy: new units are imported in review under the placeholder owner
-("Imported — owner to add" on `/admin`) with their photos; units marked `"removed"` are withdrawn (open offers closed)
-and put back when they reappear; changed figures (asking / original price, paid, instalments, plan, handover, size,
-floor, view, description) are applied unless our team edited that field since — then their edit stands and the conflict
-is reported to the admins once; a listing's gallery is put in the manifest's photo order (new photos fetched by file
-name first, nothing deleted, anything else in the gallery kept after them) by the same rule — rearranged by our team
-since the last sync, it stays theirs and is reported once; a unit with a deal in progress is never touched; the admins
-get one notice per build.
+`scripts/import-partner-stock.mjs` runs on the deploy (one build at a time): new units are imported in review under the
+placeholder owner ("Imported — owner to add" on `/admin`) with their photos; units marked `"removed"` are withdrawn
+(open offers closed, the buyers told in the app and by email) and put back when they reappear; changed figures (asking /
+original price, paid, instalments, plan, handover, size, floor, view, description) are applied unless our team edited
+that field since — then their edit stands and the conflict is reported to the admins once — and recorded in History as
+`listing.sync_update` (a price cut on a live advert also tells its watchers, in the app and by email); a listing's
+gallery is put in the manifest's photo order (new photos fetched by file name first, nothing deleted, anything else in
+the gallery kept after them) by the same rule — rearranged by our team since the last sync, or holding a photo of
+their own, it stays theirs and is reported once; a unit with a deal in progress, sold or withdrawn by us is never
+touched, not even its photos; a unit the import refuses (a bad ref, two photos with one name…) is named in the build log
+and in the admins' notice; the admins get one notice per build, in their language.
 Publishing stays with the owner's "Publish all N on Felicity's permits" click.
 
 ## Safety valves — what to do when one trips

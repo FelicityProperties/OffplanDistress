@@ -8,6 +8,7 @@ import type { TFn } from "@/i18n/translator";
 import { audit, changes } from "./audit";
 import { isOwnerEmail } from "./auth";
 import { isPlaceholderEmail } from "./claim";
+import { isImportOwner } from "./import";
 import { whatsappNumber } from "./leads";
 import { dubaiToday } from "./permits";
 
@@ -180,12 +181,16 @@ const partyColumns = {
 async function party(id: string | null) {
   if (!id) return null;
   const [p] = await db
-    .select(partyColumns)
+    .select({ ...partyColumns, passwordHash: users.passwordHash })
     .from(users)
     .leftJoin(verifiers, eq(verifiers.id, users.kycVerifiedBy))
     .where(eq(users.id, id))
     .limit(1);
-  return p ?? null;
+  if (!p) return null;
+  const { passwordHash, ...rest } = p;
+  // An import's placeholder owner (src/lib/import.ts) is nobody: the card names it in the page's language, and its KYC
+  // waits for the real owner.
+  return { ...rest, importOwner: isImportOwner({ email: p.email, passwordHash }) };
 }
 
 /** Everything the deal file card shows (admins only): the open deal, both parties, the accepted offer, the notes. */

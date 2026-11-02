@@ -26,13 +26,19 @@ import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, type ListingStatusKey } from "
 import { formatDate } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
 
-export function ReviewButtons({ listingId }: { listingId: string }) {
+/**
+ * Approve / Reject. `savedAt` is the listing's updated_at as this page shows it: Approve is refused once the listing has
+ * changed since (the seller's new price, say), and the page then shows it as it is now.
+ */
+export function ReviewButtons({ listingId, savedAt }: { listingId: string; savedAt: string }) {
   const t = useT("admin");
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const rejectButton = useRef<HTMLButtonElement>(null);
   const [reason, setReason] = useState("");
   return (
+    // One unit, never wrapped: the queue's table would shrink its column to one button and stack them. The listing
+    // page's header row wraps around it instead.
     <div className="flex justify-end gap-1">
       <Button
         size="sm"
@@ -40,7 +46,7 @@ export function ReviewButtons({ listingId }: { listingId: string }) {
         disabled={pending}
         onClick={() =>
           start(async () => {
-            const res = await approveListing(listingId);
+            const res = await approveListing(listingId, savedAt);
             if ("error" in res && res.error) toast.error(res.error);
             else toast.success(t("review.approved"));
           })
@@ -215,6 +221,8 @@ export function AdminListingForm(p: EditProps) {
       <input type="hidden" name="listingId" value={p.listingId} />
       {/* The status this form was loaded with: saving after it changed (e.g. an offer was accepted) is refused. */}
       <input type="hidden" name="statusWas" value={p.status} />
+      {/* …and the listing as saved then: any other change since (the seller's price or photo, another admin's save) too. */}
+      <input type="hidden" name="savedAt" value={p.savedAt} />
       <Field label={t("form.status")} htmlFor="status" error={fe.status}>
         <select id="status" name="status" defaultValue={p.status} className={selectClass}>
           {(Object.keys(LISTING_STATUS) as ListingStatusKey[]).map((k) => (
@@ -460,27 +468,28 @@ function SavedSelect<V extends string>({
   );
 }
 
-export function KycSelect({ userId, value }: { userId: string; value: "not_started" | "pending" | "verified" }) {
+/** `label`: the select's accessible name where several are on one page (the deal file's seller and buyer). */
+export function KycSelect({ userId, value, label }: { userId: string; value: "not_started" | "pending" | "verified"; label?: string }) {
   const t = useT("admin");
   const tc = useT("common");
   return (
     <SavedSelect
       value={value}
-      label={t("kyc.label")}
+      label={label ?? t("kyc.label")}
       options={[
         ["not_started", tc("kyc.not_started")],
         ["pending", tc("kyc.pending")],
         ["verified", tc("kyc.verified")],
       ]}
       save={async (next) => {
-        try {
-          await setKycStatus(userId, next);
-          toast.success(t("kyc.updated"));
-          return null;
-        } catch {
-          toast.error(t("kyc.failed"));
-          return t("kyc.failed");
+        // Refused (the session ended, say): its message, and the select back on what is saved.
+        const res = await setKycStatus(userId, next).catch(() => ({ error: t("kyc.failed") }));
+        if ("error" in res && res.error) {
+          toast.error(res.error);
+          return res.error;
         }
+        toast.success(t("kyc.updated"));
+        return null;
       }}
     />
   );
@@ -499,9 +508,10 @@ export function RoleSelect({ userId, value }: { userId: string; value: "user" | 
       // A refused change (your own access, an owner account) leaves the role as it was, and the select shows it.
       save={async (next) => {
         const res = await setUserRole(userId, next).catch(() => ({ error: t("role.failed") }));
-        if (res.error) toast.error(res.error);
+        const error = "error" in res ? res.error : null;
+        if (error) toast.error(error);
         else toast.success(t("role.updated"));
-        return res.error ?? null;
+        return error;
       }}
     />
   );
@@ -511,13 +521,26 @@ export function HandledToggle({ id, handled }: { id: string; handled: boolean })
   const t = useT("admin");
   const [pending, start] = useTransition();
   return (
-    <Button size="sm" variant={handled ? "ghost" : "outline"} disabled={pending} onClick={() => start(() => setInquiryHandled(id, !handled).then(() => {}))}>
+    <Button
+      size="sm"
+      variant={handled ? "ghost" : "outline"}
+      disabled={pending}
+      onClick={() =>
+        start(async () => {
+          const res = await setInquiryHandled(id, !handled);
+          if ("error" in res && res.error) toast.error(res.error);
+        })
+      }
+    >
       {handled ? t("inquiry.reopen") : t("inquiry.markHandled")}
     </Button>
   );
 }
 
-/** "Spam" on an inbox row, "Not spam" on the Spam tab (src/lib/spam.ts caught it; the team is notified once it is back). */
+/**
+ * "Spam" on an inbox row, "Not spam" on the Spam tab (src/lib/spam.ts caught it; the team is notified once it is back,
+ * unless it already had the notice).
+ */
 export function SpamToggle({ id, spam }: { id: string; spam: boolean }) {
   const t = useT("admin");
   const [pending, start] = useTransition();
@@ -530,7 +553,8 @@ export function SpamToggle({ id, spam }: { id: string; spam: boolean }) {
         start(async () => {
           const res = await setInquirySpam(id, !spam);
           if ("error" in res && res.error) toast.error(res.error);
-          else toast.success(spam ? t("inquiry.spamCleared") : t("inquiry.spamMarked"));
+          else if (!spam) toast.success(t("inquiry.spamMarked"));
+          else toast.success("notified" in res && res.notified ? t("inquiry.spamCleared") : t("inquiry.spamClearedQuiet"));
         })
       }
     >
@@ -551,8 +575,9 @@ export function DeleteSamplesButton({ count }: { count: number }) {
       onClick={() => {
         if (!confirm(t("samples.confirm", { count }))) return;
         start(async () => {
-          await deleteSampleListings();
-          toast.success(t("samples.removed"));
+          const res = await deleteSampleListings();
+          if ("error" in res && res.error) toast.error(res.error);
+          else toast.success(t("samples.removed"));
         });
       }}
     >

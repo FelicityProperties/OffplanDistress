@@ -6,14 +6,19 @@ import { useLocale } from "@/i18n/client";
 import { localePath, stripLocale } from "@/i18n/paths";
 import { cn } from "@/lib/utils";
 
-/** The header's page links, in the page's language ("/deals" → "/ar/deals" on Arabic pages), the current one marked. */
+/**
+ * The header's page links, in the page's language ("/deals" → "/ar/deals" on Arabic pages), the current one marked.
+ * `label` names the navigation landmark, apart from the consoles' own (src/components/AppShell.tsx).
+ */
 export function NavLinks({
   items,
+  label,
   className,
   linkClassName,
   activeClassName = "bg-accent text-foreground",
 }: {
   items: { href: string; label: string }[];
+  label?: string;
   className?: string;
   linkClassName?: string;
   activeClassName?: string;
@@ -21,7 +26,7 @@ export function NavLinks({
   const locale = useLocale();
   const pathname = stripLocale(usePathname() ?? "/");
   return (
-    <nav className={className}>
+    <nav aria-label={label} className={className}>
       {items.map((n) => {
         const active = pathname === n.href || pathname.startsWith(`${n.href}/`);
         return (

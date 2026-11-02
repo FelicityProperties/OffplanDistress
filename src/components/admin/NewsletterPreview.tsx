@@ -9,7 +9,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useT } from "@/i18n/client";
 import { dirOf, isLocale, LOCALES, type Locale } from "@/i18n/config";
 
-type Preview = Awaited<ReturnType<typeof previewIssueAction>>;
+type Preview = Exclude<Awaited<ReturnType<typeof previewIssueAction>>, { error: string }>;
 
 /**
  * Today's newsletter issue on /admin/newsletter: what the next daily run would send (src/lib/newsletter-issue.ts),
@@ -33,7 +33,10 @@ export function NewsletterPreview() {
   const load = () =>
     startLoading(async () => {
       try {
-        setPreview(await previewIssueAction(locale));
+        const res = await previewIssueAction(locale);
+        // Refused (the session ended, say): its message, the preview shown so far kept.
+        if ("error" in res) toast.error(res.error);
+        else setPreview(res);
       } catch {
         toast.error(t("preview.failed"));
       }
@@ -81,12 +84,14 @@ export function NewsletterPreview() {
         </Button>
       </div>
       {preview && (
-        <div className="mt-5 space-y-3" dir={dirOf(locale)}>
+        // The lines are the admin's (their language and direction); only the issue's own subject, and the email in the
+        // frame, are in the issue's.
+        <div className="mt-5 space-y-3">
           <p className="text-sm">
             <span className="text-muted-foreground">{t("preview.subject")}: </span>
-            <span className="font-semibold" data-testid="newsletter-preview-subject">
+            <bdi dir={dirOf(preview.locale)} className="font-semibold" data-testid="newsletter-preview-subject">
               {preview.subject}
-            </span>
+            </bdi>
           </p>
           <p className="text-sm text-muted-foreground" data-testid="newsletter-preview-counts">
             {t("preview.counts", { n: preview.counts.newListings, m: preview.counts.priceDrops, k: preview.counts.gone })}

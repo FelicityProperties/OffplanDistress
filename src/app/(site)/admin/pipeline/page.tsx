@@ -32,7 +32,8 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const [all, t, tc, ti, locale] = await Promise.all([adminListings(), getT("admin"), getT("common"), getT("intake"), getLocale()]);
   const statusParam = one(sp.status);
-  const stage = statusParam && statusParam in LISTING_STATUS ? (statusParam as ListingStatusKey) : null;
+  // Own keys only: ?status=toString (or constructor, __proto__) is no stage.
+  const stage = statusParam && Object.hasOwn(LISTING_STATUS, statusParam) ? (statusParam as ListingStatusKey) : null;
   const q = (one(sp.q) ?? "").trim().slice(0, 80);
 
   const card = (l: Row) => (

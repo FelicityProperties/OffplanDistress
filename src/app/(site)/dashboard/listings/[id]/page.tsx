@@ -13,11 +13,13 @@ import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import { FILE_KINDS, LISTING_STATUS, OFFER_STATUS, PUBLIC_STATUSES } from "@/lib/config";
-import { analyzeDeal } from "@/lib/deal-math";
+import { analyzeDeal, isReady } from "@/lib/deal-math";
 import { listingFiles, myListing, offersReceived } from "@/lib/dashboard";
 import { sellerMilestones } from "@/lib/deals";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
+import { dubaiToday } from "@/lib/permits";
 import { communityName, developerName } from "@/lib/place-names";
+import { storedFileName } from "@/lib/uploads";
 import { isUuid } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -106,7 +108,13 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
             t("manage.paidValue", { amount: formatAED(l.amountPaid, locale), pct: formatPct(a.paidPct) }),
           ],
           [tc("remainingPlan"), formatAED(a.remaining, locale)],
-          [tc("handover"), formatQuarter(l.handoverDate, locale)],
+          // "Ready" for a unit already handed over, as on its deal page.
+          [
+            tc("handover"),
+            isReady({ ...l, planRows: (l.paymentPlan ?? []).length }, dubaiToday())
+              ? tc("handoverReady")
+              : formatQuarter(l.handoverDate, locale),
+          ],
         ].map(([k, v]) => (
           <div key={k} className="rounded-xl border bg-card p-4 shadow-card">
             <p className="text-xs text-muted-foreground">{k}</p>
@@ -146,6 +154,7 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
                     offerId={o.id}
                     status={o.status}
                     amount={o.amount}
+                    updatedAt={o.updatedAt.toISOString()}
                     askingPrice={l.askingPrice}
                     listingStatus={l.status}
                   />
@@ -183,7 +192,8 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
                 <span className="flex min-w-0 items-center gap-2">
                   {d.kind === "photo" ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
                   <a href={`/api/files/${d.id}`} className="truncate hover:underline" target="_blank" rel="noreferrer" dir="auto">
-                    {d.filename}
+                    {/* As stored and served now (src/lib/uploads.ts), also a file stored before. */}
+                    {storedFileName(d.filename, d.mimeType, d.kind)}
                   </a>
                 </span>
                 {/* May wrap: "Sales & Purchase Agreement (SPA) · 27 Oct 2026" is wider than a 320px phone's row. */}

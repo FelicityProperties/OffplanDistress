@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "@/components/LocaleLink";
 import { EmptyState, PageTitle } from "@/components/Kpi";
-import { BuyerOfferActions, SellerOfferActions } from "@/components/OfferActions";
+import { BuyerOfferActions, OffersTabs, SellerOfferActions } from "@/components/OfferActions";
 import { DealMilestones } from "@/components/DealMilestones";
 import { Pipeline } from "@/components/Pipeline";
 import { ToneStatus } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getLocale, getT } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import { LISTING_STATUS, OFFER_STATUS } from "@/lib/config";
@@ -70,7 +70,8 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
           ))}
         </section>
       )}
-      <Tabs defaultValue={defaultTab}>
+      {/* The open tab follows ?tab= as the address changes (a counter-offer notice opened on this page shows Sent). */}
+      <OffersTabs initial={defaultTab}>
         <TabsList>
           <TabsTrigger value="received">{t("offers.tabReceived", { count: received.length })}</TabsTrigger>
           <TabsTrigger value="sent">{t("offers.tabSent", { count: sent.length })}</TabsTrigger>
@@ -124,6 +125,7 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
                           offerId={o.id}
                           status={o.status}
                           amount={o.amount}
+                          updatedAt={o.updatedAt.toISOString()}
                           askingPrice={o.askingPrice}
                           listingStatus={o.listingStatus}
                         />
@@ -188,6 +190,7 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
                           offerId={o.id}
                           status={o.status}
                           counterAmount={o.counterAmount}
+                          updatedAt={o.updatedAt.toISOString()}
                           listingStatus={o.listingStatus}
                         />
                       </TableCell>
@@ -198,7 +201,7 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
             </div>
           )}
         </TabsContent>
-      </Tabs>
+      </OffersTabs>
     </div>
   );
 }

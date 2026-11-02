@@ -4,6 +4,7 @@ import { files, listings } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
+import { storedFileName } from "@/lib/uploads";
 import { isUuid } from "@/lib/utils";
 
 async function notFound() {
@@ -60,7 +61,12 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]"
     headers: {
       "Content-Type": file.mimeType,
       "Content-Length": String(file.size),
-      "Content-Disposition": disposition(file.kind === "photo" ? "inline" : "attachment", file.filename),
+      // Named as uploads are stored now (src/lib/uploads.ts), also a file stored before: no character that disguises
+      // the name, and the extension of the type it is served as.
+      "Content-Disposition": disposition(
+        file.kind === "photo" ? "inline" : "attachment",
+        storedFileName(file.filename, file.mimeType, file.kind),
+      ),
       "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, no-store",
       "X-Content-Type-Options": "nosniff",
     },

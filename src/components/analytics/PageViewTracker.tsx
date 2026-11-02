@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useLocale } from "@/i18n/client";
 import { localeOfPath, stripLocale } from "@/i18n/paths";
@@ -21,9 +21,43 @@ const CAMPAIGN = ["utm_source", "utm_medium", "utm_campaign", "ref"] as const;
 export const NO_TRACK_KEY = "od_no_track";
 const FORCE_TRACK_KEY = "od_force_track";
 const FORGOT_KEY = "od_sid_forgot";
+/** sessionStorage: the page view a language switch carries over to the page's reload (keepPageView). */
+const CARRY_KEY = "od_view_carry";
 
 /** The referrer is only meaningful for the first page of a page load: client-side navigations keep the old one. */
 let firstViewOfLoad = true;
+
+/** The page view being recorded in this tab, if any: what keepPageView() carries over. */
+let current: { viewId: string; sessionId: string; path: string; visibleMs: () => number } | null = null;
+
+/**
+ * Called by the language switch (src/components/LocaleSwitcher.tsx) just before it loads the same page in another
+ * language: that load goes on with this page view (same row, its time adding up, its language updated) instead of
+ * counting a second one.
+ */
+export function keepPageView() {
+  const view = current;
+  if (!view) return;
+  const { viewId, sessionId, path } = view;
+  try {
+    sessionStorage.setItem(CARRY_KEY, JSON.stringify({ viewId, sessionId, path, ms: Math.round(view.visibleMs()), at: Date.now() }));
+  } catch {}
+}
+
+/** The page view a language switch handed to this load, when it is this page's, this visit's and recent; read once. */
+function carriedView(path: string, sessionId: string): { viewId: string; ms: number } | null {
+  try {
+    const raw = sessionStorage.getItem(CARRY_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(CARRY_KEY);
+    const c = JSON.parse(raw);
+    const fresh = typeof c?.at === "number" && Date.now() - c.at < 60_000;
+    if (!fresh || c.path !== path || c.sessionId !== sessionId || typeof c.viewId !== "string") return null;
+    return { viewId: c.viewId, ms: Math.max(0, Number(c.ms) || 0) };
+  } catch {
+    return null;
+  }
+}
 
 function send(body: Record<string, unknown>) {
   const json = JSON.stringify(body);
@@ -70,13 +104,19 @@ export function PageViewTracker({ staff }: { staff: boolean }) {
   const params = useSearchParams();
   const pageLocale = useLocale();
   const locale = (address && localeOfPath(address)) || pageLocale;
-  // Read when a view is sent; switching language reloads the page's content but is not a new page view.
+  // Read when a view is sent. Switching language loads the page again but is not a new page view (keepPageView).
   const localeRef = useRef(locale);
   useEffect(() => {
     localeRef.current = locale;
   }, [locale]);
-  // Only campaign tags make a new page view: filters on /deals rewrite the query string on every change.
-  const campaign = CAMPAIGN.map((k) => params.get(k) ?? "").join("\n");
+  // Only campaign tags make a new page view: filters on /deals rewrite the query string on every change. Tags that only
+  // go away (a "Clear all" that drops them with the filters) leave the page view as it is; new or other tags start one.
+  // Compared tag by tag (a tag may hold any character, a newline too: a joined string would never match itself again
+  // and re-render without end).
+  const tags = CAMPAIGN.map((k) => params.get(k) ?? "");
+  const [view, setView] = useState({ pathname, tags });
+  if (view.pathname !== pathname || tags.some((v, i) => v !== "" && v !== view.tags[i])) setView({ pathname, tags });
+  const campaign = JSON.stringify(view.tags);
 
   // An admin's tab: ask the server (which checks the session) to forget what this tab recorded before they signed in.
   useEffect(() => {
@@ -91,7 +131,8 @@ export function PageViewTracker({ staff }: { staff: boolean }) {
   }, [staff]);
 
   useEffect(() => {
-    if (staff || !pathname || UNTRACKED.test(pathname) || !trackingAllowed()) return;
+    const path = view.pathname;
+    if (staff || !path || UNTRACKED.test(path) || !trackingAllowed()) return;
     let viewId: string | null = null;
     let sessionId = "";
     let visibleMs = 0;
@@ -117,13 +158,17 @@ export function PageViewTracker({ staff }: { staff: boolean }) {
     const start = () => {
       const sid = analyticsSessionId("view");
       if (!sid) return; // storage blocked: no way to group pages into a visit
-      viewId = newViewId();
+      // Loaded again by a language switch: the same page view goes on (the server gives its row this language).
+      const carried = carriedView(path, sid);
+      viewId = carried?.viewId ?? newViewId();
       sessionId = sid;
+      visibleMs = sentMs = carried?.ms ?? 0;
       resume();
+      current = { viewId, sessionId, path, visibleMs: () => visibleMs + (visibleSince == null ? 0 : performance.now() - visibleSince) };
       const q = new URLSearchParams(location.search);
-      const body: Record<string, unknown> = { t: "v", viewId, sessionId, path: pathname, locale: localeRef.current };
+      const body: Record<string, unknown> = { t: "v", viewId, sessionId, path, locale: localeRef.current };
       for (const k of CAMPAIGN) if (q.get(k)) body[k] = q.get(k)!.slice(0, 200);
-      if (firstViewOfLoad) body.referrer = externalReferrerHost();
+      if (firstViewOfLoad && !carried) body.referrer = externalReferrerHost();
       firstViewOfLoad = false;
       send(body);
     };
@@ -150,8 +195,9 @@ export function PageViewTracker({ staff }: { staff: boolean }) {
       window.removeEventListener("pagehide", flush);
       window.removeEventListener("pageshow", onPageShow);
       flush(); // moving to another page closes this one
+      current = null;
     };
-  }, [pathname, campaign, staff]);
+  }, [view.pathname, campaign, staff]);
 
   return null;
 }

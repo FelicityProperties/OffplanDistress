@@ -54,7 +54,13 @@ async function rememberLocale(locale: Locale) {
 
 const signupSchema = (t: T, ta: TFn<"auth">) =>
   z.object({
-    fullName: z.string(t("field.fullName")).trim().min(2, t("field.fullName")),
+    // At most 120 characters, as the profile form allows (the name goes into admin notices, emails and exports). Its own
+    // message: the schema's ("Please enter your full name") would otherwise answer this check too.
+    fullName: z
+      .string(t("field.fullName"))
+      .trim()
+      .min(2, t("field.fullName"))
+      .max(120, t("field.tooLong", { max: 120 })),
     email: z.string(t("field.email")).trim().pipe(z.email(t("field.email"))),
     phone: z.string().trim().max(30).optional(),
     password: z.string(t("field.passwordMin")).min(8, t("field.passwordMin")),
