@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
  * header outlives in-app navigation, so the sheet closes itself when a page opens from it: on another address (a link,
  * a notification chosen from the bell), and on a plain click on any of its links or a form sent from it, for the page
  * already shown, a language chosen on the consoles, which re-render in place (src/components/LocaleSwitcher.tsx), and
- * logging out.
+ * logging out; and when a notice is chosen from the bell, whatever page it opens.
  */
 export function MobileMenu({
   title,
@@ -31,7 +31,16 @@ export function MobileMenu({
   const closeOnLink = (e: MouseEvent) => {
     // ⌘/ctrl/shift-click opens the link in another tab or window: this page and its menu stay.
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if (e.target instanceof Element && e.target.closest("a[href]")) setOpenOn(null);
+    const el = e.target instanceof Element ? e.target : null;
+    if (el?.closest("a[href]")) {
+      setOpenOn(null);
+      return;
+    }
+    // A notice chosen from the bell (src/components/NotificationBell.tsx) opens its page from script, maybe this one
+    // with another tab or #section, which the address doesn't always show: the bell's list closing says one was chosen
+    // ("Mark all read" keeps the list, and this menu, open).
+    const list = el?.closest('[role="menuitem"]')?.closest('[role="menu"]');
+    if (list) setTimeout(() => (!list.isConnected || list.getAttribute("data-state") !== "open") && setOpenOn(null));
   };
   return (
     <Sheet open={openOn !== null} onOpenChange={(open) => setOpenOn(open ? pathname : null)}>

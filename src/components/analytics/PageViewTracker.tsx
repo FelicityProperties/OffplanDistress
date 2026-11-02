@@ -111,10 +111,12 @@ export function PageViewTracker({ staff }: { staff: boolean }) {
   }, [locale]);
   // Only campaign tags make a new page view: filters on /deals rewrite the query string on every change. Tags that only
   // go away (a "Clear all" that drops them with the filters) leave the page view as it is; new or other tags start one.
+  // Compared tag by tag (a tag may hold any character, a newline too: a joined string would never match itself again
+  // and re-render without end).
   const tags = CAMPAIGN.map((k) => params.get(k) ?? "");
-  const [view, setView] = useState({ pathname, campaign: tags.join("\n") });
-  const seen = view.campaign.split("\n");
-  if (view.pathname !== pathname || tags.some((v, i) => v !== "" && v !== seen[i])) setView({ pathname, campaign: tags.join("\n") });
+  const [view, setView] = useState({ pathname, tags });
+  if (view.pathname !== pathname || tags.some((v, i) => v !== "" && v !== view.tags[i])) setView({ pathname, tags });
+  const campaign = JSON.stringify(view.tags);
 
   // An admin's tab: ask the server (which checks the session) to forget what this tab recorded before they signed in.
   useEffect(() => {
@@ -195,7 +197,7 @@ export function PageViewTracker({ staff }: { staff: boolean }) {
       flush(); // moving to another page closes this one
       current = null;
     };
-  }, [view.pathname, view.campaign, staff]);
+  }, [view.pathname, campaign, staff]);
 
   return null;
 }
