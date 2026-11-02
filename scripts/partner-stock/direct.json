@@ -5,7 +5,7 @@
   "name": "Direct sellers",
   "url": null
  },
- "generatedAt": "2026-11-01T13:00:00Z",
+ "generatedAt": "2026-11-02T13:00:00Z",
  "units": [
   {
    "ref": "amaal8-1104",
@@ -22,16 +22,16 @@
     "floor": "11",
     "view": null,
     "originalPrice": 1808888,
-    "amountPaid": 633111,
+    "amountPaid": 633394,
     "askingPrice": 325000,
     "handoverDate": "2028-12-31",
     "nextInstalmentDate": "2027-01-09",
     "nextInstalmentAmount": 180889,
     "paymentPlan": [
      {
-      "label": "09-JUL-2026",
-      "dueDate": "2026-07-09",
-      "amount": 90444
+      "label": "4th instalment (balance)",
+      "dueDate": "2026-10-09",
+      "amount": 90161
      },
      {
       "label": "09-JAN-2027",
@@ -45,7 +45,7 @@
      }
     ],
     "motivation": "urgent",
-    "description": "1-bedroom apartment on the 11th floor of Amaal 8 (Mansory Residences by Amaal) at Meydan Horizon, Ras Al Khor. 878 sq ft: an 805 sq ft suite with a walk-in wardrobe, powder room and laundry, plus a 73 sq ft balcony; one covered parking bay. Registered with the Dubai Land Department (Oqood) in June 2025. Developer plan: 10% in January 2027 and 50% on handover (the July 2026 instalment is shown in the plan — confirm it with the statement of account). The owner needs an immediate exit and is asking roughly half of what he has paid in."
+    "description": "1-bedroom apartment on the 11th floor of Amaal 8 (Mansory Residences by Amaal) at Meydan Horizon, Ras Al Khor. 878 sq ft: an 805 sq ft suite with a walk-in wardrobe, powder room and laundry, plus a 73 sq ft balcony; one covered parking bay. Registered with the Dubai Land Department (Oqood) in June 2025; figures from the developer's statement of account. Remaining plan: the balance of the 4th instalment (AED 90,161, due 9 October 2026, outstanding on the statement), 10% in January 2027 and 50% on handover (31 December 2028). The owner needs an immediate exit and is asking roughly half of what he has paid in."
    },
    "photos": [
     {
@@ -61,7 +61,7 @@
      "url": "https://cdn.offplan-properties.ae/floor-plans/445d1f2e-8bf8-48db-a3f3-9378dd5aa6aa/amaal-8-8.jpg"
     }
    ],
-   "notes": "Direct seller (WhatsApp intake, 31 Oct 2026); documents received: DLD initial contract of sale (June 2025) and SPA pages (unit 1104, 878 sq ft, 1 parking bay, payment schedule). The seller states approximately AED 650,000 paid; the figures follow the SPA schedule through 9 Mar 2026 — the 9 Jul 2026 instalment (AED 90,444) falls before today: confirm with the statement of account. Asking price set at half of the paid amount on the owner's instruction; the seller wants an immediate exit. Photos: project render and the 1BR Type 8 (878 sq ft) floor plan from the developer's marketing material, plus the seller's photo of the sales-centre model."
+   "notes": "Direct seller (WhatsApp intake, 31 Oct 2026); documents received: DLD initial contract of sale (June 2025), SPA pages (unit 1104, 878 sq ft, 1 parking bay, payment schedule) and the developer's statement of account (received 2 Nov 2026): total collection AED 711,000.00 = AED 633,394.48 towards the unit price + DLD 4% AED 72,355.52 + admin fee AED 5,250; the 4th instalment due 9 Oct 2026 has AED 283.68 received and AED 90,160.72 outstanding (overdue — enter it as the arrears figure on the listing); 5th instalment AED 180,888.80 due 9 Jan 2027; AED 904,444 on handover 31 Dec 2028. Asking price set at half of the paid amount on the owner's instruction; the seller wants an immediate exit. Photos: project render and the 1BR Type 8 (878 sq ft) floor plan from the developer's marketing material, plus the seller's photo of the sales-centre model."
   },
   {
    "ref": "reef998-704",
@@ -78,16 +78,16 @@
     "floor": "7",
     "view": null,
     "originalPrice": 858381,
-    "amountPaid": 343345,
+    "amountPaid": 343350,
     "askingPrice": 180000,
     "handoverDate": "2028-06-30",
     "nextInstalmentDate": "2026-11-25",
     "nextInstalmentAmount": 8584,
     "paymentPlan": [
      {
-      "label": "27-AUG-2026",
+      "label": "16th instalment (balance)",
       "dueDate": "2026-08-27",
-      "amount": 34335
+      "amount": 34330
      },
      {
       "label": "26-SEP-2026",
@@ -326,7 +326,7 @@
      }
     ],
     "motivation": "urgent",
-    "description": "Studio on the 7th floor of Reef 998, Dubai Land Residence Complex (DLRC): 477.71 sq ft with the project's climate-controlled sunken balcony (an air-conditioned balcony). Developer plan: 1% a month with 4% every fifth month until July 2030, with handover expected in June 2028 — the instalments from August to October 2026 are shown in the plan; confirm them with the statement of account. The owner needs an immediate exit and is asking roughly half of what he has paid in."
+    "description": "Studio on the 7th floor of Reef 998, Dubai Land Residence Complex (DLRC): 477.71 sq ft with the project's climate-controlled sunken balcony (an air-conditioned balcony). Figures from the developer's statement of account: 1% a month with 4% every fifth month until July 2030, handover expected June 2028. The August, September and October 2026 instalments are outstanding on the statement and are shown in the plan (cleared on transfer day). The owner needs an immediate exit and is asking roughly half of what he has paid in."
    },
    "photos": [
     {
@@ -334,7 +334,7 @@
      "url": "https://cloud.famproperties.com/project/large/-662898-152027.webp"
     }
    ],
-   "notes": "Direct seller (WhatsApp intake, 31 Oct 2026); document received: the developer's Offer to Purchase dated 3 Jun 2025 (unit 704, studio, floor 7, 477.71 sq ft, purchase price AED 858,381.10; 20% deposit then 1% monthly with 4% every fifth month, 63 instalments to 7 Jul 2030). The seller states approximately AED 360,000 paid; the figures follow the schedule through 28 Jul 2026 — the 27 Aug, 26 Sep and 26 Oct 2026 instalments fall before today: confirm with the statement of account. Asking price set at half of the paid amount on the owner's instruction; the seller wants an immediate exit. Photo: project render from the developer's marketing material."
+   "notes": "Direct seller (WhatsApp intake, 31 Oct 2026); documents received: the developer's Offer to Purchase dated 3 Jun 2025 and the statement of account dated 5 Oct 2026 (received 2 Nov 2026): total paid AED 380,317.46 = AED 343,357.22 towards the unit price + DLD fee AED 34,335.24 + admin fee AED 2,625; outstanding AED 515,023.80; overdue at the statement date AED 42,914.25 (16th instalment balance AED 34,330.44 due 27 Aug 2026 and the 17th AED 8,583.81 due 26 Sep 2026) plus AED 343.61 unpaid late fees; the 18th (AED 8,583.81, 26 Oct 2026) fell due after the statement — enter the arrears and late fees on the listing and confirm the current balance before the MOU. Asking price set at half of the paid amount on the owner's instruction; the seller wants an immediate exit. Photo: project render from the developer's marketing material."
   }
  ]
 }
