@@ -6,10 +6,10 @@ export default defineMessages({
   en: {
     "meta.title": "Browse distressed off-plan deals in Dubai",
     "meta.description":
-      "Filter verified off-plan resale units by community, developer, upfront cash, % paid, handover and discount to launch price.",
+      "Filter off-plan resale units by community, developer, upfront cash, % paid, handover and how far below the original price they sell.",
 
     title: "Browse deals",
-    subtitle: "Verified off-plan units, priced below today's developer launch.",
+    subtitle: "Off-plan units from motivated sellers: take over the payment plan, often below the original price.",
 
     "search.placeholder": "Search project, developer or community",
     "search.label": "Search deals",
@@ -95,10 +95,10 @@ export default defineMessages({
   ar: {
     "meta.title": "تصفّح فرص الوحدات على الخارطة المتعثرة في دبي",
     "meta.description":
-      "تصفّح وحدات إعادة البيع الموثّقة على الخارطة وحدّد النتائج حسب المنطقة والمطوّر والمبلغ المقدّم ونسبة المدفوع وموعد التسليم والخصم مقارنةً بسعر الإطلاق.",
+      "تصفّح وحدات إعادة البيع على الخارطة وحدّد النتائج حسب المنطقة والمطوّر والمبلغ المقدّم ونسبة المدفوع وموعد التسليم ونسبة الانخفاض عن السعر الأصلي.",
 
     title: "تصفّح الصفقات",
-    subtitle: "وحدات على الخارطة موثّقة، بأسعار أقل من سعر الإطلاق الحالي لدى المطوّر.",
+    subtitle: "وحدات على الخارطة من بائعين جادّين: تولَّ خطة الدفع، وغالباً بأقل من السعر الأصلي.",
 
     "search.placeholder": "ابحث باسم المشروع أو المطوّر أو المنطقة",
     "search.label": "البحث في الصفقات",
@@ -184,10 +184,10 @@ export default defineMessages({
   zh: {
     "meta.title": "浏览迪拜急售期房房源",
     "meta.description":
-      "按社区、开发商、前期现金、已付比例、交房时间及较开发商当前售价的折扣，筛选已核实的期房转让房源。",
+      "按社区、开发商、前期现金、已付比例、交房时间及较原始合同价的折扣，筛选期房转让房源。",
 
     title: "浏览房源",
-    subtitle: "已核实的期房，售价低于开发商当前售价。",
+    subtitle: "有意出售的卖家转让的期房：接手付款计划，售价往往低于原始合同价。",
 
     "search.placeholder": "搜索项目、开发商或社区",
     "search.label": "搜索房源",

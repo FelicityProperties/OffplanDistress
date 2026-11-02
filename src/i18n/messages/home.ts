@@ -46,7 +46,7 @@ export default defineMessages({
 
     "featured.eyebrow": "Featured",
     "featured.title": "Deepest discounts right now",
-    "featured.sub": "Verified units with motivated sellers, ranked by how far below the original price they sell.",
+    "featured.sub": "Units from motivated sellers, ranked by how far below the original price they sell.",
     "featured.viewAll": "View all deals",
     "featured.emptyTitle": "New deals are being verified",
     "featured.emptyBody": "Create a free account and save a search to hear first when units go live.",
@@ -160,7 +160,7 @@ export default defineMessages({
 
     "featured.eyebrow": "صفقات مميزة",
     "featured.title": "أكبر الخصومات حالياً",
-    "featured.sub": "وحدات موثّقة لبائعين جادّين، مرتّبة حسب نسبة الانخفاض عن السعر الأصلي.",
+    "featured.sub": "وحدات لبائعين جادّين، مرتّبة حسب نسبة الانخفاض عن السعر الأصلي.",
     "featured.viewAll": "عرض كل الصفقات",
     "featured.emptyTitle": "يجري توثيق صفقات جديدة",
     "featured.emptyBody": "أنشئ حساباً مجانياً واحفظ بحثك لتكون أول من يعلم عند نشر الوحدات.",
@@ -275,7 +275,7 @@ export default defineMessages({
 
     "featured.eyebrow": "精选房源",
     "featured.title": "当前折扣最大的房源",
-    "featured.sub": "卖家有意出售的已核实房源，按较原始合同价的折扣从高到低排列。",
+    "featured.sub": "卖家有意出售的房源，按较原始合同价的折扣从高到低排列。",
     "featured.viewAll": "查看全部房源",
     "featured.emptyTitle": "新房源正在核实中",
     "featured.emptyBody": "免费注册账户并保存搜索条件，新房源上线时第一时间通知您。",

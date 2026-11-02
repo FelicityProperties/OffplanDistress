@@ -144,6 +144,11 @@ const PROPERTY_WORDS =
   /\b(?:project|communit|unit|apartment|flat|villa|townhouse|penthouse|studio|bed|\d\s?(?:br|bed)|bhk|plot|tower|floor|off-?plan|dubai|abu dhabi|sharjah|creek|marina|downtown|jvc|hills|bay|aed|dirham|price|budget|cash|mortgage|payment|instal|plan|handover|developer|emaar|damac|sobha|nakheel|listing|propert|deal|offer|ref|od-\d|resale|rent|interested|availab|viewing|view|visit|sell|buy|purchase|invest|call|whatsapp|phone|brochure|sq\.?\s?(?:ft|m)|sqft|sqm)/i;
 /** A letter of any script but Latin: a message in Arabic, Russian, Chinese… is never "off-topic" for lack of English words. */
 const NON_LATIN = /[^\P{L}\p{Script=Latin}]/u;
+/**
+ * A Chinese, Japanese or Korean full name: written without a space ("王伟", "山田太郎", "김민준", "约翰·史密斯"), so two
+ * characters or more of those scripts are not a "one-word name".
+ */
+const CJK_NAME = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}·・ー]{2,}$/u;
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 // Whole words or phrases; the end tolerates a plural s ("backlinks", "keywords") but not "seoul", "indexeddb" or "page 10".
@@ -238,8 +243,9 @@ export function flaggedOnArrival(stored: string | null) {
 
 /**
  * The content score and why: +3 for the SEO vocabulary, +2 per link to a host that isn't ours, +1 for a one-word
- * name or one with digits, +1 for an address on a reserved domain or an obvious fake (src/lib/newsletter.ts), +2 for a
- * long Latin-script contact message that mentions nothing about property. SPAM_THRESHOLD or more is spam.
+ * name (a CJK_NAME is a full one) or one with digits, +1 for an address on a reserved domain or an obvious fake
+ * (src/lib/newsletter.ts), +2 for a long Latin-script contact message that mentions nothing about property.
+ * SPAM_THRESHOLD or more is spam.
  */
 export function spamScore({ name, email, message, listingId }: SpamInput): { score: number; reasons: string[] } {
   const reasons: string[] = [];
@@ -260,7 +266,7 @@ export function spamScore({ name, email, message, listingId }: SpamInput): { sco
     }
   }
   const n = name.trim();
-  if (!/\s/.test(n) || /\d/.test(n)) {
+  if ((!/\s/.test(n) && !CJK_NAME.test(n)) || /\d/.test(n)) {
     score += 1;
     reasons.push(/\d/.test(n) ? REASON.nameDigits : REASON.oneWordName);
   }

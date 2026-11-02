@@ -315,9 +315,9 @@ export default defineMessages({
   },
   zh: {
     "meta.unavailable": "房源不可用",
-    "meta.title": "{project} {unit}",
-    "meta.titleDiscount": "{project} {unit}（较开发商当前售价低 {pct}%）",
-    "meta.titleOriginal": "{project} {unit}（较原始合同价低 {pct}%）",
+    "meta.title": "{project} · {unit}",
+    "meta.titleDiscount": "{project} · {unit}（较开发商当前售价低 {pct}%）",
+    "meta.titleOriginal": "{project} · {unit}（较原始合同价低 {pct}%）",
     "meta.description":
       "{developer}，{community}。已付 {paid}，交房时间：{handover}。支付 {upfront} 即可接手剩余付款计划。",
     "meta.descriptionReady": "{developer}，{community}。现房，已付 {paid}。支付 {upfront} 即可接手剩余付款计划。",

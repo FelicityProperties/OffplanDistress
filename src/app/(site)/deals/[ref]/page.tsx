@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "@/components/LocaleLink";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
@@ -39,9 +40,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { db } from "@/db";
 import { listings, offers } from "@/db/schema";
 import { DEFAULT_LOCALE } from "@/i18n/config";
-import { localePath } from "@/i18n/paths";
+import { localePath, METHOD_HEADER } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import { alternatesFor, openGraphBase } from "@/lib/seo";
+import { isBotRequest } from "@/lib/analytics";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND, brandName, brokerName, FEES, PUBLIC_STATUSES } from "@/lib/config";
 import { richText } from "@/content/legal/rich-text";
@@ -126,7 +128,10 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const advertised = isAdvertised(l);
   if (!advertised && !isOwner && !isAdmin) notFound();
 
-  if (!isOwner && !isAdmin) {
+  // A view is someone opening the advert: not its seller or our team, nor a crawler, link preview or script (the visit
+  // statistics' isBotRequest), nor a HEAD request (no page shown). Sellers see the count, and the 21-day nudge quotes it.
+  const h = await headers();
+  if (!isOwner && !isAdmin && h.get(METHOD_HEADER) !== "HEAD" && !isBotRequest(h)) {
     after(() => db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, l.id)));
   }
 
@@ -666,7 +671,8 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     </span>
                     {k}
                   </dt>
-                  <dd dir="auto" className="mt-1 text-sm font-semibold leading-snug tabular sm:text-base">
+                  {/* wrap-anywhere: the seller's view can be one long run ("BurjKhalifa,DubaiCanal"), wider than its card. */}
+                  <dd dir="auto" className="mt-1 text-sm font-semibold leading-snug tabular wrap-anywhere sm:text-base">
                     {v}
                   </dd>
                 </div>
@@ -676,7 +682,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
             {description && (
               <section>
                 <h2 className="text-2xl font-semibold sm:text-3xl">{td("detail.about")}</h2>
-                <p dir="auto" className="mt-4 max-w-prose whitespace-pre-line leading-relaxed text-muted-foreground">
+                <p dir="auto" className="mt-4 max-w-prose whitespace-pre-line leading-relaxed text-muted-foreground wrap-anywhere">
                   {description}
                 </p>
               </section>

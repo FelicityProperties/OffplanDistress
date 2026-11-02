@@ -208,7 +208,8 @@ export default defineMessages({
     "preview.subject": "Subject",
     "preview.window": "changes from {since} to {until} (Dubai time)",
     "preview.counts": "{n} new · {m} price drops · {k} no longer available",
-    "preview.quiet": "Nothing changed in this window, so no issue would go out.",
+    "preview.quiet":
+      "No new adverts or price drops in this window, so no issue would go out. Units no longer available are counted in the next issue that does.",
     "preview.frame": "Email preview",
 
     // The admins' daily digest (src/lib/reminders.ts)
@@ -404,7 +405,8 @@ export default defineMessages({
     "preview.subject": "الموضوع",
     "preview.window": "التغييرات من {since} إلى {until} (بتوقيت دبي)",
     "preview.counts": "⁨{n}⁩ جديدة · ⁨{m}⁩ تخفيضات أسعار · ⁨{k}⁩ لم تعد متاحة",
-    "preview.quiet": "لم يتغيّر شيء في هذه الفترة، لذا لن يُرسل أي عدد.",
+    "preview.quiet":
+      "لا إعلانات جديدة ولا تخفيضات أسعار في هذه الفترة، لذا لن يُرسل أي عدد. أما الوحدات التي لم تعد متاحة فتُحتسب في العدد التالي الذي يُرسل.",
     "preview.frame": "معاينة الرسالة",
 
     // The admins' daily digest (src/lib/reminders.ts)
@@ -451,11 +453,11 @@ export default defineMessages({
     "page.sampleTitle": "期刊示例",
     "page.sample.subject": "今日 3 套新增急售房源及 1 套房源降价",
     "page.sample.new": "今日新增",
-    "page.sample.line1": "Creek Edge Tower 2，Dubai Creek Harbour — 1 卧室 — 付给卖家 AED 145 万，较原始合同价低 12%",
-    "page.sample.line2": "Hills Park，Dubai Hills Estate — 2 卧室 — 付给卖家 AED 210 万，较原始合同价低 9%",
-    "page.sample.line3": "Riviera 40，Meydan — 开间 — 付给卖家 AED 62 万，较原始合同价低 15%",
+    "page.sample.line1": "Creek Edge Tower 2，Dubai Creek Harbour — 1 卧室 — 付给卖家 AED 1.45M，较原始合同价低 12%",
+    "page.sample.line2": "Hills Park，Dubai Hills Estate — 2 卧室 — 付给卖家 AED 2.1M，较原始合同价低 9%",
+    "page.sample.line3": "Riviera 40，Meydan — 开间 — 付给卖家 AED 620K，较原始合同价低 15%",
     "page.sample.drops": "降价房源",
-    "page.sample.drop1": "Marina Shores，Dubai Marina — 2 卧室 — AED 260 万 → AED 245 万",
+    "page.sample.drop1": "Marina Shores，Dubai Marina — 2 卧室 — AED 2.6M → AED 2.45M",
     "page.sample.gone": "此前刊登的 2 套房源已不再在售。",
     "page.sample.footer": "{company} · RERA 经纪公司注册号（ORN）{orn} · 经纪人注册号（BRN）{brn} · 一键退订",
     "page.sampleNote": "仅作示意：以上项目和价格均为示例，并非广告。",
@@ -600,7 +602,7 @@ export default defineMessages({
     "preview.subject": "主题",
     "preview.window": "{since} 至 {until} 期间的变动（迪拜时间）",
     "preview.counts": "{n} 套新增 · {m} 套降价 · {k} 套不再在售",
-    "preview.quiet": "此时段内无任何变动，因此不会发送期刊。",
+    "preview.quiet": "此时段内没有新上线房源或降价房源，因此不会发送期刊。不再在售的房源将计入下一期发出的期刊。",
     "preview.frame": "邮件预览",
 
     // The admins' daily digest (src/lib/reminders.ts)
