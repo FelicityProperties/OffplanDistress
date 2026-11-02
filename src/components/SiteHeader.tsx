@@ -2,13 +2,13 @@
 import Link from "@/components/LocaleLink";
 import { unstable_rethrow } from "next/navigation";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { LayoutDashboard, LogOut, Menu, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, LogOut, ShieldCheck } from "lucide-react";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { Logo } from "@/components/Logo";
+import { MobileMenu } from "@/components/MobileMenu";
 import { NavLinks } from "@/components/NavLinks";
 import { NotificationBell, type BellItem } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { logout } from "@/app/actions/auth";
 import { db } from "@/db";
 import { notifications } from "@/db/schema";
@@ -88,6 +88,7 @@ export async function SiteHeader() {
         </Link>
         <NavLinks
           items={nav}
+          label={t("menu")}
           className="hidden items-center gap-0.5 rounded-full border border-border/70 bg-card/70 p-1 shadow-sm lg:flex"
           linkClassName="whitespace-nowrap rounded-full px-2.5 py-1.5 xl:px-4"
           activeClassName="bg-ink text-primary-foreground hover:bg-ink hover:text-primary-foreground"
@@ -129,59 +130,44 @@ export async function SiteHeader() {
             </>
           )}
         </div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative lg:hidden"
-              aria-label={
-                bell && bell.unread > 0
-                  ? `${t("openMenu")} (${tn("menu.hasUnread", { count: bell.unread })})`
-                  : t("openMenu")
-              }
-            >
-              <Menu />
-              {bell && bell.unread > 0 && (
-                <span aria-hidden className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-gold ring-2 ring-background" />
-              )}
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="end" className="w-72">
-            <SheetTitle className="sr-only">{t("menu")}</SheetTitle>
-            <div className="mt-8 flex flex-col gap-1 px-2">
-              <NavLinks items={nav} className="flex flex-col gap-1" linkClassName="py-2.5 text-base" />
-              <div className="mt-4 grid gap-2">
-                {user ? (
-                  <>
-                    <Button asChild>
-                      <Link href="/dashboard">{t("myAccount")}</Link>
-                    </Button>
-                    {bell && <NotificationBell variant="full" unread={bell.unread} items={bell.items} />}
-                    {user.role === "admin" && (
-                      <Button asChild variant="outline">
-                        <Link href="/admin">{t("admin")}</Link>
-                      </Button>
-                    )}
-                    <form action={logout} className="grid">
-                      <Button variant="ghost">{t("logOut")}</Button>
-                    </form>
-                  </>
-                ) : (
-                  <>
+        {/* Closes itself when a page opens from it (src/components/MobileMenu.tsx). */}
+        <MobileMenu
+          title={t("menu")}
+          label={bell && bell.unread > 0 ? `${t("openMenu")} (${tn("menu.hasUnread", { count: bell.unread })})` : t("openMenu")}
+          unread={!!bell && bell.unread > 0}
+        >
+          <div className="mt-8 flex flex-col gap-1 px-2">
+            <NavLinks items={nav} label={t("menu")} className="flex flex-col gap-1" linkClassName="py-2.5 text-base" />
+            <div className="mt-4 grid gap-2">
+              {user ? (
+                <>
+                  <Button asChild>
+                    <Link href="/dashboard">{t("myAccount")}</Link>
+                  </Button>
+                  {bell && <NotificationBell variant="full" unread={bell.unread} items={bell.items} />}
+                  {user.role === "admin" && (
                     <Button asChild variant="outline">
-                      <Link href="/login">{t("logIn")}</Link>
+                      <Link href="/admin">{t("admin")}</Link>
                     </Button>
-                    <Button asChild>
-                      <Link href="/signup">{t("getStarted")}</Link>
-                    </Button>
-                  </>
-                )}
-                <LocaleSwitcher full className="justify-start" />
-              </div>
+                  )}
+                  <form action={logout} className="grid">
+                    <Button variant="ghost">{t("logOut")}</Button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="outline">
+                    <Link href="/login">{t("logIn")}</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/signup">{t("getStarted")}</Link>
+                  </Button>
+                </>
+              )}
+              <LocaleSwitcher full className="justify-start" />
             </div>
-          </SheetContent>
-        </Sheet>
+          </div>
+        </MobileMenu>
       </div>
     </header>
   );

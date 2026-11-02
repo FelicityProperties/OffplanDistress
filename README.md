@@ -120,8 +120,9 @@ advert updates the advertised price and tells the watchers; a unit marked `"remo
 network) is withdrawn as a seller's withdrawal is (open offers closed and their buyers told, `listing.sync_withdrawn` in
 History) and put back when it is listed again (live if it was live and can still be published, else into review); the
 buyers and watchers get these notices in the app and by email, as the app's own (in their language; the price drop
-with the advert's permit line and our ORN / BRN); new photos are added only to a unit the sync may change, and a unit
-with a deal in progress (or sold, rejected or withdrawn by us) is never touched, only reported; a build that would
+with the advert's permit line and our ORN / BRN); new photos are added only to a unit the sync may change: a unit
+with a deal in progress is never touched, only reported, and one sold, rejected or withdrawn by our team is left
+alone; a build that would
 withdraw more than 3 and more than a quarter of a source's listed units withdraws none (the valve, unless the file's
 `sync.allowMassRemoval` is true); one `listing.synced` notice per build gives the admins the counts, the conflicts,
 what was left alone and the refs of units that failed, in their language. Their DLD advertising permits can come the

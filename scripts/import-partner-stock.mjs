@@ -747,7 +747,7 @@ const SYNC_COPY = {
   ar: {
     sep: "، ",
     more: (n) => `، و${n} أخرى`,
-    item: (code, ...what) => `${code} (${what.join("; ")})`,
+    item: (code, ...what) => `${code} (${what.join("؛ ")})`,
     end: ".",
     counts: (r) => `أُنشئ ${r.created}، حُدّث ${r.updated.length}، سُحب ${r.withdrawn.length}، أُعيد ${r.restored.length}.`,
     updated: () => "حُدّثت من المصدر: ",
@@ -810,7 +810,12 @@ const addYears = (day, n) => {
   const [y, m, d] = day.split("-").map(Number);
   return new Date(Date.UTC(y + n, m - 1, d)).toISOString().slice(0, 10);
 };
-const isoDay = (s) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
+/** A real calendar day written YYYY-MM-DD, as the page checks it (src/lib/import-format.ts isCalendarDay): not 2026-02-30. */
+const isoDay = (s) => {
+  if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(`${s}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+};
 const isDldUrl = (s) => {
   try {
     const u = new URL(s);
@@ -1087,7 +1092,7 @@ function checkListing(v) {
   };
   const date = (s) => {
     if (s == null) return null;
-    if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s))) throw new Error("bad date");
+    if (!isoDay(s)) throw new Error("bad date");
     return s;
   };
   if (!v || typeof v !== "object") throw new Error("no listing");
