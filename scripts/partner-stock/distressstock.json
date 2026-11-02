@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-01T01:39:28Z",
+ "generatedAt": "2026-11-02T01:40:24Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -1930,7 +1930,7 @@
     "view": "Backside",
     "originalPrice": 2868350,
     "amountPaid": 1434175,
-    "askingPrice": 1090825,
+    "askingPrice": 1065825,
     "handoverDate": "2028-12-31",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -1981,7 +1981,7 @@
      "url": "https://distressonly.deals/media/units/414/990268df9701.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 21, 2026: DISTRESS DEAL: 2-BR IN PIER POINT 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,983,084; selling price AED 2,525,000."
+   "notes": "Posted on DistressStock October 21, 2026: DISTRESS DEAL: 2-BR IN PIER POINT 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,983,084; selling price AED 2,500,000."
   },
   {
    "ref": "Nf34Mu",
@@ -2040,7 +2040,8 @@
      "url": "https://distressonly.deals/media/units/386/bedb67779ffb.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 27, 2026: DISTRESS DEAL: 1-BR IN SOBHA SOLIS - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Date printed DD.MM.YYYY (14.01.2027). All checks pass. Source: original price + DLD 4% = AED 1,093,242; selling price AED 965,000."
+   "notes": "Posted on DistressStock September 27, 2026: DISTRESS DEAL: 1-BR IN SOBHA SOLIS - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Date printed DD.MM.YYYY (14.01.2027). All checks pass. Source: original price + DLD 4% = AED 1,093,242; selling price AED 965,000.",
+   "removed": "2026-11-02"
   },
   {
    "ref": "PF6lLt",
@@ -2714,6 +2715,90 @@
    "notes": "Posted on DistressStock June 05, 2026: DISTRESS DEAL: 2-BR IN MARINA VIEWS - TOWER 3. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,828,124; selling price AED 3,400,000."
   },
   {
+   "ref": "SlA4Fo",
+   "url": "https://distressonly.deals/u/SlA4Fo",
+   "posted": "2026-10-29",
+   "listing": {
+    "projectName": "Ellington Sands 1 - Block A",
+    "developer": "Ellington",
+    "developerOther": null,
+    "community": "Dubai Islands",
+    "communityOther": null,
+    "unitType": "1br",
+    "sizeSqft": 800,
+    "floor": "MID",
+    "view": "Community",
+    "originalPrice": 2280000,
+    "amountPaid": 747123,
+    "askingPrice": 747123,
+    "handoverDate": "2028-12-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "20% Construction",
+      "dueDate": null,
+      "amount": 109491
+     },
+     {
+      "label": "30% Construction",
+      "dueDate": null,
+      "amount": 109491
+     },
+     {
+      "label": "40% Construction",
+      "dueDate": null,
+      "amount": 109491
+     },
+     {
+      "label": "50% Construction",
+      "dueDate": null,
+      "amount": 109491
+     },
+     {
+      "label": "60% Construction",
+      "dueDate": null,
+      "amount": 109491
+     },
+     {
+      "label": "70% Construction",
+      "dueDate": null,
+      "amount": 109491
+     },
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 875931
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "SlA4Fo-95538744.webp",
+     "url": "https://distressonly.deals/media/units/425/388a45d2a824.webp"
+    },
+    {
+     "filename": "SlA4Fo-7980c5c2.webp",
+     "url": "https://distressonly.deals/media/units/425/99d34e9b32e8.webp"
+    },
+    {
+     "filename": "SlA4Fo-285320bb.webp",
+     "url": "https://distressonly.deals/media/units/425/71a480c1a252.webp"
+    },
+    {
+     "filename": "SlA4Fo-64f8124d.webp",
+     "url": "https://distressonly.deals/media/units/425/364cf8caa6a2.webp"
+    },
+    {
+     "filename": "SlA4Fo-k0.webp",
+     "url": "https://distressonly.deals/media/units/425/35d7a2be352a.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock October 29, 2026: HOT LOT: 1-BR IN ELLINGTON SANDS 1 - BLOCK A. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,277,421; selling price AED 2,280,000."
+  },
+  {
    "ref": "TZlf8T",
    "url": "https://distressonly.deals/u/TZlf8T",
    "posted": "2026-06-26",
@@ -3132,8 +3217,8 @@
     "amountPaid": 801301,
     "askingPrice": 674101,
     "handoverDate": "2028-06-30",
-    "nextInstalmentDate": "2026-11-01",
-    "nextInstalmentAmount": 12719,
+    "nextInstalmentDate": "2026-12-01",
+    "nextInstalmentAmount": 457880,
     "paymentPlan": [
      {
       "label": "01.11.2026",
@@ -3171,7 +3256,7 @@
      "url": "https://distressonly.deals/media/units/361/ce7baf3e94b1.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 10, 2026: DISTRESS DEAL: 1-BR IN THE CENTRAL DOWNTOWN - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: On-transfer rows sum to 754 306 vs printed Total on Transfer 754 305 (1 AED rounding); kept printed total. Dates printed as DD.MM.YYYY (01.11.2026, 01.12.2026) read as 1 Nov 2026 and 1 Dec 2026. All other checks pass. Source: original price + DLD 4% = AED 1,322,764; selling price AED 1,144,700."
+   "notes": "Posted on DistressStock September 10, 2026: DISTRESS DEAL: 1-BR IN THE CENTRAL DOWNTOWN - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: On-transfer rows sum to 754 306 vs printed Total on Transfer 754 305 (1 AED rounding); kept printed total. Dates printed as DD.MM.YYYY (01.11.2026, 01.12.2026) read as 1 Nov 2026 and 1 Dec 2026. All other checks pass. Source: original price + DLD 4% = AED 1,322,764; selling price AED 1,144,700. 1 instalment(s) in the posted plan fall before today (01.11.2026): confirm whether they were paid."
   },
   {
    "ref": "YDUnXd",

@@ -974,14 +974,14 @@
    "notes": "Checks pass: 2666000 + 834000 = 3500000, the one instalment equals the total remaining, the transfer rows add up to 2911590, and 2911590 + 834000 = 3745590. There is no On Handover row: the only payment plan row is 31-DEC-2026."
   },
   "NRDFPA": {
-   "image": "https://distressonly.deals/media/units/414/dea3302ddf01.webp",
-   "transcribedAt": "2026-10-30",
+   "image": "https://distressonly.deals/media/units/414/d42e3a29b48e.webp",
+   "transcribedAt": "2026-11-02",
    "legible": true,
-   "unitPrice": 2525000,
-   "paymentToSeller": 1090825,
+   "unitPrice": 2500000,
+   "paymentToSeller": 1065825,
    "dldFee": 114774,
    "trusteeFee": 5250,
-   "commission": 53025,
+   "commission": 52500,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -1005,10 +1005,10 @@
      "amount": 573670
     }
    ],
-   "totalOnTransfer": 1263874,
+   "totalOnTransfer": 1238349,
    "totalRemaining": 1434175,
-   "totalCosts": 2698049,
-   "notes": "All checks pass; instalments are undated construction-percentage milestones (DLD fee implies original price 2 868 350, consistent with 10%/20% instalment amounts)."
+   "totalCosts": 2672524,
+   "notes": "All checks pass. Re-read 2026-11-02 after a price cut (2 525 000 → 2 500 000: payment to seller 1 090 825 → 1 065 825, commission 53 025 → 52 500); instalments unchanged, undated construction-percentage milestones (DLD fee implies original price 2 868 350)."
   },
   "Nf34Mu": {
    "image": "https://distressonly.deals/media/units/386/57737279f1eb.webp",
@@ -1419,6 +1419,58 @@
    "totalRemaining": 1840443,
    "totalCosts": 3623926,
    "notes": "All checks pass: seller + remaining = unit price; instalments sum to total remaining; on-transfer lines sum to total on transfer; total costs = on transfer + remaining. Handover dueDate taken from the date printed in parentheses."
+  },
+  "SlA4Fo": {
+   "image": "https://distressonly.deals/media/units/425/7df3481e73e8.webp",
+   "transcribedAt": "2026-11-02",
+   "legible": true,
+   "unitPrice": 2280000,
+   "paymentToSeller": 747123,
+   "dldFee": 91240,
+   "trusteeFee": 5250,
+   "commission": 47880,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "20% Construction",
+     "dueDate": null,
+     "amount": 109491
+    },
+    {
+     "label": "30% Construction",
+     "dueDate": null,
+     "amount": 109491
+    },
+    {
+     "label": "40% Construction",
+     "dueDate": null,
+     "amount": 109491
+    },
+    {
+     "label": "50% Construction",
+     "dueDate": null,
+     "amount": 109491
+    },
+    {
+     "label": "60% Construction",
+     "dueDate": null,
+     "amount": 109491
+    },
+    {
+     "label": "70% Construction",
+     "dueDate": null,
+     "amount": 109491
+    },
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 875931
+    }
+   ],
+   "totalOnTransfer": 891493,
+   "totalRemaining": 1532877,
+   "totalCosts": 2424370,
+   "notes": "All checks pass. Sold at the original price (DLD fee implies original price 2 280 000 = unit price; the page's 'Original Price + DLD 4%' AED 2,277,421 is lower than that and looks like the broker's misprint); undated construction-percentage milestones."
   },
   "TZlf8T": {
    "image": "https://distressonly.deals/media/units/282/4ea8a1b6704e.webp",
