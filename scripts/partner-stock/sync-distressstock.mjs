@@ -67,7 +67,11 @@ const MASS_REMOVAL_MIN = 3;
 const ROUNDING_AED = 2;
 const INT_MAX = 2_147_483_647;
 const UNIT_TYPES = ["studio", "1br", "2br", "3br", "4br", "5br", "townhouse", "villa", "penthouse"];
-/** Areas outside the emirate of Dubai (matched anywhere in the posted area): never listed, no DLD permit applies there. */
+/**
+ * Areas outside the emirate of Dubai: never listed, no DLD permit applies there. A name counts as a whole word or phrase
+ * anywhere in the posted area ("Al Marjan Island" names Marjan), not inside another word nor as a road's name ("Al Ain
+ * Road" runs through Dubai: an unknown area, NON_DUBAI_RE), and never in an area we know to be in Dubai (exclusion).
+ */
 const NON_DUBAI = [
   "Saadiyat Island",
   "Yas Island",
@@ -88,6 +92,8 @@ const NON_DUBAI = [
   "Mina Al Arab",
   "Fujairah",
 ];
+/** Each NON_DUBAI name as a whole word or phrase, any case, unless a road's name follows it ("Al Ain Road"). */
+const NON_DUBAI_RE = NON_DUBAI.map((a) => new RegExp(`\\b${a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b(?!\\s+(?:road|rd|street|st|highway)\\b)`, "i"));
 /**
  * Posted areas in Dubai that are neither on our list (src/lib/config.ts COMMUNITIES) nor in COM_MAP / COM_NAMES below,
  * lower case: listed as "Other" with the posted name. Any other area is not listed until someone checks where it is
@@ -458,13 +464,16 @@ export function validateEntry(e, rules) {
 // ---------------------------------------------------------------------------------------------------------------------
 // From a parsed page + its transcribed plan to a manifest entry.
 
-/** Why the unit never goes in the manifest: a bulk deal, a shop, or not a Dubai (DLD / Trakheesi) unit. */
-export function exclusion(u) {
+/**
+ * Why the unit never goes in the manifest: a bulk deal, a shop, or not a Dubai (DLD / Trakheesi) unit — a NON_DUBAI
+ * name in its area, unless the area is one we know to be in Dubai (with the repo's `rules`, knownDubaiArea).
+ */
+export function exclusion(u, rules) {
   const type = pyStrip(u.fields.Type);
   const area = pyStrip(u.fields.Area);
   if (/^\d+\s+apartments?$/i.test(type) || /BULK DEAL/i.test(u.title)) return "bulk deal (one listing is one unit)";
   if (/retail/i.test(type)) return "retail unit (the marketplace lists homes only)";
-  const outside = NON_DUBAI.find((a) => area.toLowerCase().includes(a.toLowerCase()));
+  const outside = NON_DUBAI_RE.some((re) => re.test(area)) && !(rules && knownDubaiArea(area, rules));
   if (outside) return `outside Dubai (${area}; not a DLD / Trakheesi unit)`;
   return null;
 }
@@ -731,7 +740,7 @@ function entryChanges(before, after) {
  *   ok       — a fresh entry.
  */
 export function assess(u, was, plans, rules, today) {
-  const excluded = exclusion(u);
+  const excluded = exclusion(u, rules);
   if (excluded) return { kind: "excluded", reason: excluded };
   // Any other area must be one we know to be in Dubai; an unknown one waits (no plan to read yet) until someone checks.
   const area = pyStrip(u.fields.Area);
@@ -1004,10 +1013,10 @@ async function cmdFetch(opts) {
   console.log(`pages: ${units.length} saved and parsed`);
 
   // The payment-plan images (served without login), plus PNG copies the agent's image reader can open.
-  const sharp = await loadSharp();
+  const [sharp, rules] = await Promise.all([loadSharp(), repoRules()]);
   let images = 0;
   for (const u of units) {
-    if (exclusion(u)) continue;
+    if (exclusion(u, rules)) continue;
     const plans = planImages(u);
     for (const [i, url] of plans.entries()) {
       const suffix = i ? `-${i + 1}` : "";

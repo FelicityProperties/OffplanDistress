@@ -2,7 +2,7 @@
 
 import { randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
-import { and, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { auditEvents, files, inquiries, listings, offers, passwordResets, sellerLeads, sessions, users, type Source } from "@/db/schema";
@@ -141,6 +141,15 @@ const listingNoticeColumns = {
  */
 function awaitsSellerConfirmation(l: { isSample: boolean; createdByStaff: boolean; ownershipConfirmedAt: Date | null }) {
   return !l.isSample && l.createdByStaff && l.ownershipConfirmedAt == null;
+}
+
+/**
+ * A listing our team entered and confirmed without its owner (their signed Form A, our record of their authority)
+ * whose account can't sign in yet (no password): its owner still needs their claim link to get in, and until then our
+ * team can still correct who it is filed under (adminSetListingOwner).
+ */
+function awaitsSellerAccount(l: { isSample: boolean; createdByStaff: boolean; passwordHash: string | null }) {
+  return !l.isSample && l.createdByStaff && l.passwordHash == null;
 }
 
 /**
@@ -757,7 +766,16 @@ export async function deleteSampleListings() {
  * What the staff forms' person checks say, worded for the form: the intake form's seller, or the Owner card's owner
  * (an imported unit's owner may not be the one selling it to the buyer, and staff are entering someone else's name).
  */
-type PersonMessages = { name: string; contact: string; phone: string; isStaff: string; phoneShared: string; phoneHasAccount: string };
+type PersonMessages = {
+  name: string;
+  contact: string;
+  phone: string;
+  isStaff: string;
+  phoneShared: string;
+  phoneHasAccount: string;
+  /** The account found by the email has another mobile number on it ({phone}, as stored). */
+  phoneMismatch: (phone: string) => string;
+};
 
 function sellerMessages(t: T): PersonMessages {
   return {
@@ -767,6 +785,7 @@ function sellerMessages(t: T): PersonMessages {
     isStaff: t("admin.sellerIsStaff"),
     phoneShared: t("admin.phoneShared"),
     phoneHasAccount: t("admin.phoneHasAccount"),
+    phoneMismatch: (phone) => t("admin.phoneMismatch", { phone }),
   };
 }
 
@@ -779,6 +798,7 @@ async function ownerMessages(): Promise<PersonMessages> {
     isStaff: ti("owner.error.isStaff"),
     phoneShared: ti("owner.error.phoneShared"),
     phoneHasAccount: ti("owner.error.phoneHasAccount"),
+    phoneMismatch: (phone) => ti("owner.error.phoneMismatch", { phone }),
   };
 }
 
@@ -791,7 +811,19 @@ const staffSellerSchema = (t: T, m: PersonMessages = sellerMessages(t)) =>
     leadId: z.uuid().optional(),
   });
 
-export type StaffListingState = FormState & { listingId?: string };
+export type StaffListingState = FormState & {
+  listingId?: string;
+  /**
+   * adminSetListingOwner: the account a confirmed listing would be filed under can already sign in, so it would have
+   * the listing, its offers and documents at once: staff confirm that account by name first (the form sends its id).
+   */
+  confirmAccess?: { id: string; name: string; email: string };
+  /**
+   * adminSetListingOwner, on a listing confirmed already: what the owner does next — sign in with their claim link,
+   * or nothing (the account can sign in and has the listing now).
+   */
+  ownerNext?: "claim" | "account";
+};
 
 type StaffSeller = z.output<ReturnType<typeof staffSellerSchema>>;
 type FieldErrors = Record<string, string[] | undefined>;
@@ -832,7 +864,10 @@ function readStaffSeller(formData: FormData, t: T, m: PersonMessages = sellerMes
 async function staffListingSeller(email: string | undefined, phoneDigits: string | null) {
   if (email) {
     const user = await findUserByEmail(email);
-    if (user) return { user: { id: user.id, role: user.role, email: user.email, phone: user.phone } };
+    if (user) {
+      const { id, role, email: address, phone, fullName, passwordHash } = user;
+      return { user: { id, role, email: address, phone, fullName, hasPassword: passwordHash != null } };
+    }
     return { user: null };
   }
   if (!phoneDigits) return { user: null };
@@ -843,6 +878,7 @@ async function staffListingSeller(email: string | undefined, phoneDigits: string
       role: users.role,
       email: users.email,
       phone: users.phone,
+      fullName: users.fullName,
       hasPassword: sql<boolean>`${users.passwordHash} is not null`,
     })
     .from(users)
@@ -861,6 +897,19 @@ async function staffListingSeller(email: string | undefined, phoneDigits: string
 }
 
 /**
+ * The account staffSellerAccount files a listing under: `canSignIn` when it has a password; its name and address.
+ * `fillPhone`: the mobile staff typed for a found account that has none, put on it only once the listing is filed under
+ * it (fillAccountPhone) — not while staff are still asked to confirm that account (adminSetListingOwner).
+ */
+type StaffAccount = { id: string; created: boolean; canSignIn: boolean; name: string; email: string; fillPhone?: string };
+
+/** The mobile staff typed, on the account a listing was just filed under, if it still has none (StaffAccount). */
+async function fillAccountPhone(account: StaffAccount) {
+  if (!account.fillPhone) return;
+  await db.update(users).set({ phone: account.fillPhone }).where(and(eq(users.id, account.id), isNull(users.phone)));
+}
+
+/**
  * The account a staff-created listing is filed under: the seller's (staffListingSeller), or a new one without a
  * password. Staff accounts and our own placeholder addresses are refused, as field errors. `created` when none matched.
  */
@@ -870,7 +919,7 @@ async function staffSellerAccount(
   phoneDigits: string | null,
   source: Source | null,
   m: PersonMessages = sellerMessages(t),
-): Promise<{ id: string; created: boolean } | { error: string; fieldErrors?: FieldErrors }> {
+): Promise<StaffAccount | { error: string; fieldErrors?: FieldErrors }> {
   if (s.sellerEmail && isOwnerEmail(s.sellerEmail)) {
     return { error: t("form.checkFields"), fieldErrors: { sellerEmail: [m.isStaff] } };
   }
@@ -887,10 +936,16 @@ async function staffSellerAccount(
     return { error: t("form.checkFields"), fieldErrors: { [s.sellerEmail ? "sellerEmail" : "sellerPhone"]: [m.isStaff] } };
   }
   if (found.user) {
-    if (!found.user.phone && s.sellerPhone) {
-      await db.update(users).set({ phone: s.sellerPhone }).where(eq(users.id, found.user.id));
+    // Found by the email: "Copy link for WhatsApp" opens a chat with the number on that account, which nobody verified
+    // (an old number, or the number of whoever registered the seller's email first). Another number typed here is
+    // refused rather than dropped, so staff check with the seller which is theirs before a claim link goes anywhere.
+    const theirs = found.user.phone ? whatsappNumber(found.user.phone) : null;
+    if (phoneDigits && theirs && theirs !== phoneDigits) {
+      return { error: t("form.checkFields"), fieldErrors: { sellerPhone: [m.phoneMismatch(found.user.phone!)] } };
     }
-    return { id: found.user.id, created: false };
+    const { id, hasPassword, fullName, email } = found.user;
+    const fillPhone = !found.user.phone && s.sellerPhone ? s.sellerPhone : undefined;
+    return { id, created: false, canSignIn: hasPassword, name: fullName, email, fillPhone };
   }
   // No password: the seller sets one (and their email, if we only have a phone number) with the claim link.
   const email = s.sellerEmail?.toLowerCase() ?? placeholderEmail(phoneDigits!);
@@ -907,10 +962,12 @@ async function staffSellerAccount(
     })
     .onConflictDoNothing()
     .returning({ id: users.id });
+  if (created) return { id: created.id, created: true, canSignIn: false, name: s.sellerName, email };
   // Created at the same moment by someone else (a sign-up with this email): use that account.
-  const id = created?.id ?? (await findUserByEmail(email))?.id;
-  if (!id) return { error: t("form.fixDetails") };
-  return { id, created: Boolean(created) };
+  const other = await findUserByEmail(email);
+  if (!other) return { error: t("form.fixDetails") };
+  const canSignIn = other.passwordHash != null;
+  return { id: other.id, created: false, canSignIn, name: other.fullName, email: other.email };
 }
 
 /** The listing a seller lead was already turned into, by its reference (for the message refusing a second one). */
@@ -1018,6 +1075,7 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
       return { error: t("admin.leadHasListing", { ref: await leadListingRef(lead.id) }) };
     }
   }
+  await fillAccountPhone(account);
   await audit({
     actorId: me.id,
     action: "listing.create",
@@ -1039,9 +1097,12 @@ export async function adminCreateListing(_prev: StaffListingState, formData: For
 
 /**
  * A claim link for a staff-created listing: emailed to the seller (via "email"), or returned for the admin to send on
- * WhatsApp (via "copy"), with a wa.me link to the seller's number carrying the same words as the email. Each new link
- * replaces the previous one. The raw token is in the link only: it is never stored, logged or kept in this response
- * beyond the admin's screen.
+ * WhatsApp (via "copy"), with a wa.me link to the seller's number carrying the same words as the email (and that
+ * number, for the dialog to show where the chat opens). Each new link replaces the previous one. The raw token is in
+ * the link only: it is never stored, logged or kept in this response beyond the admin's screen.
+ * Needed while the seller hasn't confirmed the listing, and also once our team has (from the owner's signed Form A, or
+ * on our record of their authority) while the account it is filed under can't sign in: the link is how its owner sets
+ * a password and gets in (an owner entered by mobile number has no other way).
  */
 export async function claimLink(listingId: string, via: "email" | "copy") {
   const me = await currentAdmin();
@@ -1069,7 +1130,7 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
     .where(eq(listings.id, listingId))
     .limit(1);
   if (!l) return { error: t("listing.notFound") };
-  if (!awaitsSellerConfirmation(l)) return { error: t("admin.claim.notNeeded") };
+  if (!awaitsSellerConfirmation(l) && !awaitsSellerAccount(l)) return { error: t("admin.claim.notNeeded") };
   if (l.role === "admin" || isOwnerEmail(l.email)) return { error: t("admin.sellerIsStaff") };
   // Imported and still filed under the network's placeholder owner: nobody to send it to yet.
   if (isImportOwner(l)) return { error: (await getT("intake"))("claim.setOwnerFirst") };
@@ -1097,7 +1158,12 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
   const url = `${siteUrl()}${claimPath(token, locale)}`;
   const wa = l.phone ? whatsappNumber(l.phone) : null;
   const text = `${msg.title}\n\n${msg.body}\n\n${url}`;
-  return { ok: true as const, url, whatsapp: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(text)}` : null };
+  return {
+    ok: true as const,
+    url,
+    whatsapp: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(text)}` : null,
+    phone: wa ? l.phone : null,
+  };
 }
 
 /** Unused claim links of a listing: they went to the account it was filed under, or are no longer needed. */
@@ -1111,8 +1177,10 @@ async function cancelClaimLinks(listingId: string) {
 
 /**
  * The Owner card of a listing our team entered (an imported one under its placeholder owner, or one filed under the
- * wrong account): files it under the owner staff give, by the intake form's rules (staffSellerAccount). Only until
- * ownership is confirmed; any claim link already sent stops working, and the change is audited (account ids only).
+ * wrong account): files it under the owner staff give, by the intake form's rules (staffSellerAccount). Until ownership
+ * is confirmed, and after that while the account it is filed under can't sign in (confirmed without its owner, from
+ * their signed Form A or our record of their authority, and not claimed yet), so a mistyped number or email can be
+ * corrected. Any claim link already sent stops working, and the change is audited (account ids only).
  */
 export async function adminSetListingOwner(_prev: StaffListingState, formData: FormData): Promise<StaffListingState> {
   const me = await currentAdmin();
@@ -1136,32 +1204,65 @@ export async function adminSetListingOwner(_prev: StaffListingState, formData: F
     .limit(1);
   if (!l) return { error: t("listing.notFound") };
   if (!l.createdByStaff || l.isSample) return { error: ti("owner.notStaff") };
-  // A confirmed listing keeps its owner — unless it is still filed under an import's placeholder (ownership confirmed
-  // on our team's record of the owner's authority, before the owner was entered): the real owner can still be set.
-  const [current] = await db.select({ email: users.email, passwordHash: users.passwordHash }).from(users).where(eq(users.id, l.sellerId)).limit(1);
-  const placeholder = current ? isImportOwner(current) : false;
-  if (l.ownershipConfirmedAt && !placeholder) return { error: ti("owner.locked") };
+  // A confirmed listing keeps its owner once that owner can sign in (a password set through their claim link, or one
+  // they had). Until then — still under an import's placeholder, or under an owner our team entered and confirmed
+  // without them — a mistyped number or email would otherwise be final.
+  const [current] = await db
+    .select({ passwordHash: users.passwordHash })
+    .from(users)
+    .where(eq(users.id, l.sellerId))
+    .limit(1);
+  if (l.ownershipConfirmedAt && current?.passwordHash != null) return { error: ti("owner.locked") };
   const account = await staffSellerAccount(t, seller, phoneDigits, null, m);
   if ("error" in account) return account;
-  if (account.id === l.sellerId) return { error: ti("owner.same"), fieldErrors: { sellerName: [ti("owner.same")] } };
+  if (account.id === l.sellerId) {
+    // Already its account: a mobile typed for it (it had none) is still kept, for the claim link's WhatsApp chat.
+    await fillAccountPhone(account);
+    return { error: ti("owner.same"), fieldErrors: { sellerName: [ti("owner.same")] } };
+  }
+  // A confirmed listing is on its account's dashboard at once, with its offers and documents. An account that can
+  // already sign in (registered by someone, whose email nobody verified: a typo can match a stranger's) gets it only
+  // once staff confirm that account by name, the form sending its id back; it is then final (above).
+  const accessConfirmed = formData.get("confirmAccount") === account.id;
+  if (l.ownershipConfirmedAt && account.canSignIn && !accessConfirmed) {
+    return { confirmAccess: { id: account.id, name: account.name, email: account.email } };
+  }
+  const ownerCantSignIn = sql`not exists (select 1 from ${users} u where u.id = ${l.sellerId}::uuid
+    and u.password_hash is not null)`;
   const [moved] = await db
     .update(listings)
     .set({ sellerId: account.id, updatedAt: new Date() })
-    // Not if it was confirmed (under a real owner), or re-filed by someone else, in the meantime.
-    .where(and(eq(listings.id, l.id), eq(listings.sellerId, l.sellerId), placeholder ? undefined : isNull(listings.ownershipConfirmedAt)))
+    .where(
+      and(
+        eq(listings.id, l.id),
+        // Not if someone else re-filed it meanwhile, or its owner confirmed it and can sign in now…
+        eq(listings.sellerId, l.sellerId),
+        or(isNull(listings.ownershipConfirmedAt), ownerCantSignIn),
+        // …nor, unconfirmed when read, if it was confirmed since and the account can sign in (it wasn't asked above).
+        account.canSignIn && !accessConfirmed ? isNull(listings.ownershipConfirmedAt) : undefined,
+      ),
+    )
     .returning({ id: listings.id });
   if (!moved) return { error: ti("owner.locked") };
+  await fillAccountPhone(account);
   const cancelled = await cancelClaimLinks(l.id);
   await audit({
     actorId: me.id,
     action: "listing.owner",
     entityType: "listing",
     entityId: l.id,
-    // claimsCancelled: the unused claim links that stopped working (scrubDiff drops any key with "link" in it).
-    diff: { sellerId: [l.sellerId, account.id], newSellerAccount: account.created, claimsCancelled: cancelled },
+    // claimsCancelled: the unused claim links that stopped working (scrubDiff drops any key with "link" in it);
+    // accessConfirmed: staff confirmed giving a confirmed listing to an account that can sign in.
+    diff: {
+      sellerId: [l.sellerId, account.id],
+      newSellerAccount: account.created,
+      claimsCancelled: cancelled,
+      ...(l.ownershipConfirmedAt && account.canSignIn ? { accessConfirmed: true } : {}),
+    },
   });
   refresh();
-  return { ok: true, listingId: l.id };
+  const ownerNext = account.canSignIn ? ("account" as const) : ("claim" as const);
+  return { ok: true, listingId: l.id, ...(l.ownershipConfirmedAt ? { ownerNext } : {}) };
 }
 
 /**
@@ -1210,8 +1311,9 @@ export async function adminConfirmFormA(_prev: FormState, formData: FormData): P
     .where(and(eq(listings.id, l.id), eq(listings.sellerId, l.sellerId), isNull(listings.ownershipConfirmedAt)))
     .returning({ id: listings.id });
   if (!confirmed) return { error: ti("formA.notNeeded") };
-  // The claim link isn't needed any more (it would refuse a confirmed listing anyway).
-  await cancelClaimLinks(l.id);
+  // A seller who can sign in doesn't need the claim link any more (it refuses their confirmed listing). One who can't
+  // yet keeps it: it is how they set a password and get into their account (claimListing).
+  if (l.passwordHash) await cancelClaimLinks(l.id);
   // Which document it rests on, and who checked it (the actor): the record a dispute over the owner's authority needs.
   await audit({
     actorId: me.id,

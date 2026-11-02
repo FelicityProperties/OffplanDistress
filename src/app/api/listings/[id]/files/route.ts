@@ -10,9 +10,12 @@ import { getCurrentUser } from "@/lib/auth";
 import { FILE_KINDS, MAX_UPLOAD_BYTES } from "@/lib/config";
 import { refCode } from "@/lib/format";
 import { notifyAdmins } from "@/lib/notify";
+import { cleanFileName, SNIFF_BYTES, sniffType, storedFileName } from "@/lib/uploads";
 import { isUuid } from "@/lib/utils";
 
 const ALLOWED = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
+// Types a browser gives a file it can't name (a HEIC on some Windows and Android browsers): judged by its bytes alone.
+const UNNAMED = new Set(["", "application/octet-stream"]);
 // Photos go into the public gallery, so only formats every browser can show (the sell form converts phone photos to
 // JPEG before upload; HEIC scans of documents are still accepted for our team).
 const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -59,21 +62,33 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
   const kind = String(form.get("kind") ?? "other");
   if (!(file instanceof File)) return NextResponse.json({ error: t("upload.noFile") }, { status: 400 });
   // The owner's signed Form A can confirm ownership of a listing our team entered (adminConfirmFormA): our team files it.
-  if (!(kind in FILE_KINDS) || (kind === "form_a" && user.role !== "admin")) {
+  // Own keys only: "constructor" or "toString" is no kind.
+  if (!Object.hasOwn(FILE_KINDS, kind) || (kind === "form_a" && user.role !== "admin")) {
     return NextResponse.json({ error: t("upload.unknownKind") }, { status: 400 });
   }
+  // The name as the uploader sees it in our messages, without the characters that could disguise it.
+  const name = cleanFileName(file.name);
   if (file.size > MAX_UPLOAD_BYTES) {
-    return NextResponse.json({ error: t("upload.tooLarge", { name: file.name }) }, { status: 413 });
+    return NextResponse.json({ error: t("upload.tooLarge", { name }) }, { status: 413 });
   }
-  if (!ALLOWED.has(file.type)) {
-    return NextResponse.json({ error: t("upload.badType", { name: file.name }) }, { status: 415 });
+  if (!ALLOWED.has(file.type) && !UNNAMED.has(file.type)) {
+    return NextResponse.json({ error: t("upload.badType", { name }) }, { status: 415 });
   }
-  if (kind === "photo" && !file.type.startsWith("image/")) {
+  if (kind === "photo" && !file.type.startsWith("image/") && !UNNAMED.has(file.type)) {
     return NextResponse.json({ error: t("upload.photoOnly") }, { status: 415 });
   }
-  if (kind === "photo" && !PHOTO_TYPES.has(file.type)) {
-    return NextResponse.json({ error: t("upload.photoType", { name: file.name }) }, { status: 415 });
+  // The type the browser gave is the uploader's to set: what is stored, and served back to our team, is what the
+  // file's own first bytes say it is (src/lib/uploads.ts) — an executable or a web page sent as a "PDF" is refused.
+  const type = sniffType(new Uint8Array(await file.slice(0, SNIFF_BYTES).arrayBuffer()));
+  if (!type) {
+    return NextResponse.json({ error: t("upload.badType", { name }) }, { status: 415 });
   }
+  if (kind === "photo" && !PHOTO_TYPES.has(type)) {
+    return NextResponse.json({ error: t("upload.photoType", { name }) }, { status: 415 });
+  }
+  // Stored under that type's extension, without invisible characters (a right-to-left override in "Statement…exe"
+  // would show it to our team as a PDF).
+  const filename = storedFileName(file.name, type, kind);
 
   const isAdmin = user.role === "admin";
   if (!isAdmin) {
@@ -95,8 +110,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
       listingId: id,
       uploaderId: user.id,
       kind: kind as keyof typeof FILE_KINDS,
-      filename: file.name.slice(0, 200),
-      mimeType: file.type,
+      filename,
+      mimeType: type,
       size: file.size,
       data: Buffer.from(await file.arrayBuffer()),
     })
@@ -104,7 +119,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
   // Our team adding a document or photo to a seller's listing goes in the audit trail (src/lib/audit.ts): the kind and
   // the file name, never the contents.
   if (isAdmin && listing.sellerId !== user.id) {
-    await audit({ actorId: user.id, action: "file.upload", entityType: "file", entityId: row.id, diff: { kind, filename: file.name.slice(0, 200) } });
+    await audit({ actorId: user.id, action: "file.upload", entityType: "file", entityId: row.id, diff: { kind, filename } });
   }
 
   // Seller photos go into the public gallery while the listing is still in review (our team checks them

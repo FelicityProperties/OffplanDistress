@@ -43,18 +43,48 @@ export function OgWordmark({ size = 40 }: { size?: number }) {
 }
 
 const LOCAL_FILE = /^\/api\/files\/([0-9a-f-]{36})$/i;
-// next/og can only draw these; anything else (WebP, AVIF, HEIC) would leave a blank panel.
+// next/og can only draw these: a WebP or AVIF photo comes out as a blank panel, so it goes in as JPEG (drawable()).
 const DRAWABLE = /^image\/(jpeg|png)$/i;
+const CONVERTIBLE = /^image\/(webp|avif|gif|heic|heif)$/i;
 const MAX_BYTES = 4 * 1024 * 1024;
 
 function dataUrl(mime: string, data: Uint8Array) {
   return `data:${mime};base64,${Buffer.from(data).toString("base64")}`;
 }
 
+/** sharp (installed with Next for image optimisation), loaded on first use; null where it isn't available. */
+let sharpModule: Promise<typeof import("sharp").default | null> | undefined;
+function loadSharp() {
+  sharpModule ??= import("sharp").then(
+    (m) => m.default,
+    () => null,
+  );
+  return sharpModule;
+}
+
+/**
+ * The photo as a data URL next/og can draw: JPEG and PNG as they are, other image formats re-encoded as JPEG (the build
+ * import stored its photos as WebP before it stored JPEG) at twice the card's photo panel, so the card stays light.
+ */
+async function drawable(mime: string, data: Uint8Array) {
+  if (data.length > MAX_BYTES) return null;
+  if (DRAWABLE.test(mime)) return dataUrl(mime, data);
+  if (!CONVERTIBLE.test(mime)) return null;
+  const sharp = await loadSharp();
+  if (!sharp) return null;
+  const jpeg = await sharp(data)
+    .rotate()
+    .resize({ width: 1120, height: 1260, fit: "inside", withoutEnlargement: true })
+    .flatten({ background: "#ffffff" })
+    .jpeg({ quality: 80 })
+    .toBuffer();
+  return dataUrl("image/jpeg", jpeg);
+}
+
 /**
  * A listing photo as a data URL, or null when it can't be used: a preview image must never fail because a
- * photo is missing, slow or in a format next/og can't draw. Uploaded photos (/api/files/<id>) come straight
- * from the database; remote ones are fetched with a short timeout.
+ * photo is missing, slow or in a format next/og can't draw (or sharp can't convert). Uploaded photos (/api/files/<id>)
+ * come straight from the database; remote ones are fetched with a short timeout.
  */
 export async function photoDataUrl(url: string | undefined | null) {
   if (!url) return null;
@@ -62,21 +92,20 @@ export async function photoDataUrl(url: string | undefined | null) {
     const id = LOCAL_FILE.exec(url)?.[1];
     if (id) {
       const [f] = await db
-        .select({ mime: files.mimeType, size: files.size, data: files.data })
+        .select({ mime: files.mimeType, data: files.data })
         .from(files)
         .where(and(eq(files.id, id), eq(files.kind, "photo")))
         .limit(1);
-      return f && DRAWABLE.test(f.mime) && f.size <= MAX_BYTES ? dataUrl(f.mime, f.data) : null;
+      return f ? await drawable(f.mime, f.data) : null;
     }
     if (!/^https:\/\//i.test(url)) return null;
     const remote = new URL(url);
     // Unsplash picks WebP/AVIF from the Accept header unless a format is forced.
     if (remote.hostname === "images.unsplash.com") remote.searchParams.set("fm", "jpg");
-    const res = await fetch(remote, { headers: { Accept: "image/jpeg,image/png" }, signal: AbortSignal.timeout(3000) });
+    const res = await fetch(remote, { headers: { Accept: "image/jpeg,image/png;q=0.9,image/*;q=0.8" }, signal: AbortSignal.timeout(3000) });
     const mime = (res.headers.get("content-type") ?? "").split(";")[0].trim();
-    if (!res.ok || !DRAWABLE.test(mime)) return null;
-    const buf = new Uint8Array(await res.arrayBuffer());
-    return buf.length <= MAX_BYTES ? dataUrl(mime, buf) : null;
+    if (!res.ok || !(DRAWABLE.test(mime) || CONVERTIBLE.test(mime))) return null;
+    return await drawable(mime, new Uint8Array(await res.arrayBuffer()));
   } catch {
     return null;
   }

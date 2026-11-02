@@ -58,6 +58,9 @@ export default defineMessages({
     "claim.submitExisting": "Confirm my listing",
     "claim.after":
       "Next, our team checks your documents and sends you RERA Form A (our listing agreement) to sign. The listing is published once the DLD advertising permit is issued. Your contact details are never shown to buyers.",
+    // The same, for a listing our team already confirmed (the owner's signed Form A): the account is what the link adds.
+    "claim.afterConfirmed":
+      "Your listing, the offers on it and the progress of a deal are then in your account. Your contact details are never shown to buyers.",
     // A new account (no password yet) also accepts the Privacy Policy, as at sign-up; otherwise the sell form's line.
     "claim.confirmNew":
       "I own this unit or am authorised to sell it, the documents are genuine, and I agree to the {terms} and {privacy}",
@@ -134,6 +137,7 @@ export default defineMessages({
     "claim.submitExisting": "تأكيد إعلاني",
     "claim.after":
       "بعد ذلك يتحقق فريقنا من مستنداتك ويرسل إليك النموذج (A) الصادر عن مؤسسة التنظيم العقاري (اتفاقية الوساطة) لتوقيعه، ثم يُنشر الإعلان فور صدور تصريح الإعلان من دائرة الأراضي والأملاك. ولا تظهر بيانات التواصل الخاصة بك للمشترين أبداً.",
+    "claim.afterConfirmed": "بعد ذلك تجد في حسابك إعلانك والعروض المقدَّمة عليه ومراحل الصفقة. ولا تظهر بيانات التواصل الخاصة بك للمشترين أبداً.",
     "claim.confirmNew": "أُقرّ بأنني مالك هذه الوحدة أو مخوَّل ببيعها، وبأن المستندات أصلية، وأوافق على {terms} و{privacy}",
     "claim.privacy": "سياسة الخصوصية",
     "claim.errors.confirmNew": "يرجى تأكيد أحقيتك في بيع هذه الوحدة والموافقة على شروط الاستخدام وسياسة الخصوصية",
@@ -208,6 +212,7 @@ export default defineMessages({
     "claim.submitExisting": "确认我的房源",
     "claim.after":
       "接下来，我们的团队将核查您的文件，并向您发送迪拜房地产监管局（RERA）的 A 表（委托销售协议）供您签署。迪拜土地局广告许可签发后，房源即会发布。您的联系方式绝不会向买家显示。",
+    "claim.afterConfirmed": "之后，您可在账户中查看您的房源、收到的报价以及交易进度。您的联系方式绝不会向买家显示。",
     "claim.confirmNew":
       "本人为该单元的业主或已获授权出售该单元，所提供的文件真实有效，并同意《{terms}》和《{privacy}》",
     "claim.privacy": "隐私政策",

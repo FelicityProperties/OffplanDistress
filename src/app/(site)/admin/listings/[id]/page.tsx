@@ -19,10 +19,11 @@ import { Button } from "@/components/ui/button";
 import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
 import { LISTING_STATUS, OFFER_STATUS } from "@/lib/config";
-import { analyzeDeal } from "@/lib/deal-math";
+import { analyzeDeal, isReady } from "@/lib/deal-math";
 import { adminListing, adminOffers, confirmedByBroker, confirmedByFormA } from "@/lib/admin";
 import { listingFiles } from "@/lib/dashboard";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
+import { storedFileName } from "@/lib/uploads";
 import { isUuid } from "@/lib/utils";
 import { dubaiToday, expiryDateBounds } from "@/lib/permits";
 import { communityName, developerName } from "@/lib/place-names";
@@ -73,7 +74,14 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
   const importSource = imported ? (imported.sourceName ?? imported.import ?? "") : "";
   // Still filed under that network's placeholder owner: the owner has to be entered before anything else.
   const placeholderOwner = isImportOwner(seller);
-  const formA = docs.find((d) => d.kind === "form_a");
+  // Confirmed without its owner (their signed Form A, our record of their authority) and filed under an account that
+  // can't sign in yet: the owner still needs their claim link to get in, and can still be corrected in the Owner card.
+  const ownerCantSignIn =
+    l.createdByStaff && !l.isSample && !placeholderOwner && !!l.ownershipConfirmedAt && !seller.passwordHash;
+  // Each document under the name it is stored and served under now, also one stored before (src/lib/uploads.ts): no
+  // invisible character can disguise it ("Statement<U+202E>fdp.exe" shown as a PDF).
+  const shownDocs = docs.map((d) => ({ ...d, filename: storedFileName(d.filename, d.mimeType, d.kind) }));
+  const formA = shownDocs.find((d) => d.kind === "form_a");
 
   return (
     <div className="space-y-6">
@@ -187,7 +195,13 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
               [t("listing.cashAtTransfer"), tc("approx", { amount: formatAED(a.cashToClose, locale) })],
               [t("listing.launchPrice"), l.launchPrice ? formatAED(l.launchPrice, locale) : t("listing.notSet")],
               [t("listing.discountVsLaunch"), formatPct(a.discountVsLaunch, 1)],
-              [tc("handover"), formatQuarter(l.handoverDate, locale)],
+              // "Ready" for a unit already handed over, as on its deal page.
+              [
+                tc("handover"),
+                isReady({ ...l, planRows: (l.paymentPlan ?? []).length }, dubaiToday())
+                  ? tc("handoverReady")
+                  : formatQuarter(l.handoverDate, locale),
+              ],
               [
                 t("listing.nextInstalment"),
                 l.nextInstalmentDate
@@ -205,9 +219,10 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
               </div>
             ))}
           </dl>
-          {/* dir="auto": an English description stays readable (and its numbers in order) on the Arabic page. */}
+          {/* dir="auto": an English description stays readable (and its numbers in order) on the Arabic page.
+              wrap-anywhere: a run with no space in it ("pool,gym,sauna,…") wraps instead of widening a phone's page. */}
           {l.description && (
-            <p dir="auto" className="mt-4 whitespace-pre-line text-start text-sm text-muted-foreground">
+            <p dir="auto" className="mt-4 whitespace-pre-line text-start text-sm text-muted-foreground wrap-anywhere">
               {l.description}
             </p>
           )}
@@ -262,15 +277,12 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         </div>
       </div>
 
-      {/* Who a listing our team entered is filed under, until ownership is confirmed (an import starts with nobody, and
-          one published on our record of the owner's authority still needs its owner entered). */}
-      {(awaitingSeller || (placeholderOwner && l.createdByStaff && !l.isSample)) && (
-        <section id="owner" aria-labelledby="owner-title" className="scroll-mt-24 rounded-xl border bg-card p-6 shadow-card">
-          <h2 id="owner-title" className="mb-2 font-sans text-lg font-semibold">
-            {ti("owner.title")}
-          </h2>
-          <OwnerForm listingId={l.id} placeholder={placeholderOwner} />
-        </section>
+      {/* The Owner card (#owner): who a listing our team entered is filed under, open until ownership is confirmed and its
+          owner can sign in (an import starts with nobody, one published on our record of the owner's authority still
+          needs its owner entered, and an owner entered or confirmed without them can still be corrected until they claim
+          it). Rendered closed afterwards rather than left out, so the save that closes it still says it saved. */}
+      {l.createdByStaff && !l.isSample && (
+        <OwnerForm listingId={l.id} placeholder={placeholderOwner} open={awaitingSeller || placeholderOwner || ownerCantSignIn} />
       )}
 
       {/* Staff-created listings: the seller confirms ownership through their claim link (or our team from the owner's
@@ -296,6 +308,11 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
                       {ti("claim.ownerStillPlaceholder")}
                     </p>
                   )}
+                  {ownerCantSignIn && (
+                    <p className="mt-1 text-sm text-muted-foreground" data-testid="owner-cant-sign-in">
+                      {ti("claim.ownerCantSignIn")}
+                    </p>
+                  )}
                 </>
               ) : placeholderOwner ? (
                 <p className="mt-1 text-sm text-muted-foreground" data-testid="set-owner-first">
@@ -313,7 +330,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
                 <a href="#owner">{ti("imported.setOwner")}</a>
               </Button>
             ) : (
-              !l.ownershipConfirmedAt && (
+              (!l.ownershipConfirmedAt || ownerCantSignIn) && (
                 <ClaimLinkButtons
                   listingId={l.id}
                   sellerName={seller.fullName}
@@ -335,9 +352,9 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           <h2 className="font-sans text-lg font-semibold">{t("listing.documents")}</h2>
           <DocumentUploader listingId={l.id} kinds={["photo", "spa", "soa", "oqood", "id", "form_a", "other"]} />
         </div>
-        {docs.length ? (
+        {shownDocs.length ? (
           <ul className="mt-4 divide-y rounded-lg border">
-            {docs.map((d) => (
+            {shownDocs.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 text-sm">
                 <span className="flex min-w-0 items-center gap-2">
                   {d.kind === "photo" ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
@@ -380,7 +397,14 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
                 </div>
                 <div className="flex items-center gap-3">
                   <ToneStatus label={tc(`offer.${o.status}`)} tone={OFFER_STATUS[o.status].tone} />
-                  <SellerOfferActions offerId={o.id} status={o.status} amount={o.amount} listingStatus={l.status} askingPrice={l.askingPrice} />
+                  <SellerOfferActions
+                    offerId={o.id}
+                    status={o.status}
+                    amount={o.amount}
+                    updatedAt={o.updatedAt.toISOString()}
+                    listingStatus={l.status}
+                    askingPrice={l.askingPrice}
+                  />
                 </div>
               </li>
             ))}

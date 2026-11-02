@@ -1,4 +1,4 @@
-import { discountPct } from "@/components/DiscountBadges";
+import { discountPct } from "@/lib/discount-labels";
 import { translator } from "@/i18n/translator";
 import { BRAND, UNIT_TYPES } from "@/lib/config";
 import { analyzeDeal, isReady } from "@/lib/deal-math";

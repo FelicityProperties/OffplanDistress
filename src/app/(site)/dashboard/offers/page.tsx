@@ -125,6 +125,7 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
                           offerId={o.id}
                           status={o.status}
                           amount={o.amount}
+                          updatedAt={o.updatedAt.toISOString()}
                           askingPrice={o.askingPrice}
                           listingStatus={o.listingStatus}
                         />
@@ -189,6 +190,7 @@ export default async function OffersPage({ searchParams }: PageProps<"/dashboard
                           offerId={o.id}
                           status={o.status}
                           counterAmount={o.counterAmount}
+                          updatedAt={o.updatedAt.toISOString()}
                           listingStatus={o.listingStatus}
                         />
                       </TableCell>

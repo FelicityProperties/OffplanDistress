@@ -225,10 +225,12 @@ export async function inquiryCounts() {
 const USER_ID = sql.raw(`"users"."id"`);
 
 /**
- * No password yet, and a real listing our team entered still waiting for its seller's confirmation: a seller our team
- * added who hasn't claimed it. (Not a buyer our team added to a deal, who has no password either but no such listing.)
+ * No password yet, and a real listing our team entered: a seller our team added who hasn't claimed it — still waiting for
+ * their confirmation, or confirmed without them (their signed Form A, our record of their authority), when the claim
+ * link is still how they get into their account. (Not a buyer our team added to a deal, who has no password either but
+ * no such listing; never an import's placeholder owner.)
  */
-const pendingClaimSql = sql`${users.passwordHash} is null and ${users.role} = 'user' and exists (select 1 from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and l.ownership_confirmed_at is null and not l.is_sample)
+const pendingClaimSql = sql`${users.passwordHash} is null and ${users.role} = 'user' and exists (select 1 from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and not l.is_sample)
   and lower(${users.email}) not like 'owner-pending.%@offplandistress.invalid'`;
 
 /** A buyer our team added to a deal file. */
@@ -247,8 +249,9 @@ const registeredSql = sql`(${users.passwordHash} is not null or ${dealBuyerSql}
  * "registered": accounts that can log in, and those our team added without a password that a deal needs verified
  * (registeredSql): buyers found off the platform (saveDealFile in src/lib/deals.ts) and sellers confirmed from their
  * signed Form A. "pending": sellers our team added (staff-assisted intake, src/lib/claim.ts) who haven't set a password
- * through their claim link yet (the sample seller, which has no password either, owns only samples; an import's
- * placeholder owner, src/lib/import.ts, is nobody's account).
+ * through their claim link yet, also once our team confirmed their listing (they are then on both tabs: their KYC is
+ * checked on the first); the sample seller, which has no password either, owns only samples; an import's placeholder
+ * owner, src/lib/import.ts, is nobody's account.
  */
 export async function adminUsers(tab: "registered" | "pending" = "registered") {
   return db
@@ -267,9 +270,10 @@ export async function adminUsers(tab: "registered" | "pending" = "registered") {
       // subqueries would mean the listing's / offer's own id (the counts were always 0).
       listings: sql<number>`(select count(*)::int from ${listings} l where l.seller_id = ${USER_ID})`,
       offers: sql<number>`(select count(*)::int from ${offers} o where o.buyer_id = ${USER_ID})`,
-      // The newest listing still waiting for this seller's confirmation, for the "pending" tab's link.
-      pendingListingId: sql<string | null>`(select l.id from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and l.ownership_confirmed_at is null and not l.is_sample order by l.created_at desc limit 1)`,
-      pendingListingRef: sql<number | null>`(select l.ref_no from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and l.ownership_confirmed_at is null and not l.is_sample order by l.created_at desc limit 1)`,
+      // For the "pending" tab's link, where the claim link is sent from: the newest listing still waiting for this seller's
+      // confirmation, else the newest our team entered for them.
+      pendingListingId: sql<string | null>`(select l.id from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and not l.is_sample order by l.ownership_confirmed_at is null desc, l.created_at desc limit 1)`,
+      pendingListingRef: sql<number | null>`(select l.ref_no from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and not l.is_sample order by l.ownership_confirmed_at is null desc, l.created_at desc limit 1)`,
     })
     .from(users)
     .where(tab === "pending" ? pendingClaimSql : registeredSql)

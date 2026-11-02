@@ -57,7 +57,7 @@ export default defineMessages({
     "offer.unitTaken": "This unit already has an accepted offer.",
     "offer.alreadyAccepted": "Your offer on this unit has already been accepted. Follow the deal in your dashboard under Offers.",
     // The page showed an older figure than the offer now holds (the other party revised it meanwhile).
-    "offer.changed": "The buyer has just changed this offer to {amount}. Check the new figure before you answer.",
+    "offer.changed": "The buyer has just changed this offer (now {amount}). Check the new terms before you answer.",
     "offer.counterChanged": "The seller's counter-offer is now {amount}. Check it before you answer.",
     "search.defaultName": "My search",
     "search.tooMany": "You already have {max} saved searches. Delete one to save another.",
@@ -90,9 +90,12 @@ export default defineMessages({
     "admin.phoneShared": "More than one account uses this mobile number. Enter the seller's email so the right account is used.",
     "admin.phoneHasAccount":
       "This mobile number is on an account someone registered on the site, and numbers aren't verified. Ask the seller for the email they log in with and enter it, so their listing goes to their own account.",
+    // Staff intake: the account found by the email has another number, where the claim link would go on WhatsApp.
+    "admin.phoneMismatch":
+      "The account with this email has another mobile number ({phone}), and numbers aren't verified. Check with the seller: if that number is theirs, enter it (or leave the mobile empty); if not, that account may not be the seller's.",
     "admin.leadNotFound": "That seller lead no longer exists.",
     "admin.leadHasListing": "This seller lead has already been turned into a listing ({ref}). Open that one rather than entering the unit again.",
-    "admin.claim.notNeeded": "This listing doesn't need a claim link: its seller has already confirmed ownership.",
+    "admin.claim.notNeeded": "This listing doesn't need a claim link: ownership is confirmed and its seller can sign in.",
     "admin.claim.noEmail": "This seller has no email address yet. Copy the link and send it on WhatsApp.",
     "admin.claim.emailOff": "Email isn't set up yet. Copy the link and send it on WhatsApp.",
     "admin.claim.emailFailed": "The email couldn't be sent. Copy the link and send it on WhatsApp instead.",
@@ -212,7 +215,7 @@ export default defineMessages({
     "offer.actionUnavailable": "هذا الإجراء غير متاح لهذا العرض.",
     "offer.unitTaken": "يوجد بالفعل عرض مقبول على هذه الوحدة.",
     "offer.alreadyAccepted": "سبق أن قُبل عرضك على هذه الوحدة. تابع الصفقة من قسم العروض في لوحة التحكم.",
-    "offer.changed": "عدّل المشتري هذا العرض للتو إلى ⁨{amount}⁩. راجِع المبلغ الجديد قبل أن تردّ عليه.",
+    "offer.changed": "عدّل المشتري هذا العرض للتو (أصبح ⁨{amount}⁩). راجِع الشروط الجديدة قبل أن تردّ عليه.",
     "offer.counterChanged": "أصبح العرض المقابل من البائع ⁨{amount}⁩. راجِعه قبل أن تردّ عليه.",
     "search.defaultName": "بحثي",
     "search.tooMany": "بلغتَ الحد الأقصى لعمليات البحث المحفوظة (⁨{max}⁩). احذف إحداها لحفظ بحث جديد.",
@@ -243,9 +246,11 @@ export default defineMessages({
     "admin.phoneShared": "يستخدم أكثر من حساب رقم الجوال هذا. أدخل البريد الإلكتروني للبائع ليُستخدم الحساب الصحيح.",
     "admin.phoneHasAccount":
       "رقم الجوال هذا مسجَّل في حساب أنشأه أحد المستخدمين على الموقع، ولا يجري التحقق من أرقام الجوال. اطلب من البائع البريد الإلكتروني الذي يسجّل به الدخول وأدخله، ليُضاف إعلانه إلى حسابه هو.",
+    "admin.phoneMismatch":
+      "للحساب المسجَّل بهذا البريد الإلكتروني رقم جوال آخر (⁦{phone}⁩)، ولا يجري التحقق من أرقام الجوال. تحقّق مع البائع: إن كان ذلك الرقم رقمه فأدخله (أو اترك حقل الجوال فارغاً)، وإلا فقد لا يكون ذلك الحساب حساب البائع.",
     "admin.leadNotFound": "طلب البائع هذا لم يعد موجوداً.",
     "admin.leadHasListing": "سبق تحويل طلب البائع هذا إلى إعلان (⁨{ref}⁩). افتح ذلك الإعلان بدلاً من إدخال الوحدة مرة أخرى.",
-    "admin.claim.notNeeded": "لا يحتاج هذا الإعلان إلى رابط تأكيد، فقد أكّد البائع ملكيته بالفعل.",
+    "admin.claim.notNeeded": "لا يحتاج هذا الإعلان إلى رابط تأكيد، فالملكية مؤكَّدة ويستطيع البائع تسجيل الدخول.",
     "admin.claim.noEmail": "ليس لدى هذا البائع بريد إلكتروني بعد. انسخ الرابط وأرسله عبر واتساب.",
     "admin.claim.emailOff": "لم تُفعَّل خدمة البريد الإلكتروني بعد. انسخ الرابط وأرسله عبر واتساب.",
     "admin.claim.emailFailed": "تعذّر إرسال البريد الإلكتروني. انسخ الرابط وأرسله عبر واتساب بدلاً من ذلك.",
@@ -358,7 +363,7 @@ export default defineMessages({
     "offer.actionUnavailable": "该操作不适用于此报价。",
     "offer.unitTaken": "该单元已有被接受的报价。",
     "offer.alreadyAccepted": "您对该单元的报价已被接受。请前往“我的账户”中的“报价”跟进交易。",
-    "offer.changed": "买家刚刚将此报价改为 {amount}。请先核对新金额，再作回复。",
+    "offer.changed": "买家刚刚修改了此报价（现为 {amount}）。请先核对新条款，再作回复。",
     "offer.counterChanged": "卖家的还价现为 {amount}。请先核对，再决定是否接受。",
     "search.defaultName": "我的搜索",
     "search.tooMany": "您已保存了 {max} 个搜索条件。请删除一个后再保存新的。",
@@ -387,9 +392,11 @@ export default defineMessages({
     "admin.phoneShared": "多个账户使用此手机号。请输入卖家的邮箱，以便使用正确的账户。",
     "admin.phoneHasAccount":
       "此手机号已关联到一个在本站注册的账户，而手机号未经验证。请向卖家索取其登录邮箱并填写，以便将房源归入其本人账户。",
+    "admin.phoneMismatch":
+      "使用此邮箱的账户登记了另一个手机号（{phone}），而手机号未经验证。请与卖家核实：如果该号码是其本人的，请输入该号码（或将手机号留空）；如果不是，该账户可能并非卖家本人的。",
     "admin.leadNotFound": "该卖家线索已不存在。",
     "admin.leadHasListing": "该卖家线索已转为房源（{ref}）。请打开该房源，不要重复录入此单元。",
-    "admin.claim.notNeeded": "此房源无需确认链接：卖家已确认产权。",
+    "admin.claim.notNeeded": "此房源无需确认链接：产权已确认，且卖家可以登录。",
     "admin.claim.noEmail": "该卖家尚无邮箱地址。请复制链接并通过 WhatsApp 发送。",
     "admin.claim.emailOff": "邮件功能尚未启用。请复制链接并通过 WhatsApp 发送。",
     "admin.claim.emailFailed": "邮件发送失败。请复制链接并改用 WhatsApp 发送。",

@@ -55,12 +55,15 @@ export function SellerOfferActions({
   offerId,
   status,
   amount,
+  updatedAt,
   askingPrice,
   listingStatus,
 }: {
   offerId: string;
   status: Status;
   amount: number;
+  /** The offer's updated_at as this page shows it (ISO): a revision since (financing, message) refuses the answer. */
+  updatedAt: string;
   /** The unit's asking price: the suggested counter never goes above it. */
   askingPrice?: number;
   listingStatus: ListingStatusKey;
@@ -87,8 +90,8 @@ export function SellerOfferActions({
 
   const run = (action: "accept" | "decline" | "counter", value?: number) =>
     start(async () => {
-      // With the amount this row shows: should the buyer have changed the offer since, the server says so instead.
-      const res = await respondToOffer(offerId, action, value, amount);
+      // With the offer as this row shows it: should the buyer have changed it since, the server says so instead.
+      const res = await respondToOffer(offerId, action, value, amount, updatedAt);
       if (res.error) toast.error(res.error);
       else {
         toast.success(
@@ -198,11 +201,14 @@ export function BuyerOfferActions({
   offerId,
   status,
   counterAmount,
+  updatedAt,
   listingStatus,
 }: {
   offerId: string;
   status: Status;
   counterAmount: number | null;
+  /** The offer's updated_at as this page shows it (ISO). */
+  updatedAt: string;
   listingStatus: ListingStatusKey;
 }) {
   const t = useT("dashboard");
@@ -211,8 +217,15 @@ export function BuyerOfferActions({
   const [pending, start] = useTransition();
   const run = (action: "accept_counter" | "decline" | "withdraw") =>
     start(async () => {
-      // A counter is answered at the figure shown (should the seller's counter have changed since, the server says so).
-      const res = await respondToOffer(offerId, action, undefined, action === "withdraw" ? undefined : (counterAmount ?? undefined));
+      // A counter is answered as shown (should the seller's counter have changed since, the server says so).
+      const shown = action !== "withdraw";
+      const res = await respondToOffer(
+        offerId,
+        action,
+        undefined,
+        shown ? (counterAmount ?? undefined) : undefined,
+        shown ? updatedAt : undefined,
+      );
       if (res.error) toast.error(res.error);
       else
         toast.success(

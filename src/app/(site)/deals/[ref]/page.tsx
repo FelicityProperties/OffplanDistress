@@ -28,7 +28,8 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { DealCard } from "@/components/DealCard";
-import { DiscountBadges, discountPct } from "@/components/DiscountBadges";
+import { DiscountBadges } from "@/components/DiscountBadges";
+import { discountPct } from "@/lib/discount-labels";
 import { JsonLd } from "@/components/JsonLd";
 import { WatchButton } from "@/components/WatchButton";
 import { MotivationBadge, SampleBadge, StatusPill } from "@/components/badges";
@@ -128,10 +129,11 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const advertised = isAdvertised(l);
   if (!advertised && !isOwner && !isAdmin) notFound();
 
-  // A view is someone opening the advert: not its seller or our team, nor a crawler, link preview or script (the visit
-  // statistics' isBotRequest), nor a HEAD request (no page shown). Sellers see the count, and the 21-day nudge quotes it.
+  // A view is someone opening the advert: a GET (not a HEAD, which shows nobody the page, nor the page drawn again by
+  // Watch, an offer or a message), not by its seller or our team, nor by a crawler, link preview or script (the visit
+  // statistics' isBotRequest). Sellers see the count, and the 21-day nudge quotes it.
   const h = await headers();
-  if (!isOwner && !isAdmin && h.get(METHOD_HEADER) !== "HEAD" && !isBotRequest(h)) {
+  if (!isOwner && !isAdmin && (h.get(METHOD_HEADER) ?? "GET") === "GET" && !isBotRequest(h)) {
     after(() => db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, l.id)));
   }
 
@@ -397,7 +399,8 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
               <span aria-hidden className="h-px w-7 shrink-0 bg-gold" />
               {developer}
             </p>
-            <h1 className="mt-3 text-4xl font-semibold leading-[1.05] text-balance sm:text-5xl">{l.projectName}</h1>
+            {/* wrap-anywhere: so may the project name ("SobhaHartlandWavesOpulence"), wider than a phone at this size. */}
+            <h1 className="mt-3 text-4xl font-semibold leading-[1.05] text-balance wrap-anywhere sm:text-5xl">{l.projectName}</h1>
             <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-muted-foreground sm:gap-x-3">
               <span className="inline-flex items-center gap-1.5 font-medium text-foreground wrap-anywhere">
                 <MapPin className="h-4 w-4 text-gold" aria-hidden />

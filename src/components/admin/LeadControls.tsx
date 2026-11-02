@@ -10,8 +10,9 @@ import { useT } from "@/i18n/client";
 type LeadStatus = "new" | "contacted" | "converted" | "lost";
 const STATUSES: LeadStatus[] = ["new", "contacted", "converted", "lost"];
 
-// The lead actions (src/app/actions/leads.ts) throw once the admin's session has ended: caught here, so the control says
-// so and keeps what was typed, rather than the whole page giving way to the error screen.
+// The lead actions (src/app/actions/leads.ts) answer "Please sign in again." once the admin's session has ended; a
+// request that fails outright (offline) is caught here too, so the control says so and keeps what was typed, rather than
+// the whole page giving way to the error screen.
 
 export function LeadStatusSelect({ id, value }: { id: string; value: LeadStatus }) {
   const t = useT("admin");

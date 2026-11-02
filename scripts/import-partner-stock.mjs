@@ -43,6 +43,7 @@ export async function importPartnerStock(pool) {
   if (!lock) return;
   try {
     const sharp = await loadSharp();
+    await convertWebpPhotos(pool, sharp);
     for (const name of names) {
       let doc;
       try {
@@ -1090,9 +1091,10 @@ function checkListing(v) {
     if (!Number.isInteger(n) || n < 0 || n > INT_MAX || (positive && n <= 0)) throw new Error("bad amount");
     return n;
   };
+  // A calendar day in the years the sell form's date inputs take (src/lib/listing-schema.ts isListingDay).
   const date = (s) => {
     if (s == null) return null;
-    if (!isoDay(s)) throw new Error("bad date");
+    if (!isoDay(s) || s < "2000-01-01" || s > "9999-12-31") throw new Error("bad date");
     return s;
   };
   if (!v || typeof v !== "object") throw new Error("no listing");
@@ -1206,13 +1208,28 @@ async function storePhotos(db, listingId, fetched, uploaderId) {
       [listingId, uploaderId, filename.slice(0, 200), data.type, data.bytes.length, data.bytes],
     );
     const url = `/api/files/${ins[0].id}`;
-    await db.query("update listings set images = array_append(images, $2) where id = $1", [listingId, url]);
+    // updated_at too: an admin editor opened before this build would otherwise save its older gallery over the photo
+    // (Save refuses a page loaded before the listing last changed, src/app/actions/admin.ts).
+    await db.query("update listings set images = array_append(images, $2), updated_at = now() where id = $1", [listingId, url]);
     urls.push(url);
   }
   return urls;
 }
 
-/** The photo, resized for the gallery when sharp is available; null when it is not an image or too big. */
+/**
+ * A photo for the gallery: at most PHOTO_WIDTH on the long edge, transparency on white, JPEG — as the app's uploader
+ * stores photos (src/components/DocumentUploader.tsx preparePhoto). Not WebP: the share card (src/lib/og.tsx) can't draw
+ * it and Outlook for Windows doesn't show it in the newsletter.
+ */
+const toJpeg = (sharp, input, width = PHOTO_WIDTH) =>
+  sharp(input)
+    .rotate()
+    .resize({ width, height: width, fit: "inside", withoutEnlargement: true })
+    .flatten({ background: "#ffffff" })
+    .jpeg({ quality: 80, mozjpeg: true })
+    .toBuffer();
+
+/** The photo, resized for the gallery as JPEG when sharp is available; null when it is not an image or too big. */
 async function fetchPhoto(url, sharp) {
   const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS), headers: { "user-agent": "OffplanDistress import" } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1221,14 +1238,43 @@ async function fetchPhoto(url, sharp) {
   const raw = Buffer.from(await res.arrayBuffer());
   if (sharp) {
     try {
-      const bytes = await sharp(raw).rotate().resize({ width: PHOTO_WIDTH, height: PHOTO_WIDTH, fit: "inside", withoutEnlargement: true }).webp({ quality: 72 }).toBuffer();
-      return { bytes, type: "image/webp" };
+      return { bytes: await toJpeg(sharp, raw), type: "image/jpeg" };
     } catch (err) {
       console.error(`[import] resize failed, keeping the original: ${err?.message ?? err}`);
     }
   }
   if (raw.length > MAX_PHOTO_BYTES) return null;
   return { bytes: raw, type };
+}
+
+/**
+ * Photos stored as WebP (as the import stored them until 2026-11, or as served without sharp) re-encoded as JPEG, once:
+ * in place, so every gallery's /api/files/<id> address and the import's photo names stay as they are. Runs on every
+ * build and finds nothing once they are converted; a photo sharp can't read is logged and left as it is.
+ */
+async function convertWebpPhotos(pool, sharp) {
+  if (!sharp) return;
+  let converted = 0;
+  let after = "00000000-0000-0000-0000-000000000000";
+  for (;;) {
+    const { rows } = await pool.query(
+      "select id, data from files where kind = 'photo' and mime_type = 'image/webp' and id > $1 order by id limit 20",
+      [after],
+    );
+    if (!rows.length) break;
+    for (const r of rows) {
+      after = r.id;
+      try {
+        // Never smaller than the app's uploads (DocumentUploader.tsx PHOTO_MAX_EDGE): only the format changes.
+        const bytes = await toJpeg(sharp, r.data, 2000);
+        await pool.query("update files set mime_type = 'image/jpeg', size = $2, data = $3 where id = $1 and mime_type = 'image/webp'", [r.id, bytes.length, bytes]);
+        converted++;
+      } catch (err) {
+        console.error(`[import] photo ${r.id}: not converted to JPEG — ${err?.message ?? err}`);
+      }
+    }
+  }
+  if (converted) console.log(`[import] ${converted} WebP photos converted to JPEG.`);
 }
 
 async function loadSharp() {

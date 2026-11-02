@@ -200,7 +200,9 @@ export async function resetPassword(_prev: PasswordFormState, formData: FormData
  * - Account without a password (created by our team): the seller also chooses their login email and a password, and is
  *   signed in. The password is only ever set while the account has none, so a link can't replace an existing one.
  * - Account with a password: nothing about the account changes; only its owner, signed in, can confirm.
- * The token works once and for 7 days.
+ * A listing our team already confirmed without its owner (their signed Form A, our record of their authority) takes the
+ * link while its account has no password: the owner confirms too and gets into their account; once it has one, the link
+ * isn't needed (they log in). The token works once and for 7 days.
  */
 export async function claimListing(_prev: PasswordFormState, formData: FormData): Promise<PasswordFormState> {
   const [t, ts] = await Promise.all([getT("password"), getT("sell")]);
@@ -209,7 +211,9 @@ export async function claimListing(_prev: PasswordFormState, formData: FormData)
   if (!(await hit(`claim-ip:${await clientIp()}`, 50, 15 * MINUTE))) return { error: (await getT("errors"))("tooMany") };
   const token = formData.get("token");
   const claim = typeof token === "string" ? await findClaim(token) : null;
-  if (!claim || claim.role !== "user" || isOwnerEmail(claim.email) || claim.ownershipConfirmedAt) {
+  // Confirmed, and its account can sign in: nothing left for the link to do.
+  const noLinkNeeded = claim?.ownershipConfirmedAt && claim.hasPassword;
+  if (!claim || claim.role !== "user" || isOwnerEmail(claim.email) || noLinkNeeded) {
     return { error: t("claim.invalidBody"), invalidToken: true };
   }
   const confirmed = formData.get("confirmOwnership") === "on";
@@ -282,7 +286,10 @@ async function spendClaimToken(tokenId: string) {
   return Boolean(row);
 }
 
-/** The seller's confirmation on the listing (and the Terms on their account), then a heads-up to our team. */
+/**
+ * The seller's confirmation on the listing (and the Terms on their account), then a heads-up to our team when the
+ * listing waited for it.
+ */
 async function confirmOwnership(claim: NonNullable<Awaited<ReturnType<typeof findClaim>>>) {
   const now = new Date();
   const confirmed = await db
@@ -301,6 +308,24 @@ async function confirmOwnership(claim: NonNullable<Awaited<ReturnType<typeof fin
       entityId: claim.listingId,
       diff: { ownershipConfirmedAt: [null, now], termsVersion: [null, LEGAL_UPDATED], newAccount: !claim.hasPassword },
     });
+  } else if (!claim.hasPassword) {
+    // Confirmed by our team before (the owner's signed Form A, our record of their authority): it keeps that date, and
+    // the owner's own confirmation and new account are recorded all the same (with the Terms version, if it had none),
+    // while the listing is still theirs.
+    const mine = and(eq(listings.id, claim.listingId), eq(listings.sellerId, claim.userId));
+    const [still] = await db.select({ termsVersion: listings.termsVersion }).from(listings).where(mine).limit(1);
+    if (still) {
+      if (still.termsVersion == null) {
+        await db.update(listings).set({ termsVersion: LEGAL_UPDATED }).where(and(mine, isNull(listings.termsVersion)));
+      }
+      await audit({
+        actorId: claim.userId,
+        action: "listing.claimed",
+        entityType: "listing",
+        entityId: claim.listingId,
+        diff: { ...(still.termsVersion == null ? { termsVersion: [null, LEGAL_UPDATED] } : {}), newAccount: true },
+      });
+    }
   }
   await db
     .update(users)
@@ -311,6 +336,8 @@ async function confirmOwnership(claim: NonNullable<Awaited<ReturnType<typeof fin
       termsVersion: LEGAL_UPDATED,
     })
     .where(eq(users.id, claim.userId));
+  // "Seller confirmed ownership … approve it": not for a listing confirmed before, which waits for nothing from them.
+  if (!confirmed.length) return;
   await notifyAdmins(
     "listing.claimed",
     { project: claim.projectName, seller: claim.fullName, ref: refCode(claim.refNo) },

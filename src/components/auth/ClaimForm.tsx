@@ -14,9 +14,19 @@ import { cn } from "@/lib/utils";
 /**
  * The claim link's form (src/components/auth/ClaimView.tsx). The ownership / authority / Terms confirmation is the
  * sell form's own (sell `confirm.*`). A new account also chooses its login email and password; an existing account,
- * already signed in, only confirms.
+ * already signed in, only confirms. `confirmed`: our team confirmed the listing already (its next steps are done).
  */
-export function ClaimForm({ token, existing, email }: { token: string; existing: boolean; email: string }) {
+export function ClaimForm({
+  token,
+  existing,
+  email,
+  confirmed = false,
+}: {
+  token: string;
+  existing: boolean;
+  email: string;
+  confirmed?: boolean;
+}) {
   const t = useT("password");
   const ts = useT("sell");
   const tc = useT("common");
@@ -111,7 +121,9 @@ export function ClaimForm({ token, existing, email }: { token: string; existing:
         {pending && <Loader2 className="animate-spin" aria-hidden />}
         {pending ? tc("saving") : existing ? t("claim.submitExisting") : t("claim.submit")}
       </Button>
-      <p className="text-center text-xs leading-relaxed text-muted-foreground">{t("claim.after")}</p>
+      <p className="text-center text-xs leading-relaxed text-muted-foreground">
+        {t(confirmed ? "claim.afterConfirmed" : "claim.after")}
+      </p>
     </form>
   );
 }

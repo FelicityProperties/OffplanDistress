@@ -146,9 +146,11 @@ const PROPERTY_WORDS =
 const NON_LATIN = /[^\P{L}\p{Script=Latin}]/u;
 /**
  * A Chinese, Japanese or Korean full name: written without a space ("王伟", "山田太郎", "김민준", "约翰·史密斯"), so two
- * characters or more of those scripts are not a "one-word name".
+ * characters or more of those scripts are not a "one-word name". The name dots and the long-vowel mark go with them,
+ * but don't count towards the two ("··" or "·王" is no name).
  */
-const CJK_NAME = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}·・ー]{2,}$/u;
+const CJK_NAME =
+  /^(?=(?:.*?[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]){2})[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}·・ー]+$/u;
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 // Whole words or phrases; the end tolerates a plural s ("backlinks", "keywords") but not "seoul", "indexeddb" or "page 10".

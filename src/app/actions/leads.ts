@@ -177,13 +177,25 @@ export async function createSellerLead(_prev: SellerLeadState, formData: FormDat
   return { ok: true, id: row.id, ref: leadCode(row.refNo), urgent };
 }
 
-async function assertAdmin() {
+/** The signed-in admin, or null: the lead controls then answer refused() and change nothing. */
+async function currentAdmin() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "admin") throw new Error((await getT("errors"))("auth.notAuthorised"));
-  return user;
+  return user && user.role === "admin" ? user : null;
+}
+
+/**
+ * A lead control used once the session has ended (signed out in another tab, expired) or the admin role was removed
+ * meanwhile: answered, not thrown (as in admin.ts), so the control says to sign in again and keeps what was typed.
+ */
+async function refused() {
+  const t = await getT("errors");
+  return { error: t((await getCurrentUser()) ? "auth.notAuthorised" : "auth.signInAgain") };
 }
 
 const STATUSES = ["new", "contacted", "converted", "lost"] as const;
+
+/** What the lead controls (src/components/admin/LeadControls.tsx) get back: done, or the message to show. */
+type LeadResult = { ok?: true; error?: string };
 
 /** The lead's status and notes before an admin changes them, for the audit trail (src/lib/audit.ts). */
 async function leadBefore(id: string) {
@@ -191,8 +203,9 @@ async function leadBefore(id: string) {
   return row;
 }
 
-export async function setLeadStatus(id: string, status: (typeof STATUSES)[number]) {
-  const me = await assertAdmin();
+export async function setLeadStatus(id: string, status: (typeof STATUSES)[number]): Promise<LeadResult> {
+  const me = await currentAdmin();
+  if (!me) return refused();
   if (!STATUSES.includes(status) || !z.uuid().safeParse(id).success) return { error: (await getT("errors"))("field.invalid") };
   const before = await leadBefore(id);
   await db.update(sellerLeads).set({ status, updatedAt: new Date() }).where(eq(sellerLeads.id, id));
@@ -203,8 +216,9 @@ export async function setLeadStatus(id: string, status: (typeof STATUSES)[number
   return { ok: true };
 }
 
-export async function saveLeadNotes(id: string, notes: string) {
-  const me = await assertAdmin();
+export async function saveLeadNotes(id: string, notes: string): Promise<LeadResult> {
+  const me = await currentAdmin();
+  if (!me) return refused();
   if (!z.uuid().safeParse(id).success) return { error: (await getT("errors"))("field.invalid") };
   const before = await leadBefore(id);
   const next = notes.trim().slice(0, 3000) || null;

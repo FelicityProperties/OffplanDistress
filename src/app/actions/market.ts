@@ -226,13 +226,15 @@ const TAKEN_STATUSES: ListingStatus[] = ["under_offer", "noc_in_progress", "tran
  * accepted offer (one from a deal that fell through is closed as the unit goes live again, reopenUnit in
  * src/lib/offers.ts), so a unit never has two. Returns whether this call accepted the offer.
  */
-async function acceptOffer(offerId: string, listingId: string, from: "pending" | "countered", amount: number) {
-  // A buyer revising their offer at the same moment must not be accepted at the old amount.
+async function acceptOffer(offerId: string, listingId: string, from: "pending" | "countered", amount: number, at: Date) {
+  // A buyer revising their offer at the same moment must not be accepted at the old amount, nor at the old financing
+  // or message: the row is still the one read (`at`, its updated_at).
   const seen = from === "pending" ? sql`amount = ${amount}` : sql`counter_amount = ${amount}`;
   const { rows } = await db.execute<{ accepted: number }>(sql`
     with target as (
       select id from offers
       where id = ${offerId} and listing_id = ${listingId} and status = ${from} and ${seen}
+        and date_trunc('milliseconds', updated_at) = ${at.toISOString()}::timestamptz
       for update
     ), unit as (
       update listings set status = 'under_offer', updated_at = now()
@@ -249,11 +251,12 @@ async function acceptOffer(offerId: string, listingId: string, from: "pending" |
 }
 
 /**
- * `seen`: the figure the user's page showed with the button (the offer; for the buyer, the seller's counter). An answer
- * is about that figure: if the other party has changed it since the page loaded, nothing is decided and the page
- * refreshes to show the new one.
+ * `seen`: the figure the user's page showed with the button (the offer; for the buyer, the seller's counter), and
+ * `seenAt`: the offer's updated_at as that page showed it (ISO, milliseconds). An answer is about the offer as shown:
+ * if the other party has changed it since the page loaded (the figure, or the financing or message at the same
+ * figure), nothing is decided and the page refreshes to show it.
  */
-export async function respondToOffer(offerId: string, action: OfferAction, counterAmount?: number, seen?: number) {
+export async function respondToOffer(offerId: string, action: OfferAction, counterAmount?: number, seen?: number, seenAt?: string) {
   const t = await getT("errors");
   const user = await getCurrentUser();
   if (!user) return { error: t("auth.signInAgain") };
@@ -308,21 +311,25 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
   const notLive = (status: ListingStatus | undefined) => ({
     error: t(status && TAKEN_STATUSES.includes(status) ? "offer.unitTaken" : "offer.closed"),
   });
-  /** The error when the figure on file isn't the one the page showed (`seen`), with the page refreshed to show it. */
+  /**
+   * The error when the offer on file isn't the one the page showed (`seen`, `seenAt`), with the page refreshed to show
+   * it: the figure changed, or something else did (a buyer's new financing or message at the same amount).
+   */
   const changed = async (onFile: number | null, key: "offer.changed" | "offer.counterChanged") => {
-    if (seen == null || seen === onFile) return null;
+    if ((seen == null || seen === onFile) && (seenAt == null || seenAt === offer.updatedAt.toISOString())) return null;
     refresh();
     return { error: t(key, { amount: formatAED(onFile, await getLocale()) }) };
   };
   /**
-   * Moves this offer out of `from` (still at `amount`, when given: the figure the answer is about), unless something else
-   * (another tab, the other party) moved or revised it first.
+   * Moves this offer out of `from` (still at `amount`, when given: the figure the answer is about, and as read above),
+   * unless something else (another tab, the other party) moved or revised it first.
    */
   const move = async (from: OfferStatus[], set: Partial<typeof offers.$inferInsert>, amount?: number) => {
+    const asRead = sql`date_trunc('milliseconds', ${offers.updatedAt}) = ${offer.updatedAt.toISOString()}::timestamptz`;
     const [moved] = await db
       .update(offers)
       .set({ ...set, updatedAt: now })
-      .where(and(eq(offers.id, offerId), inArray(offers.status, from), amount == null ? undefined : eq(offers.amount, amount)))
+      .where(and(eq(offers.id, offerId), inArray(offers.status, from), amount == null ? undefined : and(eq(offers.amount, amount), asRead)))
       .returning({ id: offers.id });
     if (!moved) refresh(); // the page this came from is out of date: show the offer as it now is, next to the error
     return Boolean(moved);
@@ -335,7 +342,7 @@ export async function respondToOffer(offerId: string, action: OfferAction, count
     }
     const stale = await changed(amount, from === "pending" ? "offer.changed" : "offer.counterChanged");
     if (stale) return stale;
-    if (await acceptOffer(offerId, offer.listingId, from, amount)) return null;
+    if (await acceptOffer(offerId, offer.listingId, from, amount, offer.updatedAt)) return null;
     refresh();
     const [latest] = await db.select({ status: listings.status }).from(listings).where(eq(listings.id, offer.listingId)).limit(1);
     // Still live: this offer itself changed in the meantime (withdrawn, declined, revised).

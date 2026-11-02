@@ -51,9 +51,9 @@ team") any real listing that was already live without a permit; enter its permit
 live again. A seller who changes the asking price or description of a live listing sends it back to review, so
 the advert never shows a price or text the permit and our team haven't seen; with an accepted offer those two
 fields are fixed. Nor can an admin page opened before a change publish it unseen: Approve, or a save in "Manage
-listing", from a page loaded before the listing last changed (the seller's new price or photo, another admin's save)
-is refused; Approve then shows the listing as it is now, and the editor keeps what was typed for a reloaded page.
-The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each real deal page adds a
+listing", from a page loaded before the listing last changed (the seller's new price or photo, a build's new photos,
+another admin's save) is refused; Approve then shows the listing as it is now, and the editor keeps what was typed for
+a reloaded page. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each real deal page adds a
 `RealEstateListing` with its price. The emails that list units carry the same details: each deal in the newsletter,
 in a saved-search alert and in a price-drop notice to watchers has its permit line (the deal page's wording),
 followed by our ORN and the broker's BRN.
@@ -90,13 +90,19 @@ and a second submit (another tab) is refused. The staff forms (intake, Owner car
 server even when sent before the page's scripts have loaded, never as a GET with the seller's details in the
 address, and every admin control asks to sign in again once the session has ended, keeping what was typed.
 "Copy link for WhatsApp" opens a chat to the seller with a confirmation
-link in their language ("Email claim link" when they have an email and email is on). The link works once, for 7
+link in their language ("Email claim link" when they have an email and email is on); the dialog names the number the
+chat opens with, the one on the seller's account. A mobile typed for a seller found by their email that differs from
+the number on that account (an old one, or a stranger's who registered the seller's email first: neither is verified)
+is refused until staff check with the seller which is theirs. The link works once, for 7
 days, and a new one cancels the old. The seller opens it without logging in, ticks the same ownership / authority /
 Terms confirmation as the sell form and chooses an email and password. Until then a staff-created listing can't be
-approved (the Trakheesi permit is still required too); `/admin/users` → "Pending claim" lists those sellers. A link
-never sets a password on an account that already has one. The admin listing page flags descriptions that seem to
-contain a phone number, email, link or WhatsApp handle ("Contact details in text"); the text is never changed
-automatically.
+approved (the Trakheesi permit is still required too); `/admin/users` → "Pending claim" lists those sellers. A listing
+whose ownership our team confirmed without the seller (their signed Form A, or our record of their authority on an
+import) still gets a link while its account has no password — an owner entered by mobile number has no other way in
+— and its seller stays on "Pending claim" until they use it (the claim keeps the confirmation's date and notifies
+nobody); a seller who can sign in doesn't need one. A link never sets a password on an account that already has one.
+The admin listing page flags descriptions that seem to contain a phone number, email, link or WhatsApp handle
+("Contact details in text"); the text is never changed automatically.
 
 **Bulk import.** Units a partner network shared with the owners' written permission come as one or more JSON files we
 prepare (`offplandistress-import/1`, documented in `src/lib/import-format.ts`: the source, then per unit its ref, link,
@@ -111,8 +117,11 @@ files in `scripts/partner-stock/` (the same format, with each photo's source URL
 the production build itself (`scripts/import-partner-stock.mjs`, run from `scripts/migrate.mjs`): the same rules (a
 source key of lowercase letters, digits and dashes, each unit's ref once per file, at most 6 photos whose names differ
 before the extension — a file or unit that breaks one is refused, with the reason in the build log) and placeholder
-owner, photos fetched and resized at build time, run again on every build (one build at a time: a second production
-build waits for the first, so no photo is stored twice), and an in-app notice to admins when units arrive. Each build
+owner, photos fetched and resized at build time and stored as JPEG, as the app's uploads are (the share image and
+Outlook can't show WebP: a photo stored as WebP, by an earlier build or an import file, is converted once, in place, by
+the next build; until then the share image converts it as it draws), run again on every
+build (one build at a time: a second production build waits for the first, so no photo is stored twice), and an
+in-app notice to admins when units arrive. Each build
 also syncs the units already imported with the file, which is regenerated from the network: a synced field (prices,
 paid, instalments, plan, handover, size, floor, view, description) takes the file's value unless our team edited it
 since the last sync (the snapshot in `listings.source.synced` tells; their edit stands and is reported once as a
@@ -136,7 +145,11 @@ review, filed under one placeholder owner per source ("Owner to be added (…)",
 never with its internal address — on the listing, `/admin/offers` and the deal file; no password, never emailed or
 nudged; sign-ups refuse `.invalid` addresses, so nobody can register it first), under "Imported — owner to add" on
 `/admin`, its photos private. On its page, enter the owner in the Owner
-card (same matching as "New listing"; changing it cancels any claim link), then confirm ownership with the claim link
+card (same matching as "New listing"; changing it cancels any claim link; the card stays until ownership is confirmed
+and the owner can sign in, so a mistyped mobile or email can be corrected, and filing a confirmed listing under an
+account that can already sign in — it has the listing, its offers and documents at once, and the choice is final —
+first asks to confirm that account by name, ticked again for any other account, and changes nothing on the listing or
+that account until then), then confirm ownership with the claim link
 or, for co-broker stock, upload the owner's signed Form A ("Form A (signed by the owner)") and tick "The owner's
 signed Form A is uploaded and checked"; enter the Trakheesi permit, then approve — or publish the whole import at once on
 the account owner's attestation (see Advertising compliance); the tab then lists what is live without an owner yet.
@@ -152,7 +165,8 @@ then rewrites the manifest deterministically (units by ref, 1-space indent): a u
 with `"removed": "YYYY-MM-DD"` for 90 days (the import withdraws it, and restores it if it comes back); bulk deals, shops
 and units outside Dubai are never listed (one listed before keeps its previous entry until it leaves the site), and a
 unit's area must be one we know to be in Dubai — on our communities list or in the script's `DUBAI_AREAS` (areas known
-to be outside are in `NON_DUBAI`): one in an unknown area is skipped until someone adds the area to either list; a
+to be outside are in `NON_DUBAI`, each name matched as a whole word, not as a road's name such as "Al Ain Road", and
+never in an area known to be in Dubai): one in an unknown area is skipped until someone adds the area to either list; a
 ready unit ("READY…") takes the day it was posted as its handover date, so the site shows it as ready; a unit
 whose plan is missing, illegible or inconsistent keeps its previous entry and is flagged (exit 2), as does one whose
 page's size, prices or handover can no longer be read as before (the site's wording changed: fix the parser, never the
@@ -259,10 +273,10 @@ two. The other bidders keep their offers as backups and are told; if the deal fa
 live again, the accepted offer is declined and backups are told the unit is available. A unit that is withdrawn,
 rejected or transferred closes its open offers; a seller who withdraws a unit under offer ends the deal (the buyer
 and admins are told; My listings warns as the listing's page does, and offers no Resume on a unit our team paused).
-`OFFERS.keepBackups` in `src/lib/config.ts` switches backups off. Every answer is about the figure on the page: if the
-buyer revised the offer (or the seller's counter changed) after the page loaded, Accept, Counter or Decline decides
-nothing and the page shows the new figure. A counter has to be above the buyer's offer; the counter box suggests 5%
-over it, capped at the asking price only while that is still above the offer.
+`OFFERS.keepBackups` in `src/lib/config.ts` switches backups off. Every answer is about the offer on the page: if the
+buyer revised it after the page loaded (its amount, or only its financing or message), or the seller's counter changed,
+Accept, Counter or Decline decides nothing and the page shows the offer as it now is. A counter has to be above the
+buyer's offer; the counter box suggests 5% over it, capped at the asking price only while that is still above the offer.
 
 ### Seller leads and attribution
 
@@ -288,7 +302,8 @@ typed and, with JavaScript, replaces its token by itself every hour, when the ta
 refused submission), then the limits: 5 contact messages an hour per IP (10 for deal-page requests, 5 estimates), 3 a
 day per address (10 for deal-page requests; 3 per phone for estimates). A message is then scored — SEO / "into Google's
 index" wording in English or Arabic (full-width and look-alike letters folded first), links to other sites, a one-word
-name, a fake address, a long off-topic contact message — and at 3 points it is stored flagged: the sender sees the
+name (a Chinese, Japanese or Korean name, written without a space, is a full name), a fake address, a long off-topic
+contact message — and at 3 points it is stored flagged: the sender sees the
 thank-you, nobody is notified, and it sits on the **Spam** tab of `/admin/inquiries` with its reason (in the admin's
 language); "Not spam" moves it to the inbox and sends the team the notice it skipped, once (none for a message that
 reached the inbox when it arrived, or that the migration flagged: the team had that one's), "Spam" on an inbox row does
@@ -392,6 +407,9 @@ are never stored (a daily-rotating anonymous id instead). A page view is one pag
 the filters of a campaign link (its tags go too) or switching the page's language doesn't count another one (after a
 switch the view is recorded in the language chosen); new campaign tags on the same page do. Signed-in admins are never
 counted; "Ignore this device" on the page covers a browser you use signed out. Page views are deleted after 13 months.
+A listing's own view count (the seller's "Listing views", the admin page, the 21-day no-offers nudge) counts a person
+opening its deal page: not the same crawlers, link previews and scripts, a HEAD request, the page drawn again after
+Watch or an offer, the listing's seller or our team.
 
 ## Stack
 
@@ -401,7 +419,11 @@ counted; "Ignore this device" on the page covers a browser you use signed out. P
 - i18n: typed English / Arabic / Chinese dictionaries per area in `src/i18n/messages/`; public pages take the
   language from the address (`/ar/…`, `/zh/…`), the dashboard and admin console from a cookie or the browser's
   `Accept-Language`
-- Documents and photos stored in Postgres (`files` table, 4 MB per file)
+- Documents and photos stored in Postgres (`files` table, 4 MB per file), each as the type its first bytes show (PDF,
+  JPEG, PNG, WebP or HEIC / HEIF; photos JPEG, PNG or WebP), whatever its name or which of those types the browser gave
+  it (one the browser couldn't name, a HEIC on some Windows and Android phones, is judged by its bytes alone); anything
+  else is refused. The name is stored and served without invisible or direction-changing characters, with that type's
+  extension (`src/lib/uploads.ts`; the import page recognises a photo it uploaded by that cleaned name)
 - Vercel Cron for saved-search alerts and the daily ops job (`vercel.json`)
 
 ## Deploying on Vercel

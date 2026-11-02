@@ -6,9 +6,9 @@ import { dirOf, type Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { tFor } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
-import { discountLabels } from "@/components/DiscountBadges";
+import { discountLabels } from "@/lib/discount-labels";
 import { BRAND, brandAddress, brandName, brokerName, PUBLIC_STATUSES, type UnitTypeKey } from "./config";
-import { analyzeDeal } from "./deal-math";
+import { analyzeDeal, isReady } from "./deal-math";
 import { emailEnabled, sendEmail } from "./email";
 import { formatAED, formatDate, formatQuarter, refCode } from "./format";
 import { confirmedSubscribers, markSent, subscriberStats, unsubscribeApiPath, unsubscribePath } from "./newsletter";
@@ -44,6 +44,8 @@ export type IssueDeal = {
   askingPrice: number;
   launchPrice: number | null;
   handoverDate: string | null;
+  /** Rows of the payment plan: with no date, fully paid and none left, the unit is ready (isReady). */
+  planRows: number;
   /** The first photo as an absolute address, or null when there is none the public can load. */
   image: string | null;
   dldPermit: string | null;
@@ -89,6 +91,8 @@ const dealColumns = {
   publicPrice: listings.publicPrice,
   launchPrice: listings.launchPrice,
   handoverDate: listings.handoverDate,
+  // As src/lib/listings.ts planRows.
+  planRows: sql<number>`(case when jsonb_typeof(${listings.paymentPlan}) = 'array' then jsonb_array_length(${listings.paymentPlan}) else 0 end)`,
   images: listings.images,
   dldPermit: listings.dldPermit,
   permitAttestedAt: listings.permitAttestedAt,
@@ -107,6 +111,7 @@ type DealRow = {
   publicPrice: number | null;
   launchPrice: number | null;
   handoverDate: string | null;
+  planRows: number;
   images: string[];
   dldPermit: string | null;
   permitAttestedAt: Date | null;
@@ -135,6 +140,7 @@ function toDeal(r: DealRow): IssueDeal {
     askingPrice: r.askingPrice,
     launchPrice: r.launchPrice,
     handoverDate: r.handoverDate,
+    planRows: r.planRows,
     image: publicImage(r.images),
     dldPermit: r.dldPermit,
     permitAttested: !r.dldPermit && r.permitAttestedAt != null,
@@ -194,11 +200,11 @@ export async function composeIssue(now = new Date(), opts: { since?: Date } = {}
   const newIds = new Set(newRows.map((r) => r.id));
 
   // Price drops: the audit trail's publicPrice [from, to] diffs (listing.update and listing.approve in
-  // src/app/actions/admin.ts, listing.sync_restored in scripts/import-partner-stock.mjs: whichever action moved the
-  // public price, the diff carries it), each unit's earliest in the window, up or down: its "from" is the price
-  // advertised when the window opened. The "to" is the price advertised now, and only a unit cheaper now than then is
-  // a drop (one raised and then cut by less isn't). A unit that went live in the window is listed as new, at its
-  // current price, not as a drop.
+  // src/app/actions/admin.ts, listing.sync_update and listing.sync_restored in scripts/import-partner-stock.mjs:
+  // whichever action moved the public price, the diff carries it), each unit's earliest in the window, up or down: its
+  // "from" is the price advertised when the window opened. The "to" is the price advertised now, and only a unit cheaper
+  // now than then is a drop (one raised and then cut by less isn't). A unit that went live in the window is listed as
+  // new, at its current price, not as a drop.
   const priceDiff = sql`${auditEvents.diff}->'publicPrice'`;
   const events = await db
     .selectDistinctOn([auditEvents.entityId], {
@@ -332,7 +338,8 @@ export function renderIssue(content: IssueContent, locale: Locale, opts: { unsub
     const facts = [
       tc(`unit.${d.unitType}`),
       tc("sqft", { n: d.sizeSqft.toLocaleString("en-AE") }),
-      t("issue.handover", { when: formatQuarter(d.handoverDate, locale) }),
+      // A unit already handed over is "Ready", as on its card and deal page, not "Handover TBC".
+      isReady(d, dubaiToday(content.until)) ? tc("handoverReady") : t("issue.handover", { when: formatQuarter(d.handoverDate, locale) }),
     ].join(" · ");
     const discount = [chips.originalIsDiscount ? chips.original : null, chips.launch].filter(Boolean).join(" · ") || null;
     // The same wording as the deal page's "Listed by" block (src/app/(site)/deals/[ref]/page.tsx).

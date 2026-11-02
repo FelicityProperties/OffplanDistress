@@ -17,7 +17,7 @@ export const QUERY_HEADER = "x-od-query";
  * choice.
  */
 export const SAVED_HEADER = "x-od-saved";
-/** The request's method: a HEAD request shows nobody the page (the deal page doesn't count it as a view). */
+/** The request's method: the deal page counts a view only for a GET (no HEAD, nor a server action drawing it again). */
 export const METHOD_HEADER = "x-od-method";
 
 /** Prefix of the Arabic pages (kept for older callers; prefixOf() knows every language). */
