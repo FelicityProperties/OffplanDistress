@@ -1,6 +1,7 @@
 import Link from "@/components/LocaleLink";
 import { BadgeCheck, BedDouble, CalendarClock, Maximize2, TrendingDown } from "lucide-react";
 import { DealImage } from "@/components/DealImage";
+import { DiscountBadges } from "@/components/DiscountBadges";
 import { WatchButton } from "@/components/WatchButton";
 import { MotivationBadge, SampleBadge, StatusPill } from "@/components/badges";
 import { getLocale, getT } from "@/i18n/server";
@@ -29,7 +30,6 @@ export async function DealCard({
   const list = layout === "list";
   const href = `/deals/${refCode(deal.refNo)}`;
   const a = analyzeDeal(deal);
-  const discountPct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
   const saving = a.savingVsLaunch != null && a.savingVsLaunch > 0 ? a.savingVsLaunch : null;
   const community = communityName(tc, deal.community, deal.communityOther);
   const developer = developerName(tc, deal.developer, deal.developerOther);
@@ -53,12 +53,7 @@ export async function DealCard({
           />
           <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/5 to-transparent" />
           <div className="absolute start-3 end-14 top-3 flex flex-wrap gap-1.5">
-            {discountPct != null && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-xs font-semibold text-success-foreground tabular shadow-sm">
-                <TrendingDown className="h-3.5 w-3.5" />
-                {tc("vsLaunch", { pct: discountPct })}
-              </span>
-            )}
+            <DiscountBadges a={a} tc={tc} />
             {deal.status !== "live" && <StatusPill tone="gold">{tc("underOffer")}</StatusPill>}
           </div>
           <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2">

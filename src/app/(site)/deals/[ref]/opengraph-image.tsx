@@ -1,3 +1,4 @@
+import { discountPct } from "@/components/DiscountBadges";
 import { translator } from "@/i18n/translator";
 import { BRAND, UNIT_TYPES } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
@@ -24,7 +25,10 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
   if (!l) return fallback();
 
   const a = analyzeDeal(l);
-  const pct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
+  // As the chips (src/components/DiscountBadges.tsx): below the original (SPA) price, then today's launch price.
+  const pct = discountPct(a.discountVsOriginal);
+  const launchPct = discountPct(a.discountVsLaunch);
+  const launchLine = launchPct != null && launchPct >= 1 ? `−${launchPct}% vs launch price today` : null;
   const saving = a.savingVsLaunch != null && a.savingVsLaunch > 0 ? a.savingVsLaunch : null;
   const photo = await photoDataUrl(l.images[0]);
   const unit = UNIT_TYPES[l.unitType as keyof typeof UNIT_TYPES] ?? l.unitType;
@@ -51,10 +55,10 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
           <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: 640, padding: 56 }}>
             <OgWordmark size={30} />
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
-                {pct != null && (
+              <div style={{ display: "flex", gap: 10, marginBottom: launchLine ? 8 : 18 }}>
+                {pct != null && pct >= 1 && (
                   <div style={{ display: "flex", padding: "8px 16px", borderRadius: 999, background: OG.success, fontSize: 22, fontWeight: 700 }}>
-                    −{pct}% vs launch
+                    −{pct}% vs original price
                   </div>
                 )}
                 {l.isSample && (
@@ -63,6 +67,7 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
                   </div>
                 )}
               </div>
+              {launchLine && <div style={{ display: "flex", marginBottom: 18, fontSize: 20, fontWeight: 600, color: OG.success }}>{launchLine}</div>}
               <div style={{ display: "flex", fontSize: 22, letterSpacing: 3, color: OG.muted, textTransform: "uppercase" }}>{developer}</div>
               <div style={{ display: "flex", marginTop: 6, fontSize: 52, fontWeight: 700, lineHeight: 1.08, letterSpacing: -1 }}>
                 {name.length > 42 ? `${name.slice(0, 40)}…` : name}

@@ -33,6 +33,11 @@ const cashToClose = sql<number>`(${listings.askingPrice}::numeric${
 const discount = sql<number | null>`case when ${listings.launchPrice} > 0 then 1 - (${saleValue})::float / ${listings.launchPrice} end`;
 /** How far below the original SPA price the unit sells for (negative when above it); null without an original price. */
 const belowOriginal = sql<number | null>`case when ${listings.originalPrice} > 0 then 1 - (${saleValue})::float / ${listings.originalPrice} end`;
+/**
+ * The same as the whole percentage the cards' chip shows (discountPct in src/components/DiscountBadges.tsx): exact
+ * numeric arithmetic rounded half up, so "15%+" finds every unit whose chip says 15% or more.
+ */
+const belowOriginalPct = sql<number | null>`case when ${listings.originalPrice} > 0 then floor((${listings.originalPrice} - ${saleValue})::numeric * 100 / ${listings.originalPrice} + 0.5) end`;
 const paidPct = sql<number>`case when ${listings.originalPrice} > 0 then ${listings.amountPaid}::float / ${listings.originalPrice} else 0 end`;
 const watchers = sql<number>`(select count(*)::int from ${watchlist} w where w.listing_id = ${listings.id})`;
 // Qualified: in a select from listings alone Drizzle writes ${listings.id} as a bare "id", which inside the subquery
@@ -111,6 +116,7 @@ export type DealFilters = {
   maxTransfer?: number;
   minPaid?: number;
   handoverBy?: number;
+  /** Min. % below the original (SPA) price, as the whole percentage the cards' main chip shows (belowOriginalPct). */
   minDiscount?: number;
   verified?: boolean;
   sort: "discount" | "cash" | "handover" | "newest";
@@ -213,7 +219,7 @@ function dealConditions(f: DealFilters): SQL[] {
   if (f.maxTransfer != null) where.push(sql`${cashToClose} <= ${String(f.maxTransfer)}::bigint`);
   if (f.minPaid != null) where.push(sql`${paidPct} >= ${f.minPaid / 100}`);
   if (f.handoverBy != null) where.push(lte(listings.handoverDate, `${f.handoverBy}-12-31`));
-  if (f.minDiscount != null) where.push(sql`${discount} >= ${f.minDiscount / 100}`);
+  if (f.minDiscount != null) where.push(sql`${belowOriginalPct} >= ${f.minDiscount}`);
   // sample listings are illustrations: never "verified", whatever the column says
   if (f.verified) where.push(eq(listings.verified, true), eq(listings.isSample, false));
   return where;
@@ -229,8 +235,8 @@ export async function searchDeals(f: DealFilters) {
         ? [sql`${listings.handoverDate} asc nulls last`]
         : f.sort === "newest"
           ? [desc(sql`coalesce(${listings.publishedAt}, ${listings.createdAt})`)]
-          : // The default view: sellers who need out now come first, then the deepest discounts.
-            [sql`(${listings.motivation} = 'urgent') desc`, sql`${discount} desc nulls last`];
+          : // The default view: sellers who need out now come first, then the furthest below the original price.
+            [sql`(${listings.motivation} = 'urgent') desc`, sql`${belowOriginal} desc nulls last`];
 
   const condition = and(...where);
   const [rows, [{ total }]] = await Promise.all([
@@ -285,7 +291,9 @@ export async function featuredDeals(limit = 6) {
     .select(cardColumns)
     .from(listings)
     .where(and(eq(listings.status, "live"), advertisedSql()))
-    .orderBy(sql`${discount} desc nulls last`)
+    // The home strip and the hero card: furthest below the original price first (every unit has one), the launch
+    // discount as the tiebreak.
+    .orderBy(sql`${belowOriginal} desc nulls last`, sql`${discount} desc nulls last`)
     .limit(limit);
   return rows as ListingCard[];
 }
@@ -351,7 +359,7 @@ export async function similarDeals(l: { id: string; community: string; developer
     .select(cardColumns)
     .from(listings)
     .where(and(advertisedSql(), ne(listings.id, l.id), or(...same)))
-    .orderBy(sql`${discount} desc nulls last`)
+    .orderBy(sql`${belowOriginal} desc nulls last`, sql`${discount} desc nulls last`)
     .limit(limit);
   return rows as ListingCard[];
 }

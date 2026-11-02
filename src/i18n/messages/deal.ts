@@ -7,6 +7,7 @@ export default defineMessages({
     "meta.unavailable": "Deal unavailable",
     "meta.title": "{unit} in {project}",
     "meta.titleDiscount": "{unit} in {project} — {pct}% below launch",
+    "meta.titleOriginal": "{unit} in {project} — {pct}% below original price",
     "meta.description":
       "{developer}, {community}. {paid} paid, handover {handover}. Take over the payment plan for {upfront} upfront.",
 
@@ -113,6 +114,7 @@ export default defineMessages({
     "side.nextInstalment": "Next instalment {date}",
     "side.feeNote": "2% + VAT, charged only on successful transfer. We handle the NOC, assignment and DLD paperwork.",
     "side.usd": "≈ {amount} at the fixed AED–USD peg",
+    "side.sellerLoss": "The seller takes {amount} less than they paid in",
     "side.whatsapp": "WhatsApp us",
     "side.call": "Call",
     "side.waMessage": "Hello OffplanDistress, I'm interested in {ref} ({project}). {url}",
@@ -155,6 +157,7 @@ export default defineMessages({
     "meta.unavailable": "الصفقة غير متاحة",
     "meta.title": "{unit} في {project}",
     "meta.titleDiscount": "{unit} في {project} — أقل بـ {pct}% من سعر الإطلاق",
+    "meta.titleOriginal": "{unit} في {project} — أقل من السعر الأصلي بنسبة ⁨{pct}%⁩",
     "meta.description":
       "{developer}، {community}. نسبة المدفوع {paid}، والتسليم {handover}. تولَّ خطة الدفع مقابل دفعة مقدّمة قدرها {upfront}.",
 
@@ -260,6 +263,7 @@ export default defineMessages({
     "side.feeNote":
       "2% + ضريبة القيمة المضافة، تُستحق فقط عند إتمام نقل الملكية. نتولى إجراءات شهادة عدم الممانعة والتنازل ودائرة الأراضي والأملاك.",
     "side.usd": "≈ {amount} وفق سعر الصرف الثابت بين الدرهم والدولار",
+    "side.sellerLoss": "يقبل البائع ⁨{amount}⁩ أقل مما دفعه",
     "side.whatsapp": "راسلنا عبر واتساب",
     "side.call": "اتصل بنا",
     "side.waMessage": "مرحباً، أنا مهتم بالصفقة {ref} ({project}). {url}",
@@ -301,6 +305,7 @@ export default defineMessages({
     "meta.unavailable": "房源不可用",
     "meta.title": "{project} {unit}",
     "meta.titleDiscount": "{project} {unit}（较开发商当前售价低 {pct}%）",
+    "meta.titleOriginal": "{project} {unit}（较原始合同价低 {pct}%）",
     "meta.description":
       "{developer}，{community}。已付 {paid}，交房时间：{handover}。支付 {upfront} 即可接手剩余付款计划。",
 
@@ -405,6 +410,7 @@ export default defineMessages({
     "side.nextInstalment": "下一期分期款：{date}",
     "side.feeNote": "服务费 2% + 增值税，仅在成功过户后收取。我们负责办理 NOC、转让及 DLD 手续。",
     "side.usd": "≈ {amount}（按迪拉姆兑美元固定汇率）",
+    "side.sellerLoss": "卖家以低于已付金额 {amount} 的价格出售",
     "side.whatsapp": "WhatsApp 联系我们",
     "side.call": "致电",
     "side.waMessage": "您好 OffplanDistress，我对 {ref}（{project}）感兴趣。{url}",

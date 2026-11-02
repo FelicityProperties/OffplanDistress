@@ -144,7 +144,7 @@ unless our team rearranged it by hand since the last sync (left as they made it,
 live in `scripts/partner-stock/direct.json` (source key `direct`, "Direct sellers"), written by hand in the same format:
 the figures from the owner's documents (the plan rows as the developer's schedule lists them, the instalments already
 due but not confirmed paid kept in the plan so the deal page shows them as "dated before today"), `motivation: "urgent"`
-when the owner needs out now (the default /deals order puts urgent sellers first, then the deepest discounts), the
+when the owner needs out now (the default /deals order puts urgent sellers first, then the furthest below the original price), the
 photos as public URLs — developer renders, and a photo of our own hosted in the repository under
 `scripts/partner-stock/direct-photos/` through its raw.githubusercontent.com address — and the owner's documents never
 committed (they carry personal data; they go into the deal file on the listing's admin page). The import files them
@@ -160,6 +160,21 @@ registration / trustee and NOC estimates + arrears with the developer. It is alw
 statement under "Arrears with the developer" in `/admin/listings/{id}` (0 and 0 when the seller is up to date; empty
 when not checked). The deal page also shows a dated cash timeline and warns when an instalment falls due within 45
 days. `minCash` / `maxCash`, saved searches and the Distress Index keep their meaning: equity to the seller.
+
+### Discount chips and seller labels
+
+The main chip on a card, the deal page, the home hero, the newsletter row and the share image is the discount against
+the original (SPA) price the seller signed — "20% below original price" (sale value = asking price + remaining plan;
+`discountVsOriginal` in `analyzeDeal`, `belowOriginal` in SQL), known for every listing; "At original price" or "5%
+above original price" when the unit isn't cheaper. The discount against the developer's launch price today ("28% below
+launch price today") is a second, outlined chip, only on listings with a launch price. The deal page's `<title>` leads
+with the same figure (the launch one only for a unit at or above its original price). Percentages are whole, rounded
+half up (19.5% → "20% below"). The default sort ("Most below original price", urgent sellers first) and the
+`minDiscount` filter ("Min. below original price"; the URL parameter is unchanged, so saved searches and their alerts
+still work) use the original-price figure, the filter on the whole percentage, so "15%+" finds every unit whose chip
+says 15% or more; the Distress Index keeps its launch-price discount. The seller chip is spelled out — "Urgent exit",
+"Motivated seller", "Flexible seller" — with the hint as its tooltip; the filter chips keep the short labels. One
+component renders the chips everywhere: `src/components/DiscountBadges.tsx`.
 
 ### Follow-ups and reminders
 

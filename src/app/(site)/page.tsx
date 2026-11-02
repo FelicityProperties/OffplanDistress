@@ -16,6 +16,7 @@ import {
 import { CtaBand } from "@/components/CtaBand";
 import { communityName, DealCard } from "@/components/DealCard";
 import { DealImage } from "@/components/DealImage";
+import { DiscountBadges } from "@/components/DiscountBadges";
 import { FeeCalculator } from "@/components/FeeCalculator";
 import { NewsletterBand } from "@/components/NewsletterBand";
 import { SellerEstimateSection } from "@/components/sell/SellerEstimateSection";
@@ -47,7 +48,6 @@ const HERO_POINTS = ["rera", "spa", "dld"] as const;
 async function HeroDeal({ deal, locale }: { deal: ListingCard; locale: Locale }) {
   const [t, tc] = await Promise.all([getT("home"), getT("common")]);
   const a = analyzeDeal(deal);
-  const pct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
   return (
     <Link
       href={`/deals/${refCode(deal.refNo)}`}
@@ -61,11 +61,8 @@ async function HeroDeal({ deal, locale }: { deal: ListingCard; locale: Locale })
             <span className="h-1.5 w-1.5 motion-safe:animate-pulse rounded-full bg-success" aria-hidden />
             {t("preview.eyebrow")}
           </span>
-          {pct != null && (
-            <span className="rounded-full bg-success px-2.5 py-1 text-[11px] font-semibold text-success-foreground tabular">
-              {tc("vsLaunch", { pct })}
-            </span>
-          )}
+          {/* The original-price chip only: one line at this width. */}
+          <DiscountBadges a={a} tc={tc} size="xs" primaryOnly />
         </div>
         <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2 text-primary-foreground">
           <div className="min-w-0">

@@ -27,6 +27,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { DealCard } from "@/components/DealCard";
+import { DiscountBadges, discountPct } from "@/components/DiscountBadges";
 import { JsonLd } from "@/components/JsonLd";
 import { WatchButton } from "@/components/WatchButton";
 import { MotivationBadge, SampleBadge, StatusPill } from "@/components/badges";
@@ -67,10 +68,15 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
   const l = row.listing;
   const a = analyzeDeal(l);
   const vars = { unit: tc(`unit.${l.unitType}`), project: l.projectName };
+  // The chips' lead figure, below the original (SPA) price; a unit at or above it but below today's launch price says so.
+  const launchPct = discountPct(a.discountVsLaunch);
+  const originalPct = discountPct(a.discountVsOriginal);
   const title =
-    a.discountVsLaunch && a.discountVsLaunch > 0
-      ? t("meta.titleDiscount", { ...vars, pct: Math.round(a.discountVsLaunch * 100) })
-      : t("meta.title", vars);
+    originalPct != null && originalPct >= 1
+      ? t("meta.titleOriginal", { ...vars, pct: originalPct })
+      : launchPct != null && launchPct >= 1
+        ? t("meta.titleDiscount", { ...vars, pct: launchPct })
+        : t("meta.title", vars);
   const description = t("meta.description", {
     developer: developerName(tc, l.developer, l.developerOther),
     community: communityName(tc, l.community, l.communityOther),
@@ -136,7 +142,6 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const permitHeld = !l.isSample && !l.dldPermit && l.permitAttestedAt != null;
   const community = communityName(tc, l.community, l.communityOther);
   const developer = developerName(tc, l.developer, l.developerOther);
-  const discountPct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
   const paidWidth = Math.min(100, Math.max(0, Math.round(a.paidPct * 100)));
   const plan = l.paymentPlan ?? [];
   // Sample listings are seeded with English copy; Arabic and Chinese visitors get a translated version.
@@ -345,12 +350,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           alt={`${l.projectName}, ${community}`}
           badge={
             <div className="absolute start-4 top-4 flex flex-wrap items-center gap-2 sm:start-5 sm:top-5">
-              {discountPct != null && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-success px-3 py-1 text-sm font-semibold text-success-foreground shadow-sm tabular">
-                  <TrendingDown className="h-4 w-4" aria-hidden />
-                  {tc("vsLaunch", { pct: discountPct })}
-                </span>
-              )}
+              <DiscountBadges a={a} tc={tc} size="md" />
               {l.verified && !l.isSample && (
                 <span className="glass-dark inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium text-primary-foreground">
                   <BadgeCheck className="h-4 w-4 text-success" aria-hidden />
@@ -463,6 +463,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   <p className="mt-1.5 text-xs text-primary-foreground/60 tabular">
                     {t("side.usd", { amount: formatUSDFromAED(l.askingPrice, locale) })}
                   </p>
+                  {/* The seller's loss: what they paid the developer minus what they ask for it. */}
+                  {a.sellerDiscount > 0 && (
+                    <p className="mt-1.5 text-xs text-primary-foreground/60 tabular" data-seller-loss={a.sellerDiscount}>
+                      {t("side.sellerLoss", { amount: formatAED(a.sellerDiscount, locale) })}
+                    </p>
+                  )}
                   <p className="mt-3 text-sm text-primary-foreground/75 wrap-anywhere">
                     {t("side.thenPlan", { amount: formatAED(a.remainingAfterTransfer, locale), developer })}
                   </p>
