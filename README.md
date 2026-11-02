@@ -213,7 +213,8 @@ milestone labels in English, Arabic or Chinese: "On handover" or "On completion"
 the handover payment, even when dated after the listing's handover date (the step then shows that row's quarter);
 "post / after handover or completion" (بعد…, …后) comes after it and "pre / before / until …" before it; a percentage
 next to "completion" is a construction stage ("on 50% completion", "completion of 70%", "完工 50%"), one before "on
-completion" the payment's share ("40% on completion" is the handover payment). The partner sync's placeholder developer
+completion" or right after "on / post completion" (عند الإنجاز) the payment's share ("40% on completion" and "On
+completion 40%" are the handover payment, "Post completion 10%" comes after it). The partner sync's placeholder developer
 ("Other" / "Not stated") reads "Developer not stated" in the visitor's language. The deal page's gallery reaches every
 photo (previous / next and the arrow keys; the fourth thumbnail says how many more there are), and dates on the site
 are Dubai calendar dates.

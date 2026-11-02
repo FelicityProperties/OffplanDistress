@@ -137,8 +137,9 @@ function quarterStart(day: string) {
 // completion"), so "post-/after …" ("6 months from handover", "Completion + 12 months", بعد التسليم, 竣工后) and "pre-/
 // before/until …" (قبل الإنجاز, 完工前) are checked before the word itself, for both words. "Completion" only counts when it
 // isn't a construction milestone: a percentage next to it is how far the building has got ("on 50% completion",
-// "completion of 70%", "完工 50%"), while one before "on / upon completion" is the payment's share of the price ("40% on
-// completion": the handover payment).
+// "completion of 70%", "عند إنجاز ٥٠٪", "完工 50%"), while one before "on / upon completion", or right after "on / post /
+// before … completion" (عند / بعد / قبل الإنجاز, with the article), is the payment's share of the price ("40% on
+// completion", "On completion 40%": the handover payment; "Post completion 10%").
 const POST_HANDOVER =
   /post[\s-]*hand\s*-?\s*over|after\s+(the\s+)?hand\s*-?\s*over|(days?|weeks?|months?|years?)\s+from\s+(the\s+)?hand\s*-?\s*over|hand\s*-?\s*over\s*\+\s*\d|بعد\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?后/i;
 const POST_COMPLETION =
@@ -149,17 +150,23 @@ const HANDOVER_WORD = /hand\s*-?\s*over|تسليم|استلام|交[房付楼]/i
 const COMPLETION_WORD = /\bcompletion\b|إنجاز|إكمال|完工|竣工/i;
 const PCT = String.raw`[\d٠-٩]+(?:[.,٫][\d٠-٩]+)?\s*[%％٪]`;
 const COMPLETION_ANY = String.raw`completion|(?:ال)?(?:إنجاز|إكمال)|完工|竣工`;
-const CONSTRUCTION = new RegExp(
-  String.raw`construct|بناء|إنشاء|施工|建设|工程|${PCT}\s*(?:of\s+)?(?:the\s+)?(?:${COMPLETION_ANY})|(?:${COMPLETION_ANY})\s*(?:of\s+|(?:ب)?نسبة\s*)?${PCT}`,
+const CONSTRUCTION_WORD = /construct|بناء|إنشاء|施工|建设|工程/i;
+const STAGE = new RegExp(
+  String.raw`${PCT}\s*(?:of\s+)?(?:the\s+)?(?:${COMPLETION_ANY})|(?:${COMPLETION_ANY})\s*(?:of\s+|(?:ب)?نسبة\s*)?${PCT}`,
   "i",
 );
+const SHARE = new RegExp(
+  String.raw`(?:\b(?:on|upon|at|post|after|pre|before|until|till|prior\s+to|up\s+to)[\s-]+(?:the\s+)?completion|(?:عند|بعد|قبل|حتى)\s+ال(?:إنجاز|إكمال))\s*[:(–-]?\s*${PCT}`,
+  "i",
+);
+const isConstruction = (label: string) => CONSTRUCTION_WORD.test(label) || (STAGE.test(label) && !SHARE.test(label));
 
-const isPostHandover = (label: string) => POST_HANDOVER.test(label) || (POST_COMPLETION.test(label) && !CONSTRUCTION.test(label));
-const isPreHandover = (label: string) => PRE_HANDOVER.test(label) || (PRE_COMPLETION.test(label) && !CONSTRUCTION.test(label));
+const isPostHandover = (label: string) => POST_HANDOVER.test(label) || (POST_COMPLETION.test(label) && !isConstruction(label));
+const isPreHandover = (label: string) => PRE_HANDOVER.test(label) || (PRE_COMPLETION.test(label) && !isConstruction(label));
 
 function isHandoverLabel(label: string) {
   if (isPostHandover(label) || isPreHandover(label)) return false;
-  return HANDOVER_WORD.test(label) || (COMPLETION_WORD.test(label) && !CONSTRUCTION.test(label));
+  return HANDOVER_WORD.test(label) || (COMPLETION_WORD.test(label) && !isConstruction(label));
 }
 
 type Bucket = { sum: number; count: number };
