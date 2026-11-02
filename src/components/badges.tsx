@@ -8,11 +8,15 @@ import type { MOTIVATION } from "@/lib/config";
 
 type Motivation = keyof typeof MOTIVATION;
 
-/** Seller-motivation chip. `label` overrides the translated text (optional, for callers that have their own). */
+/**
+ * Seller-motivation chip, spelled out ("Urgent exit", "Motivated seller"…) with the hint as its tooltip. `label`
+ * overrides the translated text (optional, for callers that have their own).
+ */
 export function MotivationBadge({ m, label }: { m: Motivation; label?: string }) {
   const tc = useT("common");
   return (
     <span
+      title={tc(`motivation.${m}.hint`)}
       className={cn(
         "rounded-full px-2 py-0.5 text-[11px] font-semibold",
         m === "urgent" && "bg-warning-soft text-warning",
@@ -20,7 +24,7 @@ export function MotivationBadge({ m, label }: { m: Motivation; label?: string })
         m === "flexible" && "bg-muted text-muted-foreground",
       )}
     >
-      {label ?? tc(`motivation.${m}`)}
+      {label ?? tc(`motivationBadge.${m}`)}
     </span>
   );
 }

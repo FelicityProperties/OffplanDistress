@@ -6,6 +6,7 @@ import { dirOf, type Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { tFor } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
+import { discountLabels } from "@/components/DiscountBadges";
 import { BRAND, brandAddress, brandName, brokerName, PUBLIC_STATUSES, type UnitTypeKey } from "./config";
 import { analyzeDeal } from "./deal-math";
 import { emailEnabled, sendEmail } from "./email";
@@ -282,7 +283,7 @@ const MUTED = "color:#4a5068";
 
 /**
  * The issue as one email in `locale`: subject with the counts, a row per deal (project · community, unit and size,
- * price to the seller with the discount vs launch when known, handover, a thumbnail when the listing has a public
+ * price to the seller with the discount chips' wording when the unit is cheaper, handover, a thumbnail when the listing has a public
  * photo, the "View deal" link and the RERA line the deal page shows), the price drops as "was X, now Y", the "gone"
  * line, and the footer with the advertiser's details and the unsubscribe link. `unsubscribeUrl` is the subscriber's
  * own; a preview gets a placeholder.
@@ -319,7 +320,8 @@ export function renderIssue(content: IssueContent, locale: Locale, opts: { unsub
   // Latin) project name is bidi-isolated, so "Creek Edge 2 · مرسى خور دبي" keeps its order.
   const describe = (d: IssueDeal, price: string) => {
     const a = analyzeDeal(d);
-    const pct = a.discountVsLaunch != null && a.discountVsLaunch > 0 ? Math.round(a.discountVsLaunch * 100) : null;
+    // The chips' wording (src/components/DiscountBadges.tsx): below the original price first, then today's launch price.
+    const chips = discountLabels(a, tc);
     const name = rtl ? `⁨${d.projectName}⁩` : d.projectName;
     const title = `${name} · ${communityName(tc, d.community, d.communityOther)}`;
     const facts = [
@@ -327,7 +329,7 @@ export function renderIssue(content: IssueContent, locale: Locale, opts: { unsub
       tc("sqft", { n: d.sizeSqft.toLocaleString("en-AE") }),
       t("issue.handover", { when: formatQuarter(d.handoverDate, locale) }),
     ].join(" · ");
-    const discount = pct != null ? tc("vsLaunch", { pct }) : null;
+    const discount = [chips.originalIsDiscount ? chips.original : null, chips.launch].filter(Boolean).join(" · ") || null;
     // The same wording as the deal page's "Listed by" block (src/app/(site)/deals/[ref]/page.tsx).
     const rera = d.dldPermit
       ? td("listedBy.permit", { permit: d.dldPermit })

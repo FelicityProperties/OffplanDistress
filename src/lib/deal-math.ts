@@ -68,6 +68,10 @@ export function analyzeDeal(d: DealNumbers) {
   const remainingAfterTransfer = Math.max(remaining - overdue, 0);
   const sellerDiscount = d.amountPaid - d.askingPrice; // positive: seller takes a loss to exit
   const discountVsLaunch = d.launchPrice && d.launchPrice > 0 ? 1 - saleValue / d.launchPrice : null;
+  // The same against the original (SPA) price the seller signed: known for every listing, unlike today's launch
+  // price, so it is the discount the chips lead with (mirrored in SQL by belowOriginal in src/lib/listings.ts).
+  const discountVsOriginal = d.originalPrice > 0 ? 1 - saleValue / d.originalPrice : null;
+  const savingVsOriginal = d.originalPrice - saleValue;
   // Buying new from the developer you'd also pay the 4% DLD fee on the launch price.
   const launchAllIn = d.launchPrice ? Math.round(d.launchPrice * (1 + FEES.dldRate)) : null;
   const savingVsLaunch = launchAllIn != null ? launchAllIn - totalCost : null;
@@ -91,6 +95,8 @@ export function analyzeDeal(d: DealNumbers) {
     remainingAfterTransfer,
     sellerDiscount,
     discountVsLaunch,
+    discountVsOriginal,
+    savingVsOriginal,
     launchAllIn,
     savingVsLaunch,
     sellerNet,
