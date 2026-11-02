@@ -22,6 +22,7 @@ export default defineMessages({
     "field.notNegative": "Can't be negative.",
     "field.wholeDirhams": "Whole dirhams only",
     "field.date": "Pick a date",
+    "field.planDueDate": "Check the due dates in the payment plan.",
     "field.fullName": "Please enter your full name",
     "field.name": "Enter your name",
     "field.email": "Enter a valid email",
@@ -42,6 +43,7 @@ export default defineMessages({
     "field.arrearsCheckedAt": "Pick the day you checked the statement: today or earlier.",
     "field.amountTooLarge": "That amount is too large. Check the figure.",
     "field.counterAmount": "Enter a counter amount.",
+    "field.counterNotAbove": "A counter-offer has to be above the buyer's offer of {amount}. To agree at that price, accept the offer instead.",
     "field.offerMessageContact":
       "Leave out phone numbers, email addresses, links and handles. Buyers stay anonymous until the MOU: our team puts you in touch then.",
     "field.dldPermitUrl": "Paste the https:// link on dubailand.gov.ae that the permit's QR code opens.",
@@ -54,6 +56,9 @@ export default defineMessages({
     "offer.actionUnavailable": "That action isn't available for this offer.",
     "offer.unitTaken": "This unit already has an accepted offer.",
     "offer.alreadyAccepted": "Your offer on this unit has already been accepted. Follow the deal in your dashboard under Offers.",
+    // The page showed an older figure than the offer now holds (the other party revised it meanwhile).
+    "offer.changed": "The buyer has just changed this offer to {amount}. Check the new figure before you answer.",
+    "offer.counterChanged": "The seller's counter-offer is now {amount}. Check it before you accept.",
     "search.defaultName": "My search",
     "search.tooMany": "You already have {max} saved searches. Delete one to save another.",
 
@@ -65,6 +70,11 @@ export default defineMessages({
     "listing.changeUnavailable": "That change isn't available for this listing right now.",
     "listing.lockedUnderOffer": "This unit has an accepted offer, so its price and description are fixed. Contact us if something needs to change.",
     "listing.statusChanged": "This listing's status changed while you were editing it (for example, the seller accepted an offer). Reload the page and make your changes again.",
+    // The listing editor and Approve, opened before another change (src/app/actions/admin.ts).
+    "listing.changedMeanwhile":
+      "This listing was changed while you were editing it (the seller edited it, or someone on the team saved it). Reload the page to see the change, then make yours again.",
+    "listing.reviewChanged":
+      "This listing changed after this page was loaded (the seller edited it, say). The page now shows it as it is: check it, then approve it again.",
     "listing.tooManyPending": "You already have 10 listings waiting for review. We'll verify those first.",
 
     "admin.ownAccess": "You can't remove your own admin access.",
@@ -81,6 +91,7 @@ export default defineMessages({
     "admin.phoneHasAccount":
       "This mobile number is on an account someone registered on the site, and numbers aren't verified. Ask the seller for the email they log in with and enter it, so their listing goes to their own account.",
     "admin.leadNotFound": "That seller lead no longer exists.",
+    "admin.leadHasListing": "This seller lead has already been turned into a listing ({ref}). Open that one rather than entering the unit again.",
     "admin.claim.notNeeded": "This listing doesn't need a claim link: its seller has already confirmed ownership.",
     "admin.claim.noEmail": "This seller has no email address yet. Copy the link and send it on WhatsApp.",
     "admin.claim.emailOff": "Email isn't set up yet. Copy the link and send it on WhatsApp.",
@@ -167,6 +178,7 @@ export default defineMessages({
     "field.notNegative": "لا يمكن أن تكون القيمة سالبة.",
     "field.wholeDirhams": "أدخل المبلغ بالدرهم دون كسور",
     "field.date": "اختر تاريخاً",
+    "field.planDueDate": "تحقّق من تواريخ الاستحقاق في خطة الدفع.",
     "field.fullName": "يرجى إدخال اسمك الكامل",
     "field.name": "أدخل اسمك",
     "field.email": "أدخل بريداً إلكترونياً صحيحاً",
@@ -187,6 +199,7 @@ export default defineMessages({
     "field.arrearsCheckedAt": "اختر تاريخ التحقق من كشف الحساب: اليوم أو قبله.",
     "field.amountTooLarge": "المبلغ المُدخل كبير جداً، يُرجى التحقق منه.",
     "field.counterAmount": "أدخل قيمة العرض المقابل.",
+    "field.counterNotAbove": "يجب أن يكون العرض المقابل أعلى من عرض المشتري البالغ ⁨{amount}⁩. للموافقة على هذا السعر، اقبل العرض بدلاً من ذلك.",
     "field.offerMessageContact":
       "يُرجى عدم كتابة أرقام الهواتف أو عناوين البريد الإلكتروني أو الروابط أو أسماء الحسابات، إذ تبقى هوية المشتري مخفية حتى توقيع مذكرة التفاهم، وعندها يتولى فريقنا التواصل بين الطرفين.",
     "field.dldPermitUrl": "الصق رابط ⁦https://⁩ على موقع ⁦dubailand.gov.ae⁩ الذي يفتحه رمز QR الخاص بالتصريح.",
@@ -199,6 +212,8 @@ export default defineMessages({
     "offer.actionUnavailable": "هذا الإجراء غير متاح لهذا العرض.",
     "offer.unitTaken": "يوجد بالفعل عرض مقبول على هذه الوحدة.",
     "offer.alreadyAccepted": "سبق أن قُبل عرضك على هذه الوحدة. تابع الصفقة من قسم العروض في لوحة التحكم.",
+    "offer.changed": "عدّل المشتري هذا العرض للتو إلى ⁨{amount}⁩. راجِع المبلغ الجديد قبل أن تردّ عليه.",
+    "offer.counterChanged": "أصبح العرض المقابل من البائع ⁨{amount}⁩. راجِعه قبل أن تقبله.",
     "search.defaultName": "بحثي",
     "search.tooMany": "بلغتَ الحد الأقصى لعمليات البحث المحفوظة (⁨{max}⁩). احذف إحداها لحفظ بحث جديد.",
 
@@ -210,6 +225,10 @@ export default defineMessages({
     "listing.changeUnavailable": "هذا التغيير غير متاح لهذا الإعلان حالياً.",
     "listing.lockedUnderOffer": "على هذه الوحدة عرض مقبول، لذا لا يمكن تعديل سعرها أو وصفها. تواصل معنا إن احتاج أمر ما إلى تعديل.",
     "listing.statusChanged": "تغيّرت حالة هذا الإعلان أثناء تعديلك له (كأن يقبل البائع عرضاً). أعِد تحميل الصفحة ثم أدخِل تعديلاتك مرة أخرى.",
+    "listing.changedMeanwhile":
+      "تغيّر هذا الإعلان أثناء تعديلك له (عدّله البائع أو حفظ أحد أعضاء الفريق تعديلاً عليه). أعِد تحميل الصفحة لترى التغيير، ثم أدخِل تعديلاتك مرة أخرى.",
+    "listing.reviewChanged":
+      "تغيّر هذا الإعلان بعد تحميل هذه الصفحة (كأن يعدّله البائع). تعرض الصفحة الآن الإعلان كما هو: راجِعه ثم وافق عليه مرة أخرى.",
     "listing.tooManyPending": "لديك بالفعل 10 إعلانات بانتظار المراجعة. سنتحقق منها أولاً.",
 
     "admin.ownAccess": "لا يمكنك إزالة صلاحيات الإدارة من حسابك.",
@@ -225,6 +244,7 @@ export default defineMessages({
     "admin.phoneHasAccount":
       "رقم الجوال هذا مسجَّل في حساب أنشأه أحد المستخدمين على الموقع، ولا يجري التحقق من أرقام الجوال. اطلب من البائع البريد الإلكتروني الذي يسجّل به الدخول وأدخله، ليُضاف إعلانه إلى حسابه هو.",
     "admin.leadNotFound": "طلب البائع هذا لم يعد موجوداً.",
+    "admin.leadHasListing": "سبق تحويل طلب البائع هذا إلى إعلان (⁨{ref}⁩). افتح ذلك الإعلان بدلاً من إدخال الوحدة مرة أخرى.",
     "admin.claim.notNeeded": "لا يحتاج هذا الإعلان إلى رابط تأكيد، فقد أكّد البائع ملكيته بالفعل.",
     "admin.claim.noEmail": "ليس لدى هذا البائع بريد إلكتروني بعد. انسخ الرابط وأرسله عبر واتساب.",
     "admin.claim.emailOff": "لم تُفعَّل خدمة البريد الإلكتروني بعد. انسخ الرابط وأرسله عبر واتساب.",
@@ -304,6 +324,7 @@ export default defineMessages({
     "field.notNegative": "不能为负数。",
     "field.wholeDirhams": "请输入整数迪拉姆金额",
     "field.date": "请选择日期",
+    "field.planDueDate": "请检查付款计划中的到期日期。",
     "field.fullName": "请输入您的全名",
     "field.name": "请输入您的姓名",
     "field.email": "请输入有效的邮箱地址",
@@ -324,6 +345,7 @@ export default defineMessages({
     "field.arrearsCheckedAt": "请选择您核对付款对账单的日期：今天或更早。",
     "field.amountTooLarge": "金额过大，请核对数字。",
     "field.counterAmount": "请输入还价金额。",
+    "field.counterNotAbove": "还价须高于买家的报价 {amount}。如同意该价格，请直接接受报价。",
     "field.offerMessageContact":
       "请勿填写电话号码、邮箱地址、链接或社交账号。在签署谅解备忘录（MOU）前买家保持匿名，届时由我们的团队为双方牵线。",
     "field.dldPermitUrl": "请粘贴扫描许可二维码后打开的 dubailand.gov.ae 链接（以 https:// 开头）。",
@@ -336,6 +358,8 @@ export default defineMessages({
     "offer.actionUnavailable": "该操作不适用于此报价。",
     "offer.unitTaken": "该单元已有被接受的报价。",
     "offer.alreadyAccepted": "您对该单元的报价已被接受。请前往“我的账户”中的“报价”跟进交易。",
+    "offer.changed": "买家刚刚将此报价改为 {amount}。请先核对新金额，再作回复。",
+    "offer.counterChanged": "卖家的还价现为 {amount}。请先核对，再决定是否接受。",
     "search.defaultName": "我的搜索",
     "search.tooMany": "您已保存了 {max} 个搜索条件。请删除一个后再保存新的。",
 
@@ -347,6 +371,8 @@ export default defineMessages({
     "listing.changeUnavailable": "此房源目前无法进行该更改。",
     "listing.lockedUnderOffer": "该单元已有被接受的报价，因此价格和描述已锁定。如需更改，请联系我们。",
     "listing.statusChanged": "您编辑期间该房源的状态发生了变化（例如卖家接受了报价）。请刷新页面后重新进行更改。",
+    "listing.changedMeanwhile": "您编辑期间该房源已被更改（卖家修改了房源，或团队其他成员已保存更改）。请刷新页面查看更改，然后重新进行您的修改。",
+    "listing.reviewChanged": "本页面加载后该房源已有变动（例如卖家修改了房源）。页面现已显示其最新内容：请核对后再次批准。",
     "listing.tooManyPending": "您已有 10 个房源待审核。我们会先核实这些房源。",
 
     "admin.ownAccess": "您不能移除自己的管理员权限。",
@@ -362,6 +388,7 @@ export default defineMessages({
     "admin.phoneHasAccount":
       "此手机号已关联到一个在本站注册的账户，而手机号未经验证。请向卖家索取其登录邮箱并填写，以便将房源归入其本人账户。",
     "admin.leadNotFound": "该卖家线索已不存在。",
+    "admin.leadHasListing": "该卖家线索已转为房源（{ref}）。请打开该房源，不要重复录入此单元。",
     "admin.claim.notNeeded": "此房源无需确认链接：卖家已确认产权。",
     "admin.claim.noEmail": "该卖家尚无邮箱地址。请复制链接并通过 WhatsApp 发送。",
     "admin.claim.emailOff": "邮件功能尚未启用。请复制链接并通过 WhatsApp 发送。",

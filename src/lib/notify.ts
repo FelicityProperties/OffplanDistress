@@ -2,13 +2,20 @@ import "server-only";
 import { after } from "next/server";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { notifications, users, watchlist } from "@/db/schema";
+import { listings, notifications, users, watchlist } from "@/db/schema";
 import { dirOf, isLocale, type Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { OWNER_EMAILS } from "./config";
 import { sendEmail } from "./email";
 import { refCode } from "./format";
-import { renderTemplate, type TemplateKey, type TemplateParams } from "./notification-templates";
+import {
+  advertiserLines,
+  perLocale,
+  permitLine,
+  renderTemplate,
+  type TemplateKey,
+  type TemplateParams,
+} from "./notification-templates";
 
 export type { TemplateParam, TemplateParams } from "./notification-templates";
 
@@ -20,7 +27,7 @@ type Ids = (string | null | undefined)[];
  * { t: "errors", key: "…" } is translated. Emails go out after the response so the triggering action stays fast.
  * Never throws — a failed notification must not break the action that triggered it. Resolves true once the in-app
  * notifications are stored (the emails follow), false when nothing was stored (no such user, or a failure, logged), for
- * callers that record a notice as sent (src/lib/reminders.ts).
+ * callers that record a notice as sent (src/lib/reminders.ts, src/lib/permits.ts, the saved-search alerts).
  */
 export async function notify(userIds: Ids, key: TemplateKey, params: TemplateParams, href: string | null): Promise<boolean> {
   const ids = [...new Set(userIds.filter((id): id is string => Boolean(id)))];
@@ -104,7 +111,10 @@ export async function notifyAdmins(
   }
 }
 
-/** Tells everyone watching a deal (except its seller) that the asking price fell. */
+/**
+ * Tells everyone watching a deal (except its seller) that the asking price fell, with the advert's RERA lines: its
+ * permit as stored now (the edit that cut the price may have changed it too).
+ */
 export async function notifyPriceDrop(
   listing: { id: string; projectName: string; refNo: number; sellerId: string },
   from: number,
@@ -112,14 +122,25 @@ export async function notifyPriceDrop(
 ) {
   if (!(to < from)) return;
   try {
-    const watchers = await db
-      .select({ userId: watchlist.userId })
-      .from(watchlist)
-      .where(eq(watchlist.listingId, listing.id));
+    const [watchers, [advert]] = await Promise.all([
+      db.select({ userId: watchlist.userId }).from(watchlist).where(eq(watchlist.listingId, listing.id)),
+      db
+        .select({ dldPermit: listings.dldPermit, permitAttestedAt: listings.permitAttestedAt })
+        .from(listings)
+        .where(eq(listings.id, listing.id))
+        .limit(1),
+    ]);
+    if (!advert) return;
     await notify(
       watchers.map((w) => w.userId).filter((id) => id !== listing.sellerId),
       "watch.price_drop",
-      { project: listing.projectName, from: { aed: from }, to: { aed: to } },
+      {
+        project: listing.projectName,
+        from: { aed: from },
+        to: { aed: to },
+        permit: perLocale((l) => permitLine(advert, l)),
+        advertiser: perLocale(advertiserLines),
+      },
       `/deals/${refCode(listing.refNo)}`,
     );
   } catch (err) {

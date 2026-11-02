@@ -93,7 +93,7 @@ export default defineMessages({
     "field.description": "Anything buyers should know?",
     "field.description.placeholder": "Upgraded layout, corner unit, reason for selling…",
 
-    "docs.tileHint": "PDF or image, up to 4 MB",
+    "docs.tileHint": "PDF, JPG, PNG or WebP, up to 4 MB",
     "docs.photos": "Photos or developer renders (optional)",
     "docs.photosHint": "JPG, PNG or WebP. Large phone photos are resized automatically.",
     "docs.photosSelected": "{n} selected",
@@ -160,7 +160,7 @@ export default defineMessages({
     "done.title": "Submitted for verification",
     "done.body":
       "Our transactions team will check your SPA and payment history with the developer, usually within 1–2 working days, then send you RERA Form A (our listing agreement) to sign so we can get the DLD advertising permit. You'll see the status update in your dashboard.",
-    "done.failed": "Some files didn't upload ({files}). You can add them from your listing page.",
+    "done.failed": "Some files didn't upload. You can add them from your listing page:",
     "done.viewListing": "View my listing",
     "done.allListings": "All my listings",
 
@@ -369,7 +369,7 @@ export default defineMessages({
     "field.description": "هل هناك ما يجب أن يعرفه المشترون؟",
     "field.description.placeholder": "تصميم مُحسَّن، وحدة زاوية، سبب البيع…",
 
-    "docs.tileHint": "ملف PDF أو صورة، حتى 4 ميغابايت",
+    "docs.tileHint": "ملف PDF أو JPG أو PNG أو WebP، حتى 4 ميغابايت",
     "docs.photosHint": "JPG أو PNG أو WebP. يُصغَّر حجم صور الهاتف الكبيرة تلقائياً.",
     "docs.preparing": "جارٍ تجهيز الصور…",
     "photo.heic":
@@ -431,7 +431,7 @@ export default defineMessages({
     "done.title": "تم الإرسال للتحقق",
     "done.body":
       "سيتحقق فريق المعاملات لدينا من اتفاقية البيع والشراء وسجل دفعاتك لدى المطوّر، عادةً خلال يوم أو يومي عمل، ثم نرسل إليك النموذج (A) الصادر عن مؤسسة التنظيم العقاري (اتفاقية الوساطة) لتوقيعه حتى نستخرج تصريح الإعلان من دائرة الأراضي والأملاك. وستظهر لك حالة الإعلان محدَّثة في لوحة التحكم.",
-    "done.failed": "تعذّر رفع بعض الملفات (⁨{files}⁩). يمكنك إضافتها من صفحة إعلانك.",
+    "done.failed": "تعذّر رفع بعض الملفات. يمكنك إضافتها من صفحة إعلانك:",
     "done.viewListing": "عرض إعلاني",
     "done.allListings": "جميع إعلاناتي",
 
@@ -639,7 +639,7 @@ export default defineMessages({
     "field.description": "有什么需要让买家了解的？",
     "field.description.placeholder": "升级户型、转角单元、出售原因……",
 
-    "docs.tileHint": "PDF 或图片，最大 4 MB",
+    "docs.tileHint": "PDF、JPG、PNG 或 WebP，最大 4 MB",
     "docs.photos": "照片或开发商效果图（选填）",
     "docs.photosHint": "JPG、PNG 或 WebP 格式。手机拍摄的大图会自动压缩。",
     "docs.photosSelected": "已选择 {n} 张",
@@ -704,7 +704,7 @@ export default defineMessages({
     "done.title": "已提交核实",
     "done.body":
       "我们的交易团队将向开发商核实您的买卖协议（SPA）与付款记录，通常需要 1–2 个工作日；随后会向您发送迪拜房地产监管局（RERA）A 表（委托销售协议）供您签署，以便我们申请迪拜土地局（DLD）广告许可。状态更新会显示在“我的账户”中。",
-    "done.failed": "部分文件上传失败（{files}）。您可以在房源页面重新添加。",
+    "done.failed": "部分文件上传失败。您可以在房源页面重新添加：",
     "done.viewListing": "查看我的房源",
     "done.allListings": "我的全部房源",
 

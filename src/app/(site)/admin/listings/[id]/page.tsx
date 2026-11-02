@@ -112,13 +112,14 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
               )}
             </div>
           )}
-          <div className="flex gap-2">
+          {/* Wraps on a phone: an imported unit in review has four buttons here. */}
+          <div className="flex flex-wrap justify-end gap-2">
             <Button asChild size="sm" variant="outline">
               <Link href={`/deals/${refCode(l.refNo)}`}>
                 <ExternalLink /> {t("listing.publicPage")}
               </Link>
             </Button>
-            {l.status === "pending_review" && <ReviewButtons listingId={l.id} />}
+            {l.status === "pending_review" && <ReviewButtons listingId={l.id} savedAt={l.updatedAt.toISOString()} />}
             {/* An imported unit still under its placeholder owner can't be approved; it goes live on the account owner's
                 statement instead, as the whole import can from the Imported tab (src/lib/attestation.ts). */}
             {l.status === "pending_review" && placeholderOwner && l.createdByStaff && !l.isSample && !l.dldPermit && (

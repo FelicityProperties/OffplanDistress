@@ -11,6 +11,7 @@ import { LEGAL_UPDATED } from "@/content/legal/brand";
 import { sourceFromForm } from "@/lib/attribution";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
+import { cleanText, formText } from "@/lib/clean-text";
 import { ownListingSql } from "@/lib/dashboard";
 import { openDeal } from "@/lib/deals";
 import { refCode } from "@/lib/format";
@@ -28,12 +29,17 @@ function readListingForm(formData: FormData) {
   try {
     plan = JSON.parse(String(formData.get("paymentPlan") || "[]"));
   } catch {}
+  // Typed text goes in without the control characters Postgres can't store: a NUL byte pasted from a PDF or the SPA
+  // would make the save a server error (src/lib/clean-text.ts).
+  if (Array.isArray(plan)) {
+    plan = plan.map((p) => (p && typeof p === "object" && typeof p.label === "string" ? { ...p, label: cleanText(p.label) } : p));
+  }
   const opt = (k: string) => {
-    const v = formData.get(k);
+    const v = formText(formData.get(k));
     return v == null || v === "" ? undefined : String(v);
   };
   return {
-    projectName: formData.get("projectName"),
+    projectName: formText(formData.get("projectName")),
     developer: formData.get("developer"),
     community: formData.get("community"),
     developerOther: opt("developerOther"),
@@ -50,7 +56,9 @@ function readListingForm(formData: FormData) {
     nextInstalmentAmount: opt("nextInstalmentAmount"),
     overdueAmount: opt("overdueAmount"),
     motivation: formData.get("motivation") || "motivated",
-    description: opt("description"),
+    // Line breaks as stored (one "\n"), not as a multipart post sends them ("\r\n"): the 3,000 characters are the ones
+    // the box counts, as in updateMyListing.
+    description: lineBreaks(formText(formData.get("description"), { multiline: true })) || undefined,
     paymentPlan: plan,
   };
 }
@@ -82,7 +90,7 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
   }
   const v = parsed.data;
 
-  const phone = String(formData.get("phone") ?? "").trim();
+  const phone = cleanText(String(formData.get("phone") ?? "")).trim();
   if (phone && !user.phone) {
     await db.update(users).set({ phone }).where(eq(users.id, user.id));
   }
@@ -213,8 +221,8 @@ export async function updateMyListing(_prev: FormState, formData: FormData): Pro
       askingPrice: formData.get("askingPrice"),
       motivation: formData.get("motivation"),
       // Line breaks as stored (one "\n"), not as the browser sends a textarea ("\r\n"), so the 3,000 characters are the
-      // ones the box counts and an unchanged text compares equal.
-      description: lineBreaks(formData.get("description")) || undefined,
+      // ones the box counts and an unchanged text compares equal. Without control characters (a NUL can't be stored).
+      description: lineBreaks(formText(formData.get("description"), { multiline: true })) || undefined,
       nextInstalmentDate: formData.get("nextInstalmentDate") || undefined,
       nextInstalmentAmount: formData.get("nextInstalmentAmount") || undefined,
     },

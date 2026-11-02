@@ -45,8 +45,8 @@ import { alternatesFor, openGraphBase } from "@/lib/seo";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND, brandName, brokerName, FEES, PUBLIC_STATUSES } from "@/lib/config";
 import { richText } from "@/content/legal/rich-text";
-import { analyzeDeal, planSchedule } from "@/lib/deal-math";
-import { formatAED, formatDate, formatPct, formatQuarter, formatUSDFromAED, parseRefCode, refCode } from "@/lib/format";
+import { analyzeDeal, isReady, planSchedule } from "@/lib/deal-math";
+import { formatAED, formatDate, formatPct, formatQuarter, formatUSDFromAED, parseRefCode, refCode, wholePct } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
 import { issueFormToken } from "@/lib/spam";
 import { siteUrl } from "@/lib/site-url";
@@ -59,6 +59,9 @@ async function load(ref: string) {
   if (!refNo) return null;
   return getListingByRef(refNo);
 }
+
+/** "40%" in "40% paid": the whole percentage the "Paid at least" filter compares (wholePct), so the two agree. */
+const paidText = (ratio: number) => `${wholePct(ratio)}%`;
 
 export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): Promise<Metadata> {
   const { ref } = await params;
@@ -77,13 +80,25 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
       : launchPct != null && launchPct >= 1
         ? t("meta.titleDiscount", { ...vars, pct: launchPct })
         : t("meta.title", vars);
-  const description = t("meta.description", {
-    developer: developerName(tc, l.developer, l.developerOther),
-    community: communityName(tc, l.community, l.communityOther),
-    paid: formatPct(a.paidPct),
-    handover: formatQuarter(l.handoverDate, locale),
-    upfront: formatAED(l.askingPrice, locale),
-  });
+  // A unit already handed over says so rather than "handover TBC", and one with nothing left to pay the developer isn't
+  // offered as a payment plan to take over.
+  const ready = isReady({ ...l, planRows: (l.paymentPlan ?? []).length }, dubaiToday());
+  const description = t(
+    a.remaining > 0
+      ? ready
+        ? "meta.descriptionReady"
+        : "meta.description"
+      : ready
+        ? "meta.descriptionReadyPaid"
+        : "meta.descriptionPaid",
+    {
+      developer: developerName(tc, l.developer, l.developerOther),
+      community: communityName(tc, l.community, l.communityOther),
+      paid: paidText(a.paidPct),
+      handover: formatQuarter(l.handoverDate, locale),
+      upfront: formatAED(l.askingPrice, locale),
+    },
+  );
   // One address per deal and language: "/deals/od-1001" and "/deals/OD-1001" are the same page, canonical OD-1001.
   const alternates = alternatesFor(`/deals/${refCode(l.refNo)}`, locale);
   return {
@@ -142,7 +157,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const permitHeld = !l.isSample && !l.dldPermit && l.permitAttestedAt != null;
   const community = communityName(tc, l.community, l.communityOther);
   const developer = developerName(tc, l.developer, l.developerOther);
-  const paidWidth = Math.min(100, Math.max(0, Math.round(a.paidPct * 100)));
+  const paidWidth = Math.min(100, Math.max(0, wholePct(a.paidPct) ?? 0));
   const plan = l.paymentPlan ?? [];
   // Sample listings are seeded with English copy; Arabic and Chinese visitors get a translated version.
   const translatedSample = l.isSample && locale !== DEFAULT_LOCALE;
@@ -152,7 +167,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
         project: l.projectName,
         developer,
         community,
-        paid: formatPct(a.paidPct),
+        paid: paidText(a.paidPct),
       })
     : l.description;
   const milestoneLabel = (label: string) => {
@@ -245,7 +260,8 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           {
             key: "handover",
             title: t("timeline.handover"),
-            when: formatQuarter(l.handoverDate, locale),
+            // The plan's own handover row may be dated after the listing's handover date (planSchedule).
+            when: formatQuarter(schedule.atHandover.date, locale),
             amount: schedule.atHandover.sum,
             tag: t("timeline.mortgage"),
           },
@@ -279,7 +295,11 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
 
   const facts: [string, string, typeof Mountain][] = [
     [t("facts.view"), (!translatedSample && l.view) || "—", Mountain],
-    [tc("handover"), formatQuarter(l.handoverDate, locale), CalendarClock],
+    [
+      tc("handover"),
+      isReady({ ...l, planRows: plan.length }, today) ? tc("handoverReady") : formatQuarter(l.handoverDate, locale),
+      CalendarClock,
+    ],
     [t("facts.originalPrice"), formatAED(l.originalPrice, locale), Tag],
     [t("facts.launchPrice"), l.launchPrice ? formatAED(l.launchPrice, locale) : t("facts.beingAssessed"), Sparkles],
   ];
@@ -469,9 +489,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       {t("side.sellerLoss", { amount: formatAED(a.sellerDiscount, locale) })}
                     </p>
                   )}
-                  <p className="mt-3 text-sm text-primary-foreground/75 wrap-anywhere">
-                    {t("side.thenPlan", { amount: formatAED(a.remainingAfterTransfer, locale), developer })}
-                  </p>
+                  {/* Nothing left to pay the developer after transfer (fully paid, or the rest is overdue): no plan line. */}
+                  {a.remainingAfterTransfer > 0 && (
+                    <p className="mt-3 text-sm text-primary-foreground/75 wrap-anywhere">
+                      {t("side.thenPlan", { amount: formatAED(a.remainingAfterTransfer, locale), developer })}
+                    </p>
+                  )}
                   {/* Next to the equity figure (unchanged): what the buyer actually needs on the day, an estimate. */}
                   <div className="mt-4 border-t border-primary-foreground/15 pt-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">{t("side.cashAtTransfer")}</p>
@@ -683,7 +706,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={paidWidth}
-                  aria-label={t("plan.paidPct", { pct: formatPct(a.paidPct) })}
+                  aria-label={t("plan.paidPct", { pct: paidText(a.paidPct) })}
                   className="mt-5 h-3 overflow-hidden rounded-full bg-muted ring-1 ring-inset ring-border/70"
                 >
                   <div
@@ -692,7 +715,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   />
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground tabular">
-                  <span className="font-semibold text-foreground">{t("plan.paidPct", { pct: formatPct(a.paidPct) })}</span>
+                  <span className="font-semibold text-foreground">{t("plan.paidPct", { pct: paidText(a.paidPct) })}</span>
                   {nextInstalment &&
                     ` · ${
                       nextInstalment.amount

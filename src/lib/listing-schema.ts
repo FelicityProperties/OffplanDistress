@@ -35,11 +35,19 @@ export const optionalDate = (t: T) =>
     .transform((v) => (v ? v : null))
     .refine((v) => v == null || /^\d{4}-\d{2}-\d{2}$/.test(v), t("field.date"));
 
-const instalment = z.object({
-  label: z.string().trim().min(1).max(80),
-  dueDate: z.string().nullable(),
-  amount: z.number().int().nonnegative().max(INT4_MAX),
-});
+const instalment = (t: T) =>
+  z.object({
+    label: z.string().trim().min(1).max(80),
+    // A day (YYYY-MM-DD) or none, as optionalDate: a date input lets a five-digit year through ("20277-03-15"), which
+    // would be stored, then read as undated and shown as "Invalid Date".
+    dueDate: z
+      .string()
+      .trim()
+      .transform((v) => v || null)
+      .refine((v) => v == null || /^\d{4}-\d{2}-\d{2}$/.test(v), t("field.planDueDate"))
+      .nullable(),
+    amount: z.number().int().nonnegative().max(INT4_MAX),
+  });
 
 export const listingSchema = (t: T) =>
   z
@@ -66,7 +74,7 @@ export const listingSchema = (t: T) =>
       overdueAmount: money(t).optional(),
       motivation: z.enum(["urgent", "motivated", "flexible"]),
       description: z.string().trim().max(3000).optional(),
-      paymentPlan: z.array(instalment).max(60),
+      paymentPlan: z.array(instalment(t)).max(60),
     })
     .refine((v) => v.amountPaid <= v.originalPrice, {
       path: ["amountPaid"],

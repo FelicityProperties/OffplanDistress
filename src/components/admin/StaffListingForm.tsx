@@ -68,7 +68,11 @@ export function StaffListingForm({ prefill = {}, quarters }: { prefill?: StaffPr
   const invalid = (k: string) => (fe[k] ? true : undefined);
 
   return (
+    // `action` for a Create clicked before the page's scripts have loaded: the browser posts it to the server action (a
+    // form with no action would send the seller's name, phone and email in a GET to this page's address, and save
+    // nothing). Once the page is interactive, onSubmit runs it without React's reset of the form.
     <form
+      action={action}
       noValidate
       className="space-y-6"
       onSubmit={(e) => {

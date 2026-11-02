@@ -149,6 +149,7 @@ export default defineMessages({
     "offerAction.backup": "Backup offer",
     "offerAction.backupHint": "Another offer was accepted on this unit. This one stays on file in case that deal doesn't go ahead.",
     "offerAction.counterAboveAsking": "This is more than your asking price of {amount}.",
+    "offerAction.meetsAsking": "This offer is at or above your asking price of {amount}: you can accept it as it is.",
 
     // Transfer milestones under the status pipeline (src/components/DealMilestones.tsx): dates only, for the two parties
     "milestones.title": "Transfer milestones",
@@ -312,6 +313,7 @@ export default defineMessages({
     "offerAction.backup": "عرض احتياطي",
     "offerAction.backupHint": "قُبل عرض آخر على هذه الوحدة. يبقى هذا العرض محفوظاً تحسّباً لعدم اكتمال تلك الصفقة.",
     "offerAction.counterAboveAsking": "هذا المبلغ أعلى من السعر الذي تطلبه لحصتك (⁨{amount}⁩).",
+    "offerAction.meetsAsking": "هذا العرض يساوي السعر الذي تطلبه لحصتك (⁨{amount}⁩) أو يزيد عليه، ويمكنك قبوله كما هو.",
 
     "milestones.title": "مراحل نقل الملكية",
     "milestones.note": "يضيف فريقنا تاريخ كل مرحلة عند إتمامها.",
@@ -474,6 +476,7 @@ export default defineMessages({
     "offerAction.backup": "备选报价",
     "offerAction.backupHint": "该单元已接受另一份报价。此报价将继续保留在案，以备该交易未能完成时启用。",
     "offerAction.counterAboveAsking": "此金额高于您的要价 {amount}。",
+    "offerAction.meetsAsking": "此报价已达到或高于您的要价 {amount}，您可以直接接受。",
 
     "milestones.title": "过户进度",
     "milestones.note": "每个步骤完成后，我们的团队会添加相应日期。",

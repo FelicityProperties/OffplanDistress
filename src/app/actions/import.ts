@@ -22,10 +22,19 @@ import {
 // unconfirmed, under a placeholder owner (src/lib/import.ts), so approveListing refuses it until its owner is set and
 // confirms and its permit is in.
 
-async function assertAdmin() {
+/** The signed-in admin, or null: the action then answers refused() and does nothing. */
+async function currentAdmin() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "admin") throw new Error((await getT("errors"))("auth.notAuthorised"));
-  return user;
+  return user && user.role === "admin" ? user : null;
+}
+
+/**
+ * The answer once the admin's session has ended (or the admin role was removed meanwhile): returned, not thrown, so
+ * the import page shows it on the row and the run can be retried after signing in again.
+ */
+async function refused() {
+  const t = await getT("errors");
+  return { error: t((await getCurrentUser()) ? "auth.notAuthorised" : "auth.signInAgain") };
 }
 
 const importKey = sql`(${listings.source}->>'import')`;
@@ -38,7 +47,7 @@ export type ImportedUnit = { listingId: string; refNo: number; photos: string[] 
  * page skips what is done when the files are chosen again (after a reload, say) and adds only the missing photos.
  */
 export async function adminImportStatus(sourceKey: string, refs: string[]): Promise<{ imported: Record<string, ImportedUnit> } | { error: string }> {
-  await assertAdmin();
+  if (!(await currentAdmin())) return refused();
   const wanted = Array.isArray(refs) ? [...new Set(refs.filter((r) => typeof r === "string" && IMPORT_REF_RE.test(r)))] : [];
   if (typeof sourceKey !== "string" || !IMPORT_KEY_RE.test(sourceKey) || wanted.length > IMPORT_MAX_REFS) {
     return { error: (await getT("intake"))("error.status") };
@@ -93,7 +102,8 @@ export type ImportResult =
  * source key + ref decides). The unit's fields are checked again here by the rules the page used.
  */
 export async function adminImportListing(source: unknown, unit: unknown): Promise<ImportResult> {
-  const me = await assertAdmin();
+  const me = await currentAdmin();
+  if (!me) return refused();
   const [ti, te] = await Promise.all([getT("intake"), getT("errors")]);
   const src = checkImportSource(source);
   if (!src) return { error: ti("file.source") };

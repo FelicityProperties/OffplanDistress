@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { CheckCircle2, Circle, Download, FolderOpen } from "lucide-react";
+import { KycSelect } from "@/components/admin/AdminControls";
 import { DealFileForm, DealNoteForm, type DealFileValues } from "@/components/admin/DealFile";
 import { StatusPill } from "@/components/badges";
 import { getLocale, getT } from "@/i18n/server";
 import type { TKey } from "@/i18n/translator";
+import { isPlaceholderEmail } from "@/lib/claim";
 import { CANCEL_REASONS, dealFileData, type DealFileData } from "@/lib/deals";
 import { formatAED, formatDate } from "@/lib/format";
 import { dubaiToday } from "@/lib/permits";
@@ -21,6 +23,8 @@ type Listing = {
   /** Arrears with the developer (src/lib/deal-math.ts): part of the buyer's cash on transfer day at the agreed price. */
   overdueAmount: number | null;
   overduePenalty: number | null;
+  /** Where an imported unit came from: names its placeholder owner ("Owner to be added (…)") in the page's language. */
+  source: { import?: string; sourceName?: string } | null;
 };
 
 type CheckItem = { key: TKey<"admin">; done: boolean; date?: string | null };
@@ -71,8 +75,9 @@ const cancelReason = (r: string | null) => (CANCEL_REASONS as readonly string[])
 export async function DealFileCard({ listing }: { listing: Listing }) {
   const data = await dealFileData(listing);
   if (!data) return null;
-  const [t, tc, locale] = await Promise.all([getT("admin"), getT("common"), getLocale()]);
+  const [t, tc, ti, locale] = await Promise.all([getT("admin"), getT("common"), getT("intake"), getLocale()]);
   const { deal, buyer, seller, offer, notes, earlier } = data;
+  const importSource = listing.source?.sourceName ?? listing.source?.import ?? "";
   const remaining = Math.max(listing.originalPrice - listing.amountPaid, 0);
   const values: DealFileValues = {
     agreedPrice: deal.agreedPrice,
@@ -106,16 +111,30 @@ export async function DealFileCard({ listing }: { listing: Listing }) {
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t(role === "buyer" ? "dealFile.buyer" : "dealFile.seller")}</p>
       {p ? (
         <>
+          {/* An import's placeholder owner as the listing page names it, in the page's language, without its internal
+              .invalid address (as a phone-only seller's). */}
           <p className="mt-1 font-medium wrap-anywhere">
-            <bdi>{p.fullName}</bdi>
+            <bdi>{p.importOwner && importSource ? ti("owner.placeholderName", { source: importSource }) : p.fullName}</bdi>
           </p>
           <p className="text-xs text-muted-foreground wrap-anywhere">
-            <bdi dir="ltr">{p.phone ?? p.email}</bdi>
+            {p.phone ? <bdi dir="ltr">{p.phone}</bdi> : isPlaceholderEmail(p.email) ? t("users.noEmail") : <bdi dir="ltr">{p.email}</bdi>}
           </p>
-          <p className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-            <StatusPill tone={p.kycStatus === "verified" ? "success" : p.kycStatus === "pending" ? "warning" : "muted"}>
-              {t("dealFile.kyc", { status: tc(`kyc.${p.kycStatus}`) })}
-            </StatusPill>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            {/* The NOC gate checks this KYC: set here, or on Admin → Users. A placeholder is nobody, so its KYC waits for the
+                real owner, entered in the Owner card. */}
+            {p.importOwner ? (
+              <>
+                <StatusPill tone="muted">{t("dealFile.kyc", { status: tc(`kyc.${p.kycStatus}`) })}</StatusPill>
+                <a href="#owner" className="font-medium underline-offset-4 hover:underline">
+                  {ti("imported.setOwner")}
+                </a>
+              </>
+            ) : (
+              <label className="flex items-center gap-2">
+                <span className="text-muted-foreground">{t("kyc.label")}</span>
+                <KycSelect userId={p.id} value={p.kycStatus} label={t(role === "buyer" ? "dealFile.kycBuyer" : "dealFile.kycSeller")} />
+              </label>
+            )}
             {p.kycStatus === "verified" && (
               <span className="text-muted-foreground">
                 {p.kycVerifiedAt
@@ -123,7 +142,7 @@ export async function DealFileCard({ listing }: { listing: Listing }) {
                   : t("dealFile.kycVerifiedEarlier")}
               </span>
             )}
-          </p>
+          </div>
         </>
       ) : (
         <p className="mt-1 text-muted-foreground">{t("dealFile.noBuyer")}</p>

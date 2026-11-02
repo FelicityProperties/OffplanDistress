@@ -1,12 +1,12 @@
 import { discountPct } from "@/components/DiscountBadges";
 import { translator } from "@/i18n/translator";
 import { BRAND, UNIT_TYPES } from "@/lib/config";
-import { analyzeDeal } from "@/lib/deal-math";
+import { analyzeDeal, isReady } from "@/lib/deal-math";
 import { formatAEDCompact, formatQuarter, parseRefCode, refCode } from "@/lib/format";
 import { getListingByRef } from "@/lib/listings";
 import { hasArabic, OG, OG_SIZE, OgWordmark, photoDataUrl, renderOg } from "@/lib/og";
-import { isAdvertised } from "@/lib/permits";
-import { communityName, developerName } from "@/lib/place-names";
+import { dubaiToday, isAdvertised } from "@/lib/permits";
+import { communityName, developerName, developerNotStated } from "@/lib/place-names";
 
 export const alt = `Distressed off-plan deal on ${BRAND.name}`;
 export const size = OG_SIZE;
@@ -38,8 +38,12 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
   const typedCommunity = communityName(tc, l.community, l.communityOther);
   const typedDeveloper = developerName(tc, l.developer, l.developerOther);
   const community = hasArabic(typedCommunity) ? "Dubai" : typedCommunity;
-  const developer = hasArabic(typedDeveloper) ? "" : typedDeveloper;
+  // No developer line for the partner sync's placeholder ("Developer not stated" on the page) either.
+  const developer = hasArabic(typedDeveloper) || developerNotStated(l.developer, l.developerOther) ? "" : typedDeveloper;
   const name = hasArabic(l.projectName) ? `${unit} in ${community}` : l.projectName;
+  const handover = isReady({ ...l, planRows: (l.paymentPlan ?? []).length }, dubaiToday())
+    ? tc("handoverReady")
+    : `Handover ${formatQuarter(l.handoverDate)}`;
   // Forwarded on WhatsApp, this card is the advert itself, so RERA's details go on it: the DLD permit, our office
   // ORN and the broker's BRN. Samples aren't adverts and keep the full-height card. Without a number, an advert on the
   // account owner's attestation (src/lib/attestation.ts) says the broker holds the permit.
@@ -73,7 +77,7 @@ export default async function Image({ params }: { params: Promise<{ ref: string 
                 {name.length > 42 ? `${name.slice(0, 40)}…` : name}
               </div>
               <div style={{ display: "flex", marginTop: 10, fontSize: 26, color: OG.muted }}>
-                {community} · {unit} · Handover {formatQuarter(l.handoverDate)}
+                {community} · {unit} · {handover}
               </div>
             </div>
             <div style={{ display: "flex", gap: 40 }}>

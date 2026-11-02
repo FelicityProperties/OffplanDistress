@@ -93,7 +93,12 @@ export default async function MyListingsPage() {
                     <Pencil /> {tc("manage")}
                   </Link>
                 </Button>
-                <ListingActions id={l.id} status={l.status} />
+                <ListingActions
+                  id={l.id}
+                  status={l.status}
+                  pausedByAdmin={l.pausedByAdmin}
+                  hasDeal={l.status === "under_offer" || l.hasDeal}
+                />
               </div>
             </div>
           </div>

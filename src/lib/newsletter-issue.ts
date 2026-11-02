@@ -155,18 +155,22 @@ const publicStatusList = sql.join(
 );
 
 /**
- * Where the next window starts: the end of the last issue that went out or had nothing to send. An issue whose every
- * send failed (email down) doesn't move it, so its changes go out with the next issue that does; one cut short while
- * sending doesn't either (some subscribers get those changes twice rather than never).
+ * Where the next window starts: the end of the last issue that went out. A quiet day (no new adverts, no price drops:
+ * nothing sent) doesn't move it, so the units that left the market that day are counted in the next issue that goes
+ * out, and there is nothing else in a quiet window to list twice. Nor does an issue whose every send failed (email
+ * down), so its changes go out with the next issue that does, or one cut short while sending (some subscribers get
+ * those changes twice rather than never). Until an issue has gone out, the window starts where the first run's did.
  */
 async function lastWindowEnd(): Promise<Date | null> {
   const [row] = await db
     .select({ until: newsletterIssues.until })
     .from(newsletterIssues)
-    .where(sql`${newsletterIssues.content}->>'state' in ('sent', 'quiet')`)
+    .where(sql`${newsletterIssues.content}->>'state' = 'sent'`)
     .orderBy(desc(newsletterIssues.day))
     .limit(1);
-  return row?.until ?? null;
+  if (row) return row.until;
+  const [first] = await db.select({ since: newsletterIssues.since }).from(newsletterIssues).orderBy(asc(newsletterIssues.day)).limit(1);
+  return first?.since ?? null;
 }
 
 /**
@@ -189,13 +193,15 @@ export async function composeIssue(now = new Date(), opts: { since?: Date } = {}
     .limit(LIMIT)) as DealRow[];
   const newIds = new Set(newRows.map((r) => r.id));
 
-  // Price drops: the audit trail's publicPrice [from, to] diffs with to < from (listing.update and listing.approve
-  // in src/app/actions/admin.ts, listing.sync_restored in scripts/import-partner-stock.mjs: whichever action moved
-  // the public price, the diff carries it). Oldest first, so a unit cut twice keeps its first "from"; the "to" is the
-  // price advertised now. A unit that went live in the window is listed as new, at its current price, not as a drop.
+  // Price drops: the audit trail's publicPrice [from, to] diffs (listing.update and listing.approve in
+  // src/app/actions/admin.ts, listing.sync_restored in scripts/import-partner-stock.mjs: whichever action moved the
+  // public price, the diff carries it), each unit's earliest in the window, up or down: its "from" is the price
+  // advertised when the window opened. The "to" is the price advertised now, and only a unit cheaper now than then is
+  // a drop (one raised and then cut by less isn't). A unit that went live in the window is listed as new, at its
+  // current price, not as a drop.
   const priceDiff = sql`${auditEvents.diff}->'publicPrice'`;
   const events = await db
-    .select({
+    .selectDistinctOn([auditEvents.entityId], {
       listingId: auditEvents.entityId,
       from: sql<number>`round((${priceDiff}->>0)::numeric)::int`,
     })
@@ -206,10 +212,9 @@ export async function composeIssue(now = new Date(), opts: { since?: Date } = {}
         within(auditEvents.createdAt, since, until),
         sql`jsonb_typeof(${priceDiff}->0) = 'number'`,
         sql`jsonb_typeof(${priceDiff}->1) = 'number'`,
-        sql`(${priceDiff}->>1)::numeric < (${priceDiff}->>0)::numeric`,
       ),
     )
-    .orderBy(asc(auditEvents.createdAt), asc(auditEvents.id))
+    .orderBy(auditEvents.entityId, asc(auditEvents.createdAt), asc(auditEvents.id))
     .limit(LIMIT * 5);
   const firstFrom = new Map<string, number>();
   for (const e of events) if (!newIds.has(e.listingId) && !firstFrom.has(e.listingId)) firstFrom.set(e.listingId, e.from);
@@ -429,8 +434,9 @@ async function sendOne(content: IssueContent, s: Subscriber) {
  * The daily run: composes the issue for the window ending at `now`, records it for the Dubai day and, when something
  * changed, sends it to every confirmed subscriber in their language, then stores how the send went. The row goes in
  * first, so two runs the same day can't both send ("already"); a day with no new listings and no price drops is
- * recorded with nothing sent ("quiet"). Without a usable sender nothing is recorded either: the window keeps growing
- * until email is set up, and the first issue then covers it.
+ * recorded with nothing sent ("quiet"), and the next issue that goes out covers its window again (lastWindowEnd), units
+ * gone included. Without a usable sender nothing is recorded either: the window keeps growing until email is set up,
+ * and the first issue then covers it.
  */
 export async function sendIssue(now = new Date()): Promise<SendResult> {
   if (!emailEnabled()) return { sent: 0, failed: 0, recipients: 0, reason: "emailOff" };

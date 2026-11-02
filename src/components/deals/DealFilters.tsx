@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { BadgeCheck, Bell, LayoutGrid, List, Loader2, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
+import { BadgeCheck, Bell, Check, LayoutGrid, List, Loader2, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { saveSearch } from "@/app/actions/market";
 import { Button } from "@/components/ui/button";
@@ -57,9 +57,27 @@ function FilterSection({ title, value, children }: { title: string; value?: Reac
   );
 }
 
+/** A multi-value parameter as parseFilters reads it: repeated keys, comma-joined values (community=A,B) or both. */
+function getList(params: URLSearchParams, name: string) {
+  return params
+    .getAll(name)
+    .flatMap((v) => v.split(","))
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+/**
+ * A finite number from the query string, or null for a missing, malformed ("abc") or non-positive one: the server
+ * ignores those (parseFilters), so the panel shows them as unset rather than "AED NaN".
+ */
+function positiveParam(params: URLSearchParams, name: string) {
+  const n = Number(params.get(name) ?? "");
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 function CheckGroup({ label, name, options }: { label: string; name: string; options: [string, string][] }) {
   const { params, update } = useParamsUpdater();
-  const selected = params.getAll(name);
+  const selected = getList(params, name);
   const count = options.filter(([v]) => selected.includes(v)).length;
   return (
     <FilterSection
@@ -90,7 +108,8 @@ function CheckGroup({ label, name, options }: { label: string; name: string; opt
                 checked={on}
                 onCheckedChange={(next) =>
                   update((p) => {
-                    const rest = p.getAll(name).filter((v) => v !== value);
+                    // Written back as repeated keys, so a comma-joined link keeps its other values.
+                    const rest = getList(p, name).filter((v) => v !== value);
                     p.delete(name);
                     for (const v of next ? [...rest, value] : rest) p.append(name, v);
                   })
@@ -120,7 +139,7 @@ function RangeFilter({
   format: (v: number) => string;
 }) {
   const { params, update } = useParamsUpdater();
-  const current = Number(params.get(name) ?? 0);
+  const current = positiveParam(params, name) ?? 0;
   const [value, setValue] = useState(current);
   useEffect(() => setValue(current), [current]);
   return (
@@ -163,8 +182,9 @@ function BudgetFilter({
   const t = useT("deals");
   const locale = useLocale();
   const { params, update } = useParamsUpdater();
-  const min = Number(params.get(minName) ?? 0);
-  const max = Math.min(Number(params.get(maxName) ?? ceiling), ceiling);
+  const min = positiveParam(params, minName) ?? 0;
+  // 0 is "no limit" on the server too (parseFilters).
+  const max = Math.min(positiveParam(params, maxName) ?? ceiling, ceiling);
   const [value, setValue] = useState<[number, number]>([min, max]);
   useEffect(() => setValue([min, max]), [min, max]);
   // The panel renders twice (desktop column, phone sheet), so the hint's id is unique per instance.
@@ -216,7 +236,7 @@ export function FilterPanel({ facets }: { facets: Facets }) {
   const handoverBy = params.get("handoverBy") ?? "any";
   // Only names with listings, so the panel stays short; a ticked one stays listed so it can be unticked.
   const choices = (name: string, all: string[], available: string[], label: (v: string) => string) => {
-    const ticked = params.getAll(name).filter((v) => all.includes(v));
+    const ticked = getList(params, name).filter((v) => all.includes(v));
     const collator = new Intl.Collator(locale);
     return [...new Set([...available, ...ticked])]
       .map((v): [string, string] => [v, label(v)])
@@ -430,24 +450,38 @@ export function SaveSearchButton({ summary, tone = "subtle" }: { summary: string
   const params = useSearchParams();
   const lp = useLocalePath();
   const [pending, start] = useTransition();
+  // The filters just saved (or found saved already): the button says so rather than saving them, and alerting, twice.
+  const [savedFor, setSavedFor] = useState<string | null>(null);
+  const saved = savedFor === params.toString();
   return (
     <Button
       variant={tone === "cta" ? "default" : "outline"}
       size={tone === "cta" ? "default" : "sm"}
       className={cn("rounded-full", tone === "subtle" && "h-9 bg-card px-4 shadow-none")}
-      disabled={pending}
+      disabled={pending || saved}
       onClick={() =>
         start(async () => {
-          const res = await saveSearch(summary, params.toString());
+          const query = params.toString();
+          const res = await saveSearch(summary, query);
           if (res.needsAuth) {
             toast(t("saveSearch.needsAuth"));
-            router.push(lp(`/login?next=${encodeURIComponent(`/deals?${params.toString()}`)}`));
+            router.push(lp(`/login?next=${encodeURIComponent(`/deals?${query}`)}`));
           } else if (res.error) toast.error(res.error);
-          else toast.success(t("saveSearch.saved"));
+          else {
+            setSavedFor(query);
+            toast.success(t(res.existing ? "saveSearch.already" : "saveSearch.saved"));
+          }
         })
       }
     >
-      {pending ? <Loader2 className="animate-spin" /> : <Bell className={cn(tone === "subtle" && "text-gold")} />} {t("saveSearch.button")}
+      {pending ? (
+        <Loader2 className="animate-spin" />
+      ) : saved ? (
+        <Check className={cn(tone === "subtle" && "text-gold")} />
+      ) : (
+        <Bell className={cn(tone === "subtle" && "text-gold")} />
+      )}{" "}
+      {t(saved ? "saveSearch.savedButton" : "saveSearch.button")}
     </Button>
   );
 }

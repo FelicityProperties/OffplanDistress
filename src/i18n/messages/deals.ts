@@ -59,6 +59,8 @@ export default defineMessages({
     "saveSearch.button": "Save search",
     "saveSearch.needsAuth": "Sign in to save searches and get alerts.",
     "saveSearch.saved": "Search saved to your dashboard",
+    "saveSearch.already": "You've already saved this search. It's on your dashboard.",
+    "saveSearch.savedButton": "Saved",
 
     "summary.all": "All deals",
     "summary.maxCash": "≤ {amount} upfront",
@@ -68,6 +70,9 @@ export default defineMessages({
     "summary.query": "“{q}”",
 
     "gallery.showPhoto": "Show photo {n}",
+    "gallery.previous": "Previous photo",
+    "gallery.next": "Next photo",
+    "gallery.position": "Photo {n} of {total}",
 
     // Restyled browse + deal pages
     eyebrow: "Off-plan resale marketplace",
@@ -143,6 +148,8 @@ export default defineMessages({
     "saveSearch.button": "حفظ البحث",
     "saveSearch.needsAuth": "سجّل الدخول لحفظ عمليات البحث وتلقي التنبيهات.",
     "saveSearch.saved": "تم حفظ البحث في لوحة التحكم",
+    "saveSearch.already": "سبق أن حفظت هذا البحث، وتجده في لوحة التحكم.",
+    "saveSearch.savedButton": "تم الحفظ",
 
     "summary.all": "جميع الصفقات",
     "summary.maxCash": "≤ {amount} مقدّماً",
@@ -152,6 +159,9 @@ export default defineMessages({
     "summary.query": "«{q}»",
 
     "gallery.showPhoto": "عرض الصورة {n}",
+    "gallery.previous": "الصورة السابقة",
+    "gallery.next": "الصورة التالية",
+    "gallery.position": "الصورة {n} من {total}",
 
     // Restyled browse + deal pages
     eyebrow: "سوق إعادة بيع الوحدات على الخارطة",
@@ -226,6 +236,8 @@ export default defineMessages({
     "saveSearch.button": "保存搜索",
     "saveSearch.needsAuth": "登录后即可保存搜索并接收提醒。",
     "saveSearch.saved": "搜索已保存至“我的账户”",
+    "saveSearch.already": "您已保存过此搜索，可在“我的账户”中查看。",
+    "saveSearch.savedButton": "已保存",
 
     "summary.all": "全部房源",
     "summary.maxCash": "前期现金 ≤ {amount}",
@@ -235,6 +247,9 @@ export default defineMessages({
     "summary.query": "“{q}”",
 
     "gallery.showPhoto": "显示第 {n} 张照片",
+    "gallery.previous": "上一张照片",
+    "gallery.next": "下一张照片",
+    "gallery.position": "第 {n} 张，共 {total} 张",
 
     // Restyled browse + deal pages
     eyebrow: "期房转让交易平台",

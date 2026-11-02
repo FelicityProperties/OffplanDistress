@@ -37,7 +37,16 @@ export async function GET() {
     [t("export.col.listingStatus"), (r) => tc(`listing.${r.listingStatus}`)],
     [
       t("export.col.dealStatus"),
-      (r) => t(r.deal.cancelledAt ? "export.status.cancelled" : r.listingStatus === "transferred" ? "export.status.transferred" : "export.status.open"),
+      // A sold unit taken down afterwards (withdrawn, its completed deal file kept open) is still transferred, as the
+      // fee KPIs count it (adminStats in src/lib/admin.ts).
+      (r) =>
+        t(
+          r.deal.cancelledAt
+            ? "export.status.cancelled"
+            : r.listingStatus === "transferred" || (r.listingStatus === "withdrawn" && r.deal.transferredAt)
+              ? "export.status.transferred"
+              : "export.status.open",
+        ),
     ],
     [t("export.col.sellerName"), (r) => r.sellerName],
     // A phone-only seller's account holds our own placeholder (…@claim.offplandistress.invalid), never their email.

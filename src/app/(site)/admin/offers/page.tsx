@@ -4,13 +4,14 @@ import { ToneStatus } from "@/components/badges";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
+import { isPlaceholderEmail } from "@/lib/claim";
 import { OFFER_STATUS } from "@/lib/config";
 import { adminOffers } from "@/lib/admin";
 import { formatAED, refCode, timeAgo } from "@/lib/format";
 
 export default async function AdminOffersPage() {
   await requireAdmin();
-  const [offers, t, tc, locale] = await Promise.all([adminOffers(), getT("admin"), getT("common"), getLocale()]);
+  const [offers, t, tc, ti, locale] = await Promise.all([adminOffers(), getT("admin"), getT("common"), getT("intake"), getLocale()]);
   return (
     <div className="space-y-6">
       <PageTitle title={t("offers.title")} sub={t("offers.sub")} />
@@ -46,10 +47,18 @@ export default async function AdminOffersPage() {
                       <bdi dir="ltr">{o.buyerPhone ?? o.buyerEmail}</bdi>
                     </p>
                   </TableCell>
+                  {/* An import's placeholder owner as the listing page names it; our own .invalid addresses (it, a
+                      phone-only seller) are never shown as a contact. */}
                   <TableCell>
-                    {o.sellerName}
+                    {o.sellerPlaceholder && o.importSource ? ti("owner.placeholderName", { source: o.importSource }) : o.sellerName}
                     <p className="text-xs text-muted-foreground">
-                      <bdi dir="ltr">{o.sellerPhone ?? o.sellerEmail}</bdi>
+                      {o.sellerPhone ? (
+                        <bdi dir="ltr">{o.sellerPhone}</bdi>
+                      ) : isPlaceholderEmail(o.sellerEmail) ? (
+                        t("users.noEmail")
+                      ) : (
+                        <bdi dir="ltr">{o.sellerEmail}</bdi>
+                      )}
                     </p>
                   </TableCell>
                   <TableCell className="text-end font-semibold tabular">

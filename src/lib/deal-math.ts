@@ -133,16 +133,29 @@ function quarterStart(day: string) {
 }
 
 // Sellers type milestone labels in English, Arabic or Chinese (交房 / 交付 = handover, 完工 / 竣工 = completion, 施工 /
-// 建设 = construction). "Post-handover" / "after handover" / 交房后 are checked before "handover", and "completion" only
-// counts when it isn't a construction milestone ("on 50% completion", "完工 50%").
-const POST_HANDOVER = /post[\s-]*hand\s*-?\s*over|after\s+hand\s*-?\s*over|بعد\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?后/i;
-const PRE_HANDOVER = /pre[\s-]*hand\s*-?\s*over|before\s+hand\s*-?\s*over|قبل\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?前/i;
+// 建设 = construction). Developers' plans call the handover "completion" too ("On completion", "180 days post
+// completion"), so "post-/after …" (بعد التسليم, 竣工后) and "pre-/before/until …" (قبل الإنجاز, 完工前) are checked before
+// the word itself, for both words. "Completion" only counts when it isn't a construction milestone: a percentage next to
+// it is how far the building has got ("on 50% completion", "completion of 70%", "完工 50%"), while one before "on /
+// upon completion" is the payment's share of the price ("40% on completion": the handover payment).
+const POST_HANDOVER = /post[\s-]*hand\s*-?\s*over|after\s+(the\s+)?hand\s*-?\s*over|بعد\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?后/i;
+const POST_COMPLETION = /post[\s-]*completion|after\s+(the\s+)?completion|بعد\s+(ال)?(إنجاز|إكمال)|(?:完工|竣工)(?:之)?后/i;
+const PRE_HANDOVER = /(?:pre|before|until|till|prior\s+to|up\s+to)[\s-]*(the\s+)?hand\s*-?\s*over|(?:قبل|حتى)\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?前/i;
+const PRE_COMPLETION = /(?:pre|before|until|till|prior\s+to|up\s+to)[\s-]*(the\s+)?completion|(?:قبل|حتى)\s+(ال)?(إنجاز|إكمال)|(?:完工|竣工)(?:之)?前/i;
 const HANDOVER_WORD = /hand\s*-?\s*over|تسليم|استلام|交[房付楼]/i;
 const COMPLETION_WORD = /\bcompletion\b|إنجاز|إكمال|完工|竣工/i;
-const CONSTRUCTION = /construct|\d\s*[%％]|٪|بناء|إنشاء|施工|建设|工程/i;
+const PCT = String.raw`[\d٠-٩]+(?:[.,٫][\d٠-٩]+)?\s*[%％٪]`;
+const COMPLETION_ANY = String.raw`completion|(?:ال)?(?:إنجاز|إكمال)|完工|竣工`;
+const CONSTRUCTION = new RegExp(
+  String.raw`construct|بناء|إنشاء|施工|建设|工程|${PCT}\s*(?:of\s+)?(?:the\s+)?(?:${COMPLETION_ANY})|(?:${COMPLETION_ANY})\s*(?:of\s+|(?:ب)?نسبة\s*)?${PCT}`,
+  "i",
+);
+
+const isPostHandover = (label: string) => POST_HANDOVER.test(label) || (POST_COMPLETION.test(label) && !CONSTRUCTION.test(label));
+const isPreHandover = (label: string) => PRE_HANDOVER.test(label) || (PRE_COMPLETION.test(label) && !CONSTRUCTION.test(label));
 
 function isHandoverLabel(label: string) {
-  if (POST_HANDOVER.test(label) || PRE_HANDOVER.test(label)) return false;
+  if (isPostHandover(label) || isPreHandover(label)) return false;
   return HANDOVER_WORD.test(label) || (COMPLETION_WORD.test(label) && !CONSTRUCTION.test(label));
 }
 
@@ -161,9 +174,10 @@ export type PlanSchedule = ReturnType<typeof planSchedule>;
  *   - pastDue: its due date is before today. The plan was entered when the listing was made, so these were either
  *     paid since or are overdue; the developer's statement says which (the listing's arrears fields).
  *   - preHandover: due from today up to handover (`months`: from today to the handover date).
- *   - atHandover: the handover payment, by its label ("On handover", "عند التسليم"…), or, when no label says so,
- *     the last instalment dated in the handover quarter (up to the handover date). A handover mortgage can finance it.
- *   - postHandover: due after the handover date, or labelled post-handover.
+ *   - atHandover: the handover payment, by its label ("On handover", "عند التسليم"…), even when dated after the
+ *     listing's handover date (`date`: then that later date, else the listing's), or, when no label says so, the last
+ *     instalment dated in the handover quarter (up to the handover date). A handover mortgage can finance it.
+ *   - postHandover: labelled post-handover, or due after the handover date.
  *   - undated: no due date given.
  * transferDay is the usual window for the transfer if an offer is agreed today; dueSoon is the next instalment falling
  * due within DUE_SOON_DAYS (from the plan or from the listing's separately kept "next instalment", which sellers keep
@@ -187,7 +201,7 @@ export function planSchedule(
     !labelledHandover && handover && handoverQuarter
       ? plan.reduce<string | null>((last, p) => {
           const due = dated(p);
-          const fits = due != null && due >= handoverQuarter && due <= handover && !PRE_HANDOVER.test(p.label);
+          const fits = due != null && due >= handoverQuarter && due <= handover && !isPreHandover(p.label);
           return fits && (last == null || due > last) ? due : last;
         }, null)
       : null;
@@ -197,12 +211,18 @@ export function planSchedule(
   const at = bucket();
   const post = bucket();
   const undated = bucket();
+  // The label decides before the date: a plan's "On handover (31-DEC-2028)" row is the handover payment even when the
+  // listing's own handover date is earlier, and the step is then dated by that row.
+  let atDate = handover;
   for (const p of plan) {
     const due = dated(p);
     if (due && due < today) add(pastDue, p.amount);
-    else if ((due && handover && due > handover) || POST_HANDOVER.test(p.label)) add(post, p.amount);
-    else if (isHandoverLabel(p.label)) add(at, p.amount);
-    else if (due != null && due === lastInHandoverQuarter && !PRE_HANDOVER.test(p.label)) add(at, p.amount);
+    else if (isPostHandover(p.label)) add(post, p.amount);
+    else if (isHandoverLabel(p.label)) {
+      add(at, p.amount);
+      if (due && (atDate == null || due > atDate)) atDate = due;
+    } else if (due && handover && due > handover) add(post, p.amount);
+    else if (due != null && due === lastInHandoverQuarter && !isPreHandover(p.label)) add(at, p.amount);
     else if (due) add(pre, p.amount);
     else add(undated, p.amount);
   }
@@ -231,11 +251,24 @@ export function planSchedule(
     transferDay: { from: addDays(today, TRANSFER_WINDOW_DAYS.from), to: addDays(today, TRANSFER_WINDOW_DAYS.to) },
     pastDue,
     preHandover: { ...pre, months },
-    atHandover: { ...at, date: handover },
+    atHandover: { ...at, date: atDate },
     postHandover: post,
     undated,
     /** Sum of the instalments still ahead (every bucket but pastDue). */
     future,
     dueSoon,
   };
+}
+
+/**
+ * A unit already handed over, shown as "Ready" instead of a handover quarter: its handover date is today or past (Dubai
+ * dates), or it has no date but is fully paid with no plan rows, as a partner network's ready units come. The "Handover
+ * by" filter and sort count those dateless ones as ready too (readyUndatedSql in src/lib/listings.ts).
+ */
+export function isReady(
+  l: { handoverDate: string | null; originalPrice: number; amountPaid: number; planRows: number },
+  today: string,
+) {
+  if (l.handoverDate) return l.handoverDate <= today;
+  return l.originalPrice > 0 && l.amountPaid >= l.originalPrice && l.planRows === 0;
 }

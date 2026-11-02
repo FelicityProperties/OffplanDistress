@@ -129,7 +129,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                 <TableCell>
                   <p className="font-medium">{u.fullName}</p>
                   <p className="text-xs text-muted-foreground">
-                    <bdi dir="ltr">{u.email}</bdi>
+                    {/* A phone-only seller's account holds our own placeholder address, never theirs. */}
+                    {isPlaceholderEmail(u.email) ? t("users.noEmail") : <bdi dir="ltr">{u.email}</bdi>}
                     {u.phone && (
                       <>
                         {" · "}
@@ -137,8 +138,10 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                       </>
                     )}
                   </p>
-                  {/* A buyer our team added to a deal file: no password until they set one with "Forgot password". */}
-                  {!u.hasPassword && <p className="text-xs text-gold-foreground">{t("users.addedBuyer")}</p>}
+                  {/* Added by our team, no password yet: a buyer linked to a deal file (they set one with "Forgot
+                      password"), or a seller whose ownership was confirmed from their signed Form A. */}
+                  {!u.hasPassword && u.dealBuyer && <p className="text-xs text-gold-foreground">{t("users.addedBuyer")}</p>}
+                  {!u.hasPassword && u.listings > 0 && <p className="text-xs text-gold-foreground">{t("users.addedSeller")}</p>}
                 </TableCell>
                 <TableCell>{tc(`intent.${u.intent}`)}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">

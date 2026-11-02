@@ -88,8 +88,9 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
   const sources = new Map<string, { name: string; count: number }>();
   for (const q of imported) {
     const key = q.source?.import;
-    // (A sample is never an advert, so the action leaves it out too.)
-    if (!key || q.isSample) continue;
+    // (A sample is never an advert, so the action leaves it out too, as it does a unit with its permit number entered:
+    // the number is its record, so it is approved from its own page once its owner is in.)
+    if (!key || q.isSample || q.dldPermit) continue;
     const entry = sources.get(key) ?? { name: q.source?.sourceName ?? key, count: 0 };
     entry.count++;
     sources.set(key, entry);
@@ -311,7 +312,7 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
                       </Link>
                     </Button>
                   ) : (
-                    <ReviewButtons listingId={q.id} />
+                    <ReviewButtons listingId={q.id} savedAt={q.updatedAt.toISOString()} />
                   )}
                 </TableCell>
               </TableRow>

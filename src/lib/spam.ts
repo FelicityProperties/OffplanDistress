@@ -193,6 +193,50 @@ export type SpamInput = {
 };
 
 /**
+ * Why a message was flagged, as inquiries.spam_reason stores it: the score's reasons joined with "; " (the phrase or
+ * host after "wording: " / "link: "), or TEAM_MARK for one our team marked by hand. They are codes, never shown as
+ * stored, and keep the wording they were first stored with so older rows read the same: the Spam tab names each one in
+ * the admin's language (spamReasons).
+ */
+const REASON = {
+  nameDigits: "name with digits",
+  oneWordName: "one-word name",
+  fakeEmail: "fake or reserved email address",
+  offTopic: "nothing about property",
+} as const;
+/** "Spam" on an inbox row of /admin/inquiries (src/app/actions/admin.ts setInquirySpam). */
+export const TEAM_MARK = "marked by the team";
+/** What migration 0013 stored on the SEO pitches already in the table when the score was added. */
+const BACKFILLED = "wording: seo scam (backfilled)";
+
+export type SpamReason = { code: "wording" | "link" | keyof typeof REASON | "team" | "backfilled" | "other"; value?: string };
+
+/** A stored spam_reason as its reasons, each with its phrase or host; anything unknown comes back as "other". */
+export function spamReasons(stored: string | null): SpamReason[] {
+  return (stored ?? "")
+    .split("; ")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s): SpamReason => {
+      if (s === BACKFILLED) return { code: "backfilled" };
+      if (s === TEAM_MARK) return { code: "team" };
+      const label = (Object.keys(REASON) as (keyof typeof REASON)[]).find((k) => REASON[k] === s);
+      if (label) return { code: label };
+      const m = /^(wording|link): (.+)$/.exec(s);
+      return m ? { code: m[1] as "wording" | "link", value: m[2] } : { code: "other", value: s };
+    });
+}
+
+/**
+ * Whether the score flagged the message as it arrived, so the team never had its "inquiry.received" notice: not one
+ * our team marked by hand (it reached the inbox, and the team, first) nor one the backfill flagged (stored before the
+ * score existed, it was notified on arrival).
+ */
+export function flaggedOnArrival(stored: string | null) {
+  return !spamReasons(stored).some((r) => r.code === "team" || r.code === "backfilled");
+}
+
+/**
  * The content score and why: +3 for the SEO vocabulary, +2 per link to a host that isn't ours, +1 for a one-word
  * name or one with digits, +1 for an address on a reserved domain or an obvious fake (src/lib/newsletter.ts), +2 for a
  * long Latin-script contact message that mentions nothing about property. SPAM_THRESHOLD or more is spam.
@@ -218,15 +262,15 @@ export function spamScore({ name, email, message, listingId }: SpamInput): { sco
   const n = name.trim();
   if (!/\s/.test(n) || /\d/.test(n)) {
     score += 1;
-    reasons.push(/\d/.test(n) ? "name with digits" : "one-word name");
+    reasons.push(/\d/.test(n) ? REASON.nameDigits : REASON.oneWordName);
   }
   if (!normalizeEmail(email)) {
     score += 1;
-    reasons.push("fake or reserved email address");
+    reasons.push(REASON.fakeEmail);
   }
   if (!listingId && text.length > OFF_TOPIC_MIN_LENGTH && !NON_LATIN.test(text) && !PROPERTY_WORDS.test(text)) {
     score += 2;
-    reasons.push("nothing about property");
+    reasons.push(REASON.offTopic);
   }
   return { score, reasons };
 }

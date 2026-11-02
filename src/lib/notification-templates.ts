@@ -1,7 +1,8 @@
-import type { Locale } from "@/i18n/config";
+import { LOCALES, type Locale } from "@/i18n/config";
 import type { Vars } from "@/i18n/define";
 import type { Namespace } from "@/i18n/messages";
 import { translator, type TKey } from "@/i18n/translator";
+import { BRAND, brandName, brokerName } from "./config";
 import { formatAED, formatDate } from "./format";
 
 // In-app + email copy for every notification, in each supported language.
@@ -294,15 +295,19 @@ export const TEMPLATES = {
       cta: "打开卖家线索",
     },
   },
+  // These two advertise units, so they carry what every advert carries (as the newsletter's rows do): {permit} is the
+  // deal's DLD permit line and {advertiser} our office's ORN and the broker's BRN (permitLine and advertiserLines below).
   "watch.price_drop": {
-    en: { title: "Price drop on {project}", body: "The asking price fell from {from} to {to}.", cta: "View deal" },
-    ar: { title: "انخفاض سعر {project}", body: "انخفض السعر المطلوب من {from} إلى {to}.", cta: "عرض الصفقة" },
-    zh: { title: "{project} 已降价", body: "卖家要价已从 {from} 降至 {to}。", cta: "查看房源" },
+    en: { title: "Price drop on {project}", body: "The asking price fell from {from} to {to}.\n\n{permit}\n{advertiser}", cta: "View deal" },
+    ar: { title: "انخفاض سعر {project}", body: "انخفض السعر المطلوب من {from} إلى {to}.\n\n{permit}\n{advertiser}", cta: "عرض الصفقة" },
+    zh: { title: "{project} 已降价", body: "卖家要价已从 {from} 降至 {to}。\n\n{permit}\n{advertiser}", cta: "查看房源" },
   },
+  // {name} is the saved search's name without its own quotation marks (/deals quotes the search text in it).
+  // {list} names each deal with its price to the seller and its permit line.
   "search.matches": {
-    en: { title: "New deals for “{name}”: {count}", body: "{list}", cta: "See matches" },
-    ar: { title: "صفقات جديدة تطابق «{name}»: {count}", body: "{list}", cta: "عرض النتائج" },
-    zh: { title: "“{name}”的新房源：{count}", body: "{list}", cta: "查看匹配结果" },
+    en: { title: "New deals for “{name}”: {count}", body: "{list}\n\n{advertiser}", cta: "See matches" },
+    ar: { title: "صفقات جديدة تطابق «⁨{name}⁩»: {count}", body: "{list}\n\n{advertiser}", cta: "عرض النتائج" },
+    zh: { title: "“{name}”的新房源：{count}", body: "{list}\n\n{advertiser}", cta: "查看匹配结果" },
   },
   "password.reset": {
     en: { title: "Reset your password", body: "Someone asked to reset the password for this account. The link works for 1 hour. If it wasn't you, ignore this email.", cta: "Choose a new password" },
@@ -438,7 +443,8 @@ export type TermParam = { [N in Namespace]: { t: N; key: TKey<N>; vars?: Vars } 
 
 /**
  * One {placeholder} value. Plain strings/numbers are used as-is; { aed } is formatted as money, { date: "2026-11-02" }
- * as a date and { t, key } is translated — all in the recipient's language.
+ * as a date and { t, key } is translated — all in the recipient's language. { byLocale } is text already written in
+ * each language (perLocale), for lines built from several messages.
  */
 export type TemplateParam =
   | string
@@ -447,6 +453,7 @@ export type TemplateParam =
   | undefined
   | { aed: number | null | undefined }
   | { date: string | null | undefined }
+  | { byLocale: Record<Locale, string> }
   | TermParam;
 export type TemplateParams = Record<string, TemplateParam>;
 
@@ -455,7 +462,31 @@ export function resolveParam(p: TemplateParam, locale: Locale): string {
   if (typeof p === "string" || typeof p === "number") return String(p);
   if ("aed" in p) return formatAED(p.aed, locale);
   if ("date" in p) return formatDate(p.date, locale);
+  if ("byLocale" in p) return p.byLocale[locale];
   return (translator(p.t, locale) as (key: string, vars?: Vars) => string)(p.key, p.vars);
+}
+
+/** A param written in every language by `render`; each recipient gets theirs. */
+export function perLocale(render: (locale: Locale) => string): TemplateParam {
+  return { byLocale: Object.fromEntries(LOCALES.map((l) => [l, render(l)])) as Record<Locale, string> };
+}
+
+/**
+ * The RERA line of one advert, worded as on the deal page's "Listed by" block and the newsletter's rows: its DLD
+ * advertising permit number; without one, the permit our office holds (published on the account owner's attestation,
+ * src/lib/attestation.ts); for a listing from before permits were recorded, our office and its ORN.
+ */
+export function permitLine(l: { dldPermit: string | null; permitAttestedAt: Date | null }, locale: Locale) {
+  const td = translator("deal", locale);
+  const company = brandName(locale);
+  if (l.dldPermit) return td("listedBy.permit", { permit: l.dldPermit });
+  return td(l.permitAttestedAt ? "listedBy.permitHeld" : "listedBy.office", { company, orn: BRAND.orn });
+}
+
+/** Who advertises: our office with its RERA ORN, then the broker with their BRN (as the newsletter's footer). */
+export function advertiserLines(locale: Locale) {
+  const td = translator("deal", locale);
+  return `${td("listedBy.office", { company: brandName(locale), orn: BRAND.orn })}\n${td("listedBy.broker", { name: brokerName(locale), brn: BRAND.broker.brn })}`;
 }
 
 export function renderTemplate(key: TemplateKey, locale: Locale, params: TemplateParams = {}) {

@@ -101,6 +101,8 @@ export async function adminListings(status?: (typeof listings.$inferSelect)["sta
       // Imported and still filed under the network's placeholder owner (src/lib/import.ts); `source` says from where.
       awaitingOwner: awaitingOwnerSql,
       source: listings.source,
+      // With a permit number entered, the number is the listing's record: not published on the attestation.
+      dldPermit: listings.dldPermit,
       // The seller's own text, checked for contact details (src/lib/typed-names.ts contactKinds) beside "Approve".
       description: listings.description,
       view: listings.view,
@@ -179,6 +181,10 @@ export async function adminOffers(listingId?: string) {
       sellerName: sellers.fullName,
       sellerEmail: sellers.email,
       sellerPhone: sellers.phone,
+      // Still filed under an import's placeholder owner (src/lib/import.ts), from this source: named in the page's
+      // language, as on the listing page, never by the account's English name and internal address.
+      sellerPlaceholder: sql<boolean>`(lower(${sellers.email}) like 'owner-pending.%@offplandistress.invalid' and ${sellers.passwordHash} is null)`,
+      importSource: sql<string | null>`coalesce(${listings.source}->>'sourceName', ${listings.source}->>'import')`,
     })
     .from(offers)
     .innerJoin(listings, eq(listings.id, offers.listingId))
@@ -225,14 +231,24 @@ const USER_ID = sql.raw(`"users"."id"`);
 const pendingClaimSql = sql`${users.passwordHash} is null and ${users.role} = 'user' and exists (select 1 from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and l.ownership_confirmed_at is null and not l.is_sample)
   and lower(${users.email}) not like 'owner-pending.%@offplandistress.invalid'`;
 
-/** Accounts that can log in, and buyers our team added to a deal file (no password yet), whose KYC is checked here. */
-const registeredSql = sql`(${users.passwordHash} is not null or exists (select 1 from deals d where d.buyer_id = ${USER_ID}))`;
+/** A buyer our team added to a deal file. */
+const dealBuyerSql = sql<boolean>`exists (select 1 from deals d where d.buyer_id = ${USER_ID})`;
 
 /**
- * "registered": accounts that can log in, and buyers found off the platform that our team added to a deal
- * (saveDealFile in src/lib/deals.ts) until they set a password. "pending": sellers our team added (staff-assisted
- * intake, src/lib/claim.ts) who haven't set a password through their claim link yet (the sample seller, which has no
- * password either, owns only samples; an import's placeholder owner, src/lib/import.ts, is nobody's account).
+ * Accounts that can log in, and those our team added without a password whose KYC the deal stages need checked here:
+ * buyers added to a deal file, and sellers whose ownership was confirmed without a claim (their signed Form A, or our
+ * record of their written authority). Never an import's placeholder owner, which is nobody's account.
+ */
+const registeredSql = sql`(${users.passwordHash} is not null or ${dealBuyerSql}
+  or (exists (select 1 from ${listings} l where l.seller_id = ${USER_ID} and l.ownership_confirmed_at is not null and not l.is_sample)
+    and lower(${users.email}) not like 'owner-pending.%@offplandistress.invalid'))`;
+
+/**
+ * "registered": accounts that can log in, and those our team added without a password that a deal needs verified
+ * (registeredSql): buyers found off the platform (saveDealFile in src/lib/deals.ts) and sellers confirmed from their
+ * signed Form A. "pending": sellers our team added (staff-assisted intake, src/lib/claim.ts) who haven't set a password
+ * through their claim link yet (the sample seller, which has no password either, owns only samples; an import's
+ * placeholder owner, src/lib/import.ts, is nobody's account).
  */
 export async function adminUsers(tab: "registered" | "pending" = "registered") {
   return db
@@ -246,6 +262,7 @@ export async function adminUsers(tab: "registered" | "pending" = "registered") {
       kycStatus: users.kycStatus,
       createdAt: users.createdAt,
       hasPassword: sql<boolean>`${users.passwordHash} is not null`,
+      dealBuyer: dealBuyerSql,
       // USER_ID, not ${users.id}: in a select list Drizzle writes the column unqualified ("id"), which inside these
       // subqueries would mean the listing's / offer's own id (the counts were always 0).
       listings: sql<number>`(select count(*)::int from ${listings} l where l.seller_id = ${USER_ID})`,

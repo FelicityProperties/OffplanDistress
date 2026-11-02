@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { Check, Info } from "lucide-react";
 import { toast } from "sonner";
 import { respondToOffer } from "@/app/actions/market";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs } from "@/components/ui/tabs";
 import { useLocale, useT } from "@/i18n/client";
 import type { ListingStatusKey } from "@/lib/config";
 import { formatAED } from "@/lib/format";
@@ -65,18 +67,24 @@ export function SellerOfferActions({
 }) {
   const t = useT("dashboard");
   const tc = useT("common");
+  const te = useT("errors");
   const locale = useLocale();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const counterButton = useRef<HTMLButtonElement>(null);
-  // Suggested: 5% over the offer, but no more than the seller's own asking price (rarely what a seller means to ask).
+  // Suggested: 5% over the offer, but no more than the seller's own asking price (rarely what a seller means to ask),
+  // unless the offer already meets it: a counter is always above the offer.
+  const meetsAsking = askingPrice != null && amount >= askingPrice;
   const suggested = Math.round(amount * 1.05);
-  const [counter, setCounter] = useState(String(askingPrice ? Math.min(askingPrice, suggested) : suggested));
-  const aboveAsking = askingPrice != null && Number(counter) > askingPrice;
+  const [counter, setCounter] = useState(String(askingPrice != null && !meetsAsking ? Math.min(askingPrice, suggested) : suggested));
+  const aboveAsking = askingPrice != null && !meetsAsking && Number(counter) > askingPrice;
+  // At or below the offer it isn't a counter (the server refuses it too): accepting gets the seller that price.
+  const notAbove = !(Number(counter) > amount);
 
   const run = (action: "accept" | "decline" | "counter", value?: number) =>
     start(async () => {
-      const res = await respondToOffer(offerId, action, value);
+      // With the amount this row shows: should the buyer have changed the offer since, the server says so instead.
+      const res = await respondToOffer(offerId, action, value, amount);
       if (res.error) toast.error(res.error);
       else {
         toast.success(
@@ -134,19 +142,50 @@ export function SellerOfferActions({
             onChange={(e) => setCounter(e.target.value)}
             aria-label={t("offerAction.counterAria")}
           />
-          {aboveAsking && (
+          {meetsAsking && (
+            <p className="text-xs text-muted-foreground">{t("offerAction.meetsAsking", { amount: formatAED(askingPrice, locale) })}</p>
+          )}
+          {counter !== "" && notAbove ? (
             <p role="status" className="text-xs text-warning">
-              {t("offerAction.counterAboveAsking", { amount: formatAED(askingPrice, locale) })}
+              {te("field.counterNotAbove", { amount: formatAED(amount, locale) })}
             </p>
+          ) : (
+            aboveAsking && (
+              <p role="status" className="text-xs text-warning">
+                {t("offerAction.counterAboveAsking", { amount: formatAED(askingPrice, locale) })}
+              </p>
+            )
           )}
           <DialogFooter>
-            <Button disabled={pending} onClick={() => run("counter", Number(counter))}>
+            <Button disabled={pending || notAbove} onClick={() => run("counter", Number(counter))}>
               {t("offerAction.sendCounter", { amount: formatAED(Number(counter) || 0, locale) })}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/**
+ * The offers page's Received / Sent tabs, shown from the address (?tab=): a notice's link to ?tab=sent opens Sent even
+ * while the page is already open on Received. A click on a tab writes it there too, without a reload.
+ */
+export function OffersTabs({ initial, children }: { initial: "received" | "sent"; children: React.ReactNode }) {
+  const params = useSearchParams();
+  const asked = params.get("tab");
+  const tab = asked === "received" || asked === "sent" ? asked : initial;
+  return (
+    <Tabs
+      value={tab}
+      onValueChange={(v) => {
+        const next = new URLSearchParams(params.toString());
+        next.set("tab", v);
+        window.history.replaceState(null, "", `?${next}`);
+      }}
+    >
+      {children}
+    </Tabs>
   );
 }
 
@@ -168,7 +207,8 @@ export function BuyerOfferActions({
   const [pending, start] = useTransition();
   const run = (action: "accept_counter" | "decline" | "withdraw") =>
     start(async () => {
-      const res = await respondToOffer(offerId, action);
+      // A counter is answered at the figure shown (should the seller's counter have changed since, the server says so).
+      const res = await respondToOffer(offerId, action, undefined, action === "withdraw" ? undefined : (counterAmount ?? undefined));
       if (res.error) toast.error(res.error);
       else
         toast.success(

@@ -113,7 +113,9 @@ export async function POST(request: Request, ctx: RouteContext<"/api/listings/[i
   if (kind === "photo" && (isAdmin || listing.status === "pending_review")) {
     await db
       .update(listings)
-      .set({ images: sql`array_append(${listings.images}, ${`/api/files/${row.id}`})` })
+      // A change to the listing: an admin editor opened before it shows the gallery without this photo, and is refused
+      // rather than saving that gallery back (adminUpdateListing), and the admin page's own editor reloads with it.
+      .set({ images: sql`array_append(${listings.images}, ${`/api/files/${row.id}`})`, updatedAt: new Date() })
       .where(eq(listings.id, id));
   } else if (kind === "photo" && listing.status !== "withdrawn" && listing.status !== "transferred") {
     const href = `/admin/listings/${id}`;

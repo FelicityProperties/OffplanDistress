@@ -31,7 +31,10 @@ export function OwnerForm({ listingId, placeholder }: { listingId: string; place
   }, [state]);
 
   return (
+    // `action` for a submit before the page's scripts have loaded (posted to the server action, never a GET with the
+    // owner's details in the address); onSubmit once it is interactive, without React's reset of the form.
     <form
+      action={action}
       noValidate
       className="space-y-4"
       data-testid="owner-form"
@@ -93,7 +96,9 @@ export function FormAConfirm({ listingId, fileName }: { listingId: string; fileN
       <h3 className="font-sans text-sm font-semibold">{ti("formA.title")}</h3>
       <p className="text-sm text-muted-foreground">{ti("formA.hint")}</p>
       {fileName ? (
+        // `action` for a submit before the scripts have loaded, as the Owner card.
         <form
+          action={action}
           className="space-y-3"
           onSubmit={(e) => {
             e.preventDefault();

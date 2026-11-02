@@ -1,16 +1,16 @@
 import { TrendingDown } from "lucide-react";
 import type { TFn } from "@/i18n/translator";
 import type { DealAnalysis } from "@/lib/deal-math";
+import { wholePct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
- * A discount ratio as the whole percentage the chips show (0.196 → 20), rounded half up; null when it is unknown.
- * The ratio is a double (0.195 × 100 lands at 19.499999999999996), so a nudge far below any real difference between
- * two listings' ratios (prices are whole dirhams: ≥ 1e-7 points apart) keeps an exact .5 rounding up, as
- * belowOriginalPct does in SQL (src/lib/listings.ts).
+ * A discount ratio as the whole percentage the chips show (0.196 → 20), rounded half up as belowOriginalPct does in SQL
+ * (src/lib/listings.ts); null when it is unknown. The rounding is wholePct's (src/lib/format.ts), which the paid share
+ * uses too.
  */
 export function discountPct(ratio: number | null) {
-  return ratio == null ? null : Math.round(ratio * 100 + 1e-9);
+  return wholePct(ratio);
 }
 
 /**

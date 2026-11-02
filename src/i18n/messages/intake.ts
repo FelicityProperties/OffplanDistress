@@ -144,7 +144,8 @@ export default defineMessages({
     "publish.done": "{n} listings published",
     "publish.doneOne": "1 listing published",
     "publish.none": "Nothing published: these listings were already published or changed in the meantime.",
-    "publish.skipped.hasPermit": "{n} left in review with a permit number entered — the number is their record, so approve them from their pages.",
+    "publish.skipped.hasPermit":
+      "{n} left in review with a permit number entered: the number is their record, so each one is approved from its own page once its owner is entered and confirmed.",
     "publish.skipped.formAExpired": "{n} left in review: their Form A has run out.",
     "publish.skipped.changed": "{n} left as they are: changed in the meantime.",
     "publish.failed": "Couldn't publish. Try again.",
@@ -204,6 +205,9 @@ export default defineMessages({
     "claim.ownerStillPlaceholder": "The listing is still filed under a placeholder: enter the real owner below so they can see it in their account.",
     "approve.setOwnerFirst":
       "Set the owner first: this listing is still filed under a placeholder. Then confirm ownership (claim link or the owner's signed Form A) and enter the permit before approving. Or publish it now on Felicity's permits, with the button next to Approve.",
+    // The same with a permit number entered: the number is its record, so there is no attestation button (publishAttested).
+    "approve.setOwnerFirstNumbered":
+      "Set the owner first: this listing is still filed under a placeholder. Then confirm ownership (claim link or the owner's signed Form A) and approve it: with its permit number entered, the number is its record, so it isn't published on Felicity's permits.",
 
     "formA.title": "Or confirm with the owner's signed Form A",
     "formA.hint":
@@ -356,7 +360,8 @@ export default defineMessages({
     "publish.done": "نُشر ⁨{n}⁩ من الإعلانات",
     "publish.doneOne": "نُشر إعلان واحد",
     "publish.none": "لم يُنشر شيء: هذه الإعلانات نُشرت أو تغيّرت في هذه الأثناء.",
-    "publish.skipped.hasPermit": "بقي ⁨{n}⁩ قيد المراجعة لأن رقم التصريح مُدخَل لها، فالرقم هو سجلّها؛ وافق عليها من صفحاتها.",
+    "publish.skipped.hasPermit":
+      "بقي ⁨{n}⁩ قيد المراجعة لأن رقم التصريح مُدخَل لها، فالرقم هو سجلّها: يُوافَق على كلٍّ منها من صفحته بعد إدخال مالكه وتأكيد ملكيته.",
     "publish.skipped.formAExpired": "بقي ⁨{n}⁩ قيد المراجعة: انتهت صلاحية النموذج (A) الخاص بها.",
     "publish.skipped.changed": "تُرك ⁨{n}⁩ على حاله: تغيّر في هذه الأثناء.",
     "publish.failed": "تعذّر النشر. حاول مرة أخرى.",
@@ -413,6 +418,8 @@ export default defineMessages({
     "claim.ownerStillPlaceholder": "ما زال الإعلان مسجّلاً باسم مالك مؤقت: أدخل المالك الفعلي أدناه ليراه في حسابه.",
     "approve.setOwnerFirst":
       "حدّد المالك أولاً: ما زال هذا الإعلان مسجّلاً باسم مالك مؤقت. ثم أكّد الملكية (برابط التأكيد أو بالنموذج (A) الموقّع من المالك) وأدخل التصريح قبل الموافقة عليه. أو انشره الآن بتصاريح فيليسيتي بالزر المجاور لزر الموافقة.",
+    "approve.setOwnerFirstNumbered":
+      "حدّد المالك أولاً: ما زال هذا الإعلان مسجّلاً باسم مالك مؤقت. ثم أكّد الملكية (برابط التأكيد أو بالنموذج (A) الموقّع من المالك) ووافق عليه: رقم التصريح مُدخَل له، فالرقم هو سجلّه، ولذلك لا يُنشر بتصاريح فيليسيتي.",
 
     "formA.title": "أو أكّد الملكية بالنموذج (A) الموقّع من المالك",
     "formA.hint":
@@ -565,7 +572,7 @@ export default defineMessages({
     "publish.done": "已发布 {n} 套房源",
     "publish.doneOne": "已发布 1 套房源",
     "publish.none": "未发布任何房源：这些房源已被发布，或在此期间已有变动。",
-    "publish.skipped.hasPermit": "{n} 套已录入许可编号，仍留在审核中——编号即为其记录，请从各自页面批准。",
+    "publish.skipped.hasPermit": "{n} 套已录入许可编号，仍留在审核中：编号即为其记录，须在各自页面录入并确认业主后再批准。",
     "publish.skipped.formAExpired": "{n} 套仍留在审核中：其 A 表已过期。",
     "publish.skipped.changed": "{n} 套保持原状：在此期间已有变动。",
     "publish.failed": "无法发布。请重试。",
@@ -622,6 +629,8 @@ export default defineMessages({
     "claim.ownerStillPlaceholder": "此房源仍记在占位业主名下：请在下方录入真实业主，以便其在自己的账户中看到该房源。",
     "approve.setOwnerFirst":
       "请先设置业主：此房源仍记在占位业主名下。然后确认业主身份（确认链接或业主签署的 A 表），并在批准前录入许可。或者使用“批准”旁边的按钮，立即凭 Felicity 的许可发布。",
+    "approve.setOwnerFirstNumbered":
+      "请先设置业主：此房源仍记在占位业主名下。然后确认业主身份（确认链接或业主签署的 A 表）并批准：已录入许可编号，编号即为其记录，因此不会凭 Felicity 的许可发布。",
 
     "formA.title": "或凭业主签署的 A 表确认",
     "formA.hint":

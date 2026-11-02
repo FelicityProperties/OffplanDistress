@@ -11,6 +11,7 @@ import type { TFn, TKey } from "@/i18n/translator";
 import { sourceFromForm } from "@/lib/attribution";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
+import { formText } from "@/lib/clean-text";
 import { DEVELOPERS } from "@/lib/config";
 import { leadCode, quarterEndOf, sellerEstimate } from "@/lib/estimate";
 import { formatPct } from "@/lib/format";
@@ -67,17 +68,24 @@ const leadSchema = (t: T, ts: TS) =>
 
 export type SellerLeadState = FormState & { id?: string; ref?: string; urgent?: boolean; throttled?: boolean };
 
+/**
+ * A link in a lead's name: http(s)://, www. or a bare host with a path, as the spam checks read links (src/lib/spam.ts).
+ * The name is read for links only, not for the SEO pitch's words: "Seo" is a common Korean surname (Min-jun Seo).
+ */
+const NAME_LINK = /(?:https?:\/\/|www\.)[a-z0-9.-]+\.[a-z]{2,}|(?<![\w@.-])[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}\//i;
+
 /** The free estimate's second step: no account needed. Five per IP per hour. */
 export async function createSellerLead(_prev: SellerLeadState, formData: FormData): Promise<SellerLeadState> {
   const [t, ts] = await Promise.all([getT("errors"), getT("sell")]);
+  // Without the control characters Postgres can't store (a NUL byte pasted with the text would be a server error).
   const opt = (k: string) => {
-    const v = formData.get(k);
+    const v = formText(formData.get(k));
     return v == null || v === "" ? undefined : String(v);
   };
   const parsed = leadSchema(t, ts).safeParse(
     {
-      name: formData.get("name"),
-      phone: formData.get("phone"),
+      name: formText(formData.get("name")),
+      phone: formText(formData.get("phone")),
       developer: formData.get("developer"),
       developerOther: opt("developerOther"),
       project: opt("project"),
@@ -102,9 +110,9 @@ export async function createSellerLead(_prev: SellerLeadState, formData: FormDat
   const ip = await clientIp();
   if (!(await verifyTurnstile(formData.get("cf-turnstile-response"), ip))) return { error: t("form.verifyFailed") };
   const v = parsed.data;
-  // The SEO pitch, or a link, where the name or the project should be: the lead would reach the team's inbox as a
-  // "new seller lead" notice, so it gets the bots' thank-you too.
-  if (pitchIn([v.name, v.project, v.developerOther].filter(Boolean).join(" "))) return silent();
+  // The SEO pitch, or a link, where the project should be, or a link where the name should be: the lead would reach the
+  // team's inbox as a "new seller lead" notice, so it gets the bots' thank-you too. A real seller's name never does.
+  if (pitchIn([v.project, v.developerOther].filter(Boolean).join(" ")) || NAME_LINK.test(v.name.normalize("NFKC"))) return silent();
   // Per IP, then per number (a lead has no address of its own): the estimate is open to anyone, once in a while.
   const digits = v.phone.replace(/\D/g, "");
   if (!(await hit(`lead-ip:${ip}`, 5, 60 * MINUTE)) || !(await hit(`lead-phone:${digits}`, 3, DAY))) {

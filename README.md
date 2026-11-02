@@ -51,7 +51,9 @@ team") any real listing that was already live without a permit; enter its permit
 live again. A seller who changes the asking price or description of a live listing sends it back to review, so
 the advert never shows a price or text the permit and our team haven't seen; with an accepted offer those two
 fields are fixed. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each
-real deal page adds a `RealEstateListing` with its price.
+real deal page adds a `RealEstateListing` with its price. The emails that list units carry the same details: each
+deal in the newsletter, in a saved-search alert and in a price-drop notice to watchers has its permit line (the
+deal page's wording), followed by our ORN and the broker's BRN.
 
 Each permit also has an expiry date, and optionally its DLD verification link (`https://…dubailand.gov.ae/…`),
 shown on the deal page as "Verify this advert with DLD" with a QR code; Form A has an expiry date too. A listing
@@ -59,7 +61,9 @@ can only go live with a permit valid in the future (dates must fall between a ye
 advert whose permit or Form A has lapsed disappears from every public page at once (deals, home, Distress Index,
 sitemap, share image); the daily `ops-daily` job then pauses live ones, tells the seller, and reminds admins 7
 days and 1 day before expiry. Deals already under offer or in NOC keep their status; admins are told to renew.
-Listings that were live before expiry dates existed keep running until a date is entered (admin banner).
+Listings that were live before expiry dates existed keep running until a date is entered (admin banner). A reminder
+or renewal notice that couldn't be stored is sent again by the next run; it, or a seller's pause notice that couldn't
+be stored (not retried: tell the seller), counts as a failed item of the run, so the admins get the job alert.
 
 **Attestation (no permit number).** When Felicity holds a unit's Trakheesi permit and the owner's signed Form A
 off-platform, the account owner can publish on their recorded statement instead of entering the number: tick "Felicity
@@ -268,6 +272,11 @@ keys nothing changes. The migration adding the columns also flags the SEO pitche
 | Offer waiting for your answer (48 h) / counter-offer waiting (48 h) | Seller / buyer |
 | Today's follow-ups (daily, 07:00 Dubai) | Admins |
 
+Saved-search alerts list each new deal with its price to the seller and its permit line. Each search's window (since
+its last alert) is claimed before it is alerted, so two runs at once (a cron call delivered twice, a manual run during
+the 09:00 one) alert it once; an alert that couldn't be stored goes out with the next run, and a stored search whose
+query Postgres refuses is skipped with a log line (`skipped` in the run's summary) rather than counted as a failed item.
+
 In-app notifications always work. Emails go out through [Resend](https://resend.com) once `RESEND_API_KEY` and
 `EMAIL_FROM` are set; each user gets them in the language they last used on the site. In production, sellers and
 buyers only get emails when `EMAIL_FROM` is a sender on a domain verified in Resend (Resend's `onboarding@resend.dev`
@@ -284,7 +293,10 @@ sample issue). Double opt-in: the address is `pending` until the link in the con
 (`src/lib/newsletter-issue.ts`): the adverts that went live, price drops with the old and new price, how many units are
 no longer available, the RERA details every advert carries, and a one-click unsubscribe link: `List-Unsubscribe` /
 `List-Unsubscribe-Post` headers (RFC 8058) naming `POST /api/newsletter/unsubscribe?t=…`, while the footer link opens
-`/newsletter/unsubscribe?t=…`, which shows the masked address and asks first (a GET never unsubscribes). Consent is
+`/newsletter/unsubscribe?t=…`, which shows the masked address and asks first (a GET never unsubscribes). A day with
+no new advert and no price drop sends nothing and doesn't close the window: the next issue that goes out also counts
+the units that left the market on those days. A price drop is measured from the price advertised when the window
+opened, so a unit raised and then cut by less isn't one. Consent is
 recorded with the row: when, from which IP and where on the site; a signed-in subscriber is linked to their account
 (the Privacy Policy's newsletter bullets — data, consent, retention, emails — describe exactly that record).
 The forms say "check your inbox" whatever the address's state (only a non-address is refused), a filled honeypot is
