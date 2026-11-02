@@ -11,7 +11,8 @@ import type { ListingStatusKey } from "@/lib/config";
 
 /**
  * `pausedByAdmin`: our team paused it, and only our team can put it back (no Resume). `hasDeal`: a deal is agreed on
- * it (an accepted offer), which withdrawing ends for good, so the confirmation says so.
+ * it (an accepted offer, or its open deal file), which withdrawing ends for good, so the confirmation says so. Both
+ * pages that show these controls pass both (My listings reads them in myListings, src/lib/dashboard.ts).
  */
 export function ListingActions({
   id,

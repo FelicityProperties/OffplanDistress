@@ -64,8 +64,9 @@ export async function importPartnerStock(pool) {
       await importSource(pool, { ...doc, source }, sharp);
     }
   } finally {
-    // The emails once every notice of the run is stored, as the app sends them after its response.
-    await sendMail(outbox.splice(0));
+    // The emails once every notice of the run is stored, as the app sends them after its response; the lock's
+    // connection is closed whatever happens (left open, it would keep the build from exiting).
+    await sendMail(outbox.splice(0)).catch((err) => console.error("[import] the emails failed:", err?.message ?? err));
     await releaseLock(lock);
   }
 }

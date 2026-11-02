@@ -16,7 +16,7 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Legal | Terms of Use, Privacy Policy, Cookie Policy (`/terms`, `/privacy`, `/cookies`) |
 | Marketplace | Browse deals (filters incl. cash at transfer, sort, search by project, developer or community in English or Arabic, saved searches), deal page (cash needed on transfer day, arrears with the developer, dated cash timeline, payment plan, true-cost breakdown, offer, watchlist, viewing request) |
 | Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; "Prefer WhatsApp?" card; 5-step "Sell my unit" form (saved on the device between sittings, type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline), deal milestones |
-| Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts |
+| Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts (the same filters are saved once, keeping only what the deals page reads) |
 | Everyone | Notification bell + notifications page, email notifications, self-service password reset, daily deals newsletter (`/newsletter`, no account needed, double opt-in, one-click unsubscribe), English / العربية (full right-to-left layout) / 中文 |
 | Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, bulk import of a partner network's units (`/admin/listings/import`, owner set later, claim link or signed Form A), daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), newsletter subscribers and issues (`/admin/newsletter`, CSV export), remove sample data |
 
@@ -87,7 +87,8 @@ code) and/or email plus the unit figures, and creates the seller's account witho
 upload the documents on the listing page. A lead becomes one listing: opened again, the page links to it instead,
 and a second submit (another tab) is refused. The staff forms (intake, Owner card, Form A, deal file) post to the
 server even when sent before the page's scripts have loaded, never as a GET with the seller's details in the
-address, and every admin control answers "Please sign in again" once the session has ended, keeping what was typed. "Copy link for WhatsApp" opens a chat to the seller with a confirmation
+address, and every admin control answers "Please sign in again" once the session has ended, keeping what was typed.
+"Copy link for WhatsApp" opens a chat to the seller with a confirmation
 link in their language ("Email claim link" when they have an email and email is on). The link works once, for 7
 days, and a new one cancels the old. The seller opens it without logging in, ticks the same ownership / authority /
 Terms confirmation as the sell form and chooses an email and password. Until then a staff-created listing can't be
@@ -234,7 +235,8 @@ Once an offer is accepted, the Deal file card on the admin listing page records 
 any co-broker, the NOC, the trustee office, the transfer and the invoice, with the agreed price as written in Form F
 (sale value, our fee and the buyer's ≈ cash at transfer update as you type). Stage gates in "Manage listing": "NOC in
 progress" needs Form F signed and both parties' KYC verified (on the deal file's party cards, or Admin → Users,
-which also lists the sellers our team added and confirmed from their signed Form A, without a password); "Transferred" needs the NOC issue date,
+which also lists the sellers our team added and confirmed from their signed Form A, without a password);
+"Transferred" needs the NOC issue date,
 the DLD transfer date and the agreed price. A transferred unit stays sold: it can be taken down (Withdrawn, its deal
 file kept) and shown as transferred again, never put back on the market or into an earlier stage. Deals that were already under offer get their deal file the first time
 it is opened, a gate is checked or the CSV is exported. A deal set to under offer by hand (a buyer found off the
@@ -348,7 +350,8 @@ recorded with the row: when, from which IP and where on the site; a signed-in su
 (the Privacy Policy's newsletter bullets — data, consent, retention, emails — describe exactly that record).
 The forms say "check your inbox" whatever the address's state (only a non-address is refused), a filled honeypot is
 ignored, and sign-ups are limited to 5 an hour per IP and 3 a day per address. `/admin/newsletter`: a preview of
-today's issue in English, Arabic or Chinese (its counts and time window in the admin's own language), the counts, the subscribers (search, status filter, 50 a page), the last 14 issues and "Export CSV"
+today's issue in English, Arabic or Chinese (its counts and time window in the admin's own language), the counts,
+the subscribers (search, status filter, 50 a page), the last 14 issues and "Export CSV"
 (`/api/admin/export/newsletter.csv`, admins only, audited); confirmations count as leads on `/admin/analytics`. Needs
 nothing beyond email (`RESEND_API_KEY`, `EMAIL_FROM`) and `CRON_SECRET`.
 

@@ -780,7 +780,7 @@ export default defineMessages({
     "inquiry.reason.oneWordName": "اسم من كلمة واحدة",
     "inquiry.reason.fakeEmail": "بريد إلكتروني وهمي أو محجوز",
     "inquiry.reason.offTopic": "لا تذكر شيئاً عن العقارات",
-    "inquiry.reason.team": "حدّدها الفريق كرسالة مزعجة",
+    "inquiry.reason.team": "حدّدها الفريق يدوياً",
     "inquiry.reason.backfilled": "عرض لتحسين الظهور في محركات البحث وُسم عند إضافة فحص الرسائل المزعجة",
     "inquiry.reason.other": "⁨{value}⁩",
     "inquiry.reason.sep": "؛ ",
