@@ -53,9 +53,10 @@ the advert never shows a price or text the permit and our team haven't seen; wit
 fields are fixed. Nor can an admin page opened before a change publish it unseen: Approve, or a save in "Manage
 listing", from a page loaded before the listing last changed (the seller's new price or photo, another admin's save)
 is refused; Approve then shows the listing as it is now, and the editor keeps what was typed for a reloaded page.
-The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each real deal page adds a `RealEstateListing` with its price. The emails that list units carry the same details: each
-deal in the newsletter, in a saved-search alert and in a price-drop notice to watchers has its permit line (the
-deal page's wording), followed by our ORN and the broker's BRN.
+The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each real deal page adds a
+`RealEstateListing` with its price. The emails that list units carry the same details: each deal in the newsletter,
+in a saved-search alert and in a price-drop notice to watchers has its permit line (the deal page's wording),
+followed by our ORN and the broker's BRN.
 
 Each permit also has an expiry date, and optionally its DLD verification link (`https://…dubailand.gov.ae/…`),
 shown on the deal page as "Verify this advert with DLD" with a QR code; Form A has an expiry date too. A listing

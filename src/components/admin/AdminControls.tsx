@@ -37,7 +37,9 @@ export function ReviewButtons({ listingId, savedAt }: { listingId: string; saved
   const rejectButton = useRef<HTMLButtonElement>(null);
   const [reason, setReason] = useState("");
   return (
-    <div className="flex flex-wrap justify-end gap-1">
+    // One unit, never wrapped: the queue's table would shrink its column to one button and stack them. The listing
+    // page's header row wraps around it instead.
+    <div className="flex justify-end gap-1">
       <Button
         size="sm"
         variant="success"
