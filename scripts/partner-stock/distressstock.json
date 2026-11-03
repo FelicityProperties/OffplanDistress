@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-02T14:53:49Z",
+ "generatedAt": "2026-11-03T01:40:33Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -3461,7 +3461,7 @@
     "view": "Road",
     "originalPrice": 1885950,
     "amountPaid": 1414462,
-    "askingPrice": 1225867,
+    "askingPrice": 1166570,
     "handoverDate": "2027-06-30",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -3497,7 +3497,7 @@
      "url": "https://distressonly.deals/media/units/406/c98fb6742500.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 13, 2026: DISTRESS DEAL: 1-BR IN SAFA ONE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 1,961,388; selling price AED 1,697,355."
+   "notes": "Posted on DistressStock October 13, 2026: DISTRESS DEAL: 1-BR IN SAFA ONE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: unit price cut from 1,697,355 (payment to seller 1,225,867 → 1,166,570); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 1,961,388; selling price AED 1,638,058."
   },
   {
    "ref": "b6mBDj",
@@ -4933,7 +4933,7 @@
     "view": "Park, Road",
     "originalPrice": 4486675,
     "amountPaid": 3365005,
-    "askingPrice": 2916342,
+    "askingPrice": 2730517,
     "handoverDate": "2027-06-30",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -4969,7 +4969,7 @@
      "url": "https://distressonly.deals/media/units/407/4ba4f9991dc0.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 13, 2026: DISTRESS DEAL: 2-BR IN SAFA ONE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: 2916342+1121670=4038012; transfer lines sum to 3185897; total 4307567. All checks pass. Source: original price + DLD 4% = AED 4,666,147; selling price AED 4,038,012."
+   "notes": "Posted on DistressStock October 13, 2026: DISTRESS DEAL: 2-BR IN SAFA ONE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: unit price cut from 4,038,012 (payment to seller 2,916,342 → 2,730,517); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 4,666,147; selling price AED 3,852,187."
   },
   {
    "ref": "vJhtvU",
@@ -5161,15 +5161,15 @@
     "sizeSqft": 2852,
     "floor": "10-15",
     "view": "Burj Khalifa, Canal",
-    "originalPrice": 19727425,
-    "amountPaid": 10578711,
+    "originalPrice": 18297425,
+    "amountPaid": 9148711,
     "askingPrice": 7151286,
     "handoverDate": "2027-05-31",
     "nextInstalmentDate": "2028-03-31",
     "nextInstalmentAmount": 9148714,
     "paymentPlan": [
      {
-      "label": "On Completion (31.03.2028)",
+      "label": "On Handover (31.03.2028)",
       "dueDate": "2028-03-31",
       "amount": 9148714
      }
@@ -5199,7 +5199,7 @@
      "url": "https://distressonly.deals/media/units/268/4f9e61708ca5.webp"
     }
    ],
-   "notes": "Posted on DistressStock June 13, 2026: DISTRESS DEAL: 2-BR IN VELA VIENTO. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 19,727,430; selling price AED 16,300,000."
+   "notes": "Posted on DistressStock June 13, 2026: DISTRESS DEAL: 2-BR IN VELA VIENTO. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: DLD fee corrected from 789,137 to 731,937 (original price 18,297,425), the plan row now reads 'On Handover (31.03.2028)'; unit price and payment to seller unchanged. All checks pass. Source: original price + DLD 4% = AED 19,727,430; selling price AED 16,300,000."
   },
   {
    "ref": "wsag9R",
