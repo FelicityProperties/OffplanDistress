@@ -1803,14 +1803,14 @@
    "notes": "All checks pass: 384000 + 896000 = 1280000; instalments sum to 896000; total on transfer and total costs add up. The DLD fee of 72040 works out to 4% of an original price (OP) of 1,800,000, which is higher than the unit price. That is consistent with the label, which bases the fee on OP. Instalment rows are relative ('after 6/12 months'), with no calendar dates."
   },
   "ZmJXvJ": {
-   "image": "https://distressonly.deals/media/units/406/1b5c0498b0d3.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/406/8dc52e2c45d9.webp",
+   "transcribedAt": "2026-11-03",
    "legible": true,
-   "unitPrice": 1697355,
-   "paymentToSeller": 1225867,
+   "unitPrice": 1638058,
+   "paymentToSeller": 1166570,
    "dldFee": 75478,
    "trusteeFee": 5250,
-   "commission": 35644,
+   "commission": 34399,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -1819,10 +1819,10 @@
      "amount": 471488
     }
    ],
-   "totalOnTransfer": 1342239,
+   "totalOnTransfer": 1281697,
    "totalRemaining": 471488,
-   "totalCosts": 1813727,
-   "notes": "All checks pass: 1225867 + 471488 = 1697355; the single handover instalment equals the total remaining; totals add up. The DLD fee implies an OP of 1,885,950."
+   "totalCosts": 1753185,
+   "notes": "Re-posted image: unit price cut from 1,697,355 (payment to seller 1,225,867 → 1,166,570); DLD fee and plan unchanged. All checks pass."
   },
   "b6mBDj": {
    "image": "https://distressonly.deals/media/units/289/d61211460973.webp",
@@ -2958,14 +2958,14 @@
    "notes": "The table runs across 3 images: image 0 ends at 04.07.2029, image 1 covers 04.08.2029 to 04.10.2031, and image 2 covers 04.11.2031 to 04.07.2032 plus the totals. There are 54 instalments: 4 lump rows and 50 monthly rows of 10570. They sum to 1056983. 642017+1056983=1699000; transfer lines sum to 767601; total 1824584. All checks pass. Dates are printed DD.MM.YYYY."
   },
   "tGyvVW": {
-   "image": "https://distressonly.deals/media/units/407/829605d77aa5.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/407/8adbc52faf95.webp",
+   "transcribedAt": "2026-11-03",
    "legible": true,
-   "unitPrice": 4038012,
-   "paymentToSeller": 2916342,
+   "unitPrice": 3852187,
+   "paymentToSeller": 2730517,
    "dldFee": 179507,
    "trusteeFee": 5250,
-   "commission": 84798,
+   "commission": 80896,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -2974,10 +2974,10 @@
      "amount": 1121670
     }
    ],
-   "totalOnTransfer": 3185897,
+   "totalOnTransfer": 2996170,
    "totalRemaining": 1121670,
-   "totalCosts": 4307567,
-   "notes": "2916342+1121670=4038012; transfer lines sum to 3185897; total 4307567. All checks pass."
+   "totalCosts": 4117840,
+   "notes": "Re-posted image: unit price cut from 4,038,012 (payment to seller 2,916,342 → 2,730,517); DLD fee and plan unchanged. All checks pass."
   },
   "tpPbAl": {
    "image": "https://distressonly.deals/media/units/230/f1fe18438006.webp",
@@ -3107,26 +3107,26 @@
    "notes": "1092500+607500=1700000; transfer lines sum to 1214490; total 1821990. All checks pass."
   },
   "wiLLaU": {
-   "image": "https://distressonly.deals/media/units/268/debcfaedb7f0.webp",
-   "transcribedAt": "2026-10-30",
+   "image": "https://distressonly.deals/media/units/268/470f3b2db03d.webp",
+   "transcribedAt": "2026-11-03",
    "legible": true,
    "unitPrice": 16300000,
    "paymentToSeller": 7151286,
-   "dldFee": 789137,
+   "dldFee": 731937,
    "trusteeFee": 5250,
    "commission": 342300,
    "otherOnTransfer": [],
    "instalments": [
     {
-     "label": "On Completion (31.03.2028)",
+     "label": "On Handover (31.03.2028)",
      "dueDate": "2028-03-31",
      "amount": 9148714
     }
    ],
-   "totalOnTransfer": 8287973,
+   "totalOnTransfer": 8230773,
    "totalRemaining": 9148714,
-   "totalCosts": 17436687,
-   "notes": "All checks pass: seller + remaining = unit price; one instalment equals the remaining plan; transfer rows sum to 8 287 973; total costs = 8 287 973 + 9 148 714."
+   "totalCosts": 17379487,
+   "notes": "Re-posted image: DLD fee corrected from 789,137 to 731,937 (original price 18,297,425), the plan row now reads 'On Handover (31.03.2028)'; unit price and payment to seller unchanged. All checks pass."
   },
   "wsag9R": {
    "image": "https://distressonly.deals/media/units/52/618c04beb1a4.webp",
