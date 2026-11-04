@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-03T01:40:33Z",
+ "generatedAt": "2026-11-04T01:39:53Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -1305,7 +1305,8 @@
      "url": "https://distressonly.deals/media/units/276/f0c9e65a065e.webp"
     }
    ],
-   "notes": "Posted on DistressStock June 18, 2026: DISTRESS DEAL: 2-BR IN W RESIDENCES - TOWER 1. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 8,112,000; selling price AED 6,870,000."
+   "notes": "Posted on DistressStock June 18, 2026: DISTRESS DEAL: 2-BR IN W RESIDENCES - TOWER 1. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 8,112,000; selling price AED 6,870,000.",
+   "removed": "2026-11-04"
   },
   {
    "ref": "DAtrIk",
@@ -2939,8 +2940,7 @@
      "url": "https://distressonly.deals/media/units/372/1e106f535416.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 21, 2026: DISTRESS DEAL: 2-BR IN MARINA PLACE PHASE 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 5,080,284; selling price AED 4,350,000.",
-   "removed": "2026-11-01"
+   "notes": "Posted on DistressStock September 21, 2026: DISTRESS DEAL: 2-BR IN MARINA PLACE PHASE 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 5,080,284; selling price AED 4,350,000."
   },
   {
    "ref": "V9Gk3R",
@@ -3643,7 +3643,8 @@
      "url": "https://distressonly.deals/media/units/381/591b4d2d3954.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 23, 2026: DISTRESS DEAL: 4-BR IN PENINSULA 4 THE PLAZA B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 7,913,360; selling price AED 6,800,000. Ready property (handover done)."
+   "notes": "Posted on DistressStock September 23, 2026: DISTRESS DEAL: 4-BR IN PENINSULA 4 THE PLAZA B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 7,913,360; selling price AED 6,800,000. Ready property (handover done).",
+   "removed": "2026-11-04"
   },
   {
    "ref": "dxsZam",
@@ -3916,7 +3917,8 @@
      "url": "https://distressonly.deals/media/units/421/5acdde582236.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 26, 2026: HOT LOT: 4-BR IN LA SIRENE - TOWER 3. Figures are as posted — check the current statement of account with the listing broker before approval. Ready property (handover done)."
+   "notes": "Posted on DistressStock October 26, 2026: HOT LOT: 4-BR IN LA SIRENE - TOWER 3. Figures are as posted — check the current statement of account with the listing broker before approval. Ready property (handover done).",
+   "removed": "2026-11-04"
   },
   {
    "ref": "fUll3D",
@@ -4595,6 +4597,46 @@
     }
    ],
    "notes": "Posted on DistressStock June 13, 2026: DISTRESS DEAL: 2-BR IN SKYVIEW. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: The table runs across 3 images (-0, -1, -2), with no overlap between them. Dates are printed as DD/MM/YYYY. There is no 23/08/2026 row: the plan goes from 23/07/2026 straight to 23/09/2026. Three rows are double instalments (29344): Jun, Jul and Aug 2027. Printed labels differ from the usual ones: row 3 reads '3. DLD Registration Trustee fee + 5%VAT' (mapped to trusteeFee) and row 4 reads \"4. Buyer's agent comission 2% + 5%VAT\" (mapped to commission). The totals use different wording: 'Total remaining Payment Plan' and 'TOTAL COST FOR BUYER'. There is no On Handover row. All checks pass: 369680+880320 = 1250000. The 48 instalments add up to 880320 (146720 + 44x14672 + 3x29344). Transfer rows add up to 459908. 459908+880320 = 1340228. Source: original price + DLD 4% = AED 1,525,888; selling price AED 1,250,000. 3 instalment(s) in the posted plan fall before today (23/07/2026, 23/09/2026, 23/10/2026): confirm whether they were paid."
+  },
+  {
+   "ref": "mlBUMR",
+   "url": "https://distressonly.deals/u/mlBUMR",
+   "posted": "2026-11-03",
+   "listing": {
+    "projectName": "Belmont Residence",
+    "developer": "Ellington",
+    "developerOther": null,
+    "community": "Jumeirah Village Triangle",
+    "communityOther": null,
+    "unitType": "studio",
+    "sizeSqft": 415,
+    "floor": "2-5",
+    "view": "Community",
+    "originalPrice": 800000,
+    "amountPaid": 800000,
+    "askingPrice": 800000,
+    "handoverDate": "2026-11-03",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "mlBUMR-1815d5b6.webp",
+     "url": "https://distressonly.deals/media/units/426/0ed65eb6e268.webp"
+    },
+    {
+     "filename": "mlBUMR-8af1ce5b.webp",
+     "url": "https://distressonly.deals/media/units/426/22b55325c69c.webp"
+    },
+    {
+     "filename": "mlBUMR-k0.webp",
+     "url": "https://distressonly.deals/media/units/426/1d66daa7f06f.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 03, 2026: HOT LOT: STUDIO IN BELMONT RESIDENCE. Figures are as posted — check the current statement of account with the listing broker before approval. Ready property (handover done)."
   },
   {
    "ref": "oHS4q1",
