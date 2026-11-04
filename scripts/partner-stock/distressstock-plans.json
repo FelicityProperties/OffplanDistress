@@ -2496,6 +2496,27 @@
    "totalCosts": 1340228,
    "notes": "The table runs across 3 images (-0, -1, -2), with no overlap between them. Dates are printed as DD/MM/YYYY. There is no 23/08/2026 row: the plan goes from 23/07/2026 straight to 23/09/2026. Three rows are double instalments (29344): Jun, Jul and Aug 2027. Printed labels differ from the usual ones: row 3 reads '3. DLD Registration Trustee fee + 5%VAT' (mapped to trusteeFee) and row 4 reads \"4. Buyer's agent comission 2% + 5%VAT\" (mapped to commission). The totals use different wording: 'Total remaining Payment Plan' and 'TOTAL COST FOR BUYER'. There is no On Handover row. All checks pass: 369680+880320 = 1250000. The 48 instalments add up to 880320 (146720 + 44x14672 + 3x29344). Transfer rows add up to 459908. 459908+880320 = 1340228."
   },
+  "mlBUMR": {
+   "image": "https://distressonly.deals/media/units/426/25d26bae5786.webp",
+   "transcribedAt": "2026-11-04",
+   "legible": true,
+   "unitPrice": 800000,
+   "paymentToSeller": 800000,
+   "dldFee": 32040,
+   "trusteeFee": 4200,
+   "commission": 16800,
+   "otherOnTransfer": [
+    {
+     "label": "Title Deed Fee",
+     "amount": 580
+    }
+   ],
+   "instalments": [],
+   "totalOnTransfer": 853620,
+   "totalRemaining": 0,
+   "totalCosts": 853620,
+   "notes": "Ready unit, fully paid (no payment plan). The DLD line is 4% of the 800,000 selling price + 40, so the derived original price equals the price. All checks pass."
+  },
   "oHS4q1": {
    "image": "https://distressonly.deals/media/units/301/513c42508d45.webp",
    "transcribedAt": "2026-10-30",
