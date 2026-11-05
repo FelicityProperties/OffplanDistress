@@ -39,7 +39,7 @@ export default defineMessages({
     "shell.headline": "Exit an off-plan unit, or buy one below launch price — with the paperwork handled.",
     "shell.point.verified": "SPA and payment history verified",
     "shell.point.noc": "Developer NOC and DLD transfer handled",
-    "shell.point.fee": "2% + VAT, only when the transfer completes",
+    "shell.point.fee": "2% commission, only when the transfer completes",
   },
   ar: {
     "meta.login.title": "تسجيل الدخول",
@@ -78,7 +78,7 @@ export default defineMessages({
     "shell.headline": "بِع وحدتك على الخارطة بسرعة، أو اشترِ وحدة بأقل من سعر الإطلاق — ونتولى عنك جميع الإجراءات.",
     "shell.point.verified": "التحقق من اتفاقية البيع والشراء وسجل الدفعات",
     "shell.point.noc": "نتولى شهادة عدم الممانعة من المطوّر ونقل الملكية لدى دائرة الأراضي والأملاك",
-    "shell.point.fee": "2% + ضريبة القيمة المضافة، فقط عند إتمام نقل الملكية",
+    "shell.point.fee": "عمولة 2%، فقط عند إتمام نقل الملكية",
   },
   zh: {
     "meta.login.title": "登录",
@@ -117,6 +117,6 @@ export default defineMessages({
     "shell.headline": "转让您的期房，或以低于开发商当前售价的价格买入——手续由我们全程办理。",
     "shell.point.verified": "买卖协议（SPA）及付款记录已核实",
     "shell.point.noc": "开发商无异议函（NOC）及迪拜土地局（DLD）过户由我们办理",
-    "shell.point.fee": "服务费 2% + 增值税，仅在过户完成时收取",
+    "shell.point.fee": "服务费 2%，仅在过户完成时收取",
   },
 });

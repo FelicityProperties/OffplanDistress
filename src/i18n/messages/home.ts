@@ -24,7 +24,7 @@ export default defineMessages({
     "trust.eyebrow": "Why us",
     "trust.stat.value": "AED 0",
     "trust.stat.label": "paid to us until the DLD transfer completes",
-    "trust.stat.body": "Listing is free. Our 2% + VAT is settled at the trustee office, at the same moment the seller is paid.",
+    "trust.stat.body": "Listing is free. Our 2% commission is settled at the trustee office, at the same moment the seller is paid.",
     "faq.more": "Still have questions?",
     "licence.company": "Licensed brokerage",
     "licence.orn": "RERA office registration (ORN)",
@@ -37,7 +37,7 @@ export default defineMessages({
     "stats.discount": "Avg. discount vs launch",
     "stats.belowOriginal": "Avg. below original price",
     "stats.fee": "Our fee",
-    "stats.feeValue": "2% + VAT",
+    "stats.feeValue": "2% commission",
     "stats.sellerFee": "To list your unit",
     "stats.sellerFeeValue": "Free",
     "stats.verification": "SPA & payment check",
@@ -77,7 +77,7 @@ export default defineMessages({
     "step.buyer.takeOver.desc": "Step into the remaining payment plan with your name on the Oqood.",
 
     "pricing.eyebrow": "Simple pricing",
-    "pricing.title": "2% + VAT. Only on success.",
+    "pricing.title": "2% commission. Only on success.",
     "pricing.sub":
       "No listing fees, no retainers. We're paid when the transfer completes at the DLD — and not a dirham before.",
     "pricing.link": "See full fee breakdown",
@@ -105,7 +105,7 @@ export default defineMessages({
       "We do. Our transactions team requests the developer NOC, prepares the assignment, books the DLD trustee appointment and updates the Oqood into your name.",
     "faq.cost.q": "What does it cost?",
     "faq.cost.a":
-      "A flat 2% of the sale value + 5% VAT, paid by the buyer only when the transfer completes. Listing is free for sellers. DLD and developer fees are charged by those authorities and shown as estimates on every deal.",
+      "A flat 2% commission on the sale value, paid by the buyer only when the transfer completes. Listing is free for sellers. DLD and developer fees are charged by those authorities and shown as estimates on every deal.",
     "faq.protection.q": "How is my money protected?",
     "faq.protection.a":
       "Nothing is paid to the seller until the developer has issued the NOC. Payment is made by manager's cheque at the DLD trustee office at the moment ownership moves to you, and your future instalments continue into the project's RERA escrow account.",
@@ -138,7 +138,7 @@ export default defineMessages({
     "trust.eyebrow": "لماذا نحن",
     "trust.stat.value": "0 درهم",
     "trust.stat.label": "تدفعها لنا قبل إتمام نقل الملكية لدى دائرة الأراضي والأملاك",
-    "trust.stat.body": "الإعلان مجاني. وتُسدَّد رسومنا البالغة 2% + ضريبة القيمة المضافة في مكتب أمين التسجيل في اللحظة نفسها التي يتسلّم فيها البائع مستحقاته.",
+    "trust.stat.body": "الإعلان مجاني. وتُسدَّد عمولتنا البالغة 2% في مكتب أمين التسجيل في اللحظة نفسها التي يتسلّم فيها البائع مستحقاته.",
     "faq.more": "لا تزال لديك أسئلة؟",
     "licence.company": "شركة وساطة مرخّصة",
     "licence.orn": "رقم تسجيل المكتب لدى ريرا",
@@ -151,7 +151,7 @@ export default defineMessages({
     "stats.discount": "متوسط الخصم عن سعر الإطلاق",
     "stats.belowOriginal": "متوسط الانخفاض عن السعر الأصلي",
     "stats.fee": "رسومنا",
-    "stats.feeValue": "2% + ضريبة القيمة المضافة",
+    "stats.feeValue": "عمولة 2%",
     "stats.sellerFee": "عرض وحدتك",
     "stats.sellerFeeValue": "مجاناً",
     "stats.verification": "التحقق من العقد والدفعات",
@@ -191,7 +191,7 @@ export default defineMessages({
     "step.buyer.takeOver.desc": "تولَّ المتبقي من خطة الدفع مع تسجيل شهادة أوقود باسمك.",
 
     "pricing.eyebrow": "رسوم واضحة",
-    "pricing.title": "2% + ضريبة القيمة المضافة. عند إتمام الصفقة فقط.",
+    "pricing.title": "عمولة 2%. عند إتمام الصفقة فقط.",
     "pricing.sub":
       "لا رسوم إعلان ولا أتعاب مقدّمة. نحصل على أتعابنا عند إتمام نقل الملكية لدى دائرة الأراضي والأملاك، ولا درهم قبل ذلك.",
     "pricing.link": "اطّلع على تفاصيل الرسوم كاملة",
@@ -220,7 +220,7 @@ export default defineMessages({
       "نحن. يطلب فريق المعاملات لدينا شهادة عدم الممانعة من المطوّر، ويُعدّ اتفاقية التنازل، ويحجز الموعد لدى مكتب أمين التسجيل التابع لدائرة الأراضي والأملاك، ويحدّث شهادة أوقود باسمك.",
     "faq.cost.q": "ما التكلفة؟",
     "faq.cost.a":
-      "رسوم ثابتة بنسبة 2% من قيمة البيع، تُضاف إليها ضريبة القيمة المضافة بنسبة 5% على هذه الرسوم، ويدفعها المشتري فقط عند إتمام نقل الملكية. الإعلان مجاني للبائعين. أما رسوم دائرة الأراضي والأملاك والمطوّر فتفرضها تلك الجهات، وتظهر كتقديرات في كل صفقة.",
+      "عمولة ثابتة بنسبة 2% من قيمة البيع، يدفعها المشتري فقط عند إتمام نقل الملكية. الإعلان مجاني للبائعين. أما رسوم دائرة الأراضي والأملاك والمطوّر فتفرضها تلك الجهات، وتظهر كتقديرات في كل صفقة.",
     "faq.protection.q": "كيف تُحمى أموالي؟",
     "faq.protection.a":
       "لا يُدفع أي مبلغ للبائع قبل أن يُصدر المطوّر شهادة عدم الممانعة. ويتم الدفع بشيك مدير (شيك مصرفي) في مكتب أمين التسجيل لدى دائرة الأراضي والأملاك لحظة انتقال الملكية إليك، وتُودَع أقساطك المستقبلية في حساب الضمان الخاص بالمشروع والمعتمد لدى ريرا.",
@@ -253,7 +253,7 @@ export default defineMessages({
     "trust.eyebrow": "为何选择我们",
     "trust.stat.value": "AED 0",
     "trust.stat.label": "在 DLD 过户完成之前付给我们的费用",
-    "trust.stat.body": "挂牌免费。我们的服务费 2% + 增值税在产权登记受托机构结算，与卖家收款同时进行。",
+    "trust.stat.body": "挂牌免费。我们 2% 的服务费在产权登记受托机构结算，与卖家收款同时进行。",
     "faq.more": "还有疑问？",
     "licence.company": "持牌经纪公司",
     "licence.orn": "RERA 经纪公司注册号（ORN）",
@@ -266,7 +266,7 @@ export default defineMessages({
     "stats.discount": "较开发商当前售价的平均折扣",
     "stats.belowOriginal": "平均低于原始合同价",
     "stats.fee": "服务费",
-    "stats.feeValue": "2% + 增值税",
+    "stats.feeValue": "服务费 2%",
     "stats.sellerFee": "房源挂牌",
     "stats.sellerFeeValue": "免费",
     "stats.verification": "买卖协议与付款核实",
@@ -306,7 +306,7 @@ export default defineMessages({
     "step.buyer.takeOver.desc": "承接剩余付款计划，Oqood 期房登记转入您的名下。",
 
     "pricing.eyebrow": "收费透明",
-    "pricing.title": "2% + 增值税，成交才收费。",
+    "pricing.title": "服务费 2%，成交才收费。",
     "pricing.sub":
       "无挂牌费，无预付佣金。只有在 DLD 过户完成时我们才收取服务费——在此之前一个迪拉姆也不收。",
     "pricing.link": "查看完整费用明细",
@@ -334,7 +334,7 @@ export default defineMessages({
       "由我们办理。我们的交易团队向开发商申请无异议函（NOC）、准备转让文件、预约 DLD 产权登记受托机构，并将 Oqood 期房登记更新至您的名下。",
     "faq.cost.q": "费用是多少？",
     "faq.cost.a":
-      "固定服务费为交易总价的 2%，另加 5% 增值税，仅在过户完成时由买家支付。卖家挂牌免费。DLD 和开发商的费用由相关机构收取，每套房源均显示其估算金额。",
+      "固定服务费为交易总价的 2%，仅在过户完成时由买家支付。卖家挂牌免费。DLD 和开发商的费用由相关机构收取，每套房源均显示其估算金额。",
     "faq.protection.q": "我的资金如何得到保障？",
     "faq.protection.a":
       "在开发商出具无异议函（NOC）之前，不会向卖家支付任何款项。付款以银行本票（Manager's Cheque）在 DLD 产权登记受托机构完成，与所有权转移至您名下同时进行；您日后的分期款继续存入该项目的 RERA 监管账户。",

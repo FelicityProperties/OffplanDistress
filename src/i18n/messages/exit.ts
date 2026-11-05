@@ -113,8 +113,8 @@ export default defineMessages({
     "opt3.range": "Quick-sale range",
     "opt3.range.note": "Our assumption: to buy fast, a buyer wants {low}–{high}% off today's price for the whole unit, and that comes out of your equity. Not a valuation.",
     "opt3.fee": "Our fee to you",
-    "opt3.fee.buyer": "The buyer pays our 2% + VAT",
-    "opt3.fee.seller": "2% + VAT of the sale value, on completion",
+    "opt3.fee.buyer": "The buyer pays our 2% commission",
+    "opt3.fee.seller": "2% commission on the sale value, on completion",
     "opt3.noc": "Developer NOC fee (estimate)",
     "opt3.noc.note": "Set by each developer and confirmed when the NOC is issued. In our deals it's part of the buyer's closing costs.",
     "opt3.net": "You could receive",
@@ -182,8 +182,8 @@ export default defineMessages({
       "We take what you've paid and add or subtract the difference between today's price for a similar unit and your purchase price. A quick sale usually needs a sharper price: buyers want {low}–{high}% off the whole unit, and that discount comes out of your equity, so we show that range. It's an estimate, not a valuation — we check real comparables when you list.",
     "faq.q4": "What does it cost me to sell through {brand}?",
     "faq.a4.buyer":
-      "Nothing. Listing is free and the buyer pays our 2% + VAT, only when the transfer completes. The developer's NOC fee and DLD's transfer fee are part of the buyer's closing costs.",
-    "faq.a4.seller": "Our fee is 2% + VAT of the sale value, charged only when the transfer completes. Listing is free.",
+      "Nothing. Listing is free and the buyer pays our 2% commission, only when the transfer completes. The developer's NOC fee and DLD's transfer fee are part of the buyer's closing costs.",
+    "faq.a4.seller": "Our commission is 2% of the sale value, charged only when the transfer completes. Listing is free.",
 
     "disclaimer.title": "Important",
     "disclaimer.body":
@@ -296,8 +296,8 @@ export default defineMessages({
     "opt3.range": "نطاق البيع السريع",
     "opt3.range.note": "افتراض منّا: لكي يشتري بسرعة، يطلب المشتري خصماً بنسبة {low}–{high}% من السعر الحالي للوحدة كاملةً، ويُقتطع ذلك من حصتك. وليس تقييماً.",
     "opt3.fee": "رسومنا عليك",
-    "opt3.fee.buyer": "يدفع المشتري رسومنا البالغة 2% + الضريبة",
-    "opt3.fee.seller": "2% + الضريبة من قيمة البيع، عند الإتمام",
+    "opt3.fee.buyer": "يدفع المشتري عمولتنا البالغة 2%",
+    "opt3.fee.seller": "عمولة 2% من قيمة البيع، عند الإتمام",
     "opt3.noc": "رسوم شهادة عدم الممانعة من المطوّر (تقديرية)",
     "opt3.noc.note": "يحددها كل مطوّر وتُؤكَّد عند إصدار الشهادة. وهي في صفقاتنا ضمن تكاليف الإتمام التي يتحملها المشتري.",
     "opt3.net": "ما قد تحصل عليه",
@@ -365,8 +365,8 @@ export default defineMessages({
       "نبدأ بما دفعته، ثم نضيف أو نطرح الفرق بين السعر الحالي لوحدة مماثلة وسعر شرائك. ولأن البيع السريع يتطلب عادةً سعراً أكثر تنافسية، إذ يطلب المشترون خصماً بنسبة {low}–{high}% من سعر الوحدة كاملةً يُقتطع من حصتك، نعرض هذا النطاق. إنه تقدير وليس تقييماً، ونتحقق من الصفقات المماثلة الفعلية عند عرض وحدتك.",
     "faq.q4": "كم يكلفني البيع عبر {brand}؟",
     "faq.a4.buyer":
-      "لا شيء. الإعلان مجاني، ويدفع المشتري رسومنا البالغة 2% + ضريبة القيمة المضافة عند إتمام نقل الملكية فقط. أما رسوم شهادة عدم الممانعة لدى المطوّر ورسوم النقل لدى دائرة الأراضي والأملاك فهي ضمن تكاليف الإتمام التي يتحملها المشتري.",
-    "faq.a4.seller": "رسومنا 2% + ضريبة القيمة المضافة من قيمة البيع، ولا نتقاضاها إلا عند إتمام نقل الملكية. والإعلان مجاني.",
+      "لا شيء. الإعلان مجاني، ويدفع المشتري عمولتنا البالغة 2% عند إتمام نقل الملكية فقط. أما رسوم شهادة عدم الممانعة لدى المطوّر ورسوم النقل لدى دائرة الأراضي والأملاك فهي ضمن تكاليف الإتمام التي يتحملها المشتري.",
+    "faq.a4.seller": "عمولتنا 2% من قيمة البيع، ولا نتقاضاها إلا عند إتمام نقل الملكية. والإعلان مجاني.",
 
     "disclaimer.title": "تنبيه مهم",
     "disclaimer.body":
@@ -479,8 +479,8 @@ export default defineMessages({
     "opt3.range": "快速出售价格区间",
     "opt3.range.note": "我们的假设：买家要想快速成交，通常会要求整套单元较当前市价折让 {low}–{high}%，而这部分折让从您的权益中扣除。此为假设，并非估值。",
     "opt3.fee": "我们向您收取的费用",
-    "opt3.fee.buyer": "我们的服务费 2% + 增值税由买家支付",
-    "opt3.fee.seller": "交易总价的 2% + 增值税，过户完成时支付",
+    "opt3.fee.buyer": "我们 2% 的服务费由买家支付",
+    "opt3.fee.seller": "交易总价的 2% 服务费，过户完成时支付",
     "opt3.noc": "开发商无异议函（NOC）费用（估算）",
     "opt3.noc.note": "由各开发商自行设定，出具 NOC 时确认。在我们的交易中，该费用计入买家的成交费用。",
     "opt3.net": "您可能收到",
@@ -548,8 +548,8 @@ export default defineMessages({
       "我们以您的已付金额为基础，加上或减去同类单元当前市价与您原始合同价之间的差额。快速出售通常需要更有吸引力的价格：买家希望整套单元折让 {low}–{high}%，而折让部分从您的权益中扣除，因此我们显示该区间。这只是估算，并非估值；您发布房源后，我们会核对真实的可比成交。",
     "faq.q4": "通过 {brand} 出售需要支付什么费用？",
     "faq.a4.buyer":
-      "无需任何费用。发布房源免费，我们的服务费 2% + 增值税由买家支付，且仅在过户完成时收取。开发商的 NOC 费用和迪拜土地局（DLD）的过户费属于买家的成交费用。",
-    "faq.a4.seller": "我们的服务费为交易总价的 2% + 增值税，仅在过户完成时收取。发布房源免费。",
+      "无需任何费用。发布房源免费，我们 2% 的服务费由买家支付，且仅在过户完成时收取。开发商的 NOC 费用和迪拜土地局（DLD）的过户费属于买家的成交费用。",
+    "faq.a4.seller": "我们的服务费为交易总价的 2%，仅在过户完成时收取。发布房源免费。",
 
     "disclaimer.title": "重要提示",
     "disclaimer.body":
