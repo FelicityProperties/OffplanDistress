@@ -5,7 +5,7 @@
   "name": "Direct sellers",
   "url": null
  },
- "generatedAt": "2026-11-02T10:30:00Z",
+ "generatedAt": "2026-11-06T13:45:00Z",
  "units": [
   {
    "ref": "amaal8-1104",
@@ -62,6 +62,90 @@
     }
    ],
    "notes": "Direct seller (WhatsApp intake, 31 Oct 2026); documents received: DLD initial contract of sale (June 2025), SPA pages (unit 1104, 878 sq ft, 1 parking bay, payment schedule) and the developer's statement of account (received 2 Nov 2026): total collection AED 711,000.00 = AED 633,394.48 towards the unit price + DLD 4% AED 72,355.52 + admin fee AED 5,250; the 4th instalment due 9 Oct 2026 has AED 283.68 received and AED 90,160.72 outstanding (overdue — enter it as the arrears figure on the listing); 5th instalment AED 180,888.80 due 9 Jan 2027; AED 904,444 on handover 31 Dec 2028. Asking price set at half of the paid amount on the owner's instruction; the seller wants an immediate exit. Photos: project render and the 1BR Type 8 (878 sq ft) floor plan from the developer's marketing material, plus the seller's photo of the sales-centre model."
+  },
+  {
+   "ref": "azizi-venice3-2br-corner",
+   "url": null,
+   "posted": "2026-11-06",
+   "photos": [
+    {
+     "filename": "azizi-venice3-2br-corner-1.jpg",
+     "url": "https://cloud.famproperties.com/project/large/-518539-102309.jpg"
+    },
+    {
+     "filename": "azizi-venice3-2br-corner-floorplan.webp",
+     "url": "https://raw.githubusercontent.com/FelicityProperties/OffplanDistress/main/scripts/partner-stock/direct-photos/azizi-venice3-2br-floorplan.webp"
+    }
+   ],
+   "notes": "Direct seller (inquiry, 6 Nov 2026): 2-bed corner, described by the owner as 'building 5'; the floor plan received is AV-003 (Azizi Venice 3), Tower B, apartments 202 to 502 (floors 2 to 5), so '5' may be the floor (unit 502): confirm. Paid with DLD: AED 1,760,000, so the original price is AED 1,760,000 / 1.04 = AED 1,692,308 (owner's figure; confirm against the SPA). 50% paid, 50% on handover. Owner sells at the original price. Handover Q4 2026 per public listings.",
+   "listing": {
+    "projectName": "Azizi Venice 3",
+    "developer": "Azizi",
+    "developerOther": null,
+    "community": "Dubai South",
+    "communityOther": null,
+    "unitType": "2br",
+    "sizeSqft": 1087,
+    "floor": null,
+    "view": null,
+    "originalPrice": 1692308,
+    "amountPaid": 846154,
+    "askingPrice": 846154,
+    "handoverDate": "2026-12-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "On handover",
+      "dueDate": null,
+      "amount": 846154
+     }
+    ],
+    "motivation": "motivated",
+    "description": "2-bedroom corner apartment in Building B of Azizi Venice 3, Dubai South: 1,087 sq ft in total, a 926 sq ft apartment plus two balconies (161 sq ft). Kitchen with dining area, living room, two bedrooms with a walk-in closet and two bathrooms. Half of the price is paid; the other 50% is due on handover, expected in Q4 2026. Offered at the original price: the buyer pays the owner the 50% already paid in and takes over the 50% due on handover."
+   }
+  },
+  {
+   "ref": "azizi-venice8-1br-corner",
+   "url": null,
+   "posted": "2026-11-06",
+   "photos": [
+    {
+     "filename": "azizi-venice8-1br-corner-1.png",
+     "url": "https://cloud.famproperties.com/project/large/-507168-131915.png"
+    },
+    {
+     "filename": "azizi-venice8-1br-corner-floorplan.webp",
+     "url": "https://raw.githubusercontent.com/FelicityProperties/OffplanDistress/main/scripts/partner-stock/direct-photos/azizi-venice8-1br-floorplan.webp"
+    }
+   ],
+   "notes": "Direct seller (inquiry, 6 Nov 2026): 1-bed corner, Building 8. Paid with DLD: AED 1,100,000, so the original price is AED 1,100,000 / 1.04 = AED 1,057,692 (owner's figure; confirm against the SPA). 50% paid, 50% on handover. Owner sells at the original price. Floor plan received (AV-008, Building 8B, apartments 228 to 1028, floors 2 to 10); exact unit number and floor to be confirmed. Handover Q4 2026 per public listings.",
+   "listing": {
+    "projectName": "Azizi Venice 8",
+    "developer": "Azizi",
+    "developerOther": null,
+    "community": "Dubai South",
+    "communityOther": null,
+    "unitType": "1br",
+    "sizeSqft": 678,
+    "floor": null,
+    "view": null,
+    "originalPrice": 1057692,
+    "amountPaid": 528846,
+    "askingPrice": 528846,
+    "handoverDate": "2026-12-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "On handover",
+      "dueDate": null,
+      "amount": 528846
+     }
+    ],
+    "motivation": "motivated",
+    "description": "1-bedroom corner apartment in Building 8B of Azizi Venice 8, Dubai South: 678 sq ft in total, a 543 sq ft apartment plus a 136 sq ft wraparound balcony. Open kitchen and living room, bedroom, bathroom and guest toilet. Half of the price is paid; the other 50% is due on handover, expected in Q4 2026. Offered at the original price: the buyer pays the owner the 50% already paid in and takes over the 50% due on handover."
+   }
   },
   {
    "ref": "damac-bali-ba0525",
