@@ -25,6 +25,8 @@ const FORCE_TRACK_KEY = "od_force_track";
 const FORGOT_KEY = "od_sid_forgot";
 /** sessionStorage: the page view a language switch carries over to the page's reload (keepPageView). */
 const CARRY_KEY = "od_view_carry";
+/** Cookie: the page a language switch is reloading, so its server render isn't counted as a new view. */
+export const VIEW_CARRY_COOKIE = "od_view_carry";
 
 /** The referrer is only meaningful for the first page of a page load: client-side navigations keep the old one. */
 let firstViewOfLoad = true;
@@ -44,6 +46,9 @@ export function keepPageView() {
   try {
     sessionStorage.setItem(CARRY_KEY, JSON.stringify({ viewId, sessionId, path, ms: Math.round(view.visibleMs()), at: Date.now() }));
   } catch {}
+  // For the server too: a deal page reloaded in another language doesn't count its advert's view again (the cookie
+  // names the page and lasts 30 seconds; src/app/(site)/deals/[ref]/page.tsx).
+  document.cookie = `${VIEW_CARRY_COOKIE}=${encodeURIComponent(path)}; Max-Age=30; Path=/; SameSite=Lax`;
 }
 
 /** The page view a language switch handed to this load, when it is this page's, this visit's and recent; read once. */

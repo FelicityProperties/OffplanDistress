@@ -89,6 +89,23 @@ export const TEMPLATES = {
     },
   },
   // Admins, once the seller has confirmed through that link.
+  "listing.signInRequested": {
+    en: {
+      title: "Owner asked to sign in: {project}",
+      body: "{seller} asked for a password link for {email}. Their listing {ref} was entered by our team, so no link was emailed: send them their claim link on WhatsApp from the listing page.",
+      cta: "Open listing",
+    },
+    ar: {
+      title: "طلب المالك تسجيل الدخول: {project}",
+      body: "طلب {seller} رابط كلمة المرور للعنوان ⁨{email}⁩. أدخل فريقنا إعلانه ⁨{ref}⁩، لذا لم يُرسل أي رابط بالبريد: أرسِل له رابط التأكيد عبر واتساب من صفحة الإعلان.",
+      cta: "فتح الإعلان",
+    },
+    zh: {
+      title: "业主申请登录：{project}",
+      body: "{seller} 为 {email} 申请了密码链接。其房源 {ref} 由我们的团队录入，因此未通过邮件发送链接：请在房源页面通过 WhatsApp 向其发送确认链接。",
+      cta: "打开房源",
+    },
+  },
   "listing.claimed": {
     en: {
       title: "Seller confirmed ownership: {project}",

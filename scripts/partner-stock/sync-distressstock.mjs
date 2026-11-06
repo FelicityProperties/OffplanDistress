@@ -188,6 +188,7 @@ const COM_MAP = {
   jlt: "Jumeirah Lake Towers",
   "damac hills": "DAMAC Hills",
   "damac hills ii": "DAMAC Hills 2",
+  "dubai island": "Dubai Islands",
 };
 const COM_NAMES = {
   "sobha hartland ii": "Sobha Hartland II",

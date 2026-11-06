@@ -55,7 +55,9 @@ export function formatAEDCompact(value: number | null | undefined, locale: Local
 
 export function formatPct(value: number | null | undefined, digits = 0) {
   if (value == null) return "—";
-  return `${(value * 100).toFixed(digits)}%`;
+  // Whole percentages round as wholePct does (half up, past float noise: 0.145 → 15%), so a unit's paid share reads the
+  // same on its deal page, the "Min. % paid" filter, the seller's dashboard, the admin page and the sell form.
+  return digits === 0 ? `${wholePct(value)}%` : `${(value * 100).toFixed(digits)}%`;
 }
 
 /**

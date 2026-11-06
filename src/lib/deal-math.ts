@@ -140,10 +140,16 @@ function quarterStart(day: string) {
 // "completion of 70%", "عند إنجاز ٥٠٪", "完工 50%"), while one before "on / upon completion", or right after "on / post /
 // before … completion" (عند / بعد / قبل الإنجاز, with the article), is the payment's share of the price ("40% on
 // completion", "On completion 40%": the handover payment; "Post completion 10%").
+// An offset may sit between "after" and the word: "12 months following handover", "بعد 6 أشهر من التسليم", "交房6个月后".
 const POST_HANDOVER =
-  /post[\s-]*hand\s*-?\s*over|after\s+(the\s+)?hand\s*-?\s*over|(days?|weeks?|months?|years?)\s+from\s+(the\s+)?hand\s*-?\s*over|hand\s*-?\s*over\s*\+\s*\d|بعد\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?后/i;
+  /post[\s-]*hand\s*-?\s*over|(?:after|following)\s+(the\s+)?hand\s*-?\s*over|(days?|weeks?|months?|years?)\s+from\s+(the\s+)?hand\s*-?\s*over|hand\s*-?\s*over\s*\+\s*\d|بعد\s+.{0,25}?(ال)?(تسليم|استلام)|交[房付楼].{0,8}?后/i;
 const POST_COMPLETION =
-  /post[\s-]*completion|after\s+(the\s+)?completion|(days?|weeks?|months?|years?)\s+from\s+(the\s+)?completion|completion\s*\+\s*\d|بعد\s+(ال)?(إنجاز|إكمال)|(?:完工|竣工)(?:之)?后/i;
+  /post[\s-]*completion|(?:after|following)\s+(the\s+)?completion|(days?|weeks?|months?|years?)\s+from\s+(the\s+)?completion|completion\s*\+\s*\d|بعد\s+.{0,25}?(ال)?(إنجاز|إكمال)|(?:完工|竣工).{0,8}?后/i;
+// The handover payment itself, named first ("On handover (31-DEC-2028)", "Handover 40%", "عند التسليم", "交房时"): such a row
+// stays the handover payment even when dated after the listing's handover date; any other handover-worded row dated
+// later is after handover.
+const ON_HANDOVER =
+  /^\s*(?:(?:on|upon|at)\s+(?:the\s+)?)?(?:hand\s*-?\s*over|completion)\b|^\s*(?:عند\s+)?(?:ال)?(?:تسليم|استلام|إنجاز|إكمال)|^\s*(?:交[房付楼]|完工|竣工)时?(?![^（(]*后)/i;
 const PRE_HANDOVER = /(?:pre|before|until|till|prior\s+to|up\s+to)[\s-]*(the\s+)?hand\s*-?\s*over|(?:قبل|حتى)\s+(ال)?(تسليم|استلام)|交[房付楼](?:之)?前/i;
 const PRE_COMPLETION = /(?:pre|before|until|till|prior\s+to|up\s+to)[\s-]*(the\s+)?completion|(?:قبل|حتى)\s+(ال)?(إنجاز|إكمال)|(?:完工|竣工)(?:之)?前/i;
 const HANDOVER_WORD = /hand\s*-?\s*over|تسليم|استلام|交[房付楼]/i;
@@ -228,7 +234,7 @@ export function planSchedule(
     const due = dated(p);
     if (due && due < today) add(pastDue, p.amount);
     else if (isPostHandover(p.label)) add(post, p.amount);
-    else if (isHandoverLabel(p.label)) {
+    else if (isHandoverLabel(p.label) && (!(due && handover && due > handover) || ON_HANDOVER.test(p.label))) {
       add(at, p.amount);
       if (due && (atDate == null || due > atDate)) atDate = due;
     } else if (due && handover && due > handover) add(post, p.amount);

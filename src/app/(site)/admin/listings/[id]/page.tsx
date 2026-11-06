@@ -25,7 +25,9 @@ import { listingFiles } from "@/lib/dashboard";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
 import { storedFileName } from "@/lib/uploads";
 import { isUuid } from "@/lib/utils";
-import { dubaiToday, expiryDateBounds } from "@/lib/permits";
+import { dubaiToday, expiryDateBounds, isAdvertised } from "@/lib/permits";
+import { WhatsAppCopy } from "@/components/admin/WhatsAppCopy";
+import { dealPosts } from "@/lib/whatsapp-post";
 import { communityName, developerName } from "@/lib/place-names";
 
 export default async function AdminListingPage({ params }: PageProps<"/admin/listings/[id]">) {
@@ -136,6 +138,13 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           </div>
         </div>
       </div>
+
+      {/* A ready post for the team's WhatsApp groups, in each site language: only for an advert (the post is one). */}
+      {isAdvertised(l) && (
+        <div className="rounded-xl border bg-card p-4 shadow-card">
+          <WhatsAppCopy texts={dealPosts({ ...l, planRows: (l.paymentPlan ?? []).length })} />
+        </div>
+      )}
 
       {imported && (
         <div
@@ -341,7 +350,11 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
           </div>
           {!l.ownershipConfirmedAt && !placeholderOwner && (
             <div className="mt-4">
-              <FormAConfirm listingId={l.id} fileName={formA?.filename ?? null} />
+              <FormAConfirm
+                listingId={l.id}
+                fileName={formA?.filename ?? null}
+                account={seller.passwordHash ? { id: l.sellerId, name: seller.fullName, email: seller.email } : null}
+              />
             </div>
           )}
         </section>

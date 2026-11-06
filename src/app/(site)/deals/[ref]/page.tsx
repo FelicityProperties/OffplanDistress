@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "@/components/LocaleLink";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
@@ -132,8 +132,11 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   // A view is someone opening the advert: a GET (not a HEAD, which shows nobody the page, nor the page drawn again by
   // Watch, an offer or a message), not by its seller or our team, nor by a crawler, link preview or script (the visit
   // statistics' isBotRequest). Sellers see the count, and the 21-day nudge quotes it.
+  // Nor the same advert reloaded in another language by the language switch, which carries the page view over.
   const h = await headers();
-  if (!isOwner && !isAdmin && (h.get(METHOD_HEADER) ?? "GET") === "GET" && !isBotRequest(h)) {
+  const carried = (await cookies()).get("od_view_carry")?.value;
+  const languageSwitch = carried != null && decodeURIComponent(carried) === `/deals/${ref}`;
+  if (!isOwner && !isAdmin && !languageSwitch && (h.get(METHOD_HEADER) ?? "GET") === "GET" && !isBotRequest(h)) {
     after(() => db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, l.id)));
   }
 

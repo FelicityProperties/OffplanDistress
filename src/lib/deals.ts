@@ -9,6 +9,7 @@ import { audit, changes } from "./audit";
 import { isOwnerEmail } from "./auth";
 import { isPlaceholderEmail } from "./claim";
 import { isImportOwner } from "./import";
+import { cleanText } from "./clean-text";
 import { whatsappNumber } from "./leads";
 import { dubaiToday } from "./permits";
 
@@ -258,7 +259,10 @@ export const DEAL_PAST_DATES = [
 /** Dates that may be ahead: an expiry, an appointment. */
 export const DEAL_ANY_DATES = ["formAExpiresAt", "nocValidUntil", "transferBookedFor"] as const;
 
-const emptyToUndefined = (v: FormDataEntryValue | null) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
+const emptyToUndefined = (v: FormDataEntryValue | null) => {
+  const s = typeof v === "string" ? cleanText(v, { multiline: true }).trim() : "";
+  return s || undefined;
+};
 
 function dealFileSchema(t: T, today: string) {
   const text = (max: number) => z.string().trim().max(max, t("field.tooLong", { max })).optional();
@@ -498,7 +502,7 @@ export async function syncSaleValue(actorId: string, listingId: string) {
 
 /** Adds one note to the deal file (admins only, checked by the caller). */
 export async function addNote(actorId: string, dealId: string, body: string, t: T): Promise<DealFileState> {
-  const text = body.trim();
+  const text = cleanText(body, { multiline: true }).trim();
   if (!z.uuid().safeParse(dealId).success) return { error: t("deal.notFound") };
   if (!text) return { error: t("deal.note.empty"), fieldErrors: { body: [t("deal.note.empty")] } };
   if (text.length > 2000) return { error: t("field.tooLong", { max: 2000 }), fieldErrors: { body: [t("field.tooLong", { max: 2000 })] } };
