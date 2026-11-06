@@ -15,8 +15,10 @@ import {
   isSafePath,
   recordDuration,
   recordView,
+  recordWhatsAppTap,
   UNTRACKED_PATH,
   visitorHash,
+  WHATSAPP_PLACES,
 } from "@/lib/analytics";
 
 // Beacon endpoint for the anonymous visit statistics (src/components/analytics/PageViewTracker.tsx → /admin/analytics).
@@ -58,6 +60,15 @@ const Beacon = z.discriminatedUnion("t", [
   z.object({ t: z.literal("l"), viewId: z.uuid(), sessionId, durationMs: z.number().finite().nonnegative().max(86_400_000) }),
   // A signed-in admin's tab: forget the views it recorded before they logged in.
   z.object({ t: z.literal("f"), sessionId }),
+  // A tap on a WhatsApp button: which one, on which page (and deal). Never the message.
+  z.object({
+    t: z.literal("w"),
+    sessionId,
+    path: z.string().min(1).max(300).refine(isSafePath),
+    place: z.enum(WHATSAPP_PLACES),
+    dealRef: z.string().regex(/^OD-\d{1,9}$/).nullish(),
+    locale: z.enum(LOCALES).nullish(),
+  }),
 ]);
 
 const done = () => new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
@@ -131,6 +142,26 @@ async function handle(request: Request) {
   }
 
   if (b.t === "l") return recordDuration(b.viewId, b.sessionId, b.durationMs);
+  if (b.t === "w") {
+    let path = cleanPath(b.path);
+    let locale = b.locale ?? null;
+    const named = localeOfPath(path);
+    if (named) {
+      path = stripLocale(path);
+      locale = named;
+    }
+    if (UNTRACKED_PATH.test(path)) return;
+    return recordWhatsAppTap({
+      sessionId: b.sessionId,
+      visitorHash: await visitorHash(ip, h.get("user-agent") ?? ""),
+      path: path.slice(0, 200),
+      place: b.place,
+      dealRef: b.dealRef ?? null,
+      ...geoFrom(h),
+      ...describeDevice(h),
+      locale,
+    });
+  }
   if (b.t !== "v") return;
   // The same page in every language is one page in the report: "/ar/deals" and "/zh/deals" count as "/deals", in
   // Arabic or Chinese.

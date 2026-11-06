@@ -16,6 +16,8 @@ import { todaySnapshot } from "@/lib/analytics-report";
 import { leadStats } from "@/lib/leads";
 import { formatAED, formatAEDCompact, formatDate, formatNumber, refCode } from "@/lib/format";
 import { listingsWithoutPermitExpiry } from "@/lib/permits";
+import { bestDealsPosts } from "@/lib/whatsapp-post";
+import { WhatsAppCopy } from "@/components/admin/WhatsAppCopy";
 import { developerName } from "@/lib/place-names";
 import { contactKinds } from "@/lib/typed-names";
 import { cn } from "@/lib/utils";
@@ -96,6 +98,8 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
     sources.set(key, entry);
   }
   const publishedNoOwner = tab === "imported" ? await publishedAwaitingOwner() : [];
+  // The week's best adverts as one WhatsApp message for the team's groups (the review tab only).
+  const best = tab === "review" ? await bestDealsPosts() : null;
 
   return (
     <div className="space-y-6">
@@ -116,6 +120,15 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
           <DeleteSamplesButton count={s.samples} />
         </div>
       </PageTitle>
+      {best && (
+        <section aria-labelledby="wa-best-title" className="rounded-xl border bg-card p-4 shadow-card">
+          <h2 id="wa-best-title" className="font-sans text-sm font-semibold">
+            {t("wa.best.title")}
+          </h2>
+          <p className="mb-3 text-xs text-muted-foreground">{t("wa.best.sub")}</p>
+          <WhatsAppCopy texts={best} />
+        </section>
+      )}
       {/* Adverts that went live before permit expiry dates were recorded: the cron can't take them down on time. */}
       {noExpiry.length > 0 && (
         <PermitBanner

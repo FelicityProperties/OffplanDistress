@@ -352,6 +352,73 @@ async function breakdowns(p: Period, since: Date | null) {
   };
 }
 
+export type WhatsAppTap = {
+  at: Date;
+  place: string;
+  path: string;
+  dealRef: string | null;
+  channel: Channel;
+  country: string | null;
+  city: string | null;
+  device: string | null;
+  locale: string | null;
+};
+export type WhatsAppTaps = { total: number; visits: number; previous: number; recent: WhatsAppTap[]; byPlace: { place: string; taps: number }[] };
+
+/**
+ * Taps on a WhatsApp button in the period (whatsapp_clicks): how many, in how many visits, the same count for the
+ * period before, the latest 100 with where their visit came from (its first page's referrer or campaign tag), and
+ * the count by button.
+ */
+export async function whatsappTaps(cur: Period, prev: Period): Promise<WhatsAppTaps> {
+  const inCur = sql`w.created_at >= ${at(cur.from)} and w.created_at < ${at(cur.to)}`;
+  const [totals, recent, byPlace] = await Promise.all([
+    db.execute<{ total: number; visits: number; previous: number }>(sql`
+      select count(*) filter (where ${inCur})::int as total,
+             count(distinct w.session_id) filter (where ${inCur})::int as visits,
+             count(*) filter (where w.created_at >= ${at(prev.from)} and w.created_at < ${at(prev.to)})::int as previous
+      from whatsapp_clicks w where w.created_at >= ${at(prev.from)} and w.created_at < ${at(cur.to)}`),
+    db.execute<{
+      at_ms: number;
+      place: string;
+      path: string;
+      deal_ref: string | null;
+      channel: Channel;
+      country: string | null;
+      city: string | null;
+      device: string | null;
+      locale: string | null;
+    }>(sql`
+      select (extract(epoch from w.created_at) * 1000)::float8 as at_ms, w.place, w.path, w.deal_ref, w.country, w.city, w.device, w.locale,
+             ${channelSql(sql`e.referrer_host`, sql`e.utm_source`)} as channel
+      from whatsapp_clicks w
+      left join lateral (
+        select referrer_host, utm_source from page_views v where v.session_id = w.session_id order by v.created_at, v.id limit 1
+      ) e on true
+      where ${inCur} order by w.created_at desc limit 100`),
+    db.execute<{ place: string; taps: number }>(sql`
+      select w.place, count(*)::int as taps from whatsapp_clicks w where ${inCur} group by w.place order by 2 desc, 1`),
+  ]);
+  const t = totals.rows[0];
+  return {
+    total: Number(t?.total ?? 0),
+    visits: Number(t?.visits ?? 0),
+    previous: Number(t?.previous ?? 0),
+    recent: recent.rows.map((r) => ({
+      at: new Date(Number(r.at_ms)),
+      place: r.place,
+      path: r.path,
+      dealRef: r.deal_ref,
+      channel: r.channel,
+      country: r.country,
+      city: r.city,
+      device: r.device,
+      locale: r.locale,
+    })),
+    byPlace: byPlace.rows.map((r) => ({ place: r.place, taps: Number(r.taps) })),
+  };
+}
+
 export type LiveSession = { path: string; country: string | null; city: string | null; device: string | null; at: Date };
 
 /**
@@ -492,15 +559,16 @@ export async function analyticsReport(range: RangeKey, now = new Date()) {
   const start = await trackingStart();
   const { from, to } = bounds.current;
   const since = start && start > from && start < to ? start : null;
-  const [current, previous, points, detail, live, leads] = await Promise.all([
+  const [current, previous, points, detail, live, leads, whatsapp] = await Promise.all([
     headline(bounds.current, start),
     headline(bounds.previous, start),
     series(bounds.current, bounds.buckets, bounds.hourly),
     breakdowns(bounds.current, since),
     liveSessions(),
     journeys(bounds.current, start),
+    whatsappTaps(bounds.current, bounds.previous),
   ]);
-  return { range, ...bounds, current, previous, points, ...detail, live, leads, generatedAt: now };
+  return { range, ...bounds, current, previous, points, ...detail, live, leads, whatsapp, generatedAt: now };
 }
 
 export type AnalyticsReport = Awaited<ReturnType<typeof analyticsReport>>;

@@ -10,8 +10,10 @@ import { cn } from "@/lib/utils";
 const COLS = { 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" } as const;
 const ROWS = { 2: "md:grid-rows-2", 3: "md:grid-rows-3", 4: "md:grid-rows-4" } as const;
 
+// On phones the arrows sit side by side at the photo's bottom start corner, clear of the badges that wrap down from the
+// top; from sm they are centred on each side.
 const arrow =
-  "absolute top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-ink/55 text-primary-foreground backdrop-blur transition-colors hover:bg-ink/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold";
+  "absolute bottom-3 grid h-10 w-10 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 place-items-center rounded-full bg-ink/55 text-primary-foreground backdrop-blur transition-colors hover:bg-ink/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold";
 
 /**
  * The deal page's photos: the main one with up to four thumbnails beside it. Every photo is reachable — an import's
@@ -56,7 +58,7 @@ export function Gallery({ images, alt, badge }: { images: string[]; alt: string;
             <button type="button" onClick={() => go(-1)} aria-label={t("gallery.previous")} className={cn(arrow, "start-3")}>
               <ChevronLeft className="h-5 w-5 rtl:-scale-x-100" aria-hidden />
             </button>
-            <button type="button" onClick={() => go(1)} aria-label={t("gallery.next")} className={cn(arrow, "end-3")}>
+            <button type="button" onClick={() => go(1)} aria-label={t("gallery.next")} className={cn(arrow, "start-15 sm:start-auto sm:end-3")}>
               <ChevronRight className="h-5 w-5 rtl:-scale-x-100" aria-hidden />
             </button>
             <p

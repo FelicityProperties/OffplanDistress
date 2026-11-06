@@ -73,7 +73,7 @@ export async function SiteFooter() {
             )}
             {BRAND.whatsapp && (
               <li>
-                <a href={`https://wa.me/${BRAND.whatsapp}`} className="inline-flex items-center gap-2.5 transition-colors hover:text-gold">
+                <a href={`https://wa.me/${BRAND.whatsapp}`} data-wa="footer" className="inline-flex items-center gap-2.5 transition-colors hover:text-gold">
                   <MessageCircle className="h-4 w-4 text-gold" />
                   WhatsApp
                 </a>

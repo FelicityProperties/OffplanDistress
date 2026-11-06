@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useLocale } from "@/i18n/client";
 import { localeOfPath, stripLocale } from "@/i18n/paths";
 import { analyticsSessionId } from "@/lib/attribution";
+import { isWhatsAppPlace, WHATSAPP_LINK } from "@/lib/whatsapp-places";
 
 // Anonymous visit statistics for /admin/analytics, mounted once in the site layout. On each page (a new path, or new
 // campaign tags in the URL) it sends one small beacon to /api/a, and when the visitor leaves the page or hides the tab,
@@ -13,7 +14,8 @@ import { analyticsSessionId } from "@/lib/attribution";
 // page has rendered and never block anything. Not sent from automated browsers (navigator.webdriver; our own e2e tests
 // opt in with localStorage od_force_track = "1"), from a device marked "ignore", on /admin and /dashboard, or for an
 // admin (the server drops admins' beacons as well, on any device). Link prefetches render nothing here, so they
-// never count.
+// never count. A tap on a WhatsApp button sends its own beacon at once (WhatsApp usually takes the visitor off the
+// page): which button (the link's data-wa), on which page, and on a deal page the deal's reference; never the message.
 
 const ENDPOINT = "/api/a";
 const UNTRACKED = /^\/(admin|dashboard|api)(\/|$)/;
@@ -23,6 +25,8 @@ const FORCE_TRACK_KEY = "od_force_track";
 const FORGOT_KEY = "od_sid_forgot";
 /** sessionStorage: the page view a language switch carries over to the page's reload (keepPageView). */
 const CARRY_KEY = "od_view_carry";
+/** Cookie: the page a language switch is reloading, so its server render isn't counted as a new view. */
+export const VIEW_CARRY_COOKIE = "od_view_carry";
 
 /** The referrer is only meaningful for the first page of a page load: client-side navigations keep the old one. */
 let firstViewOfLoad = true;
@@ -42,6 +46,9 @@ export function keepPageView() {
   try {
     sessionStorage.setItem(CARRY_KEY, JSON.stringify({ viewId, sessionId, path, ms: Math.round(view.visibleMs()), at: Date.now() }));
   } catch {}
+  // For the server too: a deal page reloaded in another language doesn't count its advert's view again (the cookie
+  // names the page and lasts 30 seconds; src/app/(site)/deals/[ref]/page.tsx).
+  document.cookie = `${VIEW_CARRY_COOKIE}=${encodeURIComponent(path)}; Max-Age=30; Path=/; SameSite=Lax`;
 }
 
 /** The page view a language switch handed to this load, when it is this page's, this visit's and recent; read once. */
@@ -96,6 +103,16 @@ function externalReferrerHost() {
   }
 }
 
+/** The button a WhatsApp link without data-wa stands for, from the page it is on. */
+function placeOfPage(path: string) {
+  if (path === "/contact") return "contact";
+  if (path === "/sell" || path.startsWith("/sell/")) return "sell";
+  if (path === "/exit-calculator" || path.startsWith("/exit-calculator/")) return "exit";
+  if (path.startsWith("/deals/")) return "deal";
+  if (path.startsWith("/claim") || path === "/reset-password") return "claim";
+  return "other";
+}
+
 export function PageViewTracker({ staff }: { staff: boolean }) {
   const address = usePathname();
   // The same page in every language is one page in the report: "/ar/deals" is recorded as "/deals" with locale "ar",
@@ -128,6 +145,39 @@ export function PageViewTracker({ staff }: { staff: boolean }) {
       sessionStorage.setItem(FORGOT_KEY, sid);
     } catch {}
     send({ t: "f", sessionId: sid });
+  }, [staff]);
+
+  // Taps on a WhatsApp button, anywhere on the public site.
+  useEffect(() => {
+    if (staff) return;
+    const onTap = (e: MouseEvent) => {
+      if (e.type === "auxclick" && e.button !== 1) return;
+      const a = (e.target as Element | null)?.closest?.("a[href]");
+      if (!a || !WHATSAPP_LINK.test(a.getAttribute("href") ?? "")) return;
+      const address = location.pathname;
+      const path = stripLocale(address);
+      if (UNTRACKED.test(path) || !trackingAllowed()) return;
+      const sessionId = analyticsSessionId("touch");
+      if (!sessionId) return;
+      // The link says which button it is (data-wa); otherwise the page does.
+      const place = a.getAttribute("data-wa") ?? placeOfPage(path);
+      let dealRef: string | null = null;
+      const deal = /^\/deals\/([^/]+)\/?$/.exec(path);
+      if (deal) {
+        let segment = deal[1];
+        try {
+          segment = decodeURIComponent(segment);
+        } catch {}
+        dealRef = /OD-\d{1,9}/i.exec(segment)?.[0]?.toUpperCase() ?? null;
+      }
+      send({ t: "w", sessionId, path: address, place: isWhatsAppPlace(place) ? place : "other", dealRef, locale: localeRef.current });
+    };
+    document.addEventListener("click", onTap, true);
+    document.addEventListener("auxclick", onTap, true);
+    return () => {
+      document.removeEventListener("click", onTap, true);
+      document.removeEventListener("auxclick", onTap, true);
+    };
   }, [staff]);
 
   useEffect(() => {

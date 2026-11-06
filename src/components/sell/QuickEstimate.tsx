@@ -324,7 +324,7 @@ export function QuickEstimate({
               </Button>
               {waHref && (
                 <Button asChild size="lg" variant="outline">
-                  <a href={waHref} target="_blank" rel="noopener noreferrer">
+                  <a href={waHref} target="_blank" rel="noopener noreferrer" data-wa="estimate">
                     <MessageCircle aria-hidden /> {t("estimate.done.whatsapp")}
                   </a>
                 </Button>
@@ -545,7 +545,7 @@ export function QuickEstimate({
                 {formError.throttled && waHref && (
                   <>
                     {" "}
-                    <a href={waHref} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-4">
+                    <a href={waHref} target="_blank" rel="noopener noreferrer" data-wa="estimate" className="font-semibold underline underline-offset-4">
                       {t("estimate.done.whatsapp")}
                     </a>
                   </>

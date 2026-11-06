@@ -19,7 +19,7 @@ import {
 } from "@/components/analytics/Report";
 import { PageTitle } from "@/components/Kpi";
 import { formatAsOf } from "@/components/market/shared";
-import { listSeparator } from "@/i18n/config";
+import { intlLocale, listSeparator } from "@/i18n/config";
 import { getLocale, getT } from "@/i18n/server";
 import type { TKey } from "@/i18n/translator";
 import { analyticsReport, isRange, LIVE_MINUTES, RANGES } from "@/lib/analytics-report";
@@ -45,6 +45,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const prev = r.previous;
   const n = formatNumber;
   const conv = (leads: number, visitors: number) => (visitors ? pct(leads / visitors) : "—");
+
+  const wa = r.whatsapp;
+  const tapTime = new Intl.DateTimeFormat(intlLocale(locale), { timeZone: "Asia/Dubai", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 
   const tiles: Tile[] = [
     {
@@ -99,12 +102,19 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       delta: rateDelta(cur.conversion, prev.conversion, t),
       hint: cur.conversionSince ? t("kpi.conversion.since", { date: formatAsOf(cur.conversionSince, locale) }) : t("kpi.conversion.hint"),
     },
+    {
+      key: "whatsapp",
+      label: t("kpi.whatsapp"),
+      value: n(wa.total),
+      delta: countDelta(wa.total, wa.previous, n(wa.previous), t),
+      hint: t("kpi.whatsapp.hint", { n: n(wa.visits) }),
+    },
   ];
 
   const share = (v: number) => (cur.visitors ? pct(v / cur.visitors, 0) : "—");
   // The lead columns below start when visit statistics did, if that was inside this period: say so under each table.
   const leadsSince = r.leadsSince ? ` ${t("leads.since", { date: formatAsOf(r.leadsSince, locale) })}` : "";
-  const named = (prefix: "device" | "lang", key: string | null) => {
+  const named = (prefix: "device" | "lang" | "wa.place", key: string | null) => {
     if (!key) return t("unknown");
     const k = `${prefix}.${key}` as TKey<"analytics">;
     const label = t(k);
@@ -309,6 +319,60 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           </div>
         </Section>
       </div>
+
+      <Section id="whatsapp" title={t("wa.title")} sub={t("wa.sub")}>
+        {wa.recent.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">{t("wa.empty")}</p>
+        ) : (
+          <div className="space-y-6">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm" aria-label={t("wa.title")} data-table="whatsapp">
+                <thead className="text-xs text-muted-foreground">
+                  <tr className="border-b border-border/70">
+                    {[t("wa.col.when"), t("wa.col.button"), t("wa.col.page"), t("wa.col.source"), t("wa.col.where"), t("wa.col.device")].map((c) => (
+                      <th key={c} scope="col" className="pb-2 pe-3 text-start font-semibold">
+                        {c}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {wa.recent.map((w, i) => (
+                    <tr key={`${w.at.getTime()}-${i}`}>
+                      <td className="whitespace-nowrap py-2.5 pe-3 tabular">{tapTime.format(w.at)}</td>
+                      <td className="py-2.5 pe-3">
+                        {named("wa.place", w.place)}
+                        {w.dealRef && (
+                          <>
+                            {" · "}
+                            <bdi dir="ltr">{w.dealRef}</bdi>
+                          </>
+                        )}
+                      </td>
+                      <td className="py-2.5 pe-3">
+                        <PathText path={w.path} />
+                      </td>
+                      <td className="py-2.5 pe-3">{t(`channel.${w.channel}`)}</td>
+                      <td className="py-2.5 pe-3">{[countryName(w.country, locale, t), w.city].filter(Boolean).join(listSeparator(locale))}</td>
+                      <td className="py-2.5 pe-3">
+                        {named("device", w.device)}
+                        {w.locale ? ` · ${named("lang", w.locale)}` : ""}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <RankTable
+              label={t("wa.byButton")}
+              testId="whatsapp-buttons"
+              cols={[t("wa.col.button"), t("wa.col.taps")]}
+              rows={wa.byPlace.map((p) => ({ key: p.place, head: named("wa.place", p.place), bar: p.taps, cells: [n(p.taps)] }))}
+              empty={t("wa.empty")}
+            />
+          </div>
+        )}
+      </Section>
 
       <Section id="journeys" title={t("journey.title")} sub={t("journey.sub")}>
         <Journeys leads={r.leads} locale={locale} t={t} ta={ta} />

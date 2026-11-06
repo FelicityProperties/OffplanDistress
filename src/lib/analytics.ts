@@ -3,7 +3,8 @@ import { createHmac, randomBytes, scrypt } from "node:crypto";
 import { userAgent } from "next/server";
 import { and, eq, gt, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { pageViews, sellerLeads } from "@/db/schema";
+import { pageViews, sellerLeads, whatsappClicks } from "@/db/schema";
+import type { WhatsAppPlace } from "./whatsapp-places";
 import { UNSAFE_TEXT } from "@/lib/attribution";
 
 // First-party, cookieless visit statistics: what POST /api/a records (src/app/api/a/route.ts) and how long it is kept.
@@ -199,6 +200,30 @@ export async function recordDuration(viewId: string, sessionId: string, duration
 /** Forgets every view of one browser tab's session (a signed-in admin's tab, including the pages before logging in). */
 export async function forgetSession(sessionId: string) {
   await db.delete(pageViews).where(eq(pageViews.sessionId, sessionId));
+  await db.delete(whatsappClicks).where(eq(whatsappClicks.sessionId, sessionId));
+}
+
+export { WHATSAPP_PLACES, type WhatsAppPlace } from "./whatsapp-places";
+
+/** A tap on a WhatsApp button: no more than 30 from one visit a day (one script can't fill the list). */
+export async function recordWhatsAppTap(t: {
+  sessionId: string;
+  visitorHash: string;
+  path: string;
+  place: WhatsAppPlace;
+  dealRef: string | null;
+  country: string | null;
+  city: string | null;
+  device: string;
+  browser: string | null;
+  locale: string | null;
+}) {
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(whatsappClicks)
+    .where(and(eq(whatsappClicks.sessionId, t.sessionId), gt(whatsappClicks.createdAt, sql`now() - interval '1 day'`)));
+  if (n >= 30) return;
+  await db.insert(whatsappClicks).values(t);
 }
 
 /**
@@ -244,6 +269,13 @@ export async function purgeExpiredData(now = new Date()) {
     const batch = db.select({ id: pageViews.id }).from(pageViews).where(lt(pageViews.createdAt, viewCutoff)).limit(BATCH);
     const gone = await db.delete(pageViews).where(inArray(pageViews.id, batch)).returning({ id: pageViews.id });
     views += gone.length;
+    if (gone.length < BATCH) break;
+  }
+
+  // WhatsApp taps go with the page views they belong to.
+  for (let i = 0; i < MAX_BATCHES; i++) {
+    const batch = db.select({ id: whatsappClicks.id }).from(whatsappClicks).where(lt(whatsappClicks.createdAt, viewCutoff)).limit(BATCH);
+    const gone = await db.delete(whatsappClicks).where(inArray(whatsappClicks.id, batch)).returning({ id: whatsappClicks.id });
     if (gone.length < BATCH) break;
   }
 
