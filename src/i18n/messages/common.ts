@@ -215,7 +215,7 @@ export default defineMessages({
     onWatchlist: "On your watchlist",
     watchlistAdded: "Added to your watchlist",
     watchlistNeedsAuth: "Create a free account to save deals to your watchlist.",
-    feeLine: "2% commission, only on success",
+    feeLine: "2% commission, only after transfer",
     estimatesNote: "Prices and fees shown are estimates until confirmed by the developer and Dubai Land Department.",
     operatedBy: "Operated by {company}",
     footerBlurb:
@@ -444,7 +444,7 @@ export default defineMessages({
     onWatchlist: "في قائمة المتابعة",
     watchlistAdded: "تمت الإضافة إلى قائمة المتابعة",
     watchlistNeedsAuth: "أنشئ حساباً مجانياً لحفظ الصفقات في قائمة المتابعة.",
-    feeLine: "عمولة 2%، عند إتمام الصفقة فقط",
+    feeLine: "عمولة 2%، بعد نقل الملكية فقط",
     estimatesNote: "الأسعار والرسوم المعروضة تقديرية حتى يؤكدها المطوّر ودائرة الأراضي والأملاك في دبي.",
     operatedBy: "تديرها {company}",
     footerBlurb:
@@ -674,7 +674,7 @@ export default defineMessages({
     onWatchlist: "已在关注列表",
     watchlistAdded: "已加入关注列表",
     watchlistNeedsAuth: "免费注册账户，即可将房源保存到关注列表。",
-    feeLine: "服务费 2%，仅在成交时收取",
+    feeLine: "服务费 2%，仅在过户后收取",
     estimatesNote: "所示价格与费用均为估算值，以开发商和迪拜土地局（DLD）的最终确认为准。",
     operatedBy: "由 {company} 运营",
     footerBlurb:

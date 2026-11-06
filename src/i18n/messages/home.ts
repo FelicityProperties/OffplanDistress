@@ -77,7 +77,7 @@ export default defineMessages({
     "step.buyer.takeOver.desc": "Step into the remaining payment plan with your name on the Oqood.",
 
     "pricing.eyebrow": "Simple pricing",
-    "pricing.title": "2% commission. Only on success.",
+    "pricing.title": "2% commission. Only after transfer.",
     "pricing.sub":
       "No listing fees, no retainers. We're paid when the transfer completes at the DLD — and not a dirham before.",
     "pricing.link": "See full fee breakdown",
@@ -191,7 +191,7 @@ export default defineMessages({
     "step.buyer.takeOver.desc": "تولَّ المتبقي من خطة الدفع مع تسجيل شهادة أوقود باسمك.",
 
     "pricing.eyebrow": "رسوم واضحة",
-    "pricing.title": "عمولة 2%. عند إتمام الصفقة فقط.",
+    "pricing.title": "عمولة 2%. بعد نقل الملكية فقط.",
     "pricing.sub":
       "لا رسوم إعلان ولا أتعاب مقدّمة. نحصل على أتعابنا عند إتمام نقل الملكية لدى دائرة الأراضي والأملاك، ولا درهم قبل ذلك.",
     "pricing.link": "اطّلع على تفاصيل الرسوم كاملة",
@@ -306,7 +306,7 @@ export default defineMessages({
     "step.buyer.takeOver.desc": "承接剩余付款计划，Oqood 期房登记转入您的名下。",
 
     "pricing.eyebrow": "收费透明",
-    "pricing.title": "服务费 2%，成交才收费。",
+    "pricing.title": "服务费 2%，过户后才收取。",
     "pricing.sub":
       "无挂牌费，无预付佣金。只有在 DLD 过户完成时我们才收取服务费——在此之前一个迪拉姆也不收。",
     "pricing.link": "查看完整费用明细",
