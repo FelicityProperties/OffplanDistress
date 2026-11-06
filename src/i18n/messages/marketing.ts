@@ -9,7 +9,7 @@ export default defineMessages({
     "calc.total": "Total, paid on transfer",
     "calc.zero": "{amount} if the transfer doesn't complete.",
 
-    "fees.metaTitle": "Fees: 2% commission, only after transfer",
+    "fees.metaTitle": "Fees: 2% commission, after transfer",
     "fees.metaDescription":
       "A flat 2% commission on the sale value, charged only when the transfer completes. No listing or upfront fees.",
     "fees.title": "2% commission. Only when the transfer completes.",
@@ -169,7 +169,7 @@ export default defineMessages({
     "calc.total": "الإجمالي، يُدفع عند نقل الملكية",
     "calc.zero": "{amount} إذا لم يكتمل نقل الملكية.",
 
-    "fees.metaTitle": "الرسوم: عمولة 2%، بعد نقل الملكية فقط",
+    "fees.metaTitle": "الرسوم: عمولة 2%، بعد نقل الملكية",
     "fees.metaDescription":
       "عمولة ثابتة بنسبة 2% من قيمة البيع، تُستحق فقط عند إتمام نقل الملكية. لا رسوم إعلان ولا رسوم مقدّمة.",
     "fees.title": "عمولة 2%. فقط عند إتمام نقل الملكية.",
@@ -326,7 +326,7 @@ export default defineMessages({
     "calc.total": "合计，过户时支付",
     "calc.zero": "若过户未完成，则为 {amount}。",
 
-    "fees.metaTitle": "服务费：2%，仅在过户后收取",
+    "fees.metaTitle": "服务费：2%，过户后收取",
     "fees.metaDescription":
       "固定收取交易总价的 2% 作为服务费，仅在过户完成时收取。无挂牌费，无预付费用。",
     "fees.title": "服务费 2%。仅在过户完成时收取。",
