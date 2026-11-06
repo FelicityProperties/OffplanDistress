@@ -268,14 +268,14 @@
    "notes": "All checks pass. The final row reads 'On Completion' rather than 'On Handover'."
   },
   "3DKL3B": {
-   "image": "https://distressonly.deals/media/units/390/d07214f4644c.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/390/2e45e1fba575.webp",
+   "transcribedAt": "2026-11-06",
    "legible": true,
-   "unitPrice": 3250000,
-   "paymentToSeller": 1846456,
+   "unitPrice": 3150000,
+   "paymentToSeller": 1746456,
    "dldFee": 140396,
    "trusteeFee": 5250,
-   "commission": 68250,
+   "commission": 66150,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -294,10 +294,10 @@
      "amount": 701766
     }
    ],
-   "totalOnTransfer": 2060352,
+   "totalOnTransfer": 1958252,
    "totalRemaining": 1403544,
-   "totalCosts": 3463896,
-   "notes": "All checks pass. The instalments are tied to construction milestones, not calendar dates."
+   "totalCosts": 3361796,
+   "notes": "Re-posted image: price cut from 3,250,000 (payment to seller 1,846,456 → 1,746,456; commission 68,250 → 66,150); DLD fee and plan unchanged. All checks pass."
   },
   "3NraCZ": {
    "image": "https://distressonly.deals/media/units/303/906ce0e2580f.webp",
@@ -1060,14 +1060,14 @@
    "notes": "All checks pass. DLD fee 634 040 implies an original price of 15 850 000, which is higher than the 12 600 000 unit price. That is printed this way and is not an error."
   },
   "PlDO3D": {
-   "image": "https://distressonly.deals/media/units/283/b98958bb3027.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/283/42447a9b48db.webp",
+   "transcribedAt": "2026-11-06",
    "legible": true,
-   "unitPrice": 6750000,
-   "paymentToSeller": 2388068,
+   "unitPrice": 6700000,
+   "paymentToSeller": 2338068,
    "dldFee": 290836,
    "trusteeFee": 5250,
-   "commission": 141750,
+   "commission": 140700,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -1096,20 +1096,20 @@
      "amount": 1453976
     }
    ],
-   "totalOnTransfer": 2825904,
+   "totalOnTransfer": 2774854,
    "totalRemaining": 4361932,
-   "totalCosts": 7187836,
-   "notes": "Construction-milestone plan, no dates. All checks pass."
+   "totalCosts": 7136786,
+   "notes": "Re-posted image: price cut from 6,750,000 (payment to seller 2,388,068 → 2,338,068; commission 141,750 → 140,700); DLD fee and plan unchanged. All checks pass."
   },
   "QgAGrA": {
-   "image": "https://distressonly.deals/media/units/312/3e9f9ff09d21.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/312/a343f90410f8.webp",
+   "transcribedAt": "2026-11-06",
    "legible": true,
-   "unitPrice": 3525000,
-   "paymentToSeller": 2031445,
+   "unitPrice": 3500000,
+   "paymentToSeller": 2006445,
    "dldFee": 149396,
    "trusteeFee": 5250,
-   "commission": 74025,
+   "commission": 73500,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -1133,10 +1133,10 @@
      "amount": 373388
     }
    ],
-   "totalOnTransfer": 2260116,
+   "totalOnTransfer": 2234591,
    "totalRemaining": 1493555,
-   "totalCosts": 3753671,
-   "notes": "Construction-milestone plan, no dates. The handover row is 373 388, one less than the others, as printed. All checks pass."
+   "totalCosts": 3728146,
+   "notes": "Re-posted image: price cut from 3,525,000 (payment to seller 2,031,445 → 2,006,445; commission 74,025 → 73,500); DLD fee and plan unchanged. All checks pass."
   },
   "Qhtgvw": {
    "image": "https://distressonly.deals/media/units/57/f0cdeb3cf468.webp",
@@ -1824,6 +1824,33 @@
    "totalCosts": 1753185,
    "notes": "Re-posted image: unit price cut from 1,697,355 (payment to seller 1,225,867 → 1,166,570); DLD fee and plan unchanged. All checks pass."
   },
+  "aSyDKP": {
+   "image": "https://distressonly.deals/media/units/429/a03768b64624.webp",
+   "transcribedAt": "2026-11-06",
+   "legible": true,
+   "unitPrice": 2750000,
+   "paymentToSeller": 1152000,
+   "dldFee": 127880,
+   "trusteeFee": 5250,
+   "commission": 57750,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "3-FEB-2027",
+     "dueDate": "2027-02-03",
+     "amount": 319600
+    },
+    {
+     "label": "On Handover (1-DEC-2027)",
+     "dueDate": "2027-12-01",
+     "amount": 1278400
+    }
+   ],
+   "totalOnTransfer": 1342880,
+   "totalRemaining": 1598000,
+   "totalCosts": 2940880,
+   "notes": "New unit. Selling price equals the unit price; DLD 127,880 = 4% of the 3,196,000 original price + 40 (the page's 'Original Price + DLD 4%' 3,323,840 agrees). All checks pass."
+  },
   "b6mBDj": {
    "image": "https://distressonly.deals/media/units/289/d61211460973.webp",
    "transcribedAt": "2026-10-27",
@@ -1916,14 +1943,14 @@
    "notes": "The image adds up. It has no Payment Plan section and no Total Remaining row, so totalRemaining is null (in effect 0). This is a ready or fully paid unit: payment to seller equals the unit price. 6800000 + 272040 + 4200 + 142800 + 580 = 7219620, which matches both totals."
   },
   "dxsZam": {
-   "image": "https://distressonly.deals/media/units/378/f82424fb4b66.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/378/dfc1440c5c50.webp",
+   "transcribedAt": "2026-11-06",
    "legible": true,
-   "unitPrice": 4500000,
-   "paymentToSeller": 3143460,
-   "dldFee": 180040,
+   "unitPrice": 4490000,
+   "paymentToSeller": 3133460,
+   "dldFee": 179640,
    "trusteeFee": 5250,
-   "commission": 94500,
+   "commission": 94290,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -1937,10 +1964,10 @@
      "amount": 904360
     }
    ],
-   "totalOnTransfer": 3423250,
+   "totalOnTransfer": 3412640,
    "totalRemaining": 1356540,
-   "totalCosts": 4779790,
-   "notes": "All checks pass: 3143460 + 1356540 = 4500000; 452180 + 904360 = 1356540; totals add up."
+   "totalCosts": 4769180,
+   "notes": "Re-posted image: price cut from 4,500,000 (payment to seller 3,143,460 → 3,133,460; commission 94,500 → 94,290). The DLD line is labelled '4% + 40 AED' and moved with the price (180,040 → 179,640): it is 4% of the selling price, not the original, and the page gives no original price. All checks pass."
   },
   "eiABFK": {
    "image": "https://distressonly.deals/media/units/281/44f47e9cff78.webp",
