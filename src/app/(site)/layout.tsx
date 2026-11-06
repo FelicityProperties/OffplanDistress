@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { unstable_rethrow } from "next/navigation";
+import { AssistantWidget } from "@/components/AssistantWidget";
 import { AttributionCapture } from "@/components/Attribution";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { SellDraftJanitor } from "@/components/sell/SellDraftJanitor";
@@ -8,6 +9,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { LanguageBar } from "@/components/LanguageBar";
 import { getLocale, getT, offeredLocale, tFor } from "@/i18n/server";
+import { assistantEnabled } from "@/lib/assistant";
 import { getCurrentUser } from "@/lib/auth";
 
 // Every page reads the session (header) or live listings, so render per request.
@@ -59,6 +61,8 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
       </main>
       <SiteFooter />
       <WhatsAppButton />
+      {/* The AI chat (src/lib/assistant.ts), once an Anthropic API key is set. */}
+      {assistantEnabled() && <AssistantWidget />}
       {/* Remembers how this visit arrived (utm tags, ?ref=, landing page) in sessionStorage, for the seller forms. */}
       <AttributionCapture />
       {/* Signed out (logged out, or the session ended): no seller's saved sell-form draft stays in this browser. */}

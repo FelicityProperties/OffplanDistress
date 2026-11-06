@@ -1,5 +1,6 @@
 import admin from "./admin";
 import analytics from "./analytics";
+import assistant from "./assistant";
 import auth from "./auth";
 import common from "./common";
 import dashboard from "./dashboard";
@@ -22,6 +23,7 @@ import sell from "./sell";
 export const messages = {
   admin,
   analytics,
+  assistant,
   auth,
   common,
   dashboard,

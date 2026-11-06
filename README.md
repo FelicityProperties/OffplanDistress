@@ -454,6 +454,13 @@ Watch or an offer, the listing's seller or our team.
    - Optional: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` (a Managed or Invisible Turnstile widget made
      in the Cloudflare dashboard for the site's domain) put Cloudflare's anti-bot check on the contact / viewing form
      and the free estimate; `FORM_SECRET` signs those forms' timing tokens (defaults to `CRON_SECRET`).
+   - Optional: `ANTHROPIC_API_KEY` turns on the AI assistant, a chat button above the WhatsApp one on every public page
+     (`src/lib/assistant.ts`, `src/app/api/assistant/route.ts`). It answers buyers and sellers in English, Arabic or
+     Chinese and searches the advertised units with two tools (the /deals search and a deal's details); it never sees
+     sellers' contact details or unadvertised units. `ASSISTANT_MODEL` picks the model (default `claude-opus-5-5`;
+     `claude-haiku-5-5` costs far less per chat) and `ASSISTANT_DAILY_LIMIT` caps the chat messages a day across all
+     visitors (default 300); each visitor also gets 15 messages per 10 minutes and 80 a day. Every answer logs one
+     `{"assistant": …}` line with its token use in the Vercel logs.
    - Company details (trade licence 1145910, RERA ORN 33951, broker BRN 59244, phone/WhatsApp +971 56 352 0611,
      office address in Bay Square) are built in (`BRAND` in `src/lib/config.ts`). Each can be overridden with its
      `NEXT_PUBLIC_*` variable (see `.env.example`); an empty variable keeps the built-in value.
