@@ -169,7 +169,7 @@ export default defineMessages({
     "numbers.takesOver": "Buyer takes over",
     "numbers.saleValue": "Sale value",
     "numbers.youReceive": "You receive",
-    "numbers.feeNote": "Listing is free. The buyer pays our 2% + VAT when the transfer completes.",
+    "numbers.feeNote": "Listing is free. The buyer pays our 2% commission when the transfer completes.",
     nocWarning:
       "Most developers require 30–50% of the price to be paid before they issue a resale NOC; the rule depends on your developer. We'll check its policy and tell you your options.",
 
@@ -232,8 +232,8 @@ export default defineMessages({
       "An estimate, not an offer or a valuation. It assumes a quick sale at {low}–{high}% below your SPA price, as in our exit calculator.",
     "estimate.result.basis.market":
       "An estimate, not an offer or a valuation. It assumes a quick sale at {low}–{high}% below today's price for a similar unit, as in our exit calculator.",
-    "estimate.result.fee.buyer": "Free for you: the buyer pays our 2% + VAT when the transfer completes.",
-    "estimate.result.fee.seller": "After our 2% + VAT fee.",
+    "estimate.result.fee.buyer": "Free for you: the buyer pays our 2% commission when the transfer completes.",
+    "estimate.result.fee.seller": "After our 2% commission and the VAT on it.",
     "estimate.result.underwater":
       "At a quick-sale discount the buyer's price may not cover what you have paid. Talk to us: there may be other options.",
     "estimate.result.noc": "You have paid {pct}. Most developers want 30–50% paid before they issue a resale NOC; we'll check your developer's rule.",
@@ -440,7 +440,7 @@ export default defineMessages({
     "numbers.takesOver": "يتولى المشتري سداده",
     "numbers.saleValue": "قيمة البيع",
     "numbers.youReceive": "صافي ما تحصل عليه",
-    "numbers.feeNote": "الإعلان مجاني. يدفع المشتري رسومنا البالغة 2% + ضريبة القيمة المضافة عند إتمام نقل الملكية.",
+    "numbers.feeNote": "الإعلان مجاني. يدفع المشتري عمولتنا البالغة 2% عند إتمام نقل الملكية.",
     nocWarning:
       "يشترط معظم المطوّرين سداد ما بين 30% و50% من السعر قبل إصدار شهادة عدم الممانعة لإعادة البيع، وتختلف القاعدة من مطوّر إلى آخر. سنتحقق من سياسة مطوّرك ونوضح لك الخيارات المتاحة.",
 
@@ -503,8 +503,8 @@ export default defineMessages({
       "هذا تقدير، وليس عرض شراء ولا تقييماً عقارياً. ويفترض بيعاً سريعاً بخصم {low}–{high}% من السعر الوارد في اتفاقيتك، كما في حاسبة الخروج لدينا.",
     "estimate.result.basis.market":
       "هذا تقدير، وليس عرض شراء ولا تقييماً عقارياً. ويفترض بيعاً سريعاً بخصم {low}–{high}% من السعر الحالي لوحدة مماثلة، كما في حاسبة الخروج لدينا.",
-    "estimate.result.fee.buyer": "مجاناً لك: يدفع المشتري رسومنا البالغة 2% + ضريبة القيمة المضافة عند إتمام نقل الملكية.",
-    "estimate.result.fee.seller": "بعد خصم رسومنا البالغة 2% + ضريبة القيمة المضافة.",
+    "estimate.result.fee.buyer": "مجاناً لك: يدفع المشتري عمولتنا البالغة 2% عند إتمام نقل الملكية.",
+    "estimate.result.fee.seller": "بعد خصم عمولتنا البالغة 2% والضريبة المستحقة عليها.",
     "estimate.result.underwater":
       "مع خصم البيع السريع، قد لا يغطي ما يدفعه المشتري المبلغ الذي سدّدته. تحدّث إلينا، فقد تتوفر خيارات أخرى.",
     "estimate.result.noc":
@@ -713,7 +713,7 @@ export default defineMessages({
     "numbers.takesOver": "买家承接",
     "numbers.saleValue": "交易总价",
     "numbers.youReceive": "您实收",
-    "numbers.feeNote": "挂牌免费。过户完成时，由买家支付我们 2% + 增值税的服务费。",
+    "numbers.feeNote": "挂牌免费。过户完成时，由买家支付我们 2% 的服务费。",
     nocWarning:
       "多数开发商要求已支付房价的 30%–50% 后才签发转售无异议函（NOC），具体规定视开发商而定。我们会核查其政策并告知您可行的选择。",
 
@@ -775,8 +775,8 @@ export default defineMessages({
       "此为估算，并非报价或估值。它假设以低于您原始合同价 {low}–{high}% 的价格快速出售，与我们的退出测算器一致。",
     "estimate.result.basis.market":
       "此为估算，并非报价或估值。它假设以低于同类单元当前价格 {low}–{high}% 的价格快速出售，与我们的退出测算器一致。",
-    "estimate.result.fee.buyer": "您无需付费：过户完成时由买家支付我们 2% + 增值税的服务费。",
-    "estimate.result.fee.seller": "已扣除我们 2% + 增值税的服务费。",
+    "estimate.result.fee.buyer": "您无需付费：过户完成时由买家支付我们 2% 的服务费。",
+    "estimate.result.fee.seller": "已扣除我们 2% 的服务费及其增值税。",
     "estimate.result.underwater":
       "按快速出售的折扣计算，买家支付的价格可能不足以覆盖您已付的金额。请与我们联系，或许还有其他选择。",
     "estimate.result.noc": "您已支付 {pct}。多数开发商要求已付 30%–50% 后才签发转售无异议函（NOC）；我们会核查您开发商的规定。",
