@@ -511,6 +511,35 @@ export const pageViews = pgTable(
 );
 
 /**
+ * Taps on a WhatsApp button on the public site (src/components/analytics/PageViewTracker.tsx → /api/a), for
+ * /admin/analytics. Which button, on which page, in which visit; never the message. Same anonymity and 13-month
+ * retention as page_views.
+ */
+export const whatsappClicks = pgTable(
+  "whatsapp_clicks",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    /** The tab's visit (page_views.session_id): its first page tells where the visitor came from. */
+    sessionId: text("session_id").notNull(),
+    /** As page_views.visitor_hash: rotates daily. */
+    visitorHash: text("visitor_hash").notNull(),
+    /** The page the button was on, without its language segment. */
+    path: text("path").notNull(),
+    /** Which button: WHATSAPP_PLACES in src/lib/analytics.ts. */
+    place: text("place").notNull(),
+    /** The deal's reference (OD-1234) when the tap was on a deal page. */
+    dealRef: text("deal_ref"),
+    country: text("country"),
+    city: text("city"),
+    device: text("device"),
+    browser: text("browser"),
+    locale: text("locale"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("whatsapp_clicks_created_idx").on(t.createdAt), index("whatsapp_clicks_session_idx").on(t.sessionId)],
+);
+
+/**
  * Follow-up nudges the daily ops cron already sent (src/lib/reminders.ts), so each goes out once even when runs
  * overlap or are repeated: the cron inserts the row first and only sends if the insert went in. entity_type is "user",
  * "listing" or "offer" (entity_id is then that row's id) or "digest" (entity_id is the Dubai date of the admins' daily

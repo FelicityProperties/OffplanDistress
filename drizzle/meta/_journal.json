@@ -99,6 +99,13 @@
       "when": 1793366097710,
       "tag": "0013_spam_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793960408894,
+      "tag": "0014_whatsapp_clicks",
+      "breakpoints": true
     }
   ]
 }
