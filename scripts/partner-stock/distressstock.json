@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-04T01:39:53Z",
+ "generatedAt": "2026-11-06T10:01:36Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -444,7 +444,7 @@
     "view": null,
     "originalPrice": 3508900,
     "amountPaid": 2105356,
-    "askingPrice": 1846456,
+    "askingPrice": 1746456,
     "handoverDate": "2028-06-30",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -490,7 +490,7 @@
      "url": "https://distressonly.deals/media/units/390/ada663dfbcb2.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 01, 2026: DISTRESS DEAL: 4-BR+MAID'S IN GREENRIDGE. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,649,244; selling price AED 3,250,000."
+   "notes": "Posted on DistressStock October 01, 2026: DISTRESS DEAL: 4-BR+MAID'S IN GREENRIDGE. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 3,250,000 (payment to seller 1,846,456 → 1,746,456; commission 68,250 → 66,150); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 3,649,244; selling price AED 3,150,000."
   },
   {
    "ref": "3NraCZ",
@@ -2114,7 +2114,7 @@
     "view": null,
     "originalPrice": 7269900,
     "amountPaid": 2907968,
-    "askingPrice": 2388068,
+    "askingPrice": 2338068,
     "handoverDate": "2028-12-31",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -2170,7 +2170,7 @@
      "url": "https://distressonly.deals/media/units/283/03d73e96037d.webp"
     }
    ],
-   "notes": "Posted on DistressStock June 26, 2026: DISTRESS DEAL: 4-BR IN FARM GROVE 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Construction-milestone plan, no dates. All checks pass. Source: original price + DLD 4% = AED 7,560,684; selling price AED 6,750,000."
+   "notes": "Posted on DistressStock June 26, 2026: DISTRESS DEAL: 4-BR IN FARM GROVE 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 6,750,000 (payment to seller 2,388,068 → 2,338,068; commission 141,750 → 140,700); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 7,560,684; selling price AED 6,700,000."
   },
   {
    "ref": "QgAGrA",
@@ -2188,7 +2188,7 @@
     "view": "Community",
     "originalPrice": 3733900,
     "amountPaid": 2240345,
-    "askingPrice": 2031445,
+    "askingPrice": 2006445,
     "handoverDate": "2028-07-31",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -2239,7 +2239,7 @@
      "url": "https://distressonly.deals/media/units/312/6c1406f23968.webp"
     }
    ],
-   "notes": "Posted on DistressStock July 24, 2026: DISTRESS DEAL: 3-BR IN OCEAN STAR - BUILDING 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Construction-milestone plan, no dates. The handover row is 373 388, one less than the others, as printed. All checks pass. Source: original price + DLD 4% = AED 3,883,244; selling price AED 3,525,000."
+   "notes": "Posted on DistressStock July 24, 2026: DISTRESS DEAL: 3-BR IN OCEAN STAR - BUILDING 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 3,525,000 (payment to seller 2,031,445 → 2,006,445; commission 74,025 → 73,500); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 3,883,244; selling price AED 3,500,000."
   },
   {
    "ref": "Qhtgvw",
@@ -3500,6 +3500,65 @@
    "notes": "Posted on DistressStock October 13, 2026: DISTRESS DEAL: 1-BR IN SAFA ONE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: unit price cut from 1,697,355 (payment to seller 1,225,867 → 1,166,570); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 1,961,388; selling price AED 1,638,058."
   },
   {
+   "ref": "aSyDKP",
+   "url": "https://distressonly.deals/u/aSyDKP",
+   "posted": "2026-11-05",
+   "listing": {
+    "projectName": "Fairmont Residences Solara Tower",
+    "developer": "Other",
+    "developerOther": "SOL",
+    "community": "Downtown Dubai",
+    "communityOther": null,
+    "unitType": "1br",
+    "sizeSqft": 1031,
+    "floor": "14-19",
+    "view": "Canal",
+    "originalPrice": 3196000,
+    "amountPaid": 1598000,
+    "askingPrice": 1152000,
+    "handoverDate": "2027-12-31",
+    "nextInstalmentDate": "2027-02-03",
+    "nextInstalmentAmount": 319600,
+    "paymentPlan": [
+     {
+      "label": "3-FEB-2027",
+      "dueDate": "2027-02-03",
+      "amount": 319600
+     },
+     {
+      "label": "On Handover (1-DEC-2027)",
+      "dueDate": "2027-12-01",
+      "amount": 1278400
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "aSyDKP-903cf326.webp",
+     "url": "https://distressonly.deals/media/units/429/197bf63de527.webp"
+    },
+    {
+     "filename": "aSyDKP-dd000c28.webp",
+     "url": "https://distressonly.deals/media/units/429/e97a4d19429e.webp"
+    },
+    {
+     "filename": "aSyDKP-9d78fc96.webp",
+     "url": "https://distressonly.deals/media/units/429/86bee448f625.webp"
+    },
+    {
+     "filename": "aSyDKP-9acd0e41.webp",
+     "url": "https://distressonly.deals/media/units/429/a38baf6bb6d5.webp"
+    },
+    {
+     "filename": "aSyDKP-k0.webp",
+     "url": "https://distressonly.deals/media/units/429/1abb9c015441.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 05, 2026: DISTRESS DEAL: 1-BR IN FAIRMONT RESIDENCES SOLARA TOWER. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: New unit. Selling price equals the unit price; DLD 127,880 = 4% of the 3,196,000 original price + 40 (the page's 'Original Price + DLD 4%' 3,323,840 agrees). All checks pass. Source: original price + DLD 4% = AED 3,323,840; selling price AED 2,750,000."
+  },
+  {
    "ref": "b6mBDj",
    "url": "https://distressonly.deals/u/b6mBDj",
    "posted": "2026-07-03",
@@ -3660,9 +3719,9 @@
     "sizeSqft": 2035,
     "floor": "LOW",
     "view": "Lagoon, Community",
-    "originalPrice": 4500000,
-    "amountPaid": 3143460,
-    "askingPrice": 3143460,
+    "originalPrice": 4490000,
+    "amountPaid": 3133460,
+    "askingPrice": 3133460,
     "handoverDate": "2027-09-30",
     "nextInstalmentDate": "2027-03-15",
     "nextInstalmentAmount": 452180,
@@ -3703,7 +3762,7 @@
      "url": "https://distressonly.deals/media/units/378/acc126d4b0d8.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 22, 2026: HOT LOT: 3-BR IN NAYA 1. Figures are as posted — check the current statement of account with the listing broker before approval."
+   "notes": "Posted on DistressStock September 22, 2026: HOT LOT: 3-BR IN NAYA 1. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 4,500,000 (payment to seller 3,143,460 → 3,133,460; commission 94,500 → 94,290). The DLD line is labelled '4% + 40 AED' and moved with the price (180,040 → 179,640): it is 4% of the selling price, not the original, and the page gives no original price. All checks pass."
   },
   {
    "ref": "eiABFK",
@@ -5200,7 +5259,7 @@
     "community": "Business Bay",
     "communityOther": null,
     "unitType": "2br",
-    "sizeSqft": 2852,
+    "sizeSqft": 2971,
     "floor": "10-15",
     "view": "Burj Khalifa, Canal",
     "originalPrice": 18297425,
