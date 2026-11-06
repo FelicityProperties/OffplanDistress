@@ -118,7 +118,16 @@ export function OwnerForm({ listingId, placeholder, open = true }: { listingId: 
  * "The owner's signed Form A is uploaded and checked": confirms ownership of a listing our team entered without the
  * claim link (adminConfirmFormA), once a form_a document is on file and the listing has its real owner.
  */
-export function FormAConfirm({ listingId, fileName }: { listingId: string; fileName: string | null }) {
+export function FormAConfirm({
+  listingId,
+  fileName,
+  account,
+}: {
+  listingId: string;
+  fileName: string | null;
+  /** The account the listing is filed under, when it can already sign in: confirming hands it the listing at once. */
+  account?: { id: string; name: string; email: string } | null;
+}) {
   const ti = useT("intake");
   const [state, action] = useActionState(adminConfirmFormA, {});
   const [pending, start] = useTransition();
@@ -148,6 +157,15 @@ export function FormAConfirm({ listingId, fileName }: { listingId: string; fileN
           <label className="flex items-start gap-2 text-sm">
             <Checkbox id="formAChecked" name="formAChecked" className="mt-0.5" /> <span>{ti("formA.check")}</span>
           </label>
+          {account && (
+            <div className="space-y-2 rounded-lg border border-gold/40 bg-gold-soft/40 p-3 text-sm" data-testid="form-a-account">
+              <p className="wrap-anywhere">{ti("formA.account", { name: account.name, email: account.email })}</p>
+              <label className="flex items-start gap-2">
+                <Checkbox id="formAAccount" name="confirmAccount" value={account.id} className="mt-0.5" />
+                <span>{ti("formA.account.check", { name: account.name })}</span>
+              </label>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" size="sm" disabled={pending}>
               {pending ? ti("formA.confirming") : ti("formA.submit")}

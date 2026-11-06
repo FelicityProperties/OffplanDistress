@@ -28,6 +28,7 @@ import { cancelAcceptedOffers, closeOpenOffers, DEAL_STATUSES, reopenUnit } from
 import { dubaiToday, expiryDateBounds, isAdvertised, isDldPermitUrl, publishBlocker } from "@/lib/permits";
 import { siteUrl } from "@/lib/site-url";
 import { flaggedOnArrival, TEAM_MARK } from "@/lib/spam";
+import { cleanText, formText } from "@/lib/clean-text";
 import { scrubTypedName } from "@/lib/typed-names";
 import type { FormState } from "./auth";
 import { parseListingFields } from "./listings";
@@ -257,7 +258,7 @@ export async function rejectListing(listingId: string, reason: string) {
   // Like Approve: only while it waits for review (a stale page mustn't reject a listing published since, ending its
   // offers). A listing already out there is taken down from the listing editor.
   if (before.status !== "pending_review") return reviewedMeanwhile();
-  const clean = reason.trim().slice(0, 1000);
+  const clean = cleanText(reason, { multiline: true }).trim().slice(0, 1000);
   const [rejected] = await db
     .update(listings)
     .set({ status: "rejected", rejectionReason: clean || null, updatedAt: new Date() })
@@ -388,8 +389,8 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       overdueAmount: formData.get("overdueAmount") || undefined,
       overduePenalty: formData.get("overduePenalty") || undefined,
       arrearsCheckedAt: formData.get("arrearsCheckedAt") || undefined,
-      adminNotes: formData.get("adminNotes") || undefined,
-      dldPermit: formData.get("dldPermit") || undefined,
+      adminNotes: formText(formData.get("adminNotes"), { multiline: true }) || undefined,
+      dldPermit: formText(formData.get("dldPermit")) || undefined,
       dldPermitExpiresAt: formData.get("dldPermitExpiresAt") || undefined,
       dldPermitUrl: formData.get("dldPermitUrl") || undefined,
       formAExpiresAt: formData.get("formAExpiresAt") || undefined,
@@ -834,12 +835,12 @@ type FieldErrors = Record<string, string[] | undefined>;
  */
 function readStaffSeller(formData: FormData, t: T, m: PersonMessages = sellerMessages(t)) {
   const opt = (k: string) => {
-    const v = formData.get(k);
+    const v = formText(formData.get(k));
     return typeof v === "string" && v.trim() ? v : undefined;
   };
   const seller = staffSellerSchema(t, m).safeParse(
     {
-      sellerName: formData.get("sellerName") ?? "",
+      sellerName: formText(formData.get("sellerName")) ?? "",
       sellerEmail: opt("sellerEmail"),
       sellerPhone: opt("sellerPhone"),
       sellerLocale: formData.get("sellerLocale"),
@@ -1297,6 +1298,13 @@ export async function adminConfirmFormA(_prev: FormState, formData: FormData): P
   if (!awaitsSellerConfirmation(l)) return { error: ti("formA.notNeeded") };
   if (isImportOwner(l)) return { error: ti("formA.needOwner") };
   if (l.role === "admin" || isOwnerEmail(l.email)) return { error: t("admin.sellerIsStaff") };
+  // As the Owner card (adminSetListingOwner): a confirmed listing is on its account's dashboard at once, with its offers
+  // and documents, so an account that can already sign in (whose email nobody verified: a typo can match a stranger's)
+  // gets it only once staff confirm that very account by name. The tick names the account id, so it can't carry over
+  // to another one, and the write below re-checks the listing is still filed under it.
+  if (l.passwordHash && formData.get("confirmAccount") !== l.sellerId) {
+    return { error: ti("formA.needAccount"), fieldErrors: { confirmAccount: [ti("formA.needAccount")] } };
+  }
   const [doc] = await db
     .select({ id: files.id, filename: files.filename })
     .from(files)

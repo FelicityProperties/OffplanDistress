@@ -11,7 +11,7 @@ import type { TFn, TKey } from "@/i18n/translator";
 import { sourceFromForm } from "@/lib/attribution";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
-import { formText } from "@/lib/clean-text";
+import { cleanText, formText } from "@/lib/clean-text";
 import { DEVELOPERS } from "@/lib/config";
 import { leadCode, quarterEndOf, sellerEstimate } from "@/lib/estimate";
 import { formatPct } from "@/lib/format";
@@ -221,7 +221,7 @@ export async function saveLeadNotes(id: string, notes: string): Promise<LeadResu
   if (!me) return refused();
   if (!z.uuid().safeParse(id).success) return { error: (await getT("errors"))("field.invalid") };
   const before = await leadBefore(id);
-  const next = notes.trim().slice(0, 3000) || null;
+  const next = cleanText(notes, { multiline: true }).trim().slice(0, 3000) || null;
   await db.update(sellerLeads).set({ notes: next, updatedAt: new Date() }).where(eq(sellerLeads.id, id));
   if (before && (before.notes ?? null) !== next) {
     // Who edited the notes and when, not what they say: audit rows are kept for good, while a lead that never became an

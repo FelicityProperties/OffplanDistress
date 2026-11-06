@@ -233,6 +233,9 @@ export default defineMessages({
     "formA.needCheck": "Tick the box to confirm you checked the signed Form A.",
     "formA.needOwner": "Set the owner first.",
     "formA.notNeeded": "Ownership is already confirmed.",
+    "formA.account": "{name} ({email}) can already sign in: confirming puts this listing, its offers and its documents in that account at once.",
+    "formA.account.check": "Give the listing to {name}'s account",
+    "formA.needAccount": "Tick the box to confirm the account that gets this listing.",
   },
   ar: {
     "nav.import": "استيراد الإعلانات",
@@ -456,6 +459,9 @@ export default defineMessages({
     "formA.needCheck": "ضع علامة في المربع لتأكيد أنك تحقّقت من النموذج (A) الموقّع.",
     "formA.needOwner": "حدّد المالك أولاً.",
     "formA.notNeeded": "الملكية مؤكَّدة أصلاً.",
+    "formA.account": "يستطيع ⁨{name}⁩ (⁨{email}⁩) تسجيل الدخول بالفعل: التأكيد يضع هذا الإعلان وعروضه ومستنداته في ذلك الحساب فوراً.",
+    "formA.account.check": "سلّم الإعلان لحساب ⁨{name}⁩",
+    "formA.needAccount": "ضع علامة في المربع لتأكيد الحساب الذي سيحصل على هذا الإعلان.",
   },
   zh: {
     "nav.import": "导入房源",
@@ -676,5 +682,8 @@ export default defineMessages({
     "formA.needCheck": "请勾选复选框，确认您已核对签署的 A 表。",
     "formA.needOwner": "请先设置业主。",
     "formA.notNeeded": "业主身份已确认。",
+    "formA.account": "{name}（{email}）已可登录：确认后，此房源及其报价和文件将立即归入该账户。",
+    "formA.account.check": "将房源交给 {name} 的账户",
+    "formA.needAccount": "请勾选此框，确认接收此房源的账户。",
   },
 });

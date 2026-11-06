@@ -37,9 +37,11 @@ export function ClaimForm({
   const ownershipError = fe.confirmOwnership?.[0];
 
   return (
-    // Submitted from onSubmit (not the form's action) so a field that needs fixing doesn't clear the others.
+    // Submitted from onSubmit so a field that needs fixing doesn't clear the others; the action stays for a submit before
+    // the page's scripts load, which then posts (never a GET with the password and the claim token in the address).
     <form
       className="space-y-4"
+      action={action}
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);

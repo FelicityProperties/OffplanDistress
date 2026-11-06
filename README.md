@@ -101,6 +101,10 @@ whose ownership our team confirmed without the seller (their signed Form A, or o
 import) still gets a link while its account has no password — an owner entered by mobile number has no other way in
 — and its seller stays on "Pending claim" until they use it (the claim keeps the confirmation's date and notifies
 nobody); a seller who can sign in doesn't need one. A link never sets a password on an account that already has one.
+The claim link is the only way into an account our team entered for a seller: "Forgot password" on it emails nothing
+(the address was typed by our team, and a typo can be a stranger's mailbox) and tells the admins, at most once an
+hour, to send the seller their claim link on WhatsApp. Confirming ownership from the signed Form A for an account that
+can already sign in asks staff to tick that account by name first, as the Owner card does.
 The admin listing page flags descriptions that seem to contain a phone number, email, link or WhatsApp handle
 ("Contact details in text"); the text is never changed automatically.
 

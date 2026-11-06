@@ -14,7 +14,7 @@ import { getLocale, getT } from "@/i18n/server";
 import { LEGAL_UPDATED } from "@/content/legal/brand";
 import { audit } from "@/lib/audit";
 import { createSession, findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail, safeNext } from "@/lib/auth";
-import { claimPath, findClaim, isPlaceholderEmail, issueClaimToken } from "@/lib/claim";
+import { findClaim, isPlaceholderEmail } from "@/lib/claim";
 import { canEmail, sendEmail } from "@/lib/email";
 import { refCode } from "@/lib/format";
 import { renderTemplate } from "@/lib/notification-templates";
@@ -54,9 +54,8 @@ async function issueReset(email: string) {
   const user = await findUserByEmail(email);
   // Owner passwords are managed by ADMIN_PASSWORD; placeholder (.invalid) accounts can't receive email.
   if (!user || isOwnerEmail(user.email) || user.email.endsWith(".invalid")) return;
-  // No password yet: an account our team created. A seller's gets a new claim link instead (below) while one of its
-  // staff-created listings still waits for the seller's confirmation; any other (a buyer our team added to a deal file)
-  // gets the usual reset link, with which they choose their first password.
+  // No password yet: an account our team created (a buyer added to a deal file, or a seller whose listing our team
+  // entered). Others get the usual reset link, with which they choose their first password.
   if (!user.passwordHash && user.role !== "user") return;
 
   const now = Date.now();
@@ -71,31 +70,24 @@ async function issueReset(email: string) {
 
   const locale = isLocale(user.locale) ? user.locale : "en";
   if (!user.passwordHash) {
-    const [pending] = await db
+    const [entered] = await db
       .select({ id: listings.id, projectName: listings.projectName, refNo: listings.refNo })
       .from(listings)
-      .where(
-        and(
-          eq(listings.sellerId, user.id),
-          eq(listings.createdByStaff, true),
-          eq(listings.isSample, false),
-          isNull(listings.ownershipConfirmedAt),
-        ),
-      )
+      .where(and(eq(listings.sellerId, user.id), eq(listings.createdByStaff, true), eq(listings.isSample, false)))
       .orderBy(desc(listings.createdAt))
       .limit(1);
-    if (pending) {
-      const claimToken = await issueClaimToken(user.id, pending.id, { keepOthers: true });
-      const claim = renderTemplate("listing.claim", locale, { name: user.fullName, project: pending.projectName, ref: refCode(pending.refNo) });
-      await sendEmail({
-        to: user.email,
-        subject: claim.title,
-        heading: claim.title,
-        body: claim.body,
-        cta: { label: claim.cta, href: claimPath(claimToken, locale) },
-        locale,
-        dir: dirOf(locale),
-      });
+    if (entered) {
+      // An owner our team entered gets into their account only through the claim link our team sends to the mobile it
+      // checked: the email on file was typed by our team, and a typo can be a stranger's mailbox, which a reset (or claim)
+      // link by email would hand the listing, its offers and documents. So nothing is emailed; the admins are told, once
+      // an hour per account, to send the claim link on WhatsApp. The reply to the form is the same as ever.
+      if (await hit(`claim-ask:${user.id}`, 1, 60 * MINUTE)) {
+        await notifyAdmins(
+          "listing.signInRequested",
+          { project: entered.projectName, seller: user.fullName, email: user.email, ref: refCode(entered.refNo) },
+          `/admin/listings/${entered.id}`,
+        );
+      }
       return;
     }
   }
