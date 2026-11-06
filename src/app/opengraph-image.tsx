@@ -7,7 +7,7 @@ export const size = OG_SIZE;
 export const contentType = "image/png";
 
 export default function Image() {
-  const points = ["Verified SPAs", "NOC & DLD transfer handled", "2% commission, only on success"];
+  const points = ["Verified SPAs", "NOC & DLD transfer handled", "2% commission, after transfer"];
   return new ImageResponse(
     (
       <div
