@@ -3,7 +3,7 @@ import { getLocale, getT } from "@/i18n/server";
 import type { TKey } from "@/i18n/translator";
 import { formatAEDCompact, formatNumber, formatPct } from "@/lib/format";
 import { MIN_SAMPLE, type DistressIndex } from "@/lib/market";
-import { Bar, Panel, PanelHeader, share } from "./shared";
+import { Bar, Panel, PanelHeader, ROW_END, ROW_HEAD, ROW_LINK, ROW_TAP, RowChevron, share, TABLE_HEAD } from "./shared";
 
 /** Units on the market by upfront cash (the asking price), each band linking to /deals with the same budget. */
 export async function CashBands({ index }: { index: DistressIndex }) {
@@ -15,7 +15,7 @@ export async function CashBands({ index }: { index: DistressIndex }) {
     <Panel className="flex flex-col">
       <PanelHeader id="cash-title" eyebrow={t("cash.eyebrow")} title={t("cash.title")} sub={t("cash.sub")} />
       <table className="w-full text-sm" aria-labelledby="cash-title">
-        <thead className="bg-secondary/60 text-[11px] uppercase tracking-wider text-muted-foreground rtl:text-xs">
+        <thead className={TABLE_HEAD}>
           <tr>
             <th scope="col" className="px-4 py-3 text-start font-semibold sm:px-8">
               {t("cash.col.band")}
@@ -39,12 +39,9 @@ export async function CashBands({ index }: { index: DistressIndex }) {
             if (b.max != null) q.set("maxCash", String(b.max));
             const pct = share(b.count, s.live);
             return (
-              <tr key={b.key} className="transition-colors hover:bg-secondary/40">
-                <th scope="row" className="px-4 py-4 text-start font-medium sm:px-8">
-                  <Link
-                    href={`/deals?${q.toString()}`}
-                    className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
+              <tr key={b.key} className={ROW_TAP}>
+                <th scope="row" className={`${ROW_HEAD} px-4 py-4 text-start font-medium sm:px-8`}>
+                  <Link href={`/deals?${q.toString()}`} className={`${ROW_LINK} max-sm:-mx-4 max-sm:-my-4 max-sm:px-4 max-sm:py-4`}>
                     {t(`cash.band.${b.key}` as TKey<"market">)}
                   </Link>
                 </th>
@@ -54,8 +51,9 @@ export async function CashBands({ index }: { index: DistressIndex }) {
                   <Bar value={b.count} max={max} tone="gold" className="mt-1.5 h-2" />
                 </td>
                 {/* One or two units in a band would expose those listings' private offer counts. */}
-                <td className="py-4 pe-4 ps-2 text-end tabular text-muted-foreground sm:pe-8">
+                <td className={`${ROW_END} py-4 pe-4 ps-2 text-end tabular text-muted-foreground sm:pe-8`}>
                   {b.count === 0 || b.count >= MIN_SAMPLE ? formatNumber(b.offers) : "—"}
+                  <RowChevron />
                 </td>
               </tr>
             );

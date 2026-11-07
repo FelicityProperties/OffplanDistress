@@ -34,6 +34,8 @@ export async function DealCard({
   const saving = a.savingVsLaunch != null && a.savingVsLaunch > 0 ? a.savingVsLaunch : null;
   const community = communityName(tc, deal.community, deal.communityOther);
   const developer = developerName(tc, deal.developer, deal.developerOther);
+  // "{amount} to seller", split so the amount can be kept on one line.
+  const [toSellerBefore, toSellerAfter = ""] = tc("toSeller").split("{amount}");
 
   return (
     <article
@@ -60,7 +62,7 @@ export async function DealCard({
           <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2">
             {deal.isSample ? <SampleBadge /> : <span />}
             {deal.watchers > 0 && (
-              <span className="rounded-full bg-ink/60 px-2 py-0.5 text-[11px] font-medium text-primary-foreground backdrop-blur tabular">
+              <span className="rounded-full bg-ink/60 px-2 py-0.5 text-[11px] font-medium text-primary-foreground backdrop-blur tabular max-lg:text-xs">
                 {tc("watching", { n: deal.watchers })}
               </span>
             )}
@@ -71,13 +73,16 @@ export async function DealCard({
         listingId={deal.id}
         watching={watching}
         // In list view the photo is an 18rem start column: keep the heart on its top-end corner, not over the text.
-        className={cn("absolute end-3 top-3 z-10", list && "sm:end-auto sm:start-[15.25rem]")}
+        // Below lg a 40px heart (48px target), so 0.5rem further from the column's end there.
+        className={cn("absolute end-3 top-3 z-10 max-lg:h-10 max-lg:w-10", list && "sm:end-auto sm:start-[14.75rem] lg:start-[15.25rem]")}
       />
       <div className="flex flex-1 flex-col p-5">
-        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+        {/* When the developer and the chips don't fit on one line, the chips move under the name, each on one line
+            (they used to squeeze to two or three lines, one character per line in Chinese). */}
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 text-xs text-muted-foreground">
           {/* truncate: a name the seller typed for "Other" can be long. */}
-          <span className="min-w-0 truncate font-semibold uppercase tracking-[0.14em]">{developer}</span>
-          <div className="flex items-center gap-1.5">
+          <span className="min-w-0 max-w-full truncate font-semibold uppercase tracking-[0.14em]">{developer}</span>
+          <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
             {deal.verified && !deal.isSample && (
               <span className="inline-flex items-center gap-1 font-medium text-success">
                 <BadgeCheck className="h-3.5 w-3.5" />
@@ -113,19 +118,23 @@ export async function DealCard({
         <div className="@container mt-auto grid grid-cols-2 gap-3 border-t pt-4">
           {/* Cash at transfer = equity to the seller + fees (DLD and NOC estimated) + any arrears, hence "≈". */}
           <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            {/* Labels: 12px below lg, 11px on desktop as before. */}
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground max-lg:text-xs">
               {tc("cashAtTransfer")}
               <span className="sr-only"> ({tc("cashAtTransferSr")})</span>
             </p>
             <p className="mt-0.5 text-xl font-semibold leading-none tabular @max-[20rem]:text-lg" data-cash-at-transfer={a.cashToClose}>
               {tc("approx", { amount: formatAEDCompact(a.cashToClose, locale) })}
             </p>
-            <p className="mt-1 truncate text-xs text-muted-foreground tabular" data-to-seller={deal.askingPrice}>
-              {tc("toSeller", { amount: formatAEDCompact(deal.askingPrice, locale) })}
+            {/* Below lg the line wraps after the amount (kept whole) rather than being cut off; one line on desktop. */}
+            <p className="mt-1 text-pretty text-xs text-muted-foreground tabular lg:truncate" data-to-seller={deal.askingPrice}>
+              {toSellerBefore}
+              <span className="whitespace-nowrap">{formatAEDCompact(deal.askingPrice, locale)}</span>
+              {toSellerAfter}
             </p>
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{tc("remainingPlan")}</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground max-lg:text-xs">{tc("remainingPlan")}</p>
             {/* Overdue instalments are paid on transfer day (in the figure opposite), so they leave the plan. */}
             <p className="mt-0.5 text-xl font-semibold leading-none tabular text-foreground/80 @max-[20rem]:text-lg">
               {formatAEDCompact(a.remainingAfterTransfer, locale)}

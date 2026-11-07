@@ -28,7 +28,7 @@ export async function SellerProfile({ index }: { index: DistressIndex }) {
       <PanelHeader eyebrow={t("seller.eyebrow")} title={t("seller.title")} sub={t("seller.sub")} />
       <div className="grid gap-8 p-5 sm:p-8">
         <div>
-          <h4 className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground rtl:text-xs">{t("seller.motivation")}</h4>
+          <h4 className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground rtl:text-xs max-lg:text-xs">{t("seller.motivation")}</h4>
           {/* Stacked share bar (decorative: every share is listed underneath). */}
           <div aria-hidden className="mt-4 flex h-3 gap-1 overflow-hidden rounded-full">
             {MOTIVATIONS.map((m) => {
@@ -66,7 +66,7 @@ export async function SellerProfile({ index }: { index: DistressIndex }) {
         </div>
 
         <div>
-          <h4 className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground rtl:text-xs">{t("seller.checks")}</h4>
+          <h4 className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground rtl:text-xs max-lg:text-xs">{t("seller.checks")}</h4>
           <ul className="mt-4 space-y-4">
             {checks.map((c) => {
               const pct = share(c.n, total);

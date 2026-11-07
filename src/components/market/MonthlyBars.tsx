@@ -48,30 +48,39 @@ export async function MonthlyBars({ index }: { index: DistressIndex }) {
                 <span className={cn("block truncate text-xs font-medium", i === last ? "text-foreground" : "text-muted-foreground")}>
                   {monthLabel(m.month, locale, "short")}
                 </span>
-                {i === last && <span className="block truncate text-[10px] text-muted-foreground">{t("monthly.toDate")}</span>}
+                {/* 12px below lg, on two lines if the column is too narrow for one (a 320px phone). */}
+                {i === last && (
+                  <span className="block truncate text-[10px] text-muted-foreground max-lg:whitespace-normal max-lg:text-xs max-lg:leading-tight">
+                    {t("monthly.toDate")}
+                  </span>
+                )}
               </div>
             ))}
           </div>
         </div>
-        <table className="sr-only" aria-labelledby="monthly-title">
-          <thead>
-            <tr>
-              <th scope="col">{t("monthly.col.month")}</th>
-              <th scope="col">{t("monthly.col.count")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {months.map((m, i) => (
-              <tr key={m.month}>
-                <th scope="row">
-                  {monthLabel(m.month, locale, "long")}
-                  {i === last ? ` (${t("monthly.toDate")})` : ""}
-                </th>
-                <td>{formatNumber(m.count)}</td>
+        {/* The 1px sr-only box is on a wrapper: a table can't shrink below its content, and an sr-only table 292px wide
+            (positioned against the page, not this panel) made the page wider than a 320px screen. */}
+        <div className="sr-only">
+          <table aria-labelledby="monthly-title">
+            <thead>
+              <tr>
+                <th scope="col">{t("monthly.col.month")}</th>
+                <th scope="col">{t("monthly.col.count")}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {months.map((m, i) => (
+                <tr key={m.month}>
+                  <th scope="row">
+                    {monthLabel(m.month, locale, "long")}
+                    {i === last ? ` (${t("monthly.toDate")})` : ""}
+                  </th>
+                  <td>{formatNumber(m.count)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </Panel>
   );
