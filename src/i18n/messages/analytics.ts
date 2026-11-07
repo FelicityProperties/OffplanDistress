@@ -142,6 +142,7 @@ export default defineMessages({
     "wa.place.exit": "Exit calculator",
     "wa.place.deal": "Deal page",
     "wa.place.claim": "Listing confirmation",
+    "wa.place.assistant": "AI assistant (FeliBot)",
     "wa.place.other": "Other button",
     "journey.title": "Leads and their journey",
     "journey.sub":
@@ -327,6 +328,7 @@ export default defineMessages({
     "wa.place.exit": "حاسبة الخروج",
     "wa.place.deal": "صفحة الصفقة",
     "wa.place.claim": "تأكيد الإعلان",
+    "wa.place.assistant": "المساعد الذكي (⁨FeliBot⁩)",
     "wa.place.other": "زر آخر",
     "journey.title": "العملاء المحتملون ومسار زياراتهم",
     "journey.sub": "أحدث العملاء المحتملين في هذه الفترة، وكيف وصلت زياراتهم، والصفحات التي تصفحوها قبل التواصل معنا.",
@@ -510,6 +512,7 @@ export default defineMessages({
     "wa.place.exit": "退出测算器",
     "wa.place.deal": "房源页面",
     "wa.place.claim": "房源确认",
+    "wa.place.assistant": "AI 助手（FeliBot）",
     "wa.place.other": "其他按钮",
     "journey.title": "潜在客户及其访问路径",
     "journey.sub":
