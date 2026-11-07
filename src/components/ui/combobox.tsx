@@ -1,11 +1,32 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { initials, searchKey } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
 
 export type ComboboxOption = { value: string; label: string };
+
+/** The list's usual height (max-h-64); the phone shell (below lg) is where it may open upward or get shorter. */
+const LIST_MAX = 256;
+const PHONE_SHELL = "(max-width: 1023.98px)";
+
+/**
+ * Where the open list fits on a phone: below the box, or above it when there is more room there, as tall as the room
+ * allows. The room is the part of the screen still visible (the on-screen keyboard shrinks the visual viewport), less
+ * the sticky header at the top (the page's scroll-padding-top, which clears it).
+ */
+function listPlace(box: HTMLElement, need: number) {
+  const r = box.getBoundingClientRect();
+  const vv = window.visualViewport;
+  const top = vv ? vv.offsetTop : 0;
+  const bottom = top + (vv ? vv.height : window.innerHeight);
+  const header = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  const below = bottom - r.bottom - 12;
+  const above = r.top - Math.max(top, header) - 12;
+  const up = below < need && above > below;
+  return { up, maxHeight: Math.max(Math.min(LIST_MAX, up ? above : below), 120) };
+}
 
 /** 0 = the name starts with the query, 1 = a word or the initials ("jvt") do, 2 = it appears anywhere; null = no match. */
 function score(o: ComboboxOption, q: string) {
@@ -84,6 +105,44 @@ export function Combobox({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, active]);
 
+  // Phones: the list opens where it fits (see listPlace), measured again as the keyboard comes and goes, the page
+  // scrolls or the matches change. From lg it always opens below at its usual height, as before.
+  const popup = useRef<HTMLDivElement>(null);
+  const [place, setPlace] = useState<{ up: boolean; maxHeight: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!open || !window.matchMedia(PHONE_SHELL).matches) {
+      setPlace(null);
+      return;
+    }
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const box = popup.current;
+      const list = box?.querySelector("ul");
+      if (!input.current || !box || !list) return;
+      // The list's own height, plus what else the popup holds (the "not in the list" line, the borders).
+      const need = Math.min(LIST_MAX, list.scrollHeight) + box.offsetHeight - list.offsetHeight;
+      const next = listPlace(input.current, need);
+      setPlace((p) => (p && p.up === next.up && Math.abs(p.maxHeight - next.maxHeight) < 2 ? p : next));
+    };
+    const later = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    measure();
+    const vv = window.visualViewport;
+    window.addEventListener("resize", later);
+    window.addEventListener("scroll", later, { passive: true });
+    vv?.addEventListener("resize", later);
+    vv?.addEventListener("scroll", later);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", later);
+      window.removeEventListener("scroll", later);
+      vv?.removeEventListener("resize", later);
+      vv?.removeEventListener("scroll", later);
+    };
+  }, [open, shown.length]);
+
   function show(at?: number) {
     setOpen(true);
     const current = shown.findIndex((o) => o.value === value);
@@ -159,7 +218,8 @@ export function Combobox({
         onKeyDown={onKeyDown}
         onBlur={close}
         className={cn(
-          "flex h-9 w-full rounded-md border border-input bg-transparent py-1 ps-3 pe-9 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm",
+          // Phones (below lg): 44 px tall, like the Input.
+          "flex h-9 w-full rounded-md border border-input bg-transparent py-1 ps-3 pe-9 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm max-lg:h-11",
           invalid && "border-destructive/60",
         )}
       />
@@ -169,14 +229,19 @@ export function Combobox({
       />
       {open && (
         <div
+          ref={popup}
           // Keeps focus in the text box while the list is clicked or its scrollbar dragged.
           onMouseDown={(e) => e.preventDefault()}
-          className="absolute inset-x-0 top-full z-50 mt-1 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
+          style={place ? { maxHeight: place.maxHeight } : undefined}
+          className={cn(
+            "absolute inset-x-0 z-50 flex flex-col overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95",
+            place?.up ? "bottom-full mb-1" : "top-full mt-1",
+          )}
         >
           {q && matches.length === 0 && noMatchText && (
-            <p className="border-b px-3 py-2 text-xs text-muted-foreground">{noMatchText}</p>
+            <p className="shrink-0 border-b px-3 py-2 text-xs text-muted-foreground">{noMatchText}</p>
           )}
-          <ul id={listId} role="listbox" aria-labelledby={labelledBy} className="max-h-64 overflow-y-auto p-1">
+          <ul id={listId} role="listbox" aria-labelledby={labelledBy} className="max-h-64 min-h-0 overflow-y-auto overscroll-contain p-1">
             {shown.map((o, i) => {
               const isSelected = o.value === value;
               return (
@@ -189,7 +254,8 @@ export function Combobox({
                   onClick={() => pick(o)}
                   onMouseMove={() => active !== i && setActive(i)}
                   className={cn(
-                    "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 ps-2 pe-8 text-sm",
+                    // Phones: 44 px rows with 16 px text.
+                    "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 ps-2 pe-8 text-sm max-lg:min-h-11 max-lg:text-base",
                     i === highlighted && "bg-accent text-accent-foreground",
                     o === pinned && matches.length > 0 && "mt-1 border-t pt-2",
                   )}

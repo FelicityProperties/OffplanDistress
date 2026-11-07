@@ -110,8 +110,9 @@ export default async function ExitCalculatorPage() {
         </div>
       </section>
 
-      {/* Calculator (pulled up over the hero's lower edge) */}
-      <section id="calculator" aria-label={t("calc.title")} className="container-page relative -mt-16 scroll-mt-24 sm:-mt-20">
+      {/* Calculator (pulled up over the hero's lower edge). lg:scroll-mt-24, here and on #law: below lg the page's
+          scroll-padding alone clears the header (the two added up to a gap of over 100px on a phone). */}
+      <section id="calculator" aria-label={t("calc.title")} className="container-page relative -mt-16 sm:-mt-20 lg:scroll-mt-24">
         <ExitCalculator />
       </section>
 
@@ -152,7 +153,7 @@ export default async function ExitCalculatorPage() {
       </section>
 
       {/* The law */}
-      <section id="law" className="relative isolate scroll-mt-24 overflow-hidden bg-secondary py-20 sm:py-24">
+      <section id="law" className="relative isolate overflow-hidden bg-secondary py-20 sm:py-24 lg:scroll-mt-24">
         <div aria-hidden className="absolute inset-0 -z-10 bg-grid-light opacity-60 mask-fade-b" />
         <div className="container-page reveal">
           <SectionHeading eyebrow={t("law.eyebrow")} title={t("law.title")} sub={t("law.sub")} />
@@ -162,7 +163,7 @@ export default async function ExitCalculatorPage() {
               <Scale className="h-4.5 w-4.5" aria-hidden />
             </span>
             <p className="min-w-0 flex-1 basis-60 font-medium leading-relaxed">{ltr(t("law.citation"))}</p>
-            <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground">{t("law.reviewed")}</span>
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground max-lg:text-xs">{t("law.reviewed")}</span>
           </div>
 
           {/* Procedure */}
@@ -224,7 +225,7 @@ export default async function ExitCalculatorPage() {
             rel="noopener noreferrer"
             className="mt-6 inline-flex items-center gap-2 rounded-md text-sm font-medium text-foreground underline underline-offset-4 hover:text-gold-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {t("law.source")} <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            {t("law.source")} <ExternalLink className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden />
           </a>
         </div>
       </section>
