@@ -46,7 +46,7 @@ export async function FollowUps() {
   // Every rule failed (the database is unreachable, say): the same as the whole lookup failing.
   if (!f || f.failedRules.length === FOLLOW_UP_KEYS.length) {
     return (
-      <section id="follow-ups" aria-labelledby="follow-ups-title" className="scroll-mt-24 space-y-2" data-testid="follow-ups">
+      <section id="follow-ups" aria-labelledby="follow-ups-title" className="space-y-2 lg:scroll-mt-24" data-testid="follow-ups">
         <h2 id="follow-ups-title" className="text-xl font-semibold">
           {t("followups.title")}
         </h2>
@@ -155,7 +155,7 @@ export async function FollowUps() {
   const groups = FOLLOW_UP_KEYS.filter((k) => counts[k] > 0);
 
   return (
-    <section id="follow-ups" aria-labelledby="follow-ups-title" className="scroll-mt-24 space-y-4" data-testid="follow-ups">
+    <section id="follow-ups" aria-labelledby="follow-ups-title" className="space-y-4 lg:scroll-mt-24" data-testid="follow-ups">
       <div className="flex items-start gap-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gold-soft text-gold-foreground">
           <ListTodo className="h-4.5 w-4.5" aria-hidden />

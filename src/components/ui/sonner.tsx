@@ -65,8 +65,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
           toast:
             "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
           description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          // Phones: a 36px button with 14px text (it was 24px, e.g. the sell form's Undo). sonner's own CSS is unlayered
+          // and beats plain utilities, hence the important modifier.
+          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground max-lg:h-9! max-lg:px-3! max-lg:text-sm!",
+          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground max-lg:h-9! max-lg:px-3! max-lg:text-sm!",
         },
       }}
       {...props}

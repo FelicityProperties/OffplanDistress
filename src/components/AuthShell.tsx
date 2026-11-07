@@ -46,7 +46,7 @@ export async function AuthShell({ title, sub, children }: { title: string; sub: 
       className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]"
       // The screen between the header and the bottom tab bar on phones (the app shell's variables: a 56 px header there,
       // and the bar's height); without them, and from lg, the 68 px header as before.
-      style={{ minHeight: "calc(100svh - var(--app-header-h, 4.25rem) - var(--app-bottom, 0px))" }}
+      style={{ minHeight: "calc(100svh - var(--app-header-h, 4.25rem) - var(--app-bottom-reserve, 0px))" }}
     >
       {/* Form side */}
       <div className="relative isolate flex items-center justify-center overflow-hidden px-4 py-12 sm:px-6 sm:py-16">

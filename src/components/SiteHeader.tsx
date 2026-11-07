@@ -7,6 +7,7 @@ import { LayoutDashboard, LogOut, ShieldCheck } from "lucide-react";
 import { AutoHideHeader } from "@/components/app/AutoHideHeader";
 import { ChromeState } from "@/components/app/ChromeState";
 import { HeaderBack } from "@/components/app/HeaderBack";
+import { InstallMenuItem } from "@/components/app/InstallMenuItem";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { NavProgress } from "@/components/app/NavProgress";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
@@ -179,6 +180,8 @@ export async function SiteHeader() {
                   </>
                 )}
                 <LocaleSwitcher full className="mt-2" />
+                {/* Only where the browser can install the site (Chrome on Android, iOS Safari). */}
+                <InstallMenuItem />
               </div>
             </div>
           </MobileMenu>

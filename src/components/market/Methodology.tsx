@@ -21,7 +21,7 @@ const ITEMS = [
 export async function Methodology() {
   const [t, tc, locale] = await Promise.all([getT("market"), getT("common"), getLocale()]);
   return (
-    <section id="methodology" className="scroll-mt-24 bg-secondary py-20 sm:py-24">
+    <section id="methodology" className="bg-secondary py-20 sm:py-24 lg:scroll-mt-24">
       <div className="container-page grid gap-10 reveal lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
         <div className="lg:sticky lg:top-28 lg:self-start">
           <SectionHeading eyebrow={t("method.eyebrow")} title={t("method.title")} sub={t("method.sub")} />

@@ -601,7 +601,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 <div aria-hidden className="absolute inset-0 bg-dots-dark opacity-70 mask-fade-b" />
                 <div aria-hidden className="absolute -end-16 -top-20 h-48 w-48 bg-glow-gold opacity-60" />
                 <div className="relative">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">{t("side.payNow")}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold max-lg:text-xs">{t("side.payNow")}</p>
                   {/* Phones: one line, scaled to fit (card and page padding: 5.25rem). */}
                   <p
                     className="mt-2 font-display text-4xl font-semibold leading-none tabular max-sm:whitespace-nowrap max-sm:text-[length:var(--fit)] sm:text-[2.6rem]"
@@ -626,7 +626,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   )}
                   {/* Next to the equity figure (unchanged): what the buyer actually needs on the day, an estimate. */}
                   <div className="mt-4 border-t border-primary-foreground/15 pt-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">{t("side.cashAtTransfer")}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold max-lg:text-xs">{t("side.cashAtTransfer")}</p>
                     <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                       <p className="font-display text-2xl font-semibold leading-none tabular" data-cash-at-transfer={a.cashToClose}>
                         {t("side.approx", { amount: formatAED(a.cashToClose, locale) })}
@@ -898,7 +898,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                                 {/* Smaller on phones, and left out below 360 px, where the date and the amount need the row. */}
                                 <span
                                   aria-hidden
-                                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gold-soft text-[11px] font-semibold text-gold-foreground tabular max-sm:h-6 max-sm:w-6 max-[359px]:hidden"
+                                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gold-soft text-[11px] font-semibold text-gold-foreground tabular max-lg:text-xs max-sm:h-6 max-sm:w-6 max-[359px]:hidden"
                                 >
                                   {i + 1}
                                 </span>
@@ -931,7 +931,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
               </div>
             </section>
 
-            <section id="cash-timeline" aria-labelledby="cash-timeline-title" className="scroll-mt-28">
+            <section id="cash-timeline" aria-labelledby="cash-timeline-title" className="lg:scroll-mt-28">
               <h2 id="cash-timeline-title" className="text-2xl font-semibold sm:text-3xl">
                 {t("timeline.title")}
               </h2>
@@ -970,7 +970,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       <span
                         aria-hidden
                         className={cn(
-                          "absolute start-0 top-0.5 grid h-7 w-7 place-items-center rounded-full text-[11px] font-semibold tabular ring-4 ring-card",
+                          "absolute start-0 top-0.5 grid h-7 w-7 place-items-center rounded-full text-[11px] font-semibold tabular ring-4 ring-card max-lg:text-xs",
                           s.lead ? "bg-ink text-gold" : "bg-gold-soft text-gold-foreground",
                         )}
                       >

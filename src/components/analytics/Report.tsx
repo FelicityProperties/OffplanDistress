@@ -534,7 +534,11 @@ export function Journeys({ leads, locale, t, ta }: { leads: LeadJourney[]; local
           <li key={`${l.kind}-${l.id}`} className="py-4 first:pt-0 last:pb-0" data-lead={l.id}>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <StatusPill tone={LEAD_TONE[l.kind]}>{t(`kind.${l.kind}`)}</StatusPill>
-              <Link href={leadHref(l)} className="min-w-0 font-semibold wrap-anywhere underline-offset-4 hover:underline">
+              <Link
+                href={leadHref(l)}
+                // Phones: a 40px tap target (the line was 24px).
+                className="min-w-0 font-semibold wrap-anywhere underline-offset-4 hover:underline max-lg:inline-flex max-lg:min-h-10 max-lg:items-center"
+              >
                 {l.label || "—"}
               </Link>
               {ref && <bdi className="text-xs font-medium text-muted-foreground tabular">{ref}</bdi>}

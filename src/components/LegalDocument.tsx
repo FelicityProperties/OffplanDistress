@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "@/components/LocaleLink";
 import { ArrowUp, CalendarDays, Cookie, FileText, Languages, ListOrdered, Mail, Scale, ShieldCheck, Sparkles } from "lucide-react";
-import { LegalToc } from "@/app/(site)/terms/LegalToc";
+import { LegalToc } from "@/components/LegalToc";
 import { Button } from "@/components/ui/button";
 import { richText } from "@/content/legal/rich-text";
 import type { LegalContent, LegalDoc } from "@/content/legal/types";

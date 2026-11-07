@@ -15,7 +15,7 @@ export async function SellerEstimateSection({ signedIn }: { signedIn: boolean })
   ];
   return (
     // lg:scroll-mt-24: below lg the page's scroll-padding alone clears the header (an extra margin left a gap above).
-    <section id="seller-estimate" className="container-page py-24 reveal lg:scroll-mt-24">
+    <section id="seller-estimate" className="container-page py-14 reveal sm:py-24 lg:scroll-mt-24">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <SectionHeading eyebrow={t("estimate.home.eyebrow")} title={t("estimate.home.title")} sub={t("estimate.home.body")} />
         <ul className="space-y-3 text-sm">

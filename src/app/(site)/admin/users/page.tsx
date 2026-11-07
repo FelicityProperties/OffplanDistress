@@ -112,7 +112,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
               </TableHeader>
               <TableBody className="max-md:block">
                 {users.map((u) => (
-                  <TableRow key={u.id} id={`user-${u.id}`} className={cn("scroll-mt-24 target:bg-gold-soft/50", ROW)}>
+                  <TableRow key={u.id} id={`user-${u.id}`} className={cn("target:bg-gold-soft/50 lg:scroll-mt-24", ROW)}>
                     <TableCell className="max-md:col-span-2 max-md:p-0">
                       <p className="font-medium">{u.fullName}</p>
                       <p className="text-xs text-muted-foreground wrap-anywhere">
@@ -182,7 +182,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             <TableBody className="max-md:block">
               {users.map((u) => (
                 // id: the seller-leads page links straight to a converted lead's account.
-                <TableRow key={u.id} id={`user-${u.id}`} className={cn("scroll-mt-24 target:bg-gold-soft/50", ROW)}>
+                <TableRow key={u.id} id={`user-${u.id}`} className={cn("target:bg-gold-soft/50 lg:scroll-mt-24", ROW)}>
                   <TableCell className="max-md:col-span-2 max-md:p-0">
                     <p className="font-medium">{u.fullName}</p>
                     <p className="text-xs text-muted-foreground wrap-anywhere">

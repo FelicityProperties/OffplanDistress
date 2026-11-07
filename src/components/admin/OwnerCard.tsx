@@ -41,7 +41,7 @@ export function OwnerForm({ listingId, placeholder, open = true }: { listingId: 
   if (!open) return null;
 
   return (
-    <section id="owner" aria-labelledby="owner-title" className="scroll-mt-24 rounded-xl border bg-card p-4 shadow-card sm:p-6">
+    <section id="owner" aria-labelledby="owner-title" className="rounded-xl border bg-card p-4 shadow-card sm:p-6 lg:scroll-mt-24">
       <h2 id="owner-title" className="mb-2 font-sans text-lg font-semibold">
         {ti("owner.title")}
       </h2>

@@ -254,7 +254,7 @@ export default async function AdminListingPage({ params, searchParams }: PagePro
             <div
               id="contact-warning"
               role="note"
-              className="mt-4 flex scroll-mt-24 items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm"
+              className="mt-4 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm lg:scroll-mt-24"
             >
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
               <div className="min-w-0">
@@ -411,7 +411,8 @@ export default async function AdminListingPage({ params, searchParams }: PagePro
           <ul className="mt-3 divide-y">
             {offers.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-                <div>
+                {/* min-w-0 + wrap-anywhere: the meta line holds the buyer's e-mail, one unbreakable word. */}
+                <div className="min-w-0 wrap-anywhere">
                   <p className="font-semibold tabular">
                     {formatAED(o.amount, locale)}
                     {o.counterAmount && o.status === "countered" && (
