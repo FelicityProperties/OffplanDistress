@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { RotateCcw, Send, Sparkles, X } from "lucide-react";
+import { MessageCircle, RotateCcw, Send, Sparkles, X } from "lucide-react";
 import type { AssistantEvent } from "@/app/api/assistant/route";
 import { useLocale, useT } from "@/i18n/client";
 import { stripLocale } from "@/i18n/paths";
+import { whatsappPrefill } from "@/components/WhatsAppButton";
 import { BRAND } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,11 @@ type Msg = { role: "user" | "assistant"; content: string; error?: boolean };
 const STORE = "od-assistant";
 const MAX_INPUT = 1000;
 const STARTERS = ["starter.deals", "starter.budget", "starter.how", "starter.sell"] as const;
+/** On a deal page the first suggestion is about that unit. */
+const DEAL_STARTERS = ["starter.thisDeal", "starter.deals", "starter.how", "starter.sell"] as const;
+/** The one-time hello next to the button (localStorage): shown once, a few seconds into a first visit. */
+const NUDGE_KEY = "od-assistant-nudge";
+const NUDGE_DELAY = 8000;
 /** Our consoles have no chat. */
 const HIDDEN = /^\/(?:admin|dashboard)(?:\/|$)/;
 
@@ -109,6 +115,7 @@ function Bubble({ mine, label, text, children }: { mine: boolean; label: string;
  */
 export function AssistantWidget() {
   const t = useT("assistant");
+  const tm = useT("marketing");
   const locale = useLocale();
   const pathname = usePathname() ?? "/";
   const router = useRouter();
@@ -117,6 +124,7 @@ export function AssistantWidget() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [nudge, setNudge] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -149,7 +157,29 @@ export function AssistantWidget() {
     if (open) inputRef.current?.focus({ preventScroll: true });
   }, [open]);
 
+  // The hello, unless this browser has seen it (or chatted) before.
+  useEffect(() => {
+    if (!loaded || open || msgs.length) return;
+    try {
+      if (localStorage.getItem(NUDGE_KEY) != null) return;
+    } catch {
+      return;
+    }
+    const timer = setTimeout(() => setNudge(true), NUDGE_DELAY);
+    return () => clearTimeout(timer);
+  }, [loaded, open, msgs.length]);
+
   if (HIDDEN.test(stripLocale(pathname))) return null;
+
+  const dismissNudge = () => {
+    setNudge(false);
+    try {
+      localStorage.setItem(NUDGE_KEY, "1");
+    } catch {}
+  };
+  // The WhatsApp message the floating button would open with on this page (a deal page names the deal).
+  const prefill = whatsappPrefill(pathname);
+  const starters = prefill.key === "whatsapp.prefill.deal" ? DEAL_STARTERS : STARTERS;
 
   const errorText = (code: "failed" | "busy" | "refusal") => t(`error.${code}`, { whatsapp: `https://wa.me/${BRAND.whatsapp}` });
   /** Updates the answer being written (the last message). */
@@ -236,7 +266,11 @@ export function AssistantWidget() {
       <button
         ref={launcherRef}
         type="button"
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={() => {
+          if (open) return close();
+          dismissNudge();
+          setOpen(true);
+        }}
         aria-label={open ? t("close") : t("launcher")}
         aria-expanded={open}
         title={open ? t("close") : t("launcher")}
@@ -292,7 +326,7 @@ export function AssistantWidget() {
             </Bubble>
             {msgs.length === 0 && (
               <div className="flex flex-wrap gap-2 ps-1">
-                {STARTERS.map((k) => (
+                {starters.map((k) => (
                   <button
                     key={k}
                     type="button"
@@ -352,8 +386,47 @@ export function AssistantWidget() {
               </button>
             </div>
             <p className="mt-2 text-[11px] leading-snug text-muted-foreground">{t("disclaimer")}</p>
+            {BRAND.whatsapp && (
+              <a
+                href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(tm(prefill.key, { ref: prefill.ref }))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-wa="assistant"
+                className="mt-1.5 flex w-fit items-center gap-1.5 text-xs font-medium text-emerald-700 hover:underline focus-visible:underline focus-visible:outline-none dark:text-emerald-400"
+              >
+                <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                {t("human")}
+              </a>
+            )}
           </form>
         </section>
+      )}
+
+      {nudge && !open && (
+        <div
+          data-assistant="nudge"
+          className="fixed bottom-[6.4rem] end-[5.25rem] z-40 flex max-w-[16rem] items-center gap-1 rounded-2xl rounded-ee-md border bg-background py-1.5 ps-3 pe-1 text-sm shadow-lift animate-in fade-in slide-in-from-bottom-2 duration-300"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              dismissNudge();
+              setOpen(true);
+            }}
+            className="text-start font-medium leading-snug focus-visible:underline focus-visible:outline-none"
+          >
+            {t("nudge")}
+          </button>
+          <button
+            type="button"
+            onClick={dismissNudge}
+            aria-label={t("nudgeDismiss")}
+            title={t("nudgeDismiss")}
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden />
+          </button>
+        </div>
       )}
     </>
   );
