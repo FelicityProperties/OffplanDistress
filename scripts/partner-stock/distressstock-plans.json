@@ -1969,6 +1969,28 @@
    "totalCosts": 4769180,
    "notes": "Re-posted image: price cut from 4,500,000 (payment to seller 3,143,460 → 3,133,460; commission 94,500 → 94,290). The DLD line is labelled '4% + 40 AED' and moved with the price (180,040 → 179,640): it is 4% of the selling price, not the original, and the page gives no original price. All checks pass."
   },
+  "eBxh4J": {
+   "image": "https://distressonly.deals/media/units/427/a7c7be2746bd.webp",
+   "transcribedAt": "2026-11-07",
+   "legible": true,
+   "unitPrice": 5600000,
+   "paymentToSeller": 4456240,
+   "dldFee": 228760,
+   "trusteeFee": 5250,
+   "commission": 117600,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 1143760
+    }
+   ],
+   "totalOnTransfer": 4807850,
+   "totalRemaining": 1143760,
+   "totalCosts": 5951610,
+   "notes": "All checks pass. Original price 5,718,000 (the DLD line and the page's 'Original Price + DLD 4%' AED 5,946,720 agree); balance due on handover (Q4 2027). The page spells the project 'Rixox' (Nakheel's Rixos Beach Residences)."
+  },
   "eiABFK": {
    "image": "https://distressonly.deals/media/units/281/44f47e9cff78.webp",
    "transcribedAt": "2026-10-27",
