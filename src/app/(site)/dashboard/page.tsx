@@ -72,7 +72,8 @@ export default async function DashboardOverview() {
         </div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Phones: two tiles to a row (four stacked tiles took most of the first screen). */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <Kpi
               label={t("kpi.activeListings")}
               value={String(active)}
@@ -100,7 +101,7 @@ export default async function DashboardOverview() {
 
           {/* grid-cols-1 (minmax(0, 1fr)) below lg: an auto track grows with a long project name, wider than a phone. */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border bg-card p-6 shadow-card">
+            <div className="rounded-xl border bg-card p-6 shadow-card max-sm:p-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-sans text-lg font-semibold">{t("overview.latestOffers")}</h2>
                 <Button asChild variant="link">
@@ -115,7 +116,7 @@ export default async function DashboardOverview() {
                         <span className="block truncate font-medium">{o.projectName}</span>
                         <span className="text-xs text-muted-foreground">{timeAgo(o.updatedAt, locale)}</span>
                       </span>
-                      <span className="flex items-center gap-3">
+                      <span className="flex items-center gap-3 max-sm:shrink-0">
                         <ToneStatus {...offerStatus(o.status)} />
                         <span className="font-semibold tabular">{formatAED(o.amount, locale)}</span>
                       </span>
@@ -127,7 +128,7 @@ export default async function DashboardOverview() {
               )}
             </div>
 
-            <div className="rounded-xl border bg-card p-6 shadow-card">
+            <div className="rounded-xl border bg-card p-6 shadow-card max-sm:p-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-sans text-lg font-semibold">{t("overview.yourWatchlist")}</h2>
                 <Button asChild variant="link">
@@ -140,7 +141,7 @@ export default async function DashboardOverview() {
                     const row = (
                       <>
                         <span className="min-w-0 truncate font-medium">{w.projectName}</span>
-                        <span className="font-semibold tabular">{formatAED(w.askingPrice, locale)}</span>
+                        <span className="font-semibold tabular max-sm:shrink-0">{formatAED(w.askingPrice, locale)}</span>
                       </>
                     );
                     return (
@@ -171,7 +172,7 @@ export default async function DashboardOverview() {
       )}
 
       {sent.length > 0 && (
-        <div className="rounded-xl border bg-card p-6 shadow-card">
+        <div className="rounded-xl border bg-card p-6 shadow-card max-sm:p-4">
           <h2 className="font-sans text-lg font-semibold">{t("overview.offersMade")}</h2>
           <ul className="mt-2 divide-y">
             {sent.slice(0, 4).map((o) => (
@@ -183,7 +184,7 @@ export default async function DashboardOverview() {
                 ) : (
                   <span className="min-w-0 truncate font-medium">{o.projectName}</span>
                 )}
-                <span className="flex items-center gap-3">
+                <span className="flex items-center gap-3 max-sm:shrink-0">
                   <ToneStatus {...offerStatus(o.status)} />
                   <span className="font-semibold tabular">{formatAED(o.amount, locale)}</span>
                 </span>

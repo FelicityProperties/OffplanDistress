@@ -72,23 +72,25 @@ export default async function MyListingsPage() {
               </p>
             )}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex gap-4 text-xs text-muted-foreground tabular">
-                <span className="inline-flex items-center gap-1">
+              {/* Each figure stays on one line; on a narrow phone the next one moves to a new line instead. */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground tabular">
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
                   <Eye className="h-3.5 w-3.5" />
                   {t(l.views === 1 ? "listings.views.one" : "listings.views.other", { n: formatNumber(l.views) })}
                 </span>
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
                   <Heart className="h-3.5 w-3.5" />
                   {t(l.watchers === 1 ? "listings.watchers.one" : "listings.watchers.other", { n: l.watchers })}
                 </span>
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1 whitespace-nowrap">
                   <MessageSquare className="h-3.5 w-3.5" />
                   {t(l.offers === 1 ? "listings.offers.one" : "listings.offers.other", { n: l.offers })}
                   {l.pendingOffers ? t("listings.newOffers", { n: l.pendingOffers }) : ""}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" asChild>
+              {/* Phones: Manage across the card, Pause / Withdraw under it (src/components/ListingActions.tsx). */}
+              <div className="flex flex-wrap gap-2 max-sm:w-full max-sm:flex-col">
+                <Button size="sm" variant="outline" asChild className="max-lg:h-11 max-lg:px-4 max-lg:text-sm">
                   <Link href={`/dashboard/listings/${l.id}`}>
                     <Pencil /> {tc("manage")}
                   </Link>

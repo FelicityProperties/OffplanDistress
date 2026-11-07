@@ -31,11 +31,12 @@ export function ProfileForm({ fullName, phone, intent }: { fullName: string; pho
         start(() => action(fd));
       }}
     >
+      {/* Autofill as at sign-up. The keyboard's return key saves the form (implicit submission), so it says "done". */}
       <Field label={t("profile.fullName")} htmlFor="fullName" error={fe.fullName}>
-        <Input id="fullName" name="fullName" defaultValue={fullName} required dir="auto" />
+        <Input id="fullName" name="fullName" defaultValue={fullName} required dir="auto" autoComplete="name" enterKeyHint="done" />
       </Field>
       <Field label={t("profile.phone")} htmlFor="phone" error={fe.phone}>
-        <Input id="phone" name="phone" type="tel" defaultValue={phone ?? ""} dir="ltr" />
+        <Input id="phone" name="phone" type="tel" defaultValue={phone ?? ""} dir="ltr" autoComplete="tel" enterKeyHint="done" />
       </Field>
       <Field label={t("profile.intent")} htmlFor="intent" error={fe.intent}>
         <select id="intent" name="intent" defaultValue={intent} className={selectClass}>
@@ -45,7 +46,7 @@ export function ProfileForm({ fullName, phone, intent }: { fullName: string; pho
         </select>
       </Field>
       <FormMessage state={state} />
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending} className="max-lg:h-11 max-sm:w-full">
         {pending && <Loader2 className="animate-spin" aria-hidden />}
         {pending ? tc("saving") : t("profile.save")}
       </Button>
@@ -59,7 +60,7 @@ export function RequestKycButton({ disabled }: { disabled?: boolean }) {
   return (
     <Button
       variant="outline"
-      className="w-full"
+      className="w-full max-lg:h-11"
       disabled={disabled || pending}
       onClick={() =>
         start(async () => {

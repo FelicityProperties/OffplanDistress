@@ -24,7 +24,10 @@ export function ForgotPasswordForm({ defaultEmail }: { defaultEmail?: string }) 
           <div className="space-y-1">
             <p className="font-medium">{t("forgot.noEmailTitle")}</p>
             <p className="text-muted-foreground">{t("forgot.noEmailBody")}</p>
-            <Link href="/contact" className="inline-block font-medium text-foreground underline underline-offset-4">
+            <Link
+              href="/contact"
+              className="inline-block font-medium text-foreground underline underline-offset-4 max-lg:inline-flex max-lg:min-h-11 max-lg:items-center"
+            >
               {tc("contactUs")}
             </Link>
           </div>
@@ -36,7 +39,8 @@ export function ForgotPasswordForm({ defaultEmail }: { defaultEmail?: string }) 
             <p className="font-medium text-success">{t("forgot.sentTitle")}</p>
             <p className="text-muted-foreground">
               {sentBefore}
-              <bdi className="font-medium text-foreground">{state.email}</bdi>
+              {/* An address is one long word: it breaks anywhere rather than run out of the box. */}
+              <bdi className="font-medium text-foreground wrap-anywhere">{state.email}</bdi>
               {sentAfter}
             </p>
           </div>
@@ -51,6 +55,7 @@ export function ForgotPasswordForm({ defaultEmail }: { defaultEmail?: string }) 
             dir="ltr"
             required
             autoComplete="email"
+            enterKeyHint="send"
             defaultValue={state.email ?? defaultEmail}
           />
         </Field>
@@ -73,15 +78,18 @@ export function ResetPasswordForm({ token }: { token: string }) {
     <form action={action} className="space-y-4">
       <input type="hidden" name="token" value={token} />
       <Field label={t("field.password")} htmlFor="password" error={fe.password} hint={t("field.passwordHint")}>
-        <Input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" />
+        <Input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" enterKeyHint="next" />
       </Field>
       <Field label={t("field.confirm")} htmlFor="confirm" error={fe.confirm}>
-        <Input id="confirm" name="confirm" type="password" required minLength={8} autoComplete="new-password" />
+        <Input id="confirm" name="confirm" type="password" required minLength={8} autoComplete="new-password" enterKeyHint="go" />
       </Field>
       {state.invalidToken ? (
         <div role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <p>{state.error}</p>
-          <Link href="/forgot-password" className="mt-1 inline-block font-medium underline underline-offset-4">
+          <Link
+            href="/forgot-password"
+            className="mt-1 inline-block font-medium underline underline-offset-4 max-lg:mt-0 max-lg:inline-flex max-lg:min-h-11 max-lg:items-center"
+          >
             {t("reset.requestNew")}
           </Link>
         </div>

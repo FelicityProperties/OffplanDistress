@@ -1,7 +1,7 @@
 import Link from "@/components/LocaleLink";
 import { MessageCircle } from "lucide-react";
 import { logout } from "@/app/actions/auth";
-import { AuthShell } from "@/components/AuthShell";
+import { AuthAltLink, AuthShell } from "@/components/AuthShell";
 import { ClaimForm } from "@/components/auth/ClaimForm";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { Button } from "@/components/ui/button";
@@ -136,14 +136,7 @@ export async function ClaimView({ token }: { token: string }) {
     return (
       <AuthShell title={t("claim.invalidTitle")} sub={t("claim.invalidBody")}>
         <WhatsAppLink />
-        <p className="mt-8 border-t border-border/70 pt-6 text-center text-sm text-muted-foreground">
-          <Link
-            href="/login"
-            className="rounded-sm font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {t("backToLogin")}
-          </Link>
-        </p>
+        <AuthAltLink href="/login">{t("backToLogin")}</AuthAltLink>
       </AuthShell>
     );
   }

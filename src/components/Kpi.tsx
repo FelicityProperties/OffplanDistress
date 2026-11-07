@@ -1,8 +1,9 @@
+// Phones (below sm): a tighter tile, as two share a row there.
 export function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-xl border bg-card p-5 shadow-card">
+    <div className="rounded-xl border bg-card p-5 shadow-card max-sm:p-4">
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tabular">{value}</p>
+      <p className="mt-2 text-2xl font-semibold tabular max-sm:mt-1 max-sm:text-xl">{value}</p>
       {hint && <p className="mt-1 text-xs text-success">{hint}</p>}
     </div>
   );
