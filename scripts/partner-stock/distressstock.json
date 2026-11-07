@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-06T10:01:36Z",
+ "generatedAt": "2026-11-07T01:40:08Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -3765,6 +3765,60 @@
    "notes": "Posted on DistressStock September 22, 2026: HOT LOT: 3-BR IN NAYA 1. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 4,500,000 (payment to seller 3,143,460 → 3,133,460; commission 94,500 → 94,290). The DLD line is labelled '4% + 40 AED' and moved with the price (180,040 → 179,640): it is 4% of the selling price, not the original, and the page gives no original price. All checks pass."
   },
   {
+   "ref": "eBxh4J",
+   "url": "https://distressonly.deals/u/eBxh4J",
+   "posted": "2026-11-04",
+   "listing": {
+    "projectName": "Rixox Beach Residences",
+    "developer": "Nakheel",
+    "developerOther": null,
+    "community": "Dubai Islands",
+    "communityOther": null,
+    "unitType": "3br",
+    "sizeSqft": 2013,
+    "floor": "2-5",
+    "view": "Sea",
+    "originalPrice": 5718000,
+    "amountPaid": 4574240,
+    "askingPrice": 4456240,
+    "handoverDate": "2027-12-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 1143760
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "eBxh4J-27053253.webp",
+     "url": "https://distressonly.deals/media/units/427/232d7a1374d1.webp"
+    },
+    {
+     "filename": "eBxh4J-be8c6a83.webp",
+     "url": "https://distressonly.deals/media/units/427/b29319aa0d20.webp"
+    },
+    {
+     "filename": "eBxh4J-edc9d156.webp",
+     "url": "https://distressonly.deals/media/units/427/30155693b4de.webp"
+    },
+    {
+     "filename": "eBxh4J-551e980f.webp",
+     "url": "https://distressonly.deals/media/units/427/a53c490010be.webp"
+    },
+    {
+     "filename": "eBxh4J-k0.webp",
+     "url": "https://distressonly.deals/media/units/427/45479b3ddc08.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 04, 2026: DISTRESS DEAL: 3-BR+MAID'S IN RIXOX BEACH RESIDENCES. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 5,946,720; selling price AED 5,600,000."
+  },
+  {
    "ref": "eiABFK",
    "url": "https://distressonly.deals/u/eiABFK",
    "posted": "2026-06-25",
@@ -4051,7 +4105,7 @@
     "amountPaid": 1414821,
     "askingPrice": 1288196,
     "handoverDate": "2027-06-30",
-    "nextInstalmentDate": "2026-11-06",
+    "nextInstalmentDate": "2026-12-06",
     "nextInstalmentAmount": 21766,
     "paymentPlan": [
      {
@@ -4110,7 +4164,7 @@
      "url": "https://distressonly.deals/media/units/373/d060c17e87d5.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 21, 2026: DISTRESS DEAL: 1-BR IN CANAL HEIGHTS. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,263,683; selling price AED 2,050,000."
+   "notes": "Posted on DistressStock September 21, 2026: DISTRESS DEAL: 1-BR IN CANAL HEIGHTS. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,263,683; selling price AED 2,050,000. 1 instalment(s) in the posted plan fall before today (06-NOV-2026): confirm whether they were paid."
   },
   {
    "ref": "iU7DHC",
