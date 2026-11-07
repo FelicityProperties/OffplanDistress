@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
-import { Check, KeyRound, Loader2, Trash2, X } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   adminUpdateListing,
@@ -14,49 +14,89 @@ import {
   setKycStatus,
   setUserRole,
 } from "@/app/actions/admin";
+import { PHONE_BUTTON, PHONE_OUTLINED, PHONE_SAVE_BAR, PHONE_SAVE_BAR_STYLE, PHONE_SHELL } from "@/components/admin/phone";
 import { Field, FormMessage } from "@/components/forms";
 import { selectClass } from "@/components/form-styles";
-import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLocale, useT } from "@/i18n/client";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, type ListingStatusKey } from "@/lib/config";
 import { formatDate } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
+import { cn } from "@/lib/utils";
 
 /**
  * Approve / Reject. `savedAt` is the listing's updated_at as this page shows it: Approve is refused once the listing has
- * changed since (the seller's new price, say), and the page then shows it as it is now.
+ * changed since (the seller's new price, say), and the page then shows it as it is now. `refCode` and `project` name
+ * the listing in the confirmation a phone asks for: there Approve is a big button under the thumb, and it publishes the
+ * advert and tells the seller at once.
  */
-export function ReviewButtons({ listingId, savedAt }: { listingId: string; savedAt: string }) {
+export function ReviewButtons({ listingId, savedAt, refCode, project }: { listingId: string; savedAt: string; refCode: string; project: string }) {
   const t = useT("admin");
+  const tc = useT("common");
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const approveButton = useRef<HTMLButtonElement>(null);
   const rejectButton = useRef<HTMLButtonElement>(null);
   const [reason, setReason] = useState("");
+  const approve = () =>
+    start(async () => {
+      const res = await approveListing(listingId, savedAt);
+      if ("error" in res && res.error) toast.error(res.error);
+      else toast.success(t("review.approved"));
+    });
   return (
     // One unit, never wrapped: the queue's table would shrink its column to one button and stack them. The listing
-    // page's header row wraps around it instead.
-    <div className="flex justify-end gap-1">
+    // page's header row wraps around it instead. Phones (below md): a row of its own, the two buttons sharing it 12 px
+    // apart (the queue shows each listing as a card there).
+    <div className="flex justify-end gap-1 max-lg:gap-2 max-md:grid max-md:w-full max-md:grid-cols-2 max-md:gap-3">
       <Button
+        ref={approveButton}
         size="sm"
         variant="success"
+        className={PHONE_BUTTON}
         disabled={pending}
-        onClick={() =>
-          start(async () => {
-            const res = await approveListing(listingId, savedAt);
-            if ("error" in res && res.error) toast.error(res.error);
-            else toast.success(t("review.approved"));
-          })
-        }
+        onClick={() => (window.matchMedia(PHONE_SHELL).matches ? setConfirming(true) : approve())}
       >
         <Check /> {t("review.approve")}
       </Button>
-      <Button ref={rejectButton} size="sm" variant="ghost" disabled={pending} onClick={() => setOpen(true)}>
+      <Button ref={rejectButton} size="sm" variant="ghost" className={cn(PHONE_BUTTON, PHONE_OUTLINED)} disabled={pending} onClick={() => setOpen(true)}>
         <X /> {t("review.reject")}
       </Button>
+      <AlertDialog open={confirming} onOpenChange={setConfirming}>
+        {/* Opened from a button outside it: closed, focus goes back to that button (while it is still on the page). */}
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            approveButton.current?.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("review.confirmTitle", { ref: refCode })}</AlertDialogTitle>
+            <AlertDialogDescription>{t("review.confirmBody", { project })}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="mt-0 max-lg:h-11">{tc("cancel")}</AlertDialogCancel>
+            <AlertDialogAction className={cn(buttonVariants({ variant: "success" }), "max-lg:h-11")} onClick={approve}>
+              <Check /> {t("review.approve")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Dialog open={open} onOpenChange={setOpen}>
         {/* Opened from a button outside it (not a DialogTrigger): closed, focus goes back to that button. */}
         <DialogContent
@@ -75,9 +115,16 @@ export function ReviewButtons({ listingId, savedAt }: { listingId: string; saved
             placeholder={t("review.rejectPlaceholder")}
             rows={4}
           />
-          <DialogFooter>
+          {/* Below lg a Cancel button too (a phone has no Escape key, and the corner X is small). */}
+          <DialogFooter className="gap-2">
+            <DialogClose asChild>
+              <Button variant="outline" className="max-lg:h-11 lg:hidden">
+                {tc("cancel")}
+              </Button>
+            </DialogClose>
             <Button
               variant="destructive"
+              className="max-lg:h-11"
               disabled={pending}
               onClick={() =>
                 start(async () => {
@@ -232,8 +279,9 @@ export function AdminListingForm(p: EditProps) {
           ))}
         </select>
       </Field>
+      {/* inputMode: a phone's number pad, as on the staff form and the deal file (whole dirhams). */}
       <Field label={t("form.askingPrice")} htmlFor="askingPrice" error={fe.askingPrice}>
-        <Input id="askingPrice" name="askingPrice" type="number" min={0} defaultValue={p.askingPrice} />
+        <Input id="askingPrice" name="askingPrice" type="number" inputMode="numeric" min={0} defaultValue={p.askingPrice} />
       </Field>
       <NamePicker
         kind="developer"
@@ -261,7 +309,7 @@ export function AdminListingForm(p: EditProps) {
         error={fe.launchPrice}
         hint={t("form.launchPriceHint")}
       >
-        <Input id="launchPrice" name="launchPrice" type="number" min={0} defaultValue={p.launchPrice ?? ""} />
+        <Input id="launchPrice" name="launchPrice" type="number" inputMode="numeric" min={0} defaultValue={p.launchPrice ?? ""} />
       </Field>
       {p.amountPaid != null && (
         <Field label={t("form.amountPaid")} htmlFor="amountPaid" error={fe.amountPaid} hint={t("form.amountPaidHint")}>
@@ -269,6 +317,7 @@ export function AdminListingForm(p: EditProps) {
             id="amountPaid"
             name="amountPaid"
             type="number"
+            inputMode="numeric"
             min={0}
             aria-invalid={fe.amountPaid ? true : undefined}
             defaultValue={p.amountPaid}
@@ -287,6 +336,7 @@ export function AdminListingForm(p: EditProps) {
               id="overdueAmount"
               name="overdueAmount"
               type="number"
+              inputMode="numeric"
               min={0}
               aria-invalid={fe.overdueAmount ? true : undefined}
               defaultValue={p.arrears.overdueAmount ?? ""}
@@ -297,6 +347,7 @@ export function AdminListingForm(p: EditProps) {
               id="overduePenalty"
               name="overduePenalty"
               type="number"
+              inputMode="numeric"
               min={0}
               aria-invalid={fe.overduePenalty ? true : undefined}
               defaultValue={p.arrears.overduePenalty ?? ""}
@@ -374,11 +425,12 @@ export function AdminListingForm(p: EditProps) {
           </p>
         </div>
       )}
-      <div className="flex flex-col justify-center gap-3 pt-5">
-        <label className="flex items-center gap-2 text-sm">
+      {/* Below lg each line is a 40 px target (the label toggles its box). */}
+      <div className="flex flex-col justify-center gap-3 pt-5 max-lg:gap-1 max-sm:pt-0">
+        <label className="flex items-center gap-2 text-sm max-lg:min-h-10">
           <Checkbox name="verified" defaultChecked={p.verified} /> {t("form.verified")}
         </label>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm max-lg:min-h-10">
           <Checkbox name="nocEligible" defaultChecked={p.nocEligible} /> {t("form.nocEligible")}
         </label>
       </div>
@@ -388,8 +440,9 @@ export function AdminListingForm(p: EditProps) {
       <Field label={t("form.notes")} htmlFor="adminNotes" error={fe.adminNotes} className="sm:col-span-2">
         <Textarea id="adminNotes" name="adminNotes" rows={3} defaultValue={p.adminNotes ?? ""} placeholder={t("form.notesPlaceholder")} />
       </Field>
-      <div className="flex items-center gap-3 sm:col-span-2">
-        <Button type="submit" disabled={pending}>
+      {/* Below lg the form is several screens long: its Save row stays in reach at the bottom (PHONE_SAVE_BAR). */}
+      <div className={cn("flex items-center gap-3 sm:col-span-2", PHONE_SAVE_BAR)} style={PHONE_SAVE_BAR_STYLE}>
+        <Button type="submit" className="max-lg:h-11" disabled={pending}>
           {pending && <Loader2 className="animate-spin" aria-hidden />}
           {pending ? tc("saving") : t("form.save")}
         </Button>
@@ -410,11 +463,13 @@ function SavedSelect<V extends string>({
   label,
   options,
   save,
+  className,
 }: {
   value: V;
   label: string;
   options: [V, string][];
   save: (next: V) => Promise<string | null>;
+  className?: string;
 }) {
   const [pending, start] = useTransition();
   const [shown, setShown] = useState(value);
@@ -456,7 +511,8 @@ function SavedSelect<V extends string>({
       // which the check above would then save over what is stored now (a KYC or role someone has changed since).
       autoComplete="off"
       disabled={pending}
-      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+      // Below md 44 px with 16 px text: iOS zooms into a smaller field when it is tapped.
+      className={cn("h-11 rounded-md border border-input bg-background px-2 text-base md:h-8 md:text-xs", className)}
       onChange={(e) => change(e.target.value as V)}
     >
       {options.map(([v, text]) => (
@@ -469,12 +525,23 @@ function SavedSelect<V extends string>({
 }
 
 /** `label`: the select's accessible name where several are on one page (the deal file's seller and buyer). */
-export function KycSelect({ userId, value, label }: { userId: string; value: "not_started" | "pending" | "verified"; label?: string }) {
+export function KycSelect({
+  userId,
+  value,
+  label,
+  className,
+}: {
+  userId: string;
+  value: "not_started" | "pending" | "verified";
+  label?: string;
+  className?: string;
+}) {
   const t = useT("admin");
   const tc = useT("common");
   return (
     <SavedSelect
       value={value}
+      className={className}
       label={label ?? t("kyc.label")}
       options={[
         ["not_started", tc("kyc.not_started")],
@@ -495,11 +562,12 @@ export function KycSelect({ userId, value, label }: { userId: string; value: "no
   );
 }
 
-export function RoleSelect({ userId, value }: { userId: string; value: "user" | "admin" }) {
+export function RoleSelect({ userId, value, className }: { userId: string; value: "user" | "admin"; className?: string }) {
   const t = useT("admin");
   return (
     <SavedSelect
       value={value}
+      className={className}
       label={t("role.label")}
       options={[
         ["user", t("role.user")],
@@ -524,6 +592,7 @@ export function HandledToggle({ id, handled }: { id: string; handled: boolean })
     <Button
       size="sm"
       variant={handled ? "ghost" : "outline"}
+      className={cn(PHONE_BUTTON, handled && PHONE_OUTLINED)}
       disabled={pending}
       onClick={() =>
         start(async () => {
@@ -548,6 +617,7 @@ export function SpamToggle({ id, spam }: { id: string; spam: boolean }) {
     <Button
       size="sm"
       variant={spam ? "outline" : "ghost"}
+      className={cn(PHONE_BUTTON, !spam && PHONE_OUTLINED)}
       disabled={pending}
       onClick={() =>
         start(async () => {
@@ -571,6 +641,7 @@ export function DeleteSamplesButton({ count }: { count: number }) {
     <Button
       variant="outline"
       size="sm"
+      className={PHONE_BUTTON}
       disabled={pending}
       onClick={() => {
         if (!confirm(t("samples.confirm", { count }))) return;
@@ -586,17 +657,28 @@ export function DeleteSamplesButton({ count }: { count: number }) {
   );
 }
 
-export function ResetPasswordButton({ userId, name }: { userId: string; name: string }) {
+export function ResetPasswordButton({ userId, name, className }: { userId: string; name: string; className?: string }) {
   const t = useT("admin");
+  const tc = useT("common");
   const [pending, start] = useTransition();
   const [temp, setTemp] = useState<string | null>(null);
   const resetButton = useRef<HTMLButtonElement>(null);
+  const copy = async () => {
+    if (!temp) return;
+    try {
+      await navigator.clipboard.writeText(temp);
+      toast.success(t("reset.copied"));
+    } catch {
+      toast.error(t("wa.copyFailed"));
+    }
+  };
   return (
     <>
       <Button
         ref={resetButton}
         size="sm"
         variant="ghost"
+        className={cn(PHONE_BUTTON, PHONE_OUTLINED, className)}
         disabled={pending}
         title={t("reset.title")}
         onClick={() => {
@@ -622,6 +704,17 @@ export function ResetPasswordButton({ userId, name }: { userId: string; name: st
             <DialogDescription>{t("reset.dialogDesc", { name })}</DialogDescription>
           </DialogHeader>
           <Input readOnly dir="ltr" value={temp ?? ""} className="font-mono" onFocus={(e) => e.currentTarget.select()} />
+          {/* Below lg: on a phone copying from a field takes a long press, so a button copies it; and one closes. */}
+          <DialogFooter className="gap-2 lg:hidden">
+            <DialogClose asChild>
+              <Button variant="outline" className="h-11">
+                {tc("close")}
+              </Button>
+            </DialogClose>
+            <Button className="h-11" onClick={copy}>
+              <Copy aria-hidden /> {t("reset.copy")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, Download, Search } from "lucide-react";
+import { AdminChips } from "@/components/admin/AdminTabs";
+import { PHONE_BUTTON, PHONE_LINK } from "@/components/admin/phone";
 import { PageTitle } from "@/components/Kpi";
 import { SampleBadge, StatusPill } from "@/components/badges";
 import { Button } from "@/components/ui/button";
@@ -9,6 +11,7 @@ import { requireAdmin } from "@/lib/auth";
 import { LISTING_STATUS, type ListingStatusKey } from "@/lib/config";
 import { adminListings } from "@/lib/admin";
 import { formatAEDCompact, parseRefCode, refCode } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 // Every status has its column, withdrawn included (a withdrawn unit can be put back on the market from its page).
 const COLUMNS: ListingStatusKey[] = ["pending_review", "live", "under_offer", "noc_in_progress", "transferred", "paused", "rejected", "withdrawn"];
@@ -35,6 +38,22 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
   // Own keys only: ?status=toString (or constructor, __proto__) is no stage.
   const stage = statusParam && Object.hasOwn(LISTING_STATUS, statusParam) ? (statusParam as ListingStatusKey) : null;
   const q = (one(sp.q) ?? "").trim().slice(0, 80);
+  const byStage = new Map(COLUMNS.map((col) => [col, all.filter((l) => l.status === col)]));
+  // Phones (below md): the stages as chips with their counts, the current one marked (the board's eight 240 px columns
+  // showed one and a half on a phone, the rest off-screen); from md, the board.
+  const stageChips = (current: ListingStatusKey | null) => (
+    <AdminChips
+      label={t("pipeline.stages")}
+      current={current}
+      className="md:hidden"
+      chips={COLUMNS.map((col) => ({
+        key: col,
+        href: `/admin/pipeline?status=${col}`,
+        label: tc(`listing.${col}`),
+        count: byStage.get(col)?.length ?? 0,
+      }))}
+    />
+  );
 
   const card = (l: Row) => (
     <Link key={l.id} href={`/admin/listings/${l.id}`} className="block rounded-lg border bg-card p-3 text-sm shadow-card hover:border-gold">
@@ -62,9 +81,18 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
         <label htmlFor="pipeline-q" className="text-sm font-medium">
           {t("pipeline.search")}
         </label>
-        <Input id="pipeline-q" name="q" type="search" dir="auto" maxLength={80} defaultValue={q} placeholder={t("pipeline.searchPlaceholder")} />
+        <Input
+          id="pipeline-q"
+          name="q"
+          type="search"
+          dir="auto"
+          maxLength={80}
+          defaultValue={q}
+          placeholder={t("pipeline.searchPlaceholder")}
+          className="max-lg:h-11"
+        />
       </div>
-      <Button type="submit" variant="outline">
+      <Button type="submit" variant="outline" className="max-lg:h-11">
         <Search aria-hidden /> {t("pipeline.searchSubmit")}
       </Button>
     </form>
@@ -73,7 +101,7 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
   const title = (
     <PageTitle title={t("pipeline.title")} sub={t("pipeline.sub")}>
       {/* Every deal file with both parties, for our records and AML inspections (src/lib/deals.ts). */}
-      <Button asChild size="sm" variant="outline">
+      <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
         <a href="/api/admin/export/deals.csv" download>
           <Download aria-hidden /> {t("dealFile.export")}
         </a>
@@ -110,10 +138,12 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
         {title}
         <div className="flex flex-wrap items-end justify-between gap-4">
           {search}
-          <Link href="/admin/pipeline" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <Link href="/admin/pipeline" className={cn("inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground", PHONE_LINK)}>
             <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden /> {t("pipeline.backToBoard")}
           </Link>
         </div>
+        {/* One stage: the others a tap away on a phone. */}
+        {stage && !q && stageChips(stage)}
         <section aria-labelledby="pipeline-list" className="space-y-3" data-testid="pipeline-list">
           <h2 id="pipeline-list" className="font-sans text-lg font-semibold wrap-anywhere">
             {stage && q ? `${tc(`listing.${stage}`)} · ${heading}` : heading}
@@ -126,13 +156,13 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
           {pages > 1 && (
             <nav aria-label={t("pipeline.page", { page, pages })} className="flex flex-wrap items-center gap-3 text-sm">
               {page > 1 && (
-                <Button asChild size="sm" variant="outline">
+                <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
                   <Link href={href(page - 1)}>{t("pipeline.prev")}</Link>
                 </Button>
               )}
               <span className="text-muted-foreground tabular">{t("pipeline.page", { page, pages })}</span>
               {page < pages && (
-                <Button asChild size="sm" variant="outline">
+                <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
                   <Link href={href(page + 1)}>{t("pipeline.next")}</Link>
                 </Button>
               )}
@@ -143,13 +173,32 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
     );
   }
 
+  // On a phone the board opens on its first stage with listings in it (usually those under review).
+  const first = COLUMNS.find((col) => (byStage.get(col)?.length ?? 0) > 0) ?? null;
+  const firstItems = first ? (byStage.get(first) ?? []) : [];
   return (
     <div className="space-y-6">
       {title}
       {search}
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="space-y-4 md:hidden" data-testid="pipeline-phone">
+        {stageChips(first)}
+        {first && (
+          <section aria-labelledby="pipeline-phone-stage" className="space-y-3">
+            <h2 id="pipeline-phone-stage" className="font-sans text-lg font-semibold">
+              {t("pipeline.stageList", { stage: tc(`listing.${first}`), count: firstItems.length })}
+            </h2>
+            <div className="grid gap-2">{firstItems.slice(0, COLUMN_MAX).map(card)}</div>
+            {firstItems.length > COLUMN_MAX && (
+              <Link href={`/admin/pipeline?status=${first}`} className={cn("text-sm font-medium underline-offset-4 hover:underline", PHONE_LINK)}>
+                {t("pipeline.showAll", { count: firstItems.length })}
+              </Link>
+            )}
+          </section>
+        )}
+      </div>
+      <div className="hidden gap-4 overflow-x-auto pb-4 md:flex">
         {COLUMNS.map((col) => {
-          const items = all.filter((l) => l.status === col);
+          const items = byStage.get(col) ?? [];
           return (
             <div key={col} className="w-60 shrink-0 rounded-xl bg-secondary p-3" data-stage={col}>
               <p className="mb-3 flex items-center justify-between text-sm font-semibold">

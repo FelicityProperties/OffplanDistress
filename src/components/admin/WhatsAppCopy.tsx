@@ -2,6 +2,7 @@
 
 import { MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { PHONE_BUTTON } from "@/components/admin/phone";
 import { Button } from "@/components/ui/button";
 import { useLocale, useT } from "@/i18n/client";
 import { LOCALES, type Locale } from "@/i18n/config";
@@ -39,18 +40,29 @@ export function WhatsAppCopy({ texts, title }: { texts: Record<Locale, string>; 
 
   return (
     <div className="space-y-2" data-testid="wa-copy">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 text-sm font-medium">
+      {/* Phones (below sm): the label on a line of its own, the three languages sharing the next one (a language
+          button never wraps alone), each 44 px tall. */}
+      <div className="flex flex-wrap items-center gap-2 max-sm:grid max-sm:grid-cols-3">
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium max-sm:col-span-3">
           <MessageCircle className="h-4 w-4" aria-hidden /> {label}
         </span>
         {LOCALES.map((l) => (
-          <Button key={l} type="button" size="sm" variant="outline" lang={l} onClick={() => copy(l)} aria-label={`${label}: ${LABEL[l]}`}>
+          <Button
+            key={l}
+            type="button"
+            size="sm"
+            variant="outline"
+            lang={l}
+            className={PHONE_BUTTON}
+            onClick={() => copy(l)}
+            aria-label={`${label}: ${LABEL[l]}`}
+          >
             {LABEL[l]}
           </Button>
         ))}
       </div>
       <details className="text-sm">
-        <summary className="cursor-pointer text-muted-foreground">{t("wa.preview")}</summary>
+        <summary className="cursor-pointer text-muted-foreground max-lg:py-2.5">{t("wa.preview")}</summary>
         <pre dir="auto" lang={locale} className="mt-2 whitespace-pre-wrap rounded-lg border bg-muted/40 p-3 font-sans text-xs wrap-anywhere">
           {texts[locale]}
         </pre>

@@ -11,7 +11,7 @@ export default async function ImportListingsPage() {
   const [t, ti] = await Promise.all([getT("admin"), getT("intake")]);
   return (
     <div className="space-y-6">
-      <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground max-lg:min-h-10">
         <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden /> {t("nav.queue")}
       </Link>
       <PageTitle title={ti("import.title")} sub={ti("import.sub")} />

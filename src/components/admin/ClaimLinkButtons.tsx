@@ -4,8 +4,9 @@ import { useRef, useState, useTransition } from "react";
 import { Copy, Mail, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { claimLink } from "@/app/actions/admin";
+import { PHONE_BUTTON } from "@/components/admin/phone";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n/client";
 
@@ -16,6 +17,7 @@ import { useT } from "@/i18n/client";
  */
 export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingId: string; sellerName: string; canEmail: boolean }) {
   const t = useT("admin");
+  const tc = useT("common");
   const [pending, start] = useTransition();
   const [link, setLink] = useState<{ url: string; whatsapp: string | null; phone: string | null } | null>(null);
   const copyButton = useRef<HTMLButtonElement>(null);
@@ -26,6 +28,7 @@ export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingI
         <Button
           size="sm"
           variant="outline"
+          className={PHONE_BUTTON}
           disabled={pending}
           onClick={() =>
             start(async () => {
@@ -41,6 +44,7 @@ export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingI
       <Button
         ref={copyButton}
         size="sm"
+        className={PHONE_BUTTON}
         disabled={pending}
         onClick={() =>
           start(async () => {
@@ -85,12 +89,14 @@ export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingI
               dir="ltr"
               value={link?.url ?? ""}
               onFocus={(e) => e.currentTarget.select()}
-              className="font-mono text-xs"
+              // 16 px below md: iOS zooms into a smaller field when it is tapped.
+              className="font-mono text-base md:text-xs"
             />
           </div>
           {link?.whatsapp && (
             <div className="space-y-1.5">
-              <Button asChild className="w-full sm:w-auto">
+              {/* Its label wraps on a phone: on one line it was wider than a 320 px screen, and the dialog with it. */}
+              <Button asChild className="w-full sm:w-auto max-lg:h-11 max-sm:h-auto max-sm:min-h-11 max-sm:whitespace-normal max-sm:py-2">
                 <a href={link.whatsapp} target="_blank" rel="noopener noreferrer" data-testid="claim-whatsapp">
                   <MessageCircle aria-hidden /> {t("claim.openWhatsApp")}
                 </a>
@@ -103,6 +109,14 @@ export function ClaimLinkButtons({ listingId, sellerName, canEmail }: { listingI
               )}
             </div>
           )}
+          {/* Below lg a Close button too (a phone has no Escape key, and the corner X is small). */}
+          <DialogFooter className="lg:hidden">
+            <DialogClose asChild>
+              <Button variant="outline" className="h-11">
+                {tc("close")}
+              </Button>
+            </DialogClose>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

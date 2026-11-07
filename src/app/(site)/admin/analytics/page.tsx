@@ -30,6 +30,9 @@ import { cn } from "@/lib/utils";
 // Owner's view of the anonymous visit statistics (src/lib/analytics.ts): who visits, how long they stay, where they come
 // from and which visitors become leads. Admin-only, like every page under /admin (the layout checks too).
 
+/** A column's name above its value on a phone's card (the WhatsApp taps table hides its header row there). */
+const CARD_LABEL = "block text-xs font-medium text-muted-foreground md:hidden";
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("analytics");
   return { title: t("meta.title"), robots: { index: false } };
@@ -138,14 +141,15 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
       {/* One filter row; everything below follows it. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <nav aria-label={t("range.label")} className="inline-flex flex-wrap gap-1 rounded-xl border bg-card p-1 shadow-card">
+        {/* Phones: the four ranges share the width, 40 px tall. */}
+        <nav aria-label={t("range.label")} className="inline-flex flex-wrap gap-1 rounded-xl border bg-card p-1 shadow-card max-sm:grid max-sm:w-full max-sm:grid-cols-4">
           {RANGES.map((k) => (
             <Link
               key={k}
               href={`/admin/analytics?range=${k}`}
               aria-current={k === range ? "page" : undefined}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "rounded-lg px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:inline-flex max-lg:min-h-10 max-lg:items-center max-lg:justify-center max-lg:text-center max-lg:leading-tight max-sm:px-1",
                 k === range ? "bg-ink-gradient text-primary-foreground shadow-card" : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
@@ -325,9 +329,11 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           <p className="py-6 text-center text-sm text-muted-foreground">{t("wa.empty")}</p>
         ) : (
           <div className="space-y-6">
+            {/* Phones (below md): each tap a card, every value under its column's name (the table put the source, the
+                place and the device off-screen); from md, the table. */}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-sm" aria-label={t("wa.title")} data-table="whatsapp">
-                <thead className="text-xs text-muted-foreground">
+              <table className="w-full min-w-[640px] text-sm max-md:block max-md:min-w-0" aria-label={t("wa.title")} data-table="whatsapp">
+                <thead className="text-xs text-muted-foreground max-md:hidden">
                   <tr className="border-b border-border/70">
                     {[t("wa.col.when"), t("wa.col.button"), t("wa.col.page"), t("wa.col.source"), t("wa.col.where"), t("wa.col.device")].map((c) => (
                       <th key={c} scope="col" className="pb-2 pe-3 text-start font-semibold">
@@ -336,11 +342,11 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/60">
+                <tbody className="divide-y divide-border/60 max-md:block">
                   {wa.recent.map((w, i) => (
-                    <tr key={`${w.at.getTime()}-${i}`}>
-                      <td className="whitespace-nowrap py-2.5 pe-3 tabular">{tapTime.format(w.at)}</td>
-                      <td className="py-2.5 pe-3">
+                    <tr key={`${w.at.getTime()}-${i}`} className="max-md:grid max-md:grid-cols-2 max-md:gap-x-3 max-md:gap-y-2 max-md:py-3">
+                      <td className="whitespace-nowrap py-2.5 pe-3 tabular max-md:p-0 max-md:font-medium">{tapTime.format(w.at)}</td>
+                      <td className="py-2.5 pe-3 max-md:p-0">
                         {named("wa.place", w.place)}
                         {w.dealRef && (
                           <>
@@ -349,12 +355,20 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
                           </>
                         )}
                       </td>
-                      <td className="py-2.5 pe-3">
+                      <td className="py-2.5 pe-3 max-md:col-span-2 max-md:p-0">
+                        <span className={CARD_LABEL}>{t("wa.col.page")}</span>
                         <PathText path={w.path} />
                       </td>
-                      <td className="py-2.5 pe-3">{t(`channel.${w.channel}`)}</td>
-                      <td className="py-2.5 pe-3">{[countryName(w.country, locale, t), w.city].filter(Boolean).join(listSeparator(locale))}</td>
-                      <td className="py-2.5 pe-3">
+                      <td className="py-2.5 pe-3 max-md:p-0">
+                        <span className={CARD_LABEL}>{t("wa.col.source")}</span>
+                        {t(`channel.${w.channel}`)}
+                      </td>
+                      <td className="py-2.5 pe-3 max-md:p-0">
+                        <span className={CARD_LABEL}>{t("wa.col.where")}</span>
+                        {[countryName(w.country, locale, t), w.city].filter(Boolean).join(listSeparator(locale))}
+                      </td>
+                      <td className="py-2.5 pe-3 max-md:col-span-2 max-md:p-0">
+                        <span className={CARD_LABEL}>{t("wa.col.device")}</span>
                         {named("device", w.device)}
                         {w.locale ? ` · ${named("lang", w.locale)}` : ""}
                       </td>

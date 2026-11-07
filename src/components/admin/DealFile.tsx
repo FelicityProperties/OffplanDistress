@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState, useTransition } from "reac
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { addDealNote, updateDealFile } from "@/app/actions/admin";
+import { PHONE_BUTTON, PHONE_SAVE_BAR, PHONE_SAVE_BAR_STYLE } from "@/components/admin/phone";
 import { Field, FormMessage } from "@/components/forms";
 import { selectClass } from "@/components/form-styles";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { useLocale, useT } from "@/i18n/client";
 import { FEES } from "@/lib/config";
 import { analyzeDeal, platformFee } from "@/lib/deal-math";
 import { formatAED } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 // The deal file card's form on the admin listing page (src/lib/deals.ts saveDealFile through updateDealFile). Every
 // field is optional: our team fills it in as the deal moves on, and the stage gates in the listing editor say what a
@@ -142,8 +144,9 @@ export function DealFileForm(p: Props) {
       />
     </Field>
   );
-  const fieldset = "grid gap-4 rounded-xl border border-border/80 p-4 sm:grid-cols-2 lg:grid-cols-3";
-  const legend = "px-1 text-sm font-semibold";
+  // Phones (below sm): no frame inside the card's own, so the fields get the screen's width; the legend heads each part.
+  const fieldset = "grid gap-4 rounded-xl border border-border/80 p-4 sm:grid-cols-2 lg:grid-cols-3 max-sm:border-0 max-sm:p-0";
+  const legend = "px-1 text-sm font-semibold max-sm:mb-2 max-sm:px-0";
 
   return (
     // noValidate: the server checks every field and answers in the page's language, next to the field. `action` for a
@@ -344,8 +347,9 @@ export function DealFileForm(p: Props) {
         </fieldset>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={pending}>
+      {/* Below lg the deal file is several screens long: its Save row stays in reach at the bottom (PHONE_SAVE_BAR). */}
+      <div className={cn("flex flex-wrap items-center gap-3", PHONE_SAVE_BAR)} style={PHONE_SAVE_BAR_STYLE}>
+        <Button type="submit" className="max-lg:h-11" disabled={pending}>
           {pending && <Loader2 className="animate-spin" aria-hidden />}
           {pending ? tc("saving") : t("dealFile.save")}
         </Button>
@@ -398,7 +402,7 @@ export function DealNoteForm({ dealId }: { dealId: string }) {
         />
       </Field>
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" size="sm" variant="outline" disabled={pending}>
+        <Button type="submit" size="sm" variant="outline" className={PHONE_BUTTON} disabled={pending}>
           {pending && <Loader2 className="animate-spin" aria-hidden />}
           {pending ? tc("saving") : t("dealFile.notes.add")}
         </Button>

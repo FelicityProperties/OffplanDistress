@@ -122,7 +122,7 @@ export async function HistoryPanel({ listingId }: { listingId: string }) {
   };
 
   return (
-    <section aria-labelledby="history-title" className="rounded-xl border bg-card p-6 shadow-card" data-testid="history">
+    <section aria-labelledby="history-title" className="rounded-xl border bg-card p-4 shadow-card sm:p-6" data-testid="history">
       <h2 id="history-title" className="flex items-center gap-2 font-sans text-lg font-semibold">
         <History className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden /> {t("history.title")}
       </h2>
@@ -175,8 +175,9 @@ export async function HistoryPanel({ listingId }: { listingId: string }) {
                     })}
                   </dl>
                 )}
+                {/* 12 px, the smallest text the console uses (11 px was hard to read on a phone). */}
                 {e.ip && (
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {t("history.ip", { ip: "" })}
                     <bdi dir="ltr">{e.ip}</bdi>
                   </p>
