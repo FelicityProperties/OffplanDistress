@@ -15,7 +15,7 @@ type Prefill = {
  * advice, a deal page names the deal. Copy: marketing `whatsapp.prefill.*`. The language segment (/ar/…, /zh/…) is
  * ignored, so every language's address picks the same message.
  */
-function whatsappPrefill(pathname: string): Prefill {
+export function whatsappPrefill(pathname: string): Prefill {
   const path = stripLocale(pathname);
   if (path === "/sell" || path.startsWith("/sell/")) return { key: "whatsapp.prefill.sell" };
   if (path === "/exit-calculator" || path.startsWith("/exit-calculator/")) return { key: "whatsapp.prefill.exit" };

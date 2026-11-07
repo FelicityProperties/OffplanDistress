@@ -335,10 +335,23 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           provider: { "@id": `${siteUrl()}/#organization` },
         }
       : null;
+  // Home › Browse deals › this unit: the trail search results show above the page's title.
+  const breadcrumbJsonLd = listingJsonLd
+    ? {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: BRAND.name, item: `${siteUrl()}${localePath("/", locale)}` },
+          { "@type": "ListItem", position: 2, name: tc("browseDeals"), item: `${siteUrl()}${localePath("/deals", locale)}` },
+          { "@type": "ListItem", position: 3, name: listingJsonLd.name, item: listingJsonLd.url },
+        ],
+      }
+    : null;
 
   return (
     <div className="relative isolate">
       {listingJsonLd && <JsonLd data={listingJsonLd} />}
+      {breadcrumbJsonLd && <JsonLd data={breadcrumbJsonLd} />}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-gradient-to-b from-gold-soft/60 via-background to-background" />
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-grid-light opacity-40 mask-fade-b" />
 
