@@ -415,6 +415,28 @@ A listing's own view count (the seller's "Listing views", the admin page, the 21
 opening its deal page: not the same crawlers, link previews and scripts, a HEAD request, the page drawn again after
 Watch or an offer, the listing's seller or our team.
 
+### Installable app
+
+Phones can add the site to their home screen and open it full screen, like an app. Each language has its own web app
+manifest (`/manifest/en.webmanifest`, `ar`, `zh`, from `src/lib/pwa.ts`), linked from the pages in that language: the
+app starts in the language it was added in (`/?utm_source=pwa`, so launches show as source "pwa" in
+`/admin/analytics`), with shortcuts to Deals, Sell and the watchlist. Its `id` stays `/`: never change it, or
+installed copies become a different app. The icons in `public/icons/` and `src/app/apple-icon.png` are drawn from
+`src/app/icon.svg`: after changing the logo, run `node scripts/make-app-icons.mjs` and commit the PNGs.
+
+On Android (Chrome) and in iOS Safari an install card appears on phones after some browsing (three pages and 45 seconds
+in a visit), on the home page, `/deals`, the market and info pages and the dashboard; never on a deal page, a form or
+in the admin console, never in the installed app, and twice at most, 30 days apart, if turned down. On iOS it explains
+Share › Add to Home Screen. "Install the app" in the phone menu opens it at any time.
+
+A small service worker (`public/sw.js`) shows `public/offline.html` (in the page's language, with the phone number)
+when a page can't load for lack of a connection, and reloads the page once the connection is back; a notice under the
+header says so while offline. It caches nothing else: no page, server action, API answer or Next file, so no one ever
+sees a stale or another person's page. It is registered in production builds only, and not in automated browsers (set
+`localStorage.od_force_sw = "1"` to test it there). Bump `VERSION` in `public/sw.js` when `offline.html` changes.
+Kill switch, should the worker ever misbehave: copy `scripts/sw-kill.js` over `public/sw.js`, set `NEXT_PUBLIC_SW=off`
+and deploy; browsers drop the worker on their next visit.
+
 ## Stack
 
 - Next.js 16 (App Router, server actions) + Tailwind CSS 4 + shadcn/ui
