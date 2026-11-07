@@ -8,10 +8,10 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 
 /**
  * The header's menu below lg: a sheet from the end edge, its content rendered by src/components/SiteHeader.tsx. The
- * header outlives in-app navigation, so the sheet closes itself when a page opens from it: on another address (a link,
- * a notification chosen from the bell), and on a plain click on any of its links or a form sent from it, for the page
- * already shown, a language chosen on the consoles, which re-render in place (src/components/LocaleSwitcher.tsx), and
- * logging out; and when a notice is chosen from the bell, whatever page it opens.
+ * header outlives in-app navigation, so the sheet closes itself when a page opens from it: on another address, and on
+ * a plain click on any of its links or a form sent from it, for the page already shown, a language chosen on the
+ * consoles, which re-render in place (src/components/LocaleSwitcher.tsx), and logging out. It scrolls on its own, so
+ * every item stays reachable on a short screen (a phone held sideways).
  */
 export function MobileMenu({
   title,
@@ -31,26 +31,17 @@ export function MobileMenu({
   const closeOnLink = (e: MouseEvent) => {
     // ⌘/ctrl/shift-click opens the link in another tab or window: this page and its menu stay.
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    const el = e.target instanceof Element ? e.target : null;
-    if (el?.closest("a[href]")) {
-      setOpenOn(null);
-      return;
-    }
-    // A notice chosen from the bell (src/components/NotificationBell.tsx) opens its page from script, maybe this one
-    // with another tab or #section, which the address doesn't always show: the bell's list closing says one was chosen
-    // ("Mark all read" keeps the list, and this menu, open).
-    const list = el?.closest('[role="menuitem"]')?.closest('[role="menu"]');
-    if (list) setTimeout(() => (!list.isConnected || list.getAttribute("data-state") !== "open") && setOpenOn(null));
+    if (e.target instanceof Element && e.target.closest("a[href]")) setOpenOn(null);
   };
   return (
     <Sheet open={openOn !== null} onOpenChange={(open) => setOpenOn(open ? pathname : null)}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative lg:hidden" aria-label={label}>
+        <Button variant="ghost" size="icon" className="relative h-11 w-11 lg:hidden [&_svg]:size-5" aria-label={label}>
           <Menu />
-          {unread && <span aria-hidden className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-gold ring-2 ring-background" />}
+          {unread && <span aria-hidden className="absolute end-2 top-2 h-2 w-2 rounded-full bg-gold ring-2 ring-background" />}
         </Button>
       </SheetTrigger>
-      <SheetContent side="end" className="w-72" onClick={closeOnLink} onSubmit={() => setOpenOn(null)}>
+      <SheetContent side="end" className="w-72 overflow-y-auto" onClick={closeOnLink} onSubmit={() => setOpenOn(null)}>
         <SheetTitle className="sr-only">{title}</SheetTitle>
         {children}
       </SheetContent>

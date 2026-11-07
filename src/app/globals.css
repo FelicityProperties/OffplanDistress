@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+/* Opened from the home screen (an installed app): no browser back button, so the header shows one (HeaderBack). */
+@custom-variant standalone (@media (display-mode: standalone));
 
 /* OffplanDistress design system — ink navy, Dubai sand-gold, savings emerald. All oklch. */
 
@@ -178,13 +180,153 @@ html:lang(zh) :is(h1, h2, h3, h4, [class*="tracking-tight"]) {
   letter-spacing: 0;
 }
 
+/*
+ * The app shell on phones (below lg, where the header shows the menu button): bottom tab bar, auto-hiding header,
+ * floating buttons, the deal page's action bar. Everything that reads these variables passes a fallback, so each piece
+ * also works alone. --app-bottom is the height of the bar on screen at the bottom (safe area included, 0 when none),
+ * --app-bottom-reserve the room the page keeps for it at its end. State on <html>: data-scroll="down" (header hidden
+ * while reading down: src/components/app/AutoHideHeader.tsx), data-keyboard (on-screen keyboard up: ChromeState.tsx),
+ * data-install-prompt (the install card is up).
+ */
+:root {
+  --app-header-h: 3.5rem;
+  --app-tabbar-h: 3.5rem;
+  --app-dealbar-h: 4rem;
+  --app-safe-t: env(safe-area-inset-top, 0px);
+  --app-safe-b: env(safe-area-inset-bottom, 0px);
+  --app-bottom: 0px;
+  --app-bottom-reserve: 0px;
+  --app-header-offset: var(--app-header-h);
+  --fab-size: 3rem;
+  --fab-gap: 0.75rem;
+  --fab-edge: max(1rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  --fab-wa-slot: calc(var(--fab-size) + var(--fab-gap));
+  --fab-base: max(var(--app-bottom), var(--app-safe-b));
+}
+@media (min-width: 640px) {
+  :root {
+    --fab-size: 3.5rem;
+    --fab-gap: 1.25rem;
+    --fab-edge: max(1.25rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --app-header-h: 4.25rem;
+  }
+}
+/* Landscape phones: a lower tab bar, icons only (the labels stay for screen readers). */
+@media (orientation: landscape) and (max-height: 500px) {
+  :root {
+    --app-tabbar-h: 3rem;
+  }
+  [data-tab-label] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+@media screen and (max-width: 1023.98px) {
+  html:has([data-tabbar]) {
+    --app-bottom: calc(var(--app-tabbar-h) + var(--app-safe-b));
+    --app-bottom-reserve: var(--app-bottom);
+  }
+  /* A deal page's action bar replaces the tab bar and the WhatsApp button (it has its own). */
+  html:has([data-dealbar]) {
+    --app-bottom: var(--app-safe-b);
+    --app-bottom-reserve: calc(var(--app-dealbar-h) + var(--app-safe-b));
+    --fab-wa-slot: 0px;
+  }
+  html:has([data-dealbar][data-state="shown"]) {
+    --app-bottom: calc(var(--app-dealbar-h) + var(--app-safe-b));
+  }
+  html:has([data-dealbar]) :is([data-tabbar], [data-wa="floating"]) {
+    display: none;
+  }
+  html {
+    /* focused fields and links stop above the bottom bar */
+    scroll-padding-bottom: calc(var(--app-bottom-reserve) + 0.75rem);
+  }
+  html[data-scroll="down"] {
+    --app-header-offset: 0px;
+  }
+  html[data-scroll="down"] [data-app-header] {
+    transform: translateY(-100%);
+  }
+  html[data-keyboard] :is([data-tabbar], [data-dealbar]) {
+    transform: translateY(100%);
+    visibility: hidden;
+  }
+  :is(html[data-keyboard], html[data-install-prompt]) [data-fab],
+  html[data-scroll="down"] [data-fab-autohide] {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.9);
+    visibility: hidden;
+    pointer-events: none;
+  }
+  /* the footer's last line ends above the bottom bar */
+  body {
+    padding-bottom: var(--app-bottom-reserve);
+  }
+  [data-tabbar] a,
+  [data-fab] {
+    -webkit-touch-callout: none;
+  }
+  /* The consoles' section row (src/components/AppShell.tsx): full bleed under the header, and hides with it. */
+  [data-shell-nav] {
+    position: sticky;
+    top: var(--app-header-h);
+    z-index: 30;
+    margin-inline: calc(var(--page-gutter, 1rem) * -1);
+    transition: transform 200ms ease-out;
+  }
+  [data-shell-nav] nav {
+    padding-inline: var(--page-gutter, 1rem);
+    /* it scrolls sideways: a pill cut off at either end fades out, which says there is more */
+    mask-image: linear-gradient(to right, transparent, #000 var(--page-gutter, 1rem), #000 calc(100% - var(--page-gutter, 1rem)), transparent);
+  }
+  html[data-scroll="down"] [data-shell-nav] {
+    transform: translateY(calc(-100% - var(--app-header-h)));
+  }
+  /* focused / anchored elements clear that row too (it is 61px tall) */
+  html:has([data-shell-nav]) {
+    scroll-padding-top: calc(var(--app-header-h) + 5rem);
+  }
+}
+/* iOS zooms into a field whose text is under 16px when it's focused: on phones none is (text-xs utilities included). */
+@media (max-width: 767.98px), (pointer: coarse) and (max-height: 500px) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="button"], [type="submit"], [type="reset"], [type="image"], [type="hidden"]),
+  textarea,
+  select {
+    font-size: max(16px, 1rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
   }
   html {
-    /* keep focused / anchored elements clear of the sticky header */
-    scroll-padding-top: 5.5rem;
+    /* keep focused / anchored elements clear of the sticky header (5.5rem from lg, as before) */
+    scroll-padding-top: calc(var(--app-header-h) + 1.25rem);
+  }
+  /* No double-tap zoom on controls: a second quick tap is a second tap. */
+  :where(a, button, summary, label, input, select, textarea, [role="button"]) {
+    touch-action: manipulation;
   }
   @media (min-width: 1024px) {
     /* /deals: the search toolbar sticks under the header too */
@@ -293,15 +435,17 @@ html:lang(zh) :is(h1, h2, h3, h4, [class*="tracking-tight"]) {
     animation: float-y 6s ease-in-out infinite;
   }
 }
+/* The gutter also clears the notch of a landscape phone (viewport-fit=cover); --page-gutter lets a bar inside go full bleed. */
 @utility container-page {
+  --page-gutter: max(1rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   margin-inline: auto;
   width: 100%;
   max-width: 80rem;
-  padding-inline: 1rem;
+  padding-inline: var(--page-gutter);
   @media (min-width: 640px) {
-    padding-inline: 1.5rem;
+    --page-gutter: max(1.5rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   }
   @media (min-width: 1024px) {
-    padding-inline: 2rem;
+    --page-gutter: max(2rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   }
 }
