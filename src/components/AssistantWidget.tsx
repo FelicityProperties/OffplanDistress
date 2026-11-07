@@ -5,8 +5,19 @@ import { usePathname, useRouter } from "next/navigation";
 import { MessageCircle, RotateCcw, Send, Sparkles, X } from "lucide-react";
 import type { AssistantEvent } from "@/app/api/assistant/route";
 import { useLocale, useT } from "@/i18n/client";
-import { stripLocale } from "@/i18n/paths";
-import { whatsappPrefill } from "@/components/WhatsAppButton";
+import {
+  FAB,
+  FAB_AWAY,
+  FAB_VARS,
+  PHONE_SHELL,
+  floatingPlaces,
+  onSettled,
+  pageUnder,
+  restBox,
+  typingOnTouch,
+  useClearOfPage,
+  whatsappPrefill,
+} from "@/components/WhatsAppButton";
 import { BRAND } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
@@ -21,8 +32,37 @@ const DEAL_STARTERS = ["starter.thisDeal", "starter.deals", "starter.how", "star
 /** The one-time hello next to the button (localStorage): shown once, a few seconds into a first visit. */
 const NUDGE_KEY = "od-assistant-nudge";
 const NUDGE_DELAY = 8000;
-/** Our consoles have no chat. */
-const HIDDEN = /^\/(?:admin|dashboard)(?:\/|$)/;
+/** Once on screen, the hello leaves by itself. */
+const NUDGE_TIME = 15000;
+/** Phones (and phones held sideways): the chat takes the whole screen. */
+const FULL_SCREEN = "(max-width: 639.98px), (max-height: 500px) and (pointer: coarse)";
+
+/** Something else has the screen: the keyboard, the install card, a dialog or the menu, or the page is scrolling down. */
+function screenBusy() {
+  const html = document.documentElement;
+  return (
+    html.hasAttribute("data-keyboard") ||
+    html.hasAttribute("data-install-prompt") ||
+    html.getAttribute("data-scroll") === "down" ||
+    typingOnTouch() ||
+    !!document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')
+  );
+}
+
+/** Tab and Shift+Tab stay inside the full-screen chat, as in any modal window. */
+function keepFocusIn(e: React.KeyboardEvent<HTMLElement>) {
+  const items = [...e.currentTarget.querySelectorAll<HTMLElement>("a[href], button:not(:disabled), textarea")].filter((el) => el.offsetParent);
+  if (!items.length) return;
+  const first = items[0];
+  const last = items[items.length - 1];
+  if (e.shiftKey && (document.activeElement === first || document.activeElement === e.currentTarget)) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
 
 // A link in an answer: [label](https://…) or a bare https://… address (without bidi isolates or CJK punctuation).
 const LINK_RE = /\[([^\]\n]{1,200})\]\((https?:\/\/[^\s)]+)\)|https?:\/\/[^\s⁦-⁩<>"'）】」》，。、；]+/g;
@@ -124,11 +164,18 @@ export function AssistantWidget() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [nudge, setNudge] = useState(false);
+  // The hello: "wait" (due, laid out unseen until nothing would be under it), then "on".
+  const [nudge, setNudge] = useState<"off" | "wait" | "on">("off");
+  // The chat fills the screen (phones), instead of the small window.
+  const [full, setFull] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const nudgeRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const place = floatingPlaces(pathname).assistant;
+  const launcherClear = useClearOfPage(launcherRef, pathname, place === "always" && !open);
 
   // The conversation so far in this tab (after hydration, so the server and first client render agree).
   useEffect(() => {
@@ -150,12 +197,58 @@ export function AssistantWidget() {
 
   useEffect(() => {
     const list = listRef.current;
-    if (list) list.scrollTop = list.scrollHeight;
+    // A new chat starts at the greeting (on a small phone it and the suggestions overflow the list).
+    if (list) list.scrollTop = msgs.length ? list.scrollHeight : 0;
   }, [msgs, open]);
 
   useEffect(() => {
-    if (open) inputRef.current?.focus({ preventScroll: true });
+    const screen = window.matchMedia(FULL_SCREEN);
+    const update = () => setFull(screen.matches);
+    update();
+    screen.addEventListener("change", update);
+    return () => screen.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    // Phones: no keyboard over the greeting and the suggestions; the window itself takes focus (screen readers start there).
+    if (window.matchMedia(FULL_SCREEN).matches) panelRef.current?.focus({ preventScroll: true });
+    else inputRef.current?.focus({ preventScroll: true });
   }, [open]);
+
+  // Full screen: the page behind stays put, and the window follows the visible area, so the text box sits right above
+  // the on-screen keyboard (iOS and Android shrink and shift the visual viewport, not the page).
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!open || !full || !panel) return;
+    const html = document.documentElement;
+    const overflow = html.style.overflow;
+    html.style.overflow = "hidden";
+    const vv = window.visualViewport;
+    let frame = 0;
+    const fit = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (!vv) return;
+        panel.style.setProperty("--assistant-vvh", `${vv.height}px`);
+        panel.style.transform = vv.offsetTop ? `translateY(${vv.offsetTop}px)` : "";
+        // The keyboard covers the home indicator: no safe-area gap above it.
+        panel.style.setProperty("--assistant-safe-b", window.innerHeight - vv.height > 150 ? "0px" : "env(safe-area-inset-bottom, 0px)");
+      });
+    };
+    fit();
+    vv?.addEventListener("resize", fit);
+    vv?.addEventListener("scroll", fit);
+    return () => {
+      cancelAnimationFrame(frame);
+      vv?.removeEventListener("resize", fit);
+      vv?.removeEventListener("scroll", fit);
+      html.style.overflow = overflow;
+      panel.style.removeProperty("--assistant-vvh");
+      panel.style.removeProperty("--assistant-safe-b");
+      panel.style.transform = "";
+    };
+  }, [open, full]);
 
   // The hello, unless this browser has seen it (or chatted) before.
   useEffect(() => {
@@ -165,14 +258,57 @@ export function AssistantWidget() {
     } catch {
       return;
     }
-    const timer = setTimeout(() => setNudge(true), NUDGE_DELAY);
+    const timer = setTimeout(() => setNudge((n) => (n === "off" ? "wait" : n)), NUDGE_DELAY);
     return () => clearTimeout(timer);
   }, [loaded, open, msgs.length]);
 
-  if (HIDDEN.test(stripLocale(pathname))) return null;
+  // Due: from lg it shows at once, as it always did. On phones only once it can't hide anything: the launcher is on
+  // screen, nothing else has the screen, and no text, picture or control of the page is where the bubble goes.
+  useEffect(() => {
+    if (nudge !== "wait") return;
+    const phone = window.matchMedia(PHONE_SHELL);
+    const check = () => {
+      const launcher = launcherRef.current;
+      const bubble = nudgeRef.current;
+      if (phone.matches) {
+        if (!launcher || !bubble || !launcher.offsetWidth || screenBusy()) return;
+        // The launcher's own look runs in the same pass and may not have rendered yet: ask the page directly.
+        if (pageUnder(restBox(launcher)) || pageUnder(restBox(bubble), true)) return;
+      }
+      setNudge("on");
+      // Seen once it has been shown: it never comes back.
+      try {
+        localStorage.setItem(NUDGE_KEY, "1");
+      } catch {}
+    };
+    const stop = onSettled(check);
+    const first = requestAnimationFrame(check);
+    return () => {
+      stop();
+      cancelAnimationFrame(first);
+    };
+  }, [nudge]);
+
+  // On screen: gone after a while, and on phones as soon as the page scrolls under it.
+  useEffect(() => {
+    if (nudge !== "on") return;
+    const timer = setTimeout(() => setNudge("off"), NUDGE_TIME);
+    const phone = window.matchMedia(PHONE_SHELL);
+    const from = window.scrollY;
+    const onScroll = () => {
+      if (phone.matches && Math.abs(window.scrollY - from) > 40) setNudge("off");
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [nudge]);
+
+  if (place === "never") return null;
 
   const dismissNudge = () => {
-    setNudge(false);
+    setNudge("off");
     try {
       localStorage.setItem(NUDGE_KEY, "1");
     } catch {}
@@ -195,13 +331,15 @@ export function AssistantWidget() {
     abortRef.current?.abort();
     setMsgs([]);
     setBusy(false);
-    inputRef.current?.focus();
+    // Phones: the new greeting and suggestions stay in view (no keyboard).
+    if (full) panelRef.current?.focus({ preventScroll: true });
+    else inputRef.current?.focus();
   };
 
   const goTo = (path: string) => {
     router.push(path);
     // On a phone the window covers the page: get out of the way.
-    if (window.matchMedia("(max-width: 639px)").matches) setOpen(false);
+    if (full) setOpen(false);
   };
 
   async function send(text: string) {
@@ -275,28 +413,53 @@ export function AssistantWidget() {
         aria-expanded={open}
         title={open ? t("close") : t("launcher")}
         data-assistant="launcher"
-        className="fixed bottom-24 end-5 z-40 grid h-14 w-14 place-items-center rounded-full bg-ink text-primary-foreground shadow-lift ring-4 ring-background/70 transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-ring"
+        // Floating column (WhatsAppButton.tsx): above the WhatsApp button, in its slot where that one is not shown; hides
+        // while scrolling down (globals.css) and over the page's controls on phones.
+        data-fab=""
+        data-fab-autohide=""
+        className={cn(
+          FAB_VARS,
+          "fixed z-40 grid place-items-center rounded-full bg-ink text-primary-foreground shadow-lift ring-4 ring-background/70 transition-[bottom,opacity,translate,scale,visibility] duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-ring motion-reduce:transition-none print:hidden",
+          !BRAND.whatsapp && "[--fab-wa-slot:0px]",
+          place === "desktop" ? "max-lg:hidden" : !launcherClear && !open && FAB_AWAY,
+        )}
+        style={{ insetInlineEnd: FAB.edge, bottom: `calc(${FAB.base} + ${FAB.edge} + ${FAB.waSlot})`, width: FAB.size, height: FAB.size }}
       >
-        {open ? <X className="h-6 w-6" aria-hidden /> : <Sparkles className="h-6 w-6" aria-hidden />}
+        {open ? <X className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden /> : <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden />}
       </button>
 
       {open && (
         <section
+          ref={panelRef}
           role="dialog"
           aria-label={t("title")}
+          // Full screen it is a modal window: the page behind is out of reach (scroll locked, focus kept inside).
+          aria-modal={full || undefined}
+          tabIndex={full ? -1 : undefined}
           data-assistant="panel"
           onKeyDown={(e) => {
             if (e.key === "Escape") close();
+            else if (e.key === "Tab" && full) keepFocusIn(e);
           }}
-          className="fixed inset-x-2 bottom-2 z-50 flex h-[min(38rem,calc(100dvh-1rem))] flex-col overflow-hidden rounded-2xl border bg-background shadow-lift sm:inset-x-auto sm:bottom-40 sm:end-5 sm:h-[min(36rem,calc(100dvh-11rem))] sm:w-[24rem]"
+          className={cn(
+            "fixed z-50 flex flex-col overflow-hidden bg-background",
+            full
+              ? "inset-x-0 top-0 outline-none"
+              : "inset-x-2 bottom-2 h-[min(38rem,calc(100dvh-1rem))] rounded-2xl border shadow-lift sm:inset-x-auto sm:bottom-40 sm:end-5 sm:h-[min(36rem,calc(100dvh-11rem))] sm:w-[24rem]",
+          )}
+          style={full ? { height: "var(--assistant-vvh, 100dvh)" } : undefined}
         >
-          <header className="flex items-start gap-3 bg-ink px-4 py-3 text-primary-foreground">
-            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gold text-gold-foreground">
+          <header
+            className={cn("flex gap-3 bg-ink px-4 py-3 text-primary-foreground", full ? "items-center pe-2" : "items-start")}
+            style={full ? { paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))" } : undefined}
+          >
+            <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gold text-gold-foreground", !full && "mt-0.5")}>
               <Sparkles className="h-4 w-4" aria-hidden />
             </span>
             <div className="min-w-0 flex-1">
               <h2 className="text-sm font-semibold">{t("title")}</h2>
-              <p className="text-xs leading-snug opacity-80">{t("subtitle")}</p>
+              {/* Phones: one short line, so the conversation keeps the room. */}
+              <p className={cn("text-xs leading-snug opacity-80", full && "truncate")}>{full ? t("subtitleShort") : t("subtitle")}</p>
             </div>
             {msgs.length > 0 && (
               <button
@@ -304,9 +467,12 @@ export function AssistantWidget() {
                 onClick={reset}
                 aria-label={t("newChat")}
                 title={t("newChat")}
-                className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                className={cn(
+                  "grid shrink-0 place-items-center rounded-full hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold",
+                  full ? "h-11 w-11 active:bg-white/15" : "h-8 w-8",
+                )}
               >
-                <RotateCcw className="h-4 w-4" aria-hidden />
+                <RotateCcw className={full ? "h-5 w-5" : "h-4 w-4"} aria-hidden />
               </button>
             )}
             <button
@@ -314,9 +480,12 @@ export function AssistantWidget() {
               onClick={close}
               aria-label={t("close")}
               title={t("close")}
-              className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+              className={cn(
+                "grid shrink-0 place-items-center rounded-full hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold",
+                full ? "h-11 w-11 active:bg-white/15" : "h-8 w-8",
+              )}
             >
-              <X className="h-4 w-4" aria-hidden />
+              <X className={full ? "h-5 w-5" : "h-4 w-4"} aria-hidden />
             </button>
           </header>
 
@@ -331,7 +500,10 @@ export function AssistantWidget() {
                     key={k}
                     type="button"
                     onClick={() => send(t(k))}
-                    className="rounded-full border bg-background px-3 py-1.5 text-start text-xs font-medium transition-colors hover:border-ink hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className={cn(
+                      "rounded-full border bg-background text-start font-medium transition-colors hover:border-ink hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      full ? "min-h-11 px-3.5 py-2 text-sm active:bg-muted" : "px-3 py-1.5 text-xs",
+                    )}
                   >
                     {t(k)}
                   </button>
@@ -350,7 +522,8 @@ export function AssistantWidget() {
           </div>
 
           <form
-            className="border-t p-3"
+            className="group border-t p-3"
+            style={full ? { paddingBottom: "max(0.75rem, var(--assistant-safe-b, env(safe-area-inset-bottom, 0px)))" } : undefined}
             onSubmit={(e) => {
               e.preventDefault();
               send(input);
@@ -373,28 +546,42 @@ export function AssistantWidget() {
                 }}
                 placeholder={t("placeholder")}
                 aria-label={t("placeholder")}
-                className="field-sizing-content max-h-32 min-h-10 flex-1 resize-none rounded-xl border bg-background px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+                // Enter sends: the on-screen keyboard says so.
+                enterKeyHint="send"
+                className={cn(
+                  "field-sizing-content flex-1 resize-none rounded-xl border bg-background px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm",
+                  full ? "max-h-24 min-h-11" : "max-h-32 min-h-10",
+                )}
               />
               <button
                 type="submit"
                 disabled={busy || !input.trim()}
                 aria-label={t("send")}
                 title={t("send")}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink text-primary-foreground transition-opacity disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className={cn(
+                  "grid shrink-0 place-items-center rounded-xl bg-ink text-primary-foreground transition-opacity disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  full ? "h-11 w-11" : "h-10 w-10",
+                )}
               >
                 <Send className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
               </button>
             </div>
-            <p className="mt-2 text-[11px] leading-snug text-muted-foreground">{t("disclaimer")}</p>
+            {/* Phones: while typing, the keyboard leaves little room; these two come back when it closes. */}
+            <p className={cn("mt-2 text-muted-foreground", full ? "text-xs group-has-[textarea:focus]:hidden" : "text-[11px]", "leading-snug")}>
+              {t("disclaimer")}
+            </p>
             {BRAND.whatsapp && (
               <a
                 href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(tm(prefill.key, { ref: prefill.ref }))}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 data-wa="assistant"
-                className="mt-1.5 flex w-fit items-center gap-1.5 text-xs font-medium text-emerald-700 hover:underline focus-visible:underline focus-visible:outline-none dark:text-emerald-400"
+                className={cn(
+                  "flex w-fit items-center gap-1.5 font-medium text-emerald-700 hover:underline focus-visible:underline focus-visible:outline-none dark:text-emerald-400",
+                  full ? "min-h-11 text-sm group-has-[textarea:focus]:hidden" : "mt-1.5 text-xs",
+                )}
               >
-                <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                <MessageCircle className={full ? "h-4 w-4" : "h-3.5 w-3.5"} aria-hidden />
                 {t("human")}
               </a>
             )}
@@ -402,29 +589,49 @@ export function AssistantWidget() {
         </section>
       )}
 
-      {nudge && !open && (
+      {nudge !== "off" && !open && (
         <div
-          data-assistant="nudge"
-          className="fixed bottom-[6.4rem] end-[5.25rem] z-40 flex max-w-[16rem] items-center gap-1 rounded-2xl rounded-ee-md border bg-background py-1.5 ps-3 pe-1 text-sm shadow-lift animate-in fade-in slide-in-from-bottom-2 duration-300"
+          ref={nudgeRef}
+          // While due ("wait") it is laid out unseen, so its place can be checked, under another name than the hello
+          // (the install card waits for [data-assistant="nudge"] to go).
+          data-assistant={nudge === "on" ? "nudge" : "nudge-due"}
+          data-fab={nudge === "on" ? "" : undefined}
+          data-fab-autohide=""
+          aria-hidden={nudge === "on" ? undefined : true}
+          className={cn(
+            FAB_VARS,
+            "fixed z-40 flex items-center gap-1 rounded-2xl rounded-ee-md border bg-background py-1.5 ps-3 pe-1 text-sm shadow-lift max-lg:py-1 print:hidden",
+            nudge === "on" ? "animate-in fade-in slide-in-from-bottom-2 duration-300" : "invisible",
+            !BRAND.whatsapp && "[--fab-wa-slot:0px]",
+            place === "desktop" ? "max-lg:hidden" : !launcherClear && FAB_AWAY,
+          )}
+          // Beside the launcher, at least one edge's width from the other side of the screen (16 px on a 320 px phone).
+          style={{
+            bottom: `calc(${FAB.base} + ${FAB.edge} + ${FAB.waSlot} + 0.4rem)`,
+            insetInlineEnd: `calc(${FAB.edge} + ${FAB.size} + 0.5rem)`,
+            maxWidth: `min(16rem, calc(100vw - 2 * ${FAB.edge} - ${FAB.size} - 0.5rem))`,
+          }}
         >
           <button
             type="button"
+            tabIndex={nudge === "on" ? undefined : -1}
             onClick={() => {
               dismissNudge();
               setOpen(true);
             }}
-            className="text-start font-medium leading-snug focus-visible:underline focus-visible:outline-none"
+            className="text-start font-medium leading-snug focus-visible:underline focus-visible:outline-none max-lg:min-h-11"
           >
             {t("nudge")}
           </button>
           <button
             type="button"
+            tabIndex={nudge === "on" ? undefined : -1}
             onClick={dismissNudge}
             aria-label={t("nudgeDismiss")}
             title={t("nudgeDismiss")}
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:h-11 max-lg:w-11 max-lg:active:bg-muted"
           >
-            <X className="h-3.5 w-3.5" aria-hidden />
+            <X className="h-3.5 w-3.5 max-lg:h-4 max-lg:w-4" aria-hidden />
           </button>
         </div>
       )}

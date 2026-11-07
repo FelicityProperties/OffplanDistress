@@ -7,6 +7,8 @@ export default defineMessages({
     launcher: "Ask FeliBot, our AI assistant",
     title: "FeliBot",
     subtitle: "AI assistant for deals, fees and selling, in English, Arabic or Chinese",
+    // The full-screen chat on phones: one short line under the name.
+    subtitleShort: "AI assistant",
     greeting:
       "Hi, I'm FeliBot, the AI assistant at OffplanDistress. I can find distressed off-plan units for you, explain the fees and how a transfer works, or help you sell your unit. What are you looking for?",
     placeholder: "Ask about deals, fees or selling…",
@@ -33,6 +35,7 @@ export default defineMessages({
     launcher: "اسأل ⁨FeliBot⁩، مساعدنا الذكي",
     title: "FeliBot",
     subtitle: "المساعد الذكي للصفقات والرسوم والبيع، بالعربية أو الإنجليزية أو الصينية",
+    subtitleShort: "المساعد الذكي",
     greeting:
       "أهلاً بك! أنا ⁨FeliBot⁩، المساعد الذكي في ⁨OffplanDistress⁩. يمكنني البحث لك عن وحدات على الخارطة يبيعها أصحابها على عجل، وشرح الرسوم وخطوات نقل الملكية، أو مساعدتك في بيع وحدتك. عمّ تبحث؟",
     placeholder: "اسأل عن الصفقات أو الرسوم أو البيع…",
@@ -59,6 +62,7 @@ export default defineMessages({
     launcher: "咨询 AI 助手 FeliBot",
     title: "FeliBot",
     subtitle: "AI 助手：房源、费用与出售咨询，支持中文、英文和阿拉伯语",
+    subtitleShort: "AI 助手",
     greeting: "您好！我是 FeliBot，OffplanDistress 的 AI 助手。我可以帮您查找急售期房房源，讲解费用和过户流程，或协助您出售房产。请问您想找什么样的房源？",
     placeholder: "询问房源、费用或出售事宜…",
     send: "发送",
