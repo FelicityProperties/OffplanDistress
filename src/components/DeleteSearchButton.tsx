@@ -14,6 +14,8 @@ export function DeleteSearchButton({ id }: { id: string }) {
     <Button
       size="icon"
       variant="ghost"
+      // A 44 px target below lg.
+      className="max-lg:h-11 max-lg:w-11"
       aria-label={t("delete.label")}
       title={t("delete.label")}
       disabled={pending}

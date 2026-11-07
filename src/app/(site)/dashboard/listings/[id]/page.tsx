@@ -67,12 +67,13 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
             {tc(`unit.${l.unitType}`)} · {tc("sqft", { n: formatNumber(l.sizeSqft) })} · <bdi>{community}</bdi>
           </p>
         </div>
-        {/* Wraps on small phones (320–360px), where the three buttons don't fit on one line. */}
-        <div className="flex max-w-full flex-col items-end gap-2">
+        {/* Wraps on small phones (320–360px), where the three buttons don't fit on one line. On a phone: the pill, then
+            View public page across the screen and Pause / Withdraw side by side under it (44 px buttons). */}
+        <div className="flex max-w-full flex-col items-end gap-2 max-sm:w-full max-sm:items-start">
           <ToneStatus label={tc(`listing.${l.status}`)} tone={LISTING_STATUS[l.status].tone} />
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2 max-sm:w-full max-sm:flex-col">
             {PUBLIC_STATUSES.includes(l.status) && (
-              <Button asChild size="sm" variant="outline">
+              <Button asChild size="sm" variant="outline" className="max-lg:h-11 max-lg:px-4 max-lg:text-sm">
                 <Link href={`/deals/${refCode(l.refNo)}`}>
                   <ExternalLink /> {t("manage.viewPublic")}
                 </Link>
@@ -100,7 +101,8 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      {/* Phones: one card of label / value rows instead of four tiles stacked down the screen (about half the height). */}
+      <dl className="grid gap-4 sm:grid-cols-4 max-sm:gap-0 max-sm:rounded-xl max-sm:border max-sm:bg-card max-sm:px-4 max-sm:shadow-card">
         {[
           [t("manage.purchasePrice"), formatAED(l.originalPrice, locale)],
           [
@@ -116,19 +118,27 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
               : formatQuarter(l.handoverDate, locale),
           ],
         ].map(([k, v]) => (
-          <div key={k} className="rounded-xl border bg-card p-4 shadow-card">
-            <p className="text-xs text-muted-foreground">{k}</p>
-            <p className="mt-1 font-semibold tabular">{v}</p>
+          <div
+            key={k}
+            className="rounded-xl border bg-card p-4 shadow-card max-sm:flex max-sm:items-baseline max-sm:justify-between max-sm:gap-4 max-sm:rounded-none max-sm:border-0 max-sm:border-t max-sm:bg-transparent max-sm:px-0 max-sm:py-3 max-sm:shadow-none max-sm:first:border-t-0"
+          >
+            <dt className="text-xs text-muted-foreground max-sm:text-sm">{k}</dt>
+            <dd className="mt-1 font-semibold tabular max-sm:mt-0 max-sm:shrink-0 max-sm:whitespace-nowrap">{v}</dd>
           </div>
         ))}
-      </div>
+      </dl>
 
-      <section className="rounded-xl border bg-card p-6 shadow-card">
+      <section className="rounded-xl border bg-card p-6 shadow-card max-sm:p-4">
         <h2 className="font-sans text-lg font-semibold">{t("manage.offersTitle")}</h2>
         {listingOffers.length ? (
           <ul className="mt-3 divide-y">
             {listingOffers.map((o) => (
-              <li key={o.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+              // Phones: the amount with its status beside it, and the answers across the card under them (a pill and
+              // three buttons on one line ran past a 320 px screen).
+              <li
+                key={o.id}
+                className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm max-sm:grid max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:items-start"
+              >
                 <div>
                   <p className="font-semibold tabular">
                     {formatAED(o.amount, locale)}
@@ -148,7 +158,7 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 max-sm:contents">
                   <ToneStatus label={tc(`offer.${o.status}`)} tone={OFFER_STATUS[o.status].tone} />
                   <SellerOfferActions
                     offerId={o.id}
@@ -157,6 +167,7 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
                     updatedAt={o.updatedAt.toISOString()}
                     askingPrice={l.askingPrice}
                     listingStatus={l.status}
+                    className="max-sm:col-span-2"
                   />
                 </div>
               </li>
@@ -167,7 +178,7 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
         )}
       </section>
 
-      <section className="rounded-xl border bg-card p-6 shadow-card">
+      <section className="rounded-xl border bg-card p-6 shadow-card max-sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-sans text-lg font-semibold">{t("manage.docsTitle")}</h2>
@@ -207,7 +218,7 @@ export default async function ManageListingPage({ params }: PageProps<"/dashboar
       </section>
 
       {!["transferred", "withdrawn"].includes(l.status) && (
-        <section className="rounded-xl border bg-card p-6 shadow-card">
+        <section className="rounded-xl border bg-card p-6 shadow-card max-sm:p-4">
           <h2 className="mb-4 font-sans text-lg font-semibold">{t("manage.editTitle")}</h2>
           <SellerEditForm
             listingId={l.id}

@@ -15,7 +15,7 @@ export function AlertToggle({ id, enabled }: { id: string; enabled: boolean }) {
   const [pending, start] = useTransition();
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 max-lg:gap-3">
       <Switch
         id={switchId}
         checked={checked}
@@ -31,7 +31,11 @@ export function AlertToggle({ id, enabled }: { id: string; enabled: boolean }) {
           })
         }
       />
-      <Label htmlFor={switchId} className="cursor-pointer text-sm font-normal text-muted-foreground">
+      {/* Below lg the label is a 44 px row, so a tap beside the small switch still flips it. */}
+      <Label
+        htmlFor={switchId}
+        className="cursor-pointer text-sm font-normal text-muted-foreground max-lg:flex max-lg:min-h-11 max-lg:items-center max-lg:pe-2"
+      >
         {t("alerts.label")}
       </Label>
     </div>

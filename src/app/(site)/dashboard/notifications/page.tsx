@@ -11,6 +11,7 @@ import { getLocale, getT } from "@/i18n/server";
 import { requireUser } from "@/lib/auth";
 import { formatDate, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { NoticeList } from "./NoticeList";
 
 const PAGE_LIMIT = 100;
 
@@ -48,7 +49,7 @@ export default async function NotificationsPage() {
   return (
     <div className="space-y-6">
       <PageTitle title={t("page.title")} sub={unread > 0 ? t("page.subUnread", { count: unread }) : t("page.sub")}>
-        {unread > 0 && <MarkAllReadButton />}
+        {unread > 0 && <MarkAllReadButton className="max-lg:h-11 max-lg:px-4 max-lg:text-sm" />}
       </PageTitle>
 
       {rows.length === 0 ? (
@@ -58,58 +59,55 @@ export default async function NotificationsPage() {
           </Button>
         </EmptyState>
       ) : (
-        <>
-          <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-card">
-            {rows.map((n) => {
-              const read = n.readAt != null;
-              return (
-                <li key={n.id}>
-                  <NotificationLink
-                    id={n.id}
-                    href={n.href}
-                    read={read}
-                    className={cn(
-                      "flex w-full items-start gap-3 px-4 py-4 text-start transition-colors",
-                      (n.href || !read) && "hover:bg-accent/60",
-                      !read && "bg-gold-soft/40",
-                    )}
-                  >
-                    <span
-                      aria-hidden
-                      className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", read ? "bg-border" : "bg-gold")}
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                        <span dir="auto" className={cn("min-w-0 flex-1 text-sm", read ? "font-medium" : "font-semibold")}>
-                          {n.title}
-                        </span>
-                        <time
-                          dateTime={n.createdAt.toISOString()}
-                          title={formatDate(n.createdAt, locale)}
-                          className="shrink-0 text-xs text-muted-foreground"
-                        >
-                          {timeAgo(n.createdAt, locale)}
-                        </time>
-                      </span>
-                      {n.body && (
-                        <span dir="auto" className="mt-1 block whitespace-pre-line text-sm text-muted-foreground">
-                          {n.body}
-                        </span>
-                      )}
-                      {!read && <span className="sr-only">{t("unread")}</span>}
+        // Phones page through the rows 20 at a time (NoticeList); from lg all of them show, as before.
+        <NoticeList note={rows.length >= PAGE_LIMIT ? t("page.limitNote", { count: PAGE_LIMIT }) : undefined}>
+          {rows.map((n) => {
+            const read = n.readAt != null;
+            return (
+              <NotificationLink
+                key={n.id}
+                id={n.id}
+                href={n.href}
+                read={read}
+                className={cn(
+                  "flex w-full items-start gap-3 px-4 py-4 text-start transition-colors",
+                  (n.href || !read) && "hover:bg-accent/60",
+                  !read && "bg-gold-soft/40",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", read ? "bg-border" : "bg-gold")}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                    {/* Phones: the title takes the whole line and the time goes under it (beside it, a title took
+                        three lines at 320 px). */}
+                    <span dir="auto" className={cn("min-w-0 flex-1 text-sm max-sm:basis-full", read ? "font-medium" : "font-semibold")}>
+                      {n.title}
                     </span>
-                    {n.href && (
-                      <ChevronRight aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground rtl:-scale-x-100" />
-                    )}
-                  </NotificationLink>
-                </li>
-              );
-            })}
-          </ul>
-          {rows.length >= PAGE_LIMIT && (
-            <p className="text-center text-xs text-muted-foreground">{t("page.limitNote", { count: PAGE_LIMIT })}</p>
-          )}
-        </>
+                    <time
+                      dateTime={n.createdAt.toISOString()}
+                      title={formatDate(n.createdAt, locale)}
+                      className="shrink-0 text-xs text-muted-foreground"
+                    >
+                      {timeAgo(n.createdAt, locale)}
+                    </time>
+                  </span>
+                  {n.body && (
+                    <span dir="auto" className="mt-1 block whitespace-pre-line text-sm text-muted-foreground">
+                      {n.body}
+                    </span>
+                  )}
+                  {!read && <span className="sr-only">{t("unread")}</span>}
+                </span>
+                {n.href && (
+                  <ChevronRight aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground rtl:-scale-x-100" />
+                )}
+              </NotificationLink>
+            );
+          })}
+        </NoticeList>
       )}
     </div>
   );

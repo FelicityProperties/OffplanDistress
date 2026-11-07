@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "@/components/LocaleLink";
-import { AuthShell } from "@/components/AuthShell";
+import { AuthAltLink, AuthShell } from "@/components/AuthShell";
 import { ForgotPasswordForm } from "@/components/auth/PasswordForms";
 import { getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
@@ -17,12 +16,9 @@ export default async function ForgotPasswordPage() {
   return (
     <AuthShell title={t("forgot.title")} sub={t("forgot.sub")}>
       <ForgotPasswordForm defaultEmail={user?.email} />
-      <p className="mt-8 border-t border-border/70 pt-6 text-center text-sm text-muted-foreground">
-        {t("forgot.remembered")}{" "}
-        <Link href="/login" className="rounded-sm font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          {tc("logIn")}
-        </Link>
-      </p>
+      <AuthAltLink lead={t("forgot.remembered")} href="/login">
+        {tc("logIn")}
+      </AuthAltLink>
     </AuthShell>
   );
 }

@@ -49,15 +49,17 @@ export function LoginForm({ next, lead }: { next?: string; lead?: string }) {
     <form ref={formRef} action={action} onSubmit={submit} className="space-y-4">
       {next && <input type="hidden" name="next" value={next} />}
       {lead && <input type="hidden" name="lead" value={lead} />}
+      {/* The keyboard's return key reads "next" on the address and "go" on the password (it submits from either). */}
       <Field label={t("field.email")} htmlFor="email" error={fe.email}>
-        <Input id="email" name="email" type="email" dir="ltr" required autoComplete="email" />
+        <Input id="email" name="email" type="email" dir="ltr" required autoComplete="email" enterKeyHint="next" />
       </Field>
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 max-lg:space-y-2">
         <div className="flex items-center justify-between gap-2">
           <Label htmlFor="password">{t("field.password")}</Label>
+          {/* Below lg a 44 px target with 14 px text (it was a 12 px link 6 px above the field). */}
           <Link
             href="/forgot-password"
-            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline max-lg:-me-2 max-lg:inline-flex max-lg:min-h-11 max-lg:items-center max-lg:px-2 max-lg:text-sm"
           >
             {t("login.forgot")}
           </Link>
@@ -68,6 +70,7 @@ export function LoginForm({ next, lead }: { next?: string; lead?: string }) {
           type="password"
           required
           autoComplete="current-password"
+          enterKeyHint="go"
           aria-invalid={passwordError ? true : undefined}
           aria-describedby={passwordError ? "password-msg" : undefined}
         />
@@ -142,17 +145,18 @@ export function SignupForm({ next, intent, lead }: { next?: string; intent?: str
           </button>
         ))}
       </div>
+      {/* The return key reads "next" down the form and "go" on the password, the last field typed in. */}
       <Field label={t("field.fullName")} htmlFor="fullName" error={fe.fullName}>
-        <Input id="fullName" name="fullName" required maxLength={120} autoComplete="name" />
+        <Input id="fullName" name="fullName" required maxLength={120} autoComplete="name" enterKeyHint="next" />
       </Field>
       <Field label={t("field.email")} htmlFor="email" error={fe.email}>
-        <Input id="email" name="email" type="email" dir="ltr" required autoComplete="email" />
+        <Input id="email" name="email" type="email" dir="ltr" required autoComplete="email" enterKeyHint="next" />
       </Field>
       <Field label={t("field.phone")} htmlFor="phone" error={fe.phone}>
-        <Input id="phone" name="phone" type="tel" dir="ltr" autoComplete="tel" placeholder="+971 5X XXX XXXX" />
+        <Input id="phone" name="phone" type="tel" dir="ltr" autoComplete="tel" placeholder="+971 5X XXX XXXX" enterKeyHint="next" />
       </Field>
       <Field label={t("field.password")} htmlFor="password" error={fe.password} hint={t("field.passwordHint")}>
-        <Input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" />
+        <Input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" enterKeyHint="go" />
       </Field>
       <div className="space-y-1.5">
         <label
