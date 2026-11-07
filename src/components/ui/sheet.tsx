@@ -37,7 +37,7 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
+  "fixed z-50 gap-4 overscroll-contain bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
   {
     variants: {
       side: {
@@ -64,15 +64,48 @@ interface SheetContentProps
     React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
     VariantProps<typeof sheetVariants> {}
 
+/**
+ * The p-6 padding, grown to clear the notch, the home indicator and a landscape phone's sides (viewport-fit=cover) on
+ * the edges the sheet touches. Inline, so a caller's p-* class (DealFilters passes p-6) can't undo it.
+ */
+const SAFE_X = "max(1.5rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px))";
+const SAFE_TOP = "max(1.5rem, env(safe-area-inset-top, 0px))";
+const SAFE_BOTTOM = "max(1.5rem, env(safe-area-inset-bottom, 0px))";
+const SAFE_AREA: Record<NonNullable<SheetContentProps["side"]>, React.CSSProperties> = {
+  top: { paddingTop: SAFE_TOP, paddingInline: SAFE_X },
+  bottom: { paddingBottom: SAFE_BOTTOM, paddingInline: SAFE_X },
+  left: { paddingTop: SAFE_TOP, paddingBottom: SAFE_BOTTOM, paddingLeft: SAFE_X },
+  right: { paddingTop: SAFE_TOP, paddingBottom: SAFE_BOTTOM, paddingRight: SAFE_X },
+  start: { paddingTop: SAFE_TOP, paddingBottom: SAFE_BOTTOM, paddingInlineStart: SAFE_X },
+  end: { paddingTop: SAFE_TOP, paddingBottom: SAFE_BOTTOM, paddingInlineEnd: SAFE_X },
+};
+/** The close button sits 1rem above the padded content, and clear of a screen edge it shares with the sheet. */
+function closePlace(side: NonNullable<SheetContentProps["side"]>): React.CSSProperties {
+  return {
+    top: side === "bottom" ? "0.5rem" : "max(0.5rem, calc(env(safe-area-inset-top, 0px) - 1rem))",
+    insetInlineEnd:
+      side === "start" || side === "left" ? "0.5rem" : "max(0.5rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px))",
+  };
+}
+
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
+>(({ side = "right", className, style, children, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
-    <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-      <SheetPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
+    <SheetPrimitive.Content
+      ref={ref}
+      className={cn(sheetVariants({ side }), className)}
+      style={{ ...SAFE_AREA[side ?? "right"], ...style }}
+      {...props}
+    >
+      {/* A 44px target; its ring only for the keyboard (Radix focuses it when the sheet opens, a tap included). */}
+      <SheetPrimitive.Close
+        className="absolute grid h-11 w-11 cursor-pointer place-items-center rounded-full opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none"
+        style={closePlace(side ?? "right")}
+      >
+        <X className="h-5 w-5" />
         <CloseLabel />
       </SheetPrimitive.Close>
       {children}
