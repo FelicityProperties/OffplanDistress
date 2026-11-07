@@ -65,7 +65,7 @@ export default async function NewStaffListingPage({
     <div className="space-y-6">
       <Link
         href={fromLead ? "/admin/leads" : "/admin"}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground max-lg:min-h-10"
       >
         <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden /> {t(fromLead ? "nav.leads" : "nav.queue")}
       </Link>

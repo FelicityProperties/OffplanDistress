@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { Eye, Send } from "lucide-react";
 import { toast } from "sonner";
 import { previewIssueAction, sendTestIssueAction } from "@/app/actions/newsletter-issue";
+import { PHONE_BUTTON } from "@/components/admin/phone";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useT } from "@/i18n/client";
@@ -69,17 +70,17 @@ export function NewsletterPreview() {
           className="rounded-lg border border-input p-0.5"
         >
           {LOCALES.map((l) => (
-            <ToggleGroupItem key={l} value={l} className="h-8 px-3 text-xs">
+            <ToggleGroupItem key={l} value={l} className="h-8 px-3 text-xs max-lg:h-10 max-lg:px-4 max-lg:text-sm">
               {t(`admin.lang.${l}`)}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button size="sm" disabled={loading} onClick={load} data-testid="newsletter-preview-load">
+        <Button size="sm" className={PHONE_BUTTON} disabled={loading} onClick={load} data-testid="newsletter-preview-load">
           <Eye aria-hidden /> {loading ? t("preview.loading") : t("preview.load")}
         </Button>
-        <Button size="sm" variant="outline" disabled={sending} onClick={sendTest} data-testid="newsletter-send-test">
+        <Button size="sm" variant="outline" className={PHONE_BUTTON} disabled={sending} onClick={sendTest} data-testid="newsletter-send-test">
           <Send aria-hidden /> {sending ? t("preview.sending") : t("preview.sendTest")}
         </Button>
       </div>
