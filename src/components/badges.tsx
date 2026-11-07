@@ -18,7 +18,8 @@ export function MotivationBadge({ m, label }: { m: Motivation; label?: string })
     <span
       title={tc(`motivation.${m}.hint`)}
       className={cn(
-        "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+        // One line whatever the room (a squeezed chip went to one character per line in Chinese); 12px below lg.
+        "whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold max-lg:text-xs",
         m === "urgent" && "bg-warning-soft text-warning",
         m === "motivated" && "bg-gold-soft text-gold-foreground",
         m === "flexible" && "bg-muted text-muted-foreground",
@@ -60,6 +61,9 @@ export function SectionHeading({
   tone?: "light" | "dark";
 }) {
   const dark = tone === "dark";
+  // A sequence ("Verify → List → Match → Transfer"): on phones its lines break only between steps (keep-all stops
+  // Chinese splitting a word), and the copy glues each arrow to the step before it, so no line starts with an arrow.
+  const sequence = /[→←]/.test(title);
   return (
     <div className={cn("max-w-2xl", center && "mx-auto text-center")}>
       {eyebrow && (
@@ -73,7 +77,16 @@ export function SectionHeading({
           {eyebrow}
         </p>
       )}
-      <h2 className={cn("mt-4 text-3xl font-semibold leading-tight sm:text-[2.6rem]", dark && "text-primary-foreground")}>{title}</h2>
+      {/* Balanced lines below lg: no one-word (or one-character, in Chinese) last line on a phone. */}
+      <h2
+        className={cn(
+          "mt-4 text-3xl font-semibold leading-tight max-lg:text-balance sm:text-[2.6rem]",
+          sequence && "max-lg:break-keep",
+          dark && "text-primary-foreground",
+        )}
+      >
+        {title}
+      </h2>
       {sub && <p className={cn("mt-3 text-base leading-relaxed", dark ? "text-primary-foreground/70" : "text-muted-foreground")}>{sub}</p>}
     </div>
   );
@@ -91,7 +104,8 @@ export function SampleBadge({ className, label }: { className?: string; label?: 
   return (
     <span
       title={tc("sampleHint")}
-      className={cn("rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground", className)}
+      // 12px below lg (a caller's own size still applies from lg).
+      className={cn("rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground max-lg:text-xs", className)}
     >
       {label ?? tc("sample")}
     </span>

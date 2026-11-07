@@ -3,7 +3,20 @@ import { getT } from "@/i18n/server";
 import { COMMUNITIES } from "@/lib/config";
 import { formatNumber, formatPct } from "@/lib/format";
 import { MIN_SAMPLE, type DistressIndex } from "@/lib/market";
-import { Bar, communityLabel, NotEnough, Panel, PanelHeader, signedPct } from "./shared";
+import {
+  Bar,
+  communityLabel,
+  NotEnough,
+  Panel,
+  PanelHeader,
+  ROW_END,
+  ROW_HEAD,
+  ROW_LINK,
+  ROW_TAP,
+  RowChevron,
+  signedPct,
+  TABLE_HEAD,
+} from "./shared";
 
 /** Discount and % paid by community: a real table, with CSS bars beside the printed values. */
 export async function CommunityTable({ index }: { index: DistressIndex }) {
@@ -16,21 +29,23 @@ export async function CommunityTable({ index }: { index: DistressIndex }) {
     <Panel>
       <PanelHeader id="communities-title" eyebrow={t("communities.eyebrow")} title={t("communities.title")} sub={t("communities.sub")} />
       <table className="w-full table-fixed text-sm" aria-labelledby="communities-title">
+        {/* Phones: a narrower units and discount column, so the name column fits the longest word ("Mohammed",
+            "Beachfront"): names broke mid-word in 90px. */}
         <colgroup>
           <col />
-          <col className="w-12 sm:w-28" />
-          <col className="w-[32%] sm:w-[38%]" />
+          <col className="w-11 sm:w-28" />
+          <col className="w-[28%] sm:w-[38%]" />
           <col className="w-14 sm:w-32" />
         </colgroup>
-        <thead className="bg-secondary/60 text-[11px] uppercase tracking-wider text-muted-foreground rtl:text-xs">
+        <thead className={TABLE_HEAD}>
           <tr>
-            <th scope="col" className="px-4 py-3 text-start font-semibold sm:px-8">
+            <th scope="col" className="px-3 py-3 text-start font-semibold sm:px-8">
               {t("communities.col.community")}
             </th>
-            <th scope="col" className="px-2 py-3 text-end font-semibold sm:px-4">
+            <th scope="col" className="px-1.5 py-3 text-end font-semibold sm:px-4">
               {t("communities.col.units")}
             </th>
-            <th scope="col" className="px-2 py-3 text-start font-semibold sm:px-4">
+            <th scope="col" className="px-1.5 py-3 text-start font-semibold sm:px-4">
               {t("communities.col.discount")}
               <span className="sr-only"> ({t("communities.col.discountSr")})</span>
             </th>
@@ -43,13 +58,14 @@ export async function CommunityTable({ index }: { index: DistressIndex }) {
         <tbody className="divide-y divide-border/70">
           {rows.map((r) => {
             const name = communityLabel(tc, r.name);
+            const linked = COMMUNITIES.includes(r.name);
             return (
-              <tr key={r.name} className="transition-colors hover:bg-secondary/40">
-                <th scope="row" className="break-words px-4 py-4 text-start font-medium sm:px-8">
-                  {COMMUNITIES.includes(r.name) ? (
+              <tr key={r.name} className={ROW_TAP}>
+                <th scope="row" className={`${ROW_HEAD} break-words px-3 py-4 text-start font-medium sm:px-8`}>
+                  {linked ? (
                     <Link
                       href={`/deals?community=${encodeURIComponent(r.name)}`}
-                      className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className={`${ROW_LINK} max-sm:-mx-3 max-sm:-my-4 max-sm:px-3 max-sm:py-4`}
                     >
                       {name}
                     </Link>
@@ -57,15 +73,17 @@ export async function CommunityTable({ index }: { index: DistressIndex }) {
                     name
                   )}
                 </th>
-                <td className="px-2 py-4 text-end tabular sm:px-4">{formatNumber(r.count)}</td>
-                <td className="px-2 py-4 sm:px-4">
+                <td className="px-1.5 py-4 text-end tabular sm:px-4">{formatNumber(r.count)}</td>
+                <td className="px-1.5 py-4 sm:px-4">
                   <span className="block font-semibold tabular">
                     {r.medianDiscount == null ? <NotEnough label={notEnough} /> : signedPct(r.medianDiscount)}
                   </span>
                   {r.medianDiscount != null && <Bar value={r.medianDiscount} max={maxDiscount} tone="success" className="mt-2 max-w-[14rem]" />}
                 </td>
-                <td className="py-4 pe-4 ps-2 text-end tabular sm:pe-8 sm:ps-4">
+                {/* ps-1 on phones: "100%" fits beside the chevron. */}
+                <td className={`${ROW_END} py-4 pe-4 ps-1 text-end tabular sm:pe-8 sm:ps-4`}>
                   {r.medianPaid == null ? <NotEnough label={notEnough} /> : formatPct(r.medianPaid, 0)}
+                  {linked && <RowChevron />}
                 </td>
               </tr>
             );

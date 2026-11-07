@@ -7,13 +7,14 @@ import { getT } from "@/i18n/server";
 export async function CtaBand() {
   const t = await getT("common");
   return (
-    <section className="container-page py-20">
-      <div className="relative isolate overflow-hidden rounded-3xl bg-ink-gradient px-6 py-14 text-primary-foreground shadow-lift sm:px-14 sm:py-16">
+    // Phones: tighter bands (desktop spacing made long empty gaps there).
+    <section className="container-page py-12 sm:py-20">
+      <div className="relative isolate overflow-hidden rounded-3xl bg-ink-gradient px-5 py-10 text-primary-foreground shadow-lift sm:px-14 sm:py-16">
         <div aria-hidden className="absolute inset-0 -z-10 bg-dots-dark opacity-60 mask-fade-b" />
         <div aria-hidden className="absolute -end-24 -top-24 -z-10 h-80 w-80 bg-glow-gold opacity-70" />
         <div className="grid items-center gap-8 lg:grid-cols-[1.4fr_1fr]">
           <div>
-            <h2 className="text-3xl font-semibold leading-tight text-primary-foreground sm:text-4xl">{t("cta.title")}</h2>
+            <h2 className="text-3xl font-semibold leading-tight text-primary-foreground max-lg:text-balance sm:text-4xl">{t("cta.title")}</h2>
             <p className="mt-4 max-w-xl text-primary-foreground/75">{t("cta.body")}</p>
           </div>
           <div className="flex flex-wrap gap-3 lg:justify-end">

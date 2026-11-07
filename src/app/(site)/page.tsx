@@ -157,9 +157,11 @@ export default async function Home() {
             <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1.5 text-xs font-medium text-primary-foreground backdrop-blur">
               <ShieldCheck className="h-3.5 w-3.5 text-gold" /> {t("hero.badge")}
             </p>
-            <h1 className="mt-6 max-w-3xl text-[2.6rem] font-semibold leading-[1.04] text-primary-foreground sm:text-6xl lg:text-7xl">
+            {/* Balanced lines on phones: no orphaned last word (or character, in Chinese). */}
+            <h1 className="mt-6 max-w-3xl text-[2.6rem] font-semibold leading-[1.04] text-primary-foreground max-lg:text-balance sm:text-6xl lg:text-7xl">
               {t("hero.titleStart")}
-              <span className="text-gradient-gold">{t("hero.titleHighlight")}</span>
+              {/* Chinese: the gold phrase (低于开盘价) stays on one line on phones; English and Arabic need to wrap it. */}
+              <span className="text-gradient-gold max-lg:[&:lang(zh)]:whitespace-nowrap">{t("hero.titleHighlight")}</span>
               {t("hero.titleEnd")}
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-primary-foreground/80">{t("hero.sub")}</p>
@@ -194,8 +196,10 @@ export default async function Home() {
       <div className="container-page relative z-10 -mt-14">
         <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border/70 bg-border/70 shadow-lift md:grid-cols-4">
           {strip.map(([label, value]) => (
-            <div key={label} className="bg-card px-5 py-5 sm:px-6">
-              <p className="text-xl font-semibold tabular sm:text-3xl">{value}</p>
+            <div key={label} className="bg-card px-3.5 py-4 sm:px-6 sm:py-5">
+              {/* Phones: sized to the half-width cell, so every value is one line from 390px ("AED 659.76M" no longer
+                  breaks after "AED"); on smaller phones only the longest wrap, at their space ("2% / commission"). */}
+              <p className="text-[length:clamp(1rem,4.6vw,1.25rem)]/7 font-semibold tabular sm:text-3xl">{value}</p>
               <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                 {liveData && <span className="h-1.5 w-1.5 motion-safe:animate-pulse rounded-full bg-success" aria-hidden />}
                 {label}
@@ -205,8 +209,8 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Featured deals */}
-      <section className="container-page py-24 reveal">
+      {/* Featured deals (sections: 56px apart on phones, 96px from sm as before) */}
+      <section className="container-page py-14 reveal sm:py-24">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SectionHeading eyebrow={t("featured.eyebrow")} title={t("featured.title")} sub={t("featured.sub")} />
           <Button asChild variant="outline" className="rounded-full">
@@ -217,7 +221,7 @@ export default async function Home() {
         </div>
         {featured.length ? (
           <>
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid gap-6 sm:mt-12 sm:grid-cols-2 lg:grid-cols-3">
               {featured.map((d) => (
                 <DealCard key={d.id} deal={d} watching={watched.has(d.id)} />
               ))}
@@ -230,7 +234,7 @@ export default async function Home() {
             )}
           </>
         ) : (
-          <div className="mt-12 rounded-3xl border border-dashed bg-card p-12 text-center">
+          <div className="mt-8 rounded-3xl border border-dashed bg-card p-8 text-center sm:mt-12 sm:p-12">
             <p className="font-display text-xl font-semibold">{t("featured.emptyTitle")}</p>
             <p className="mt-2 text-sm text-muted-foreground">{t("featured.emptyBody")}</p>
             <Button asChild className="mt-6">
@@ -244,21 +248,31 @@ export default async function Home() {
       <NewsletterBand defaultEmail={prefillEmail(user)} />
 
       {/* How it works */}
-      <section className="relative isolate overflow-hidden bg-secondary py-24">
+      <section className="relative isolate overflow-hidden bg-secondary py-14 sm:py-24">
         <div aria-hidden className="absolute inset-0 -z-10 bg-grid-light mask-fade-b" />
         <div className="container-page reveal">
           <SectionHeading center eyebrow={tc("howItWorks")} title={t("how.title")} sub={t("how.sub")} />
-          <div className="mt-14 grid gap-6">
+          <div className="mt-8 grid gap-6 sm:mt-14">
             <StepsFlow title={t("how.sellers")} steps={SELLER_STEPS} tone="ink" />
             <StepsFlow title={t("how.buyers")} steps={BUYER_STEPS} tone="gold" />
           </div>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <Button asChild variant="outline" className="rounded-full bg-card">
+          {/* Phones: full-width buttons whose label may wrap ("Behind on payments? Compare your options" is wider
+              than a 320px screen and was cut off on both sides). */}
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:gap-4">
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-full bg-card max-sm:h-auto max-sm:min-h-11 max-sm:w-full max-sm:whitespace-normal max-sm:py-2.5 max-sm:text-center max-sm:leading-snug"
+            >
               <Link href="/exit-calculator">
                 <Calculator aria-hidden /> {t("how.exitLink")}
               </Link>
             </Button>
-            <Button asChild variant="ghost" className="rounded-full">
+            <Button
+              asChild
+              variant="ghost"
+              className="rounded-full max-sm:h-auto max-sm:min-h-11 max-sm:w-full max-sm:whitespace-normal max-sm:py-2.5 max-sm:text-center max-sm:leading-snug"
+            >
               <Link href="/market">
                 <ChartNoAxesColumn aria-hidden /> {t("how.indexLink")} <ArrowRight className="rtl:-scale-x-100" aria-hidden />
               </Link>
@@ -271,7 +285,7 @@ export default async function Home() {
       <SellerEstimateSection signedIn={!!user} />
 
       {/* Pricing */}
-      <section className="container-page grid items-center gap-12 overflow-x-clip py-24 reveal lg:grid-cols-2">
+      <section className="container-page grid items-center gap-10 overflow-x-clip py-14 reveal sm:gap-12 sm:py-24 lg:grid-cols-2">
         <div>
           <SectionHeading eyebrow={t("pricing.eyebrow")} title={t("pricing.title")} sub={t("pricing.sub")} />
           <Button asChild variant="link" className="mt-6 px-0">
@@ -287,12 +301,12 @@ export default async function Home() {
       </section>
 
       {/* Trust */}
-      <section className="relative isolate overflow-hidden bg-ink-gradient py-24 text-primary-foreground">
+      <section className="relative isolate overflow-hidden bg-ink-gradient py-14 text-primary-foreground sm:py-24">
         <div aria-hidden className="absolute inset-0 -z-10 bg-dots-dark opacity-50 mask-fade-b" />
         <div aria-hidden className="absolute -end-40 -top-20 -z-10 h-96 w-96 bg-glow-gold opacity-30" />
         <div className="container-page reveal">
           <SectionHeading tone="dark" eyebrow={t("trust.eyebrow")} title={t("trust.title")} />
-          <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-4 sm:mt-12 md:grid-cols-2 lg:grid-cols-3">
             <div className="flex flex-col justify-between rounded-3xl p-7 glass-dark md:row-span-2">
               <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gold text-gold-foreground shadow-gold">
                 <ShieldCheck className="h-6 w-6" />
@@ -335,7 +349,7 @@ export default async function Home() {
       </section>
 
       {/* FAQ */}
-      <section className="container-page grid gap-12 py-24 reveal lg:grid-cols-[1fr_1.6fr]">
+      <section className="container-page grid gap-8 py-14 reveal sm:gap-12 sm:py-24 lg:grid-cols-[1fr_1.6fr]">
         <div>
           <SectionHeading eyebrow={t("faq.eyebrow")} title={t("faq.title")} />
           <div className="mt-8 rounded-2xl border bg-card p-6 shadow-card">

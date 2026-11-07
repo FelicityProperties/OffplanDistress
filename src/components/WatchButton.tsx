@@ -75,11 +75,13 @@ export function WatchButton({
       aria-label={label}
       title={label}
       className={cn(
-        "grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-card/90 shadow-sm ring-1 ring-ink/5 backdrop-blur transition hover:scale-110 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70",
+        "relative grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-card/90 shadow-sm ring-1 ring-ink/5 backdrop-blur transition hover:scale-110 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70",
+        // Phones: a target 8px larger than the circle (44px for this 36px one), and a press state.
+        "max-lg:active:scale-95 max-lg:after:absolute max-lg:after:-inset-1 max-lg:after:rounded-full max-lg:after:content-['']",
         className,
       )}
     >
-      <Heart className={cn("h-4 w-4", optimistic ? "fill-destructive text-destructive" : "text-foreground")} />
+      <Heart className={cn("h-4 w-4 max-lg:h-[1.125rem] max-lg:w-[1.125rem]", optimistic ? "fill-destructive text-destructive" : "text-foreground")} />
     </button>
   );
 }
