@@ -1,10 +1,11 @@
 "use client";
 
-import { useId, useLayoutEffect, useRef, useState, useTransition, type ComponentProps, type MouseEvent } from "react";
+import { useId, useRef, useState, useTransition, type ComponentProps, type MouseEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, Info } from "lucide-react";
 import { toast } from "sonner";
 import { respondToOffer } from "@/app/actions/market";
+import { useAmountField } from "@/components/amount-field";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs } from "@/components/ui/tabs";
 import { useLocale, useT } from "@/i18n/client";
 import type { ListingStatusKey } from "@/lib/config";
-import { formatAED, formatNumber } from "@/lib/format";
+import { formatAED } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type Status = "pending" | "accepted" | "declined" | "countered" | "withdrawn";
@@ -119,16 +120,11 @@ function useConfirm() {
   return { confirm, sheet };
 }
 
-/** Arabic-Indic and Persian digits (typed on an Arabic keyboard) as Latin ones. */
-function latinDigits(s: string) {
-  return s.replace(/[٠-٩۰-۹]/g, (d) => String((d.charCodeAt(0) & 0xf) % 10));
-}
-
 /**
  * A whole-dirham amount: the currency beside it ("AED" before it, "درهم" after it in Arabic, as formatAED writes them),
- * thousands separators as it is typed (the caret stays after the same digit) and the number pad on a phone. Controlled
- * (`value` / `onValue`, digits only) or, in a form, uncontrolled from `defaultValue`, with the digits sent under `name`:
- * the server reads a plain number, not "820,000".
+ * thousands separators as it is typed (the caret stays after the same digit; typed fils never count: useAmountField)
+ * and the number pad on a phone. Controlled (`value` / `onValue`, digits only) or, in a form, uncontrolled from
+ * `defaultValue`, with the digits sent under `name`: the server reads a plain number, not "820,000".
  */
 export function AedInput({
   id,
@@ -149,20 +145,7 @@ export function AedInput({
   const locale = useLocale();
   const [own, setOwn] = useState(defaultValue == null ? "" : String(defaultValue));
   const digits = value ?? own;
-  const text = digits ? formatNumber(Number(digits)) : "";
-  const ref = useRef<HTMLInputElement>(null);
-  const digitsBeforeCaret = useRef<number | null>(null);
-  const lastKey = useRef<string | null>(null);
-
-  useLayoutEffect(() => {
-    const el = ref.current;
-    const want = digitsBeforeCaret.current;
-    if (!el || want == null || document.activeElement !== el) return;
-    digitsBeforeCaret.current = null;
-    let pos = 0;
-    for (let seen = 0; pos < text.length && seen < want; pos++) if (/\d/.test(text[pos])) seen++;
-    el.setSelectionRange(pos, pos);
-  }, [text]);
+  const field = useAmountField(digits, onValue ?? setOwn, 12);
 
   const unit = (
     <span aria-hidden className="shrink-0 text-sm font-medium text-muted-foreground">
@@ -179,35 +162,16 @@ export function AedInput({
     >
       {locale !== "ar" && unit}
       <input
-        ref={ref}
+        ref={field.ref}
         id={id}
         type="text"
         inputMode="numeric"
         autoComplete="off"
         dir="ltr"
-        value={text}
-        onKeyDown={(e) => {
-          lastKey.current = e.key;
-        }}
-        onChange={(e) => {
-          // Whole dirhams: a statement's "540,000.00" keeps 540,000, not 54,000,000.
-          const raw = latinDigits(e.target.value).replace(/[.٫]\d{0,2}$/, "");
-          const caret = Math.min(e.target.selectionStart ?? raw.length, raw.length);
-          let before = raw.slice(0, caret).replace(/\D/g, "").length;
-          let next = raw.replace(/\D/g, "");
-          // Backspace / Delete on a thousands separator takes the digit beside it.
-          if (next === digits && raw.length < text.length) {
-            if (lastKey.current === "Backspace" && before > 0) {
-              next = next.slice(0, before - 1) + next.slice(before);
-              before -= 1;
-            } else if (lastKey.current === "Delete") next = next.slice(0, before) + next.slice(before + 1);
-          }
-          const lead = next.length - next.replace(/^0+(?=\d)/, "").length;
-          next = next.slice(lead, lead + 12);
-          digitsBeforeCaret.current = Math.max(0, before - lead);
-          if (onValue) onValue(next);
-          else setOwn(next);
-        }}
+        value={field.text}
+        onKeyDown={field.onKeyDown}
+        onChange={field.onChange}
+        onBlur={field.onBlur}
         // w-0: it fills the box (flex-1) but adds no width of its own; an input is 20 characters wide by default, 320 px
         // in the Arabic font, which pushed the counter dialog past a phone's screen.
         className="h-full w-0 min-w-0 flex-1 bg-transparent py-1 text-base outline-none placeholder:text-muted-foreground md:text-sm"
