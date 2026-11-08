@@ -41,7 +41,16 @@ export function MobileMenu({
           {unread && <span aria-hidden className="absolute end-2 top-2 h-2 w-2 rounded-full bg-gold ring-2 ring-background" />}
         </Button>
       </SheetTrigger>
-      <SheetContent side="end" className="w-72 overflow-y-auto" onClick={closeOnLink} onSubmit={() => setOpenOn(null)}>
+      <SheetContent
+        side="end"
+        className="w-72 overflow-y-auto"
+        onClick={closeOnLink}
+        onSubmit={() => setOpenOn(null)}
+        onCloseAutoFocus={(e) => {
+          // "Install the app" opened the install card, which took focus (src/components/app/InstallPrompt.tsx): it stays.
+          if (document.activeElement?.closest("[data-install-card]")) e.preventDefault();
+        }}
+      >
         <SheetTitle className="sr-only">{title}</SheetTitle>
         {children}
       </SheetContent>

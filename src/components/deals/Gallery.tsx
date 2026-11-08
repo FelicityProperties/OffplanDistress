@@ -45,6 +45,8 @@ export function Gallery({ images, alt, badge }: { images: string[]; alt: string;
   const rtl = useDir() === "rtl";
   const [img, setImg] = useState(0);
   const [viewer, setViewer] = useState(false);
+  // The photo's own button opens the viewer (not a dialog trigger, for the swipe guard): closed, focus goes back to it.
+  const opener = useRef<HTMLButtonElement>(null);
   const swipe = useRef<Swipe | null>(null);
   // When the last swipe ended: a click some browsers still send after it must not open the viewer.
   const swipedAt = useRef(-1e9);
@@ -102,6 +104,7 @@ export function Gallery({ images, alt, badge }: { images: string[]; alt: string;
         {images.length > 0 && (
           // Phones and tablets: the photo opens the viewer (under the badges, arrows and counter).
           <button
+            ref={opener}
             type="button"
             onClick={(e) => e.timeStamp - swipedAt.current > 500 && setViewer(true)}
             aria-label={td("gallery.open")}
@@ -176,6 +179,11 @@ export function Gallery({ images, alt, badge }: { images: string[]; alt: string;
           <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
           <DialogPrimitive.Content
             aria-describedby={undefined}
+            onCloseAutoFocus={(e) => {
+              // No trigger to return to (Radix's default would leave focus on the page itself).
+              e.preventDefault();
+              opener.current?.focus({ preventScroll: true });
+            }}
             className="fixed inset-0 z-50 flex flex-col text-white outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
             style={{
               paddingTop: "env(safe-area-inset-top, 0px)",

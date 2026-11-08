@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { Ellipsis, Share, SquarePlus, X } from "lucide-react";
 import { LogoMark } from "@/components/Logo";
@@ -115,14 +115,24 @@ export function InstallPrompt() {
     return () => clearTimeout(timer);
   }, [pathname, platform, standalone]);
 
-  // The menu's "Install the app": now, on any page, however often it was turned down.
+  // The menu's "Install the app": now, on any page, however often it was turned down. Asked for, the card takes focus
+  // once it is on screen and the menu has let go of it (its title is read out, its steps follow); the menu, closing,
+  // leaves focus there (MobileMenu.tsx).
+  const [asked, setAsked] = useState(0);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     const open = () => {
-      if (platform && !isStandalone()) setOpenOn(pathname);
+      if (!platform || isStandalone()) return;
+      setOpenOn(pathname);
+      setAsked((n) => n + 1);
     };
     window.addEventListener(INSTALL_OPEN_EVENT, open);
     return () => window.removeEventListener(INSTALL_OPEN_EVENT, open);
   }, [pathname, platform]);
+
+  useEffect(() => {
+    if (asked) titleRef.current?.focus({ preventScroll: true });
+  }, [asked]);
 
   const open = openOn !== null;
   useEffect(() => {
@@ -145,7 +155,8 @@ export function InstallPrompt() {
   };
 
   return (
-    // Not focused when it appears (it must not steal the page's focus); hidden while the keyboard is up.
+    // Not focused when it appears by itself (it must not steal the page's focus), only when asked for from the menu;
+    // hidden while the keyboard is up.
     <section
       role="region"
       aria-labelledby={titleId}
@@ -157,7 +168,7 @@ export function InstallPrompt() {
         <LogoMark className="h-11 w-11" />
         <div className="min-w-0 flex-1 pt-0.5">
           {/* Clear of the close button in the corner; a Chinese word (应用) is never split across lines. */}
-          <h2 id={titleId} className="text-balance break-keep pe-9 text-base font-semibold leading-snug">
+          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="text-balance break-keep pe-9 text-base font-semibold leading-snug outline-none">
             {ios ? t("install.iosTitle") : t("install.title")}
           </h2>
           {ios ? (
