@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { updateMyListing } from "@/app/actions/listings";
 import { Field, FormMessage } from "@/components/forms";
 import { selectClass } from "@/components/form-styles";
+import { AedInput } from "@/components/OfferActions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,8 +38,10 @@ export function SellerEditForm(p: Props) {
 
   return (
     // Submitted from onSubmit (not the form's action), so a field that needs fixing doesn't reset what was typed.
+    // grid-cols-1 (minmax(0, 1fr)): an auto column grew with the longest motivation option (380 px in Arabic), past a
+    // 320 px phone.
     <form
-      className="grid gap-4 sm:grid-cols-2"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -46,9 +49,10 @@ export function SellerEditForm(p: Props) {
       }}
     >
       <input type="hidden" name="listingId" value={p.listingId} />
+      {/* Any whole dirham, as the sell form takes (a step of 1,000 once blocked saving 770,500). Amounts show "820,000"
+          with the number pad on a phone; the form still sends 820000. The return key saves the form, so it says "done". */}
       <Field label={t("edit.askingPrice")} htmlFor="askingPrice" error={fe.askingPrice}>
-        {/* Any whole dirham (step 1), as the sell form takes: a step of 1,000 blocked saving a price like 770,500. */}
-        <Input id="askingPrice" name="askingPrice" type="number" min={0} step={1} defaultValue={p.askingPrice} required />
+        <AedInput id="askingPrice" name="askingPrice" defaultValue={p.askingPrice} required enterKeyHint="done" />
       </Field>
       <Field label={t("edit.motivation")} htmlFor="motivation" error={fe.motivation}>
         <select id="motivation" name="motivation" defaultValue={p.motivation} className={selectClass}>
@@ -63,20 +67,13 @@ export function SellerEditForm(p: Props) {
         <Input id="nextInstalmentDate" name="nextInstalmentDate" type="date" defaultValue={p.nextInstalmentDate ?? ""} />
       </Field>
       <Field label={t("edit.nextInstalmentAmount")} htmlFor="nextInstalmentAmount" error={fe.nextInstalmentAmount}>
-        <Input
-          id="nextInstalmentAmount"
-          name="nextInstalmentAmount"
-          type="number"
-          min={0}
-          step={1}
-          defaultValue={p.nextInstalmentAmount ?? ""}
-        />
+        <AedInput id="nextInstalmentAmount" name="nextInstalmentAmount" defaultValue={p.nextInstalmentAmount} enterKeyHint="done" />
       </Field>
       <Field label={t("edit.description")} htmlFor="description" error={fe.description} className="sm:col-span-2">
         <Textarea id="description" name="description" rows={4} maxLength={3000} defaultValue={p.description ?? ""} dir="auto" />
       </Field>
-      <div className="flex items-center gap-3 sm:col-span-2">
-        <Button type="submit" disabled={pending}>
+      <div className="flex items-center gap-3 sm:col-span-2 max-sm:flex-col max-sm:items-stretch">
+        <Button type="submit" disabled={pending} className="max-lg:h-11">
           {pending && <Loader2 className="animate-spin" aria-hidden />}
           {pending ? tc("saving") : t("edit.save")}
         </Button>

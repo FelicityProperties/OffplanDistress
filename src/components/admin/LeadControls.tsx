@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { saveLeadNotes, setLeadStatus } from "@/app/actions/leads";
+import { PHONE_BUTTON } from "@/components/admin/phone";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/i18n/client";
@@ -22,7 +23,8 @@ export function LeadStatusSelect({ id, value }: { id: string; value: LeadStatus 
       aria-label={t("leads.status.label")}
       defaultValue={value}
       disabled={pending}
-      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+      // Below md a full-width 44 px field with 16 px text: iOS zooms into a smaller one when it is tapped.
+      className="h-11 w-full rounded-md border border-input bg-background px-2 text-base md:h-8 md:w-auto md:text-xs"
       onChange={(e) => {
         const select = e.currentTarget;
         const next = select.value as LeadStatus;
@@ -71,10 +73,11 @@ export function LeadNotes({ id, notes }: { id: string; notes: string | null }) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={t("leads.notes.placeholder")}
-        className="min-h-0 text-sm"
+        // 16 px below md, as the select above (iOS zoom).
+        className="min-h-0 text-base md:text-sm"
       />
       {changed && (
-        <Button type="submit" size="sm" variant="outline" disabled={pending}>
+        <Button type="submit" size="sm" variant="outline" className={PHONE_BUTTON} disabled={pending}>
           {pending ? tc("saving") : t("leads.notes.save")}
         </Button>
       )}

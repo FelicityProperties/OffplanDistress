@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useTransition } from "react";
+import { createContext, useContext, useEffect, useId, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { BadgeCheck, Bell, Check, LayoutGrid, List, Loader2, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, BadgeCheck, Bell, Check, LayoutGrid, List, Loader2, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { saveSearch } from "@/app/actions/market";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useLocale, useLocalePath, useT } from "@/i18n/client";
@@ -27,12 +27,24 @@ const YEARS = [2026, 2027, 2028, 2029];
 /** Communities and developers that have listings on the market (lib/listings dealFacets). */
 export type Facets = { communities: string[]; developers: string[] };
 
+/**
+ * The toolbar's transition, shared with the filters sheet it opens: an update started in the sheet shows on the
+ * sheet's "Show N deals" button and on the search box's spinner. The desktop column's panel keeps its own.
+ */
+const SharedTransition = createContext<ReturnType<typeof useTransition> | null>(null);
+
+/** Every filter off (the search text, sort order and view stay). */
+function clearFilters(p: URLSearchParams) {
+  for (const k of [...p.keys()]) if (!["q", "sort", "view"].includes(k)) p.delete(k);
+}
+
 function useParamsUpdater() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const lp = useLocalePath();
-  const [pending, start] = useTransition();
+  const own = useTransition();
+  const [pending, start] = useContext(SharedTransition) ?? own;
 
   function update(mutate: (p: URLSearchParams) => void) {
     const next = new URLSearchParams(params.toString());
@@ -49,7 +61,8 @@ function FilterSection({ title, value, children }: { title: string; value?: Reac
   return (
     <section className="border-t border-border/70 pt-5 first:border-t-0 first:pt-0">
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h3 className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{title}</h3>
+        {/* 12px below lg (phones and the filters sheet), 11px in the desktop column as before. */}
+        <h3 className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground max-lg:text-xs">{title}</h3>
         {value != null && <span className="text-xs font-semibold text-foreground tabular">{value}</span>}
       </div>
       {children}
@@ -84,7 +97,7 @@ function CheckGroup({ label, name, options }: { label: string; name: string; opt
       title={label}
       value={
         count > 0 ? (
-          <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gold-soft px-1.5 text-[11px] text-gold-foreground">
+          <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gold-soft px-1.5 text-[11px] text-gold-foreground max-lg:text-xs">
             {count}
           </span>
         ) : undefined
@@ -97,7 +110,8 @@ function CheckGroup({ label, name, options }: { label: string; name: string; opt
             <label
               key={value}
               className={cn(
-                "inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border py-1.5 ps-2 pe-3 text-xs font-medium transition-colors",
+                // 40px tall below lg: a finger-sized chip (the 8px gap keeps neighbours apart).
+                "inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border py-1.5 ps-2 pe-3 text-xs font-medium transition-colors max-lg:min-h-10 max-lg:py-2 max-lg:ps-2.5 max-lg:pe-3.5",
                 "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1 has-[:focus-visible]:ring-offset-background",
                 on
                   ? "border-ink bg-ink text-primary-foreground shadow-sm"
@@ -220,7 +234,7 @@ function BudgetFilter({
         className="py-1.5"
       />
       {hint && (
-        <p id={hintId} className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+        <p id={hintId} className="mt-3 text-[11px] leading-relaxed text-muted-foreground max-lg:text-xs">
           {hint}
         </p>
       )}
@@ -228,7 +242,11 @@ function BudgetFilter({
   );
 }
 
-export function FilterPanel({ facets }: { facets: Facets }) {
+/** Below lg a select option is 44px tall (32px in the desktop column, as before). */
+const OPTION = "max-lg:min-h-11";
+
+/** `reset`: the "Reset filters" button at the end; the phone sheet has its own in its footer. */
+export function FilterPanel({ facets, reset = true }: { facets: Facets; reset?: boolean }) {
   const t = useT("deals");
   const tc = useT("common");
   const locale = useLocale();
@@ -281,13 +299,15 @@ export function FilterPanel({ facets }: { facets: Facets }) {
           value={handoverBy}
           onValueChange={(v) => update((p) => (v === "any" ? p.delete("handoverBy") : p.set("handoverBy", v)))}
         >
-          <SelectTrigger aria-label={t("filters.handoverBy")} className="h-10 rounded-xl bg-background">
+          <SelectTrigger aria-label={t("filters.handoverBy")} className="h-10 rounded-xl bg-background max-lg:h-11">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="any">{t("filters.anyTime")}</SelectItem>
+            <SelectItem value="any" className={OPTION}>
+              {t("filters.anyTime")}
+            </SelectItem>
             {YEARS.map((y) => (
-              <SelectItem key={y} value={String(y)}>
+              <SelectItem key={y} value={String(y)} className={OPTION}>
                 {t("filters.endOfYear", { year: y })}
               </SelectItem>
             ))}
@@ -310,24 +330,42 @@ export function FilterPanel({ facets }: { facets: Facets }) {
           />
         </label>
       </section>
-      <Button
-        variant="outline"
-        className="w-full rounded-xl"
-        onClick={() =>
-          update((p) => {
-            for (const k of [...p.keys()]) if (!["q", "sort", "view"].includes(k)) p.delete(k);
-          })
-        }
-      >
-        <RotateCcw />
-        {t("filters.reset")}
-      </Button>
+      {reset && (
+        <Button variant="outline" className="w-full rounded-xl" onClick={() => update(clearFilters)}>
+          <RotateCcw />
+          {t("filters.reset")}
+        </Button>
+      )}
     </div>
   );
 }
 
-/** Search, mobile filters sheet, sort and grid/list toggle — a sticky glass bar on desktop. */
-export function DealsToolbar({ activeCount = 0, facets }: { activeCount?: number; facets: Facets }) {
+const SORTS = ["discount", "cash", "handover", "newest"] as const;
+
+/** The filters sheet's side padding: 20px, or more where a landscape phone's notch is (viewport-fit=cover). */
+const GUTTER = "max(1.25rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px))";
+
+type ToolbarProps = {
+  activeCount?: number;
+  facets: Facets;
+  /** Deals the current filters find: the filters sheet's "Show N deals" button. */
+  total: number;
+};
+
+/**
+ * Search, the filters sheet (below lg), sort and the grid/list toggle: one sticky glass bar on desktop, two rows below
+ * lg (search on its own, so its hint fits).
+ */
+export function DealsToolbar(props: ToolbarProps) {
+  const transition = useTransition();
+  return (
+    <SharedTransition.Provider value={transition}>
+      <Toolbar {...props} />
+    </SharedTransition.Provider>
+  );
+}
+
+function Toolbar({ activeCount = 0, facets, total }: ToolbarProps) {
   const t = useT("deals");
   const { params, update, pending } = useParamsUpdater();
   const paramQ = params.get("q") ?? "";
@@ -336,7 +374,17 @@ export function DealsToolbar({ activeCount = 0, facets }: { activeCount?: number
   // clobbering what the visitor is still typing while their own search loads.
   const pushed = useRef(paramQ);
   const sort = params.get("sort") ?? "discount";
+  const sortKey = (SORTS as readonly string[]).includes(sort) ? (sort as (typeof SORTS)[number]) : "discount";
   const view = params.get("view") === "list" ? "list" : "grid";
+
+  function search(text: string) {
+    const next = text.trim();
+    // pushed: the search key and the debounce below can both send the same query before the URL has it.
+    if (paramQ !== next && pushed.current !== next) {
+      pushed.current = next;
+      update((p) => (next ? p.set("q", next) : p.delete("q")));
+    }
+  }
 
   useEffect(() => {
     if (paramQ !== pushed.current) {
@@ -346,13 +394,7 @@ export function DealsToolbar({ activeCount = 0, facets }: { activeCount?: number
   }, [paramQ]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const next = q.trim();
-      if (paramQ !== next) {
-        pushed.current = next;
-        update((p) => (next ? p.set("q", next) : p.delete("q")));
-      }
-    }, 400);
+    const timer = setTimeout(() => search(q), 400);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
@@ -360,9 +402,19 @@ export function DealsToolbar({ activeCount = 0, facets }: { activeCount?: number
   return (
     <div
       data-sticky-toolbar
-      className="z-30 mt-6 flex flex-col gap-2 rounded-2xl border border-border/60 bg-card/85 p-2 shadow-card backdrop-blur-xl backdrop-saturate-150 sm:flex-row sm:items-center lg:sticky lg:top-20"
+      className="z-30 mt-6 flex flex-col gap-2 rounded-2xl border border-border/60 bg-card/85 p-2 shadow-card backdrop-blur-xl backdrop-saturate-150 lg:sticky lg:top-20 lg:flex-row lg:items-center"
     >
-      <div className="relative flex-1">
+      {/* Enter (the phone keyboard's search key) runs the search at once; on a touch screen it also puts the keyboard
+          away. */}
+      <form
+        role="search"
+        className="relative flex-1"
+        onSubmit={(e) => {
+          e.preventDefault();
+          search(q);
+          if (window.matchMedia("(pointer: coarse)").matches) (document.activeElement as HTMLElement | null)?.blur();
+        }}
+      >
         {pending ? (
           <Loader2 className="absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gold" aria-hidden />
         ) : (
@@ -372,33 +424,75 @@ export function DealsToolbar({ activeCount = 0, facets }: { activeCount?: number
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t("search.placeholder")}
-          className="h-11 rounded-xl border-border/70 bg-background/80 ps-10 shadow-none focus-visible:ring-2"
+          inputMode="search"
+          enterKeyHint="search"
+          className="peer h-11 rounded-xl border-border/70 bg-background/80 ps-10 shadow-none focus-visible:ring-2 max-sm:placeholder:text-transparent"
           aria-label={t("search.label")}
         />
-      </div>
+        {/* Phones: a shorter hint in the placeholder's place (the full one, cut off there, stays for screen readers). */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 start-10 end-3 hidden truncate text-base leading-[2.75rem] text-muted-foreground max-sm:peer-placeholder-shown:block"
+        >
+          {t("search.placeholderShort")}
+        </span>
+      </form>
       <div className="flex items-center gap-2">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" className="h-11 rounded-xl bg-background/80 shadow-none lg:hidden">
+            <Button variant="outline" className="h-11 rounded-xl bg-background/80 shadow-none max-sm:flex-1 lg:hidden">
               <SlidersHorizontal />
               {t("filters.title")}
               {activeCount > 0 && (
                 <span
                   aria-hidden
-                  className="grid h-5 min-w-5 place-items-center rounded-full bg-ink px-1.5 text-[11px] font-semibold text-primary-foreground tabular"
+                  className="grid h-5 min-w-5 place-items-center rounded-full bg-ink px-1.5 text-xs font-semibold text-primary-foreground tabular"
                 >
                   {activeCount}
                 </span>
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="start" className="overflow-y-auto p-6">
-            <SheetTitle className="inline-flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4 text-gold" aria-hidden />
-              {t("filters.title")}
-            </SheetTitle>
-            <div className="mt-6">
-              <FilterPanel facets={facets} />
+          {/* A bottom sheet nearly the screen's height: the title row, the filters scrolling under it, and a footer
+              that stays with the live count. Its own padding (and safe areas) move into those rows. */}
+          <SheetContent
+            side="bottom"
+            className="flex h-[calc(100dvh-2.5rem)] flex-col gap-0 rounded-t-3xl p-0 sm:mx-auto sm:max-w-2xl"
+            style={{ paddingBottom: 0, paddingInline: 0 }}
+          >
+            <div aria-hidden className="absolute inset-x-0 top-2 mx-auto h-1.5 w-10 rounded-full bg-muted-foreground/30" />
+            {/* 60px tall: the sheet's close button sits on its end side, centred on the same line. */}
+            <div className="flex h-15 shrink-0 items-center gap-2 border-b border-border/70 pe-16" style={{ paddingInlineStart: GUTTER }}>
+              <SheetTitle className="inline-flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4 text-gold" aria-hidden />
+                {t("filters.title")}
+              </SheetTitle>
+              {activeCount > 0 && (
+                <span className="rounded-full bg-ink px-2.5 py-0.5 text-xs font-semibold text-primary-foreground tabular">
+                  {t("filters.active", { n: activeCount })}
+                </span>
+              )}
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6 pt-5" style={{ paddingInline: GUTTER }}>
+              <FilterPanel facets={facets} reset={false} />
+            </div>
+            <div
+              className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] gap-3 border-t border-border/70 bg-background pt-3"
+              style={{ paddingInline: GUTTER, paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
+            >
+              {/* "Clear all" (the results' chip row word): shorter than "Reset filters", so the count fits at 320px. */}
+              <Button variant="outline" className="h-12 rounded-xl" disabled={activeCount === 0} onClick={() => update(clearFilters)}>
+                <RotateCcw />
+                {t("chips.clearAll")}
+              </Button>
+              <SheetClose asChild>
+                <Button className="h-12 min-w-0 rounded-xl">
+                  {pending && <Loader2 className="animate-spin" aria-hidden />}
+                  <span aria-live="polite" className="truncate">
+                    {pending ? t("filters.updating") : t(total === 1 ? "filters.showOne" : "filters.showMany", { count: total })}
+                  </span>
+                </Button>
+              </SheetClose>
             </div>
           </SheetContent>
         </Sheet>
@@ -406,21 +500,40 @@ export function DealsToolbar({ activeCount = 0, facets }: { activeCount?: number
           {t("sort.label")}
         </Label>
         <Select value={sort} onValueChange={(v) => update((p) => p.set("sort", v))}>
-          <SelectTrigger id="sort" className="h-11 min-w-0 flex-1 rounded-xl border-border/70 bg-background/80 shadow-none sm:w-52 sm:flex-none">
-            <SelectValue />
+          <SelectTrigger
+            id="sort"
+            className="h-11 min-w-0 flex-1 rounded-xl border-border/70 bg-background/80 shadow-none max-sm:justify-center max-sm:gap-2 sm:w-52 sm:flex-none"
+          >
+            {/* Phones: "Sort" and an icon, as the orders don't fit there (the current one is ticked in the list, and
+                read out); from sm the current order, as before. */}
+            <ArrowUpDown className="h-4 w-4 shrink-0 text-muted-foreground sm:hidden" aria-hidden />
+            <SelectValue>
+              <span aria-hidden className="sm:hidden">
+                {t("sort.label")}
+              </span>
+              <span className="max-sm:sr-only">{t(`sort.${sortKey}`)}</span>
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="discount">{t("sort.discount")}</SelectItem>
-            <SelectItem value="cash">{t("sort.cash")}</SelectItem>
-            <SelectItem value="handover">{t("sort.handover")}</SelectItem>
-            <SelectItem value="newest">{t("sort.newest")}</SelectItem>
+            <SelectItem value="discount" className={OPTION}>
+              {t("sort.discount")}
+            </SelectItem>
+            <SelectItem value="cash" className={OPTION}>
+              {t("sort.cash")}
+            </SelectItem>
+            <SelectItem value="handover" className={OPTION}>
+              {t("sort.handover")}
+            </SelectItem>
+            <SelectItem value="newest" className={OPTION}>
+              {t("sort.newest")}
+            </SelectItem>
           </SelectContent>
         </Select>
         <ToggleGroup
           type="single"
           value={view}
           onValueChange={(v) => v && update((p) => (v === "list" ? p.set("view", "list") : p.delete("view")))}
-          className="hidden h-11 rounded-xl bg-muted/80 p-1 sm:flex"
+          className="hidden h-11 rounded-xl bg-muted/80 p-1 sm:ms-auto sm:flex"
         >
           {(
             [
@@ -457,7 +570,7 @@ export function SaveSearchButton({ summary, tone = "subtle" }: { summary: string
     <Button
       variant={tone === "cta" ? "default" : "outline"}
       size={tone === "cta" ? "default" : "sm"}
-      className={cn("rounded-full", tone === "subtle" && "h-9 bg-card px-4 shadow-none")}
+      className={cn("rounded-full", tone === "subtle" && "h-9 bg-card px-4 shadow-none max-lg:h-11", tone === "cta" && "max-lg:h-11")}
       disabled={pending || saved}
       onClick={() =>
         start(async () => {

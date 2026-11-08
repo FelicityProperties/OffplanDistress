@@ -52,7 +52,8 @@ export default defineMessages({
     "featured.emptyBody": "Create a free account and save a search to hear first when units go live.",
     "featured.emptyCta": "Get early access",
 
-    "how.title": "Verify → List → Match → Transfer",
+    // A no-break space before each arrow: a wrapped line never starts with one (SectionHeading breaks between steps).
+    "how.title": "Verify\u00a0→ List\u00a0→ Match\u00a0→ Transfer",
     "how.sellers": "For sellers",
     "how.buyers": "For buyers",
     "how.exitLink": "Behind on payments? Compare your options",
@@ -166,7 +167,7 @@ export default defineMessages({
     "featured.emptyBody": "أنشئ حساباً مجانياً واحفظ بحثك لتكون أول من يعلم عند نشر الوحدات.",
     "featured.emptyCta": "احصل على وصول مبكر",
 
-    "how.title": "التوثيق ← النشر ← المطابقة ← نقل الملكية",
+    "how.title": "التوثيق\u00a0← النشر\u00a0← المطابقة\u00a0← نقل الملكية",
     "how.sellers": "للبائعين",
     "how.buyers": "للمشترين",
     "how.exitLink": "متأخر في الدفعات؟ قارن خياراتك",
@@ -281,7 +282,7 @@ export default defineMessages({
     "featured.emptyBody": "免费注册账户并保存搜索条件，新房源上线时第一时间通知您。",
     "featured.emptyCta": "抢先了解",
 
-    "how.title": "核实 → 挂牌 → 撮合 → 过户",
+    "how.title": "核实\u00a0→ 挂牌\u00a0→ 撮合\u00a0→ 过户",
     "how.sellers": "卖家流程",
     "how.buyers": "买家流程",
     "how.exitLink": "分期款逾期？比较您的退出方案",

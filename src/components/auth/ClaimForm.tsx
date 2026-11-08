@@ -59,6 +59,7 @@ export function ClaimForm({
               dir="ltr"
               required
               autoComplete="email"
+              enterKeyHint="next"
               defaultValue={email}
               aria-invalid={fe.email ? true : undefined}
             />
@@ -71,6 +72,7 @@ export function ClaimForm({
               required
               minLength={8}
               autoComplete="new-password"
+              enterKeyHint="next"
               aria-invalid={fe.password ? true : undefined}
             />
           </Field>
@@ -82,6 +84,7 @@ export function ClaimForm({
               required
               minLength={8}
               autoComplete="new-password"
+              enterKeyHint="go"
               aria-invalid={fe.confirm ? true : undefined}
             />
           </Field>

@@ -377,7 +377,9 @@ export function RankTable({
   if (rows.length === 0) return <p className="py-6 text-center text-sm text-muted-foreground">{empty}</p>;
   const max = Math.max(1, ...rows.map((r) => r.bar ?? 0));
   return (
-    <table className="w-full table-fixed text-sm" aria-label={label} data-table={testId}>
+    // Phones: the columns take their content's width (fixed thirds ran "Conversion" and "800.0%" past the card at
+    // 320px); from sm as before.
+    <table className="w-full table-fixed text-sm max-sm:table-auto" aria-label={label} data-table={testId}>
       <thead className="text-xs text-muted-foreground">
         <tr className="border-b border-border/70">
           {cols.map((c, i) => (
@@ -395,7 +397,9 @@ export function RankTable({
         {rows.map((r) => (
           <tr key={r.key} data-row={r.key}>
             <th scope="row" className="py-2.5 pe-2 text-start font-medium">
-              <span className="block wrap-anywhere">{r.head}</span>
+              {/* Words stay whole (the phone layout sizes this column by its longest word); paths, codes and other
+                  long tokens come in a bdi and may break anywhere. */}
+              <span className="block break-words [&_bdi]:wrap-anywhere">{r.head}</span>
               {r.bar != null && <Bar value={r.bar} max={max} className="mt-1.5" />}
             </th>
             {r.cells.map((c, i) => (
@@ -534,7 +538,11 @@ export function Journeys({ leads, locale, t, ta }: { leads: LeadJourney[]; local
           <li key={`${l.kind}-${l.id}`} className="py-4 first:pt-0 last:pb-0" data-lead={l.id}>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <StatusPill tone={LEAD_TONE[l.kind]}>{t(`kind.${l.kind}`)}</StatusPill>
-              <Link href={leadHref(l)} className="min-w-0 font-semibold wrap-anywhere underline-offset-4 hover:underline">
+              <Link
+                href={leadHref(l)}
+                // Phones: a 40px tap target (the line was 24px).
+                className="min-w-0 font-semibold wrap-anywhere underline-offset-4 hover:underline max-lg:inline-flex max-lg:min-h-10 max-lg:items-center"
+              >
                 {l.label || "—"}
               </Link>
               {ref && <bdi className="text-xs font-medium text-muted-foreground tabular">{ref}</bdi>}

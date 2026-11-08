@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowLeftRight, Building2, Check, Landmark, ShieldCheck, Wallet, X } from "lucide-react";
+import { Building2, Check, Landmark, ShieldCheck, Wallet, X } from "lucide-react";
 import { CtaBand } from "@/components/CtaBand";
 import { FeeCalculator } from "@/components/FeeCalculator";
 import { SectionHeading } from "@/components/badges";
@@ -53,6 +53,7 @@ export default async function FeesPage() {
     [t("fees.third.noc"), t("fees.table.paidTo.developer"), t("fees.third.nocValue")],
     [t("fees.third.trustee"), t("fees.table.paidTo.trustee"), t("fees.third.trusteeValue")],
   ] as const;
+  const ours = [t("fees.example.fee", { brand: BRAND.name }), BRAND.name, t("fees.third.oursValue")] as const;
 
   return (
     <>
@@ -119,7 +120,7 @@ export default async function FeesPage() {
                     <c.icon className="h-5 w-5" aria-hidden />
                   </span>
                   {c.estimate && (
-                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground max-lg:text-xs">
                       {t("fees.compare.estimate")}
                     </span>
                   )}
@@ -197,14 +198,31 @@ export default async function FeesPage() {
           <div className="border-b border-border/70 p-6 sm:p-8">
             <h2 className="text-2xl font-semibold">{t("fees.third.title")}</h2>
             <p className="mt-2 text-sm text-muted-foreground">{t("fees.third.sub")}</p>
-            {/* The table is wider than a phone: say so, since the last column starts off-screen. */}
-            <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground md:hidden">
-              <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden />
-              {t("fees.table.scrollHint")}
-            </p>
           </div>
+          {/* Phones: the table is wider than the screen, so each cost is a block with who it's paid to and how it's
+              set under it. The table from md, where it fits. */}
+          <ul className="divide-y divide-border/70 text-sm md:hidden">
+            {[...third, ours].map(([cost, to, how]) => (
+              <li key={cost} className={cn("px-6 py-4", cost === ours[0] && "bg-gold-soft/40")}>
+                <p className={cost === ours[0] ? "font-semibold" : "font-medium"}>{cost}</p>
+                <dl className="mt-2 space-y-2">
+                  {(
+                    [
+                      [t("fees.table.paidTo"), to],
+                      [t("fees.table.amount"), how],
+                    ] as const
+                  ).map(([k, v]) => (
+                    <div key={k}>
+                      <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{k}</dt>
+                      <dd className={cn("mt-0.5", cost === ours[0] ? "font-medium" : "text-muted-foreground")}>{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </li>
+            ))}
+          </ul>
           <div
-            className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring max-md:hidden"
             role="region"
             aria-label={t("fees.third.title")}
             tabIndex={0}
@@ -235,10 +253,10 @@ export default async function FeesPage() {
                 ))}
                 <tr className="bg-gold-soft/40">
                   <th scope="row" className="px-6 py-4 text-start font-semibold sm:px-8">
-                    {t("fees.example.fee", { brand: BRAND.name })}
+                    {ours[0]}
                   </th>
-                  <td className="px-6 py-4 font-medium">{BRAND.name}</td>
-                  <td className="px-6 py-4 font-medium sm:px-8">{t("fees.third.oursValue")}</td>
+                  <td className="px-6 py-4 font-medium">{ours[1]}</td>
+                  <td className="px-6 py-4 font-medium sm:px-8">{ours[2]}</td>
                 </tr>
               </tbody>
             </table>

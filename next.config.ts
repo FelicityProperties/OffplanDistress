@@ -14,7 +14,22 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      { source: "/(.*)", headers: securityHeaders },
+      // The installable app (README, "Installable app"); a later rule wins for the same header. The service worker is
+      // fetched fresh every time, so a fix or the kill switch reaches every phone at once, and may load nothing but our
+      // own scripts. The offline page and the manifests are checked on every use too.
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'" },
+        ],
+      },
+      { source: "/offline.html", headers: [{ key: "Cache-Control", value: "no-cache" }] },
+      { source: "/manifest/:file", headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }] },
+    ];
   },
   turbopack: {
     rules: {

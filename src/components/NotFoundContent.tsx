@@ -32,13 +32,14 @@ export async function NotFoundContent() {
         <p className="mt-6 font-display text-8xl font-semibold leading-none text-gradient-gold tabular">404</p>
         <h1 className="mt-4 text-2xl font-semibold">{t("notFoundTitle")}</h1>
         <p className="mt-2 text-muted-foreground">{t("notFoundBody")}</p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button asChild className="rounded-full">
+        {/* Phones: two full-width 48px buttons, one under the other, in easy reach of a thumb. */}
+        <div className="mt-8 flex flex-wrap justify-center gap-3 max-sm:flex-col">
+          <Button asChild className="rounded-full max-sm:h-12">
             <Link href="/deals">
               {t("browseDeals")} <ArrowRight className="rtl:-scale-x-100" />
             </Link>
           </Button>
-          <Button asChild variant="outline" className="rounded-full">
+          <Button asChild variant="outline" className="rounded-full max-sm:h-12">
             <Link href="/">{t("goHome")}</Link>
           </Button>
         </div>

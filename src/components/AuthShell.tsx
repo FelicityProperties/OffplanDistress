@@ -1,8 +1,32 @@
 import type { ReactNode } from "react";
 import { BadgeCheck, FileSignature, Landmark, Wallet } from "lucide-react";
+import Link from "@/components/LocaleLink";
 import { LogoMark } from "@/components/Logo";
 import { getT } from "@/i18n/server";
 import { AUTH_IMAGE } from "@/lib/content";
+import { cn } from "@/lib/utils";
+
+/**
+ * Under the form, the way to the other screen (log in, sign up, back to log in) after an optional lead-in sentence: a
+ * link in the sentence from lg, a full-width 44 px outline button under it on phones and tablets (it was a 17 px link).
+ */
+export function AuthAltLink({ lead, href, children }: { lead?: string; href: string; children: ReactNode }) {
+  return (
+    <p className="mt-8 border-t border-border/70 pt-6 text-center text-sm text-muted-foreground">
+      {lead && <>{lead} </>}
+      <Link
+        href={href}
+        className={cn(
+          "rounded-sm font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "max-lg:flex max-lg:h-11 max-lg:w-full max-lg:items-center max-lg:justify-center max-lg:rounded-lg max-lg:border max-lg:border-input max-lg:bg-background max-lg:no-underline max-lg:shadow-sm max-lg:active:bg-accent",
+          lead && "max-lg:mt-3",
+        )}
+      >
+        {children}
+      </Link>
+    </p>
+  );
+}
 
 // Trust bullets on the image panel. Copy: home `hero.point.<id>`.
 const POINTS = [
@@ -18,7 +42,12 @@ const POINTS = [
 export async function AuthShell({ title, sub, children }: { title: string; sub: string; children: ReactNode }) {
   const [t, th] = await Promise.all([getT("auth"), getT("home")]);
   return (
-    <div className="grid min-h-[calc(100svh-4.25rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+    <div
+      className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]"
+      // The screen between the header and the bottom tab bar on phones (the app shell's variables: a 56 px header there,
+      // and the bar's height); without them, and from lg, the 68 px header as before.
+      style={{ minHeight: "calc(100svh - var(--app-header-h, 4.25rem) - var(--app-bottom-reserve, 0px))" }}
+    >
       {/* Form side */}
       <div className="relative isolate flex items-center justify-center overflow-hidden px-4 py-12 sm:px-6 sm:py-16">
         <div aria-hidden className="absolute -start-40 -top-40 -z-10 h-[26rem] w-[26rem] bg-glow-gold opacity-25" />

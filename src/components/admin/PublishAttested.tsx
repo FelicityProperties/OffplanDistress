@@ -4,10 +4,27 @@ import { useRef, useState, useTransition } from "react";
 import { Loader2, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { adminPublishAttested, adminPublishAttestedListing, type PublishSkipped } from "@/app/actions/admin";
+import { PHONE_BUTTON } from "@/components/admin/phone";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useT } from "@/i18n/client";
+import { cn } from "@/lib/utils";
+
+/**
+ * Below lg a Cancel button too (a phone has no Escape key, and the corner X is small); while publishing it does nothing,
+ * as the dialog stays open then.
+ */
+function CancelButton() {
+  const tc = useT("common");
+  return (
+    <DialogClose asChild>
+      <Button variant="outline" className="max-lg:h-11 lg:hidden">
+        {tc("cancel")}
+      </Button>
+    </DialogClose>
+  );
+}
 
 /**
  * "Publish all N on Felicity's permits" on the Imported tab of /admin: the account owner's attestation (BULK_ATTESTATION
@@ -25,10 +42,13 @@ export function PublishAttestedButton({ sourceKey, sourceName, count, named }: {
     (["hasPermit", "formAExpired", "changed"] as const).filter((k) => s[k] > 0).map((k) => ti(`publish.skipped.${k}`, { n: s[k] }));
   return (
     <>
+      {/* Phones: as wide as the screen, its label wrapping ("Publish all 79 from DistressStock on Felicity's permits"
+          is wider than a 320 px phone). */}
       <Button
         ref={trigger}
         size="sm"
         data-testid="publish-attested"
+        className={cn(PHONE_BUTTON, "max-sm:h-auto max-sm:min-h-11 max-sm:w-full max-sm:whitespace-normal max-sm:py-2")}
         onClick={() => {
           // The statement is ticked afresh each time the dialog opens.
           setChecked(false);
@@ -53,10 +73,12 @@ export function PublishAttestedButton({ sourceKey, sourceName, count, named }: {
             <Checkbox checked={checked} onCheckedChange={(v) => setChecked(v === true)} className="mt-0.5" data-testid="attest-check" />
             <span className="font-medium">{ti("publish.statement")}</span>
           </label>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
+            <CancelButton />
             <Button
               disabled={!checked || pending}
               data-testid="attest-submit"
+              className="max-lg:h-11"
               onClick={() =>
                 start(async () => {
                   const res = await adminPublishAttested(sourceKey).catch(() => ({ error: ti("publish.failed") }));
@@ -97,6 +119,7 @@ export function PublishAttestedListingButton({ listingId, refCode }: { listingId
         ref={trigger}
         size="sm"
         data-testid="publish-attested-one"
+        className={PHONE_BUTTON}
         onClick={() => {
           setChecked(false);
           setOpen(true);
@@ -119,10 +142,12 @@ export function PublishAttestedListingButton({ listingId, refCode }: { listingId
             <Checkbox checked={checked} onCheckedChange={(v) => setChecked(v === true)} className="mt-0.5" data-testid="attest-check-one" />
             <span className="font-medium">{ti("publish.one.statement")}</span>
           </label>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
+            <CancelButton />
             <Button
               disabled={!checked || pending}
               data-testid="attest-submit-one"
+              className="max-lg:h-11"
               onClick={() =>
                 start(async () => {
                   const res = await adminPublishAttestedListing(listingId).catch(() => ({ error: ti("publish.failed") }));

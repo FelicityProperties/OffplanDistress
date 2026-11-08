@@ -76,6 +76,7 @@ export function NewsletterForm({
           type="email"
           inputMode="email"
           autoComplete="email"
+          enterKeyHint="go"
           required
           maxLength={254}
           dir="ltr"
@@ -85,7 +86,9 @@ export function NewsletterForm({
           aria-invalid={state.error ? true : undefined}
           aria-describedby={state.error ? `${id}-error` : undefined}
           className={cn(
-            "h-11 min-w-0 flex-1 rounded-lg bg-card rtl:text-end",
+            // flex-1 only beside the button: in the stacked column its zero basis squashed the field to 30px.
+            "h-11 min-w-0 rounded-lg bg-card rtl:text-end",
+            !stacked && "sm:flex-1",
             dark &&
               "border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/50 focus-visible:ring-gold",
           )}

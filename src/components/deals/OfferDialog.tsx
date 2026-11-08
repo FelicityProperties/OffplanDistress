@@ -5,6 +5,7 @@ import Link from "@/components/LocaleLink";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { makeOffer } from "@/app/actions/market";
+import { useAmountField } from "@/components/amount-field";
 import { Field, FormMessage } from "@/components/forms";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,55 @@ import { Textarea } from "@/components/ui/textarea";
 import { richText } from "@/content/legal/rich-text";
 import { useLocale, useT } from "@/i18n/client";
 import { formatAED } from "@/lib/format";
+import { cn } from "@/lib/utils";
+
+/** The price card's full-width button; on a phone a long label ("Sign in to make an offer") fits the card or wraps. */
+const CARD_TRIGGER = "w-full max-sm:h-auto max-sm:min-h-12 max-sm:whitespace-normal max-sm:px-4 max-sm:leading-tight";
+/** The deal page's action bar on phones (src/components/deals/DealActionBar.tsx): a compact gold button (narrower
+ * still below 360 px, where the price beside it needs the room). */
+const BAR_TRIGGER = "h-11 rounded-xl px-4 text-sm font-semibold active:scale-[0.98] max-[359px]:px-3";
+
+/**
+ * The offer in whole dirhams, shown with thousands separators while it is typed ("1,723,000") and the caret kept after
+ * the same digit; typed fils show but never count (useAmountField). The form sends the digits alone, under `name`. A
+ * text field with the number pad rather than type="number" (no separators, spinner arrows, a scroll wheel that changes
+ * the figure). On a phone the keyboard's Done key closes the keyboard, as the financing and the message come next; a
+ * desktop Enter still sends the offer.
+ */
+function AmountInput({
+  name,
+  defaultValue,
+  className,
+  ...props
+}: Omit<React.ComponentProps<"input">, "defaultValue" | "value" | "onChange"> & { defaultValue: number }) {
+  const [digits, setDigits] = useState(String(defaultValue));
+  const field = useAmountField(digits, setDigits, 10);
+  return (
+    <>
+      <Input
+        ref={field.ref}
+        {...props}
+        type="text"
+        inputMode="numeric"
+        enterKeyHint="done"
+        autoComplete="off"
+        dir="ltr"
+        value={field.text}
+        onKeyDown={(e) => {
+          field.onKeyDown(e);
+          if (e.key === "Enter" && window.matchMedia("(pointer: coarse)").matches) {
+            e.preventDefault();
+            e.currentTarget.blur();
+          }
+        }}
+        onChange={field.onChange}
+        onBlur={field.onBlur}
+        className={cn("tabular rtl:text-end", className)}
+      />
+      {name && <input type="hidden" name={name} value={digits} />}
+    </>
+  );
+}
 
 export function OfferDialog({
   listingId,
@@ -31,6 +81,7 @@ export function OfferDialog({
   signedIn,
   loginHref,
   disabledReason,
+  variant = "card",
 }: {
   listingId: string;
   project: string;
@@ -38,6 +89,8 @@ export function OfferDialog({
   signedIn: boolean;
   loginHref: string;
   disabledReason?: string;
+  /** "card": the price card's full-width button; "bar": the phone action bar's compact one (nothing when disabled). */
+  variant?: "card" | "bar";
 }) {
   const t = useT("deal");
   const tc = useT("common");
@@ -48,6 +101,7 @@ export function OfferDialog({
   const [pending, start] = useTransition();
   // Names the financing radio group.
   const financingLabel = useId();
+  const bar = variant === "bar";
 
   useEffect(() => {
     if (state.ok) {
@@ -59,17 +113,19 @@ export function OfferDialog({
   }, [state]);
 
   if (disabledReason) {
+    if (bar) return null;
     return (
-      <Button size="lg" variant="gold" className="w-full" disabled>
+      <Button size="lg" variant="gold" className={CARD_TRIGGER} disabled>
         {disabledReason}
       </Button>
     );
   }
 
   if (!signedIn) {
+    // The bar has room for the short label; the login page says why.
     return (
-      <Button asChild size="lg" variant="gold" className="w-full">
-        <Link href={loginHref}>{t("offer.signIn")}</Link>
+      <Button asChild size={bar ? undefined : "lg"} variant="gold" className={bar ? BAR_TRIGGER : CARD_TRIGGER}>
+        <Link href={loginHref}>{t(bar ? "offer.cta" : "offer.signIn")}</Link>
       </Button>
     );
   }
@@ -78,7 +134,7 @@ export function OfferDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" variant="gold" className="w-full">
+        <Button size={bar ? undefined : "lg"} variant="gold" className={bar ? BAR_TRIGGER : CARD_TRIGGER}>
           {t("offer.cta")}
         </Button>
       </DialogTrigger>
@@ -92,14 +148,15 @@ export function OfferDialog({
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
+            // The amount goes as whole dirhams, digits only (AmountInput's hidden field).
             const fd = new FormData(e.currentTarget);
             start(() => action(fd));
           }}
         >
           <input type="hidden" name="listingId" value={listingId} />
           <Field label={t("offer.amount")} htmlFor="amount" error={fe.amount} hint={t("offer.amountHint")}>
-            {/* Any whole dirham (step 1): the asking price itself needn't be a round thousand. 95% is only a suggestion. */}
-            <Input id="amount" name="amount" type="number" min={0} step={1} defaultValue={Math.round((asking * 0.95) / 1000) * 1000} required />
+            {/* Any whole dirham: the asking price itself needn't be a round thousand. 95% is only a suggestion. */}
+            <AmountInput id="amount" name="amount" defaultValue={Math.round((asking * 0.95) / 1000) * 1000} required className="max-md:h-11" />
           </Field>
           <div className="space-y-2">
             <Label id={financingLabel}>{t("offer.financing")}</Label>
@@ -121,6 +178,7 @@ export function OfferDialog({
             </RadioGroup>
           </div>
           <Field label={t("offer.message")} htmlFor="message" error={fe.message} hint={t("offer.messageHint")}>
+            {/* The return key starts a new line: the message may run to several. */}
             <Textarea id="message" name="message" placeholder={t("offer.placeholder")} />
           </Field>
           <FormMessage state={state} />

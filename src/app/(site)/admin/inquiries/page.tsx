@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { HandledToggle, SpamToggle } from "@/components/admin/AdminControls";
+import { AdminTabs } from "@/components/admin/AdminTabs";
+import { PHONE_LINK } from "@/components/admin/phone";
 import { EmptyState, PageTitle } from "@/components/Kpi";
 import { StatusPill } from "@/components/badges";
 import { getLocale, getT } from "@/i18n/server";
@@ -22,26 +24,15 @@ export default async function InquiriesPage({ searchParams }: { searchParams: Pr
       .map((r) => t(`inquiry.reason.${r.code}`, { value: r.value }))
       .join(t("inquiry.reason.sep"));
   const tabs = (
-    <nav aria-label={t("inquiries.tabs")} className="flex flex-wrap gap-1 rounded-lg bg-secondary p-1 text-sm" data-testid="inquiry-tabs">
-      {(
-        [
-          ["inbox", "/admin/inquiries", `${t("inquiries.tab.inbox")} (${counts.inbox})`],
-          ["spam", "/admin/inquiries?view=spam", `${t("inquiries.tab.spam")} (${counts.spam})`],
-        ] as const
-      ).map(([key, href, label]) => (
-        <Link
-          key={key}
-          href={href}
-          aria-current={view === key ? "page" : undefined}
-          className={cn(
-            "rounded-md px-3 py-1.5 font-medium text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            view === key && "bg-card text-foreground shadow-card",
-          )}
-        >
-          {label}
-        </Link>
-      ))}
-    </nav>
+    <AdminTabs
+      label={t("inquiries.tabs")}
+      current={view}
+      testId="inquiry-tabs"
+      tabs={[
+        ["inbox", "/admin/inquiries", `${t("inquiries.tab.inbox")} (${counts.inbox})`],
+        ["spam", "/admin/inquiries?view=spam", `${t("inquiries.tab.spam")} (${counts.spam})`],
+      ]}
+    />
   );
   return (
     <div className="space-y-6">
@@ -56,7 +47,7 @@ export default async function InquiriesPage({ searchParams }: { searchParams: Pr
             <div
               key={q.id}
               data-testid="inquiry-row"
-              className={cn("flex flex-wrap items-start justify-between gap-4 p-5", q.handled && !spam && "opacity-60")}
+              className={cn("flex flex-wrap items-start justify-between gap-4 p-5 max-sm:p-4", q.handled && !spam && "opacity-60")}
             >
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -64,15 +55,18 @@ export default async function InquiriesPage({ searchParams }: { searchParams: Pr
                   <StatusPill tone={q.type === "viewing" ? "gold" : "muted"}>{t(`inquiry.${q.type}`)}</StatusPill>
                   <span className="text-xs text-muted-foreground">{timeAgo(q.createdAt, locale)}</span>
                 </div>
+                {/* Below lg each contact is a 40 px target: one tap writes or calls. */}
                 <p className="text-sm wrap-anywhere">
-                  <a href={`mailto:${q.email}`} className="hover:underline">
+                  <a href={`mailto:${q.email}`} className={cn("hover:underline", PHONE_LINK)}>
                     <bdi dir="ltr">{q.email}</bdi>
                   </a>
                   {q.phone && (
                     <>
                       {" · "}
-                      <a href={`tel:${q.phone}`} className="hover:underline">
-                        <bdi dir="ltr">{q.phone}</bdi>
+                      <a href={`tel:${q.phone}`} className={cn("hover:underline", PHONE_LINK)}>
+                        <bdi dir="ltr" className="whitespace-nowrap">
+                          {q.phone}
+                        </bdi>
                       </a>
                     </>
                   )}
@@ -80,7 +74,7 @@ export default async function InquiriesPage({ searchParams }: { searchParams: Pr
                 {refNo && (
                   <p className="text-sm text-muted-foreground">
                     {t("inquiries.re")}{" "}
-                    <Link href={`/deals/${refCode(refNo)}`} className="hover:underline">
+                    <Link href={`/deals/${refCode(refNo)}`} className={cn("hover:underline", PHONE_LINK)}>
                       {projectName} (<bdi>{refCode(refNo)}</bdi>)
                     </Link>
                   </p>
@@ -93,7 +87,8 @@ export default async function InquiriesPage({ searchParams }: { searchParams: Pr
                   </p>
                 )}
               </div>
-              <div className="flex shrink-0 flex-wrap gap-2">
+              {/* Phones: the two answers share a row of their own under the message. */}
+              <div className="flex shrink-0 flex-wrap gap-2 max-sm:grid max-sm:w-full max-sm:auto-cols-fr max-sm:grid-flow-col">
                 {!spam && <HandledToggle id={q.id} handled={q.handled} />}
                 <SpamToggle id={q.id} spam={q.spam} />
               </div>

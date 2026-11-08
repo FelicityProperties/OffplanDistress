@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle2, Circle, Download, FolderOpen } from "lucide-react";
 import { KycSelect } from "@/components/admin/AdminControls";
 import { DealFileForm, DealNoteForm, type DealFileValues } from "@/components/admin/DealFile";
+import { PHONE_LINK } from "@/components/admin/phone";
 import { StatusPill } from "@/components/badges";
 import { getLocale, getT } from "@/i18n/server";
 import type { TKey } from "@/i18n/translator";
@@ -117,7 +118,16 @@ export async function DealFileCard({ listing }: { listing: Listing }) {
             <bdi>{p.importOwner && importSource ? ti("owner.placeholderName", { source: importSource }) : p.fullName}</bdi>
           </p>
           <p className="text-xs text-muted-foreground wrap-anywhere">
-            {p.phone ? <bdi dir="ltr">{p.phone}</bdi> : isPlaceholderEmail(p.email) ? t("users.noEmail") : <bdi dir="ltr">{p.email}</bdi>}
+            {/* The number as a link (the pages tell iPhones not to make one themselves). */}
+            {p.phone ? (
+              <a href={`tel:${p.phone.replace(/[^\d+]/g, "")}`} className={cn("hover:underline", PHONE_LINK)}>
+                <bdi dir="ltr">{p.phone}</bdi>
+              </a>
+            ) : isPlaceholderEmail(p.email) ? (
+              t("users.noEmail")
+            ) : (
+              <bdi dir="ltr">{p.email}</bdi>
+            )}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
             {/* The NOC gate checks this KYC: set here, or on Admin → Users. A placeholder is nobody, so its KYC waits for the
@@ -125,7 +135,7 @@ export async function DealFileCard({ listing }: { listing: Listing }) {
             {p.importOwner ? (
               <>
                 <StatusPill tone="muted">{t("dealFile.kyc", { status: tc(`kyc.${p.kycStatus}`) })}</StatusPill>
-                <a href="#owner" className="font-medium underline-offset-4 hover:underline">
+                <a href="#owner" className={cn("font-medium underline-offset-4 hover:underline", PHONE_LINK)}>
                   {ti("imported.setOwner")}
                 </a>
               </>
@@ -151,7 +161,8 @@ export async function DealFileCard({ listing }: { listing: Listing }) {
   );
 
   return (
-    <section aria-labelledby="deal-file-title" className="rounded-xl border bg-card p-6 shadow-card" data-testid="deal-file">
+    // p-4 on a phone: the form's Save row spans the card (PHONE_SAVE_BAR expects it).
+    <section aria-labelledby="deal-file-title" className="rounded-xl border bg-card p-4 shadow-card sm:p-6" data-testid="deal-file">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 max-w-2xl">
           <h2 id="deal-file-title" className="flex items-center gap-2 font-sans text-lg font-semibold">
@@ -167,7 +178,7 @@ export async function DealFileCard({ listing }: { listing: Listing }) {
         <a
           href="/api/admin/export/deals.csv"
           download
-          className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:min-h-10"
         >
           <Download className="h-4 w-4" aria-hidden /> {t("dealFile.export")}
         </a>
@@ -179,7 +190,7 @@ export async function DealFileCard({ listing }: { listing: Listing }) {
         {partyCard("buyer", buyer)}
       </div>
       <p className="mt-2 text-xs">
-        <Link href="/admin/users" className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+        <Link href="/admin/users" className={cn("text-muted-foreground underline-offset-4 hover:text-foreground hover:underline", PHONE_LINK)}>
           {t("dealFile.kycManage")}
         </Link>
       </p>

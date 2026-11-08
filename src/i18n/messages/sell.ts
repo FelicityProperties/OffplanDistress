@@ -34,6 +34,8 @@ export default defineMessages({
     "step.price": "Price & timeline",
     "step.documents": "Documents",
     "step.review": "Review",
+    // Phones: the step indicator in short (SellForm).
+    "step.progress": "Step {n} of {total}",
 
     "field.developer": "Developer",
     "field.developer.placeholder": "Type to search or pick",
@@ -310,6 +312,7 @@ export default defineMessages({
     "step.price": "السعر والجدول الزمني",
     "step.documents": "المستندات",
     "step.review": "المراجعة",
+    "step.progress": "الخطوة ⁨{n}⁩ من ⁨{total}⁩",
 
     "field.developer": "المطوّر",
     "field.developer.placeholder": "اكتب للبحث أو اختر من القائمة",
@@ -580,6 +583,7 @@ export default defineMessages({
     "step.price": "价格与时间",
     "step.documents": "文件",
     "step.review": "核对",
+    "step.progress": "第 {n} 步，共 {total} 步",
 
     "field.developer": "开发商",
     "field.developer.placeholder": "输入搜索或选择",

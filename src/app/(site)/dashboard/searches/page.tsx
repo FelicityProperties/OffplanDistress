@@ -49,8 +49,8 @@ export default async function SearchesPage() {
       ) : (
         <div className="divide-y rounded-xl border bg-card shadow-card">
           {withCounts.map((s) => (
-            <div key={s.id} className="flex flex-wrap items-center justify-between gap-4 p-5">
-              <div className="space-y-2">
+            <div key={s.id} className="flex flex-wrap items-center justify-between gap-4 p-5 max-sm:gap-3 max-sm:p-4">
+              <div className="space-y-2 max-sm:space-y-1">
                 <div>
                   <p dir="auto" className="font-semibold">
                     {s.name}
@@ -62,9 +62,10 @@ export default async function SearchesPage() {
                 </div>
                 <AlertToggle id={s.id} enabled={s.alerts} />
               </div>
-              <div className="flex items-center gap-3">
+              {/* Phones: Open fills the row beside the 44 px delete button. */}
+              <div className="flex items-center gap-3 max-sm:w-full">
                 {s.fresh > 0 && <StatusPill tone="gold">{t("fresh", { count: s.fresh })}</StatusPill>}
-                <Button asChild size="sm" variant="outline">
+                <Button asChild size="sm" variant="outline" className="max-lg:h-11 max-lg:px-4 max-lg:text-sm max-sm:flex-1">
                   <Link href={`/deals?${s.query}`}>{tc("open")}</Link>
                 </Button>
                 <DeleteSearchButton id={s.id} />

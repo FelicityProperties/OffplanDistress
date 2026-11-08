@@ -1,0 +1,77 @@
+<!doctype html>
+<!--
+  Shown by the service worker (public/sw.js) when a page can't load for lack of a connection: cached once, at install,
+  so it is self-contained (inline styles, inline logo, no other file). In English, Arabic and Chinese; the script below
+  picks the language. After changing this file, bump VERSION in public/sw.js. The phone number is BRAND.phone
+  (src/lib/config.ts): edit it here too if NEXT_PUBLIC_CONTACT_PHONE changes.
+-->
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#fbf9f4">
+<title>OffplanDistress</title>
+<style>
+  :root { color-scheme: light; --ink: #141c33; --cream: #fbf9f4; --muted: #5f6678; --gold: #d9a94a; --line: #e6e1d6; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--cream); color: var(--ink); }
+  body { font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", "PingFang SC", "Microsoft YaHei", sans-serif;
+         display: grid; place-items: center; padding: max(1.5rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left)); }
+  main { width: 100%; max-width: 22rem; text-align: center; }
+  .mark { width: 4rem; height: 4rem; margin: 0 auto 1.5rem; }
+  .off { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; font-weight: 600; color: var(--muted); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: .3rem .75rem; }
+  h1 { font: 600 1.6rem/1.2 Georgia, "Times New Roman", serif; margin: 1rem 0 .5rem; letter-spacing: -.01em; }
+  p { margin: 0; color: var(--muted); }
+  button { margin-top: 1.75rem; width: 100%; height: 3rem; border: 0; border-radius: 999px; background: var(--ink); color: var(--cream); font: inherit; font-weight: 600; cursor: pointer; }
+  /* gap: in a flex box the label's trailing space is dropped ("Call us:+971…") */
+  a { display: inline-flex; align-items: center; gap: .3em; min-height: 44px; margin-top: .5rem; color: var(--ink); font-weight: 500; text-underline-offset: 4px; }
+  [data-lang] { display: none; }
+  html[lang="en"] [data-lang="en"], html[lang="ar"] [data-lang="ar"], html[lang="zh-CN"] [data-lang="zh"] { display: block; }
+  html[lang="ar"] body { font-family: "Noto Naskh Arabic", "Geeza Pro", "Noto Sans Arabic", system-ui, sans-serif; }
+  html[lang="ar"] h1 { font-family: inherit; letter-spacing: 0; }
+</style>
+<script>
+  // The language the page that could not load would have had (src/proxy.ts, src/i18n/server.ts): its address (/ar/…,
+  // /zh/…), else the saved choice (od_locale, which sends a plain address to /ar or /zh), else on the consoles the
+  // browser's language, else English.
+  (function () {
+    var path = location.pathname;
+    var m = /^\/(ar|zh|en)(?:\/|$)/.exec(path);
+    var saved = /(?:^|; )od_locale=(ar|zh|en)(?:;|$)/.exec(document.cookie);
+    var browser = /^(ar|zh)/.exec((navigator.language || "").toLowerCase());
+    var lang = m ? m[1] : saved ? saved[1] : /^\/(dashboard|admin)(\/|$)/.test(path) && browser ? browser[1] : "en";
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    // Back online: load the page that failed.
+    addEventListener("online", function () { location.reload(); });
+  })();
+</script>
+</head>
+<body>
+<main>
+  <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#141c33"/><path d="M8 25V7h16v18h-4.2V11.2h-7.6V25z" fill="#faf8f3"/><rect x="12.2" y="20.6" width="7.6" height="2.6" rx=".5" fill="#d9a94a"/></svg>
+  <div data-lang="en">
+    <span class="off">No connection</span>
+    <h1>You're offline</h1>
+    <p>OffplanDistress needs the internet to show live deals and prices. Check your connection and try again.</p>
+    <button type="button" onclick="location.reload()">Try again</button>
+    <a href="tel:+971563520611">Call us: <bdi>+971 56 352 0611</bdi></a>
+  </div>
+  <div data-lang="ar">
+    <span class="off">لا يوجد اتصال</span>
+    <h1>أنت غير متصل بالإنترنت</h1>
+    <p>يحتاج ⁨OffplanDistress⁩ إلى الإنترنت لعرض الصفقات والأسعار المحدّثة. تحقّق من اتصالك ثم حاول مرة أخرى.</p>
+    <button type="button" onclick="location.reload()">حاول مرة أخرى</button>
+    <a href="tel:+971563520611">اتصل بنا: <bdi dir="ltr">+971 56 352 0611</bdi></a>
+  </div>
+  <div data-lang="zh">
+    <span class="off">无网络连接</span>
+    <h1>您已离线</h1>
+    <p>OffplanDistress 需要联网才能显示最新房源和价格。请检查网络连接后重试。</p>
+    <button type="button" onclick="location.reload()">重试</button>
+    <a href="tel:+971563520611">致电我们：<bdi>+971 56 352 0611</bdi></a>
+  </div>
+</main>
+</body>
+</html>

@@ -7,7 +7,6 @@ import { and, eq, sql } from "drizzle-orm";
 import {
   AlertTriangle,
   ArrowDown,
-  ArrowLeft,
   BadgeCheck,
   BedDouble,
   Building2,
@@ -31,8 +30,10 @@ import { DealCard } from "@/components/DealCard";
 import { DiscountBadges } from "@/components/DiscountBadges";
 import { discountPct } from "@/lib/discount-labels";
 import { JsonLd } from "@/components/JsonLd";
+import { ShareButton } from "@/components/ShareButton";
 import { WatchButton } from "@/components/WatchButton";
 import { MotivationBadge, SampleBadge, StatusPill } from "@/components/badges";
+import { DealActionBar } from "@/components/deals/DealActionBar";
 import { Gallery } from "@/components/deals/Gallery";
 import { OfferDialog } from "@/components/deals/OfferDialog";
 import { InquiryDialog } from "@/components/InquiryForm";
@@ -41,7 +42,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { db } from "@/db";
 import { listings, offers } from "@/db/schema";
 import { DEFAULT_LOCALE } from "@/i18n/config";
-import { localePath, METHOD_HEADER } from "@/i18n/paths";
+import { localePath, METHOD_HEADER, stripLocale } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import { alternatesFor, openGraphBase } from "@/lib/seo";
 import { isBotRequest } from "@/lib/analytics";
@@ -49,13 +50,15 @@ import { getCurrentUser } from "@/lib/auth";
 import { BRAND, brandName, brokerName, FEES, PUBLIC_STATUSES } from "@/lib/config";
 import { richText } from "@/content/legal/rich-text";
 import { analyzeDeal, isReady, planSchedule } from "@/lib/deal-math";
-import { formatAED, formatDate, formatPct, formatQuarter, formatUSDFromAED, parseRefCode, refCode, wholePct } from "@/lib/format";
+import { formatAED, formatAEDCompact, formatDate, formatPct, formatQuarter, formatUSDFromAED, parseRefCode, refCode, wholePct } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
 import { issueFormToken } from "@/lib/spam";
 import { siteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 import { getListingByRef, similarDeals, watchedIds } from "@/lib/listings";
 import { dubaiToday, isAdvertised, permitQrSvg } from "@/lib/permits";
+import { BackToDeals } from "./BackToDeals";
+import { CollapsiblePlan } from "./CollapsiblePlan";
 
 async function load(ref: string) {
   const refNo = parseRefCode(ref);
@@ -65,6 +68,59 @@ async function load(ref: string) {
 
 /** "40%" in "40% paid": the whole percentage the "Min. % paid" filter compares (wholePct), so the two agree. */
 const paidText = (ratio: number) => `${wholePct(ratio)}%`;
+
+/**
+ * Phones: a font size (for `text-[length:var(--fit)]`) at which an amount stays on one line in a box `room` wide,
+ * `max` at most: "AED 95,000,000" gets smaller at 320 px instead of breaking after "AED". 0.6em a character is a little
+ * over the widest measured (tabular digits: Fraunces 0.58, the sans 0.575).
+ */
+const fitAmount = (text: string, max: string, room: string) =>
+  ({ "--fit": `min(${max}, calc((${room}) / ${(text.length * 0.6).toFixed(1)}))` }) as React.CSSProperties;
+
+/**
+ * WhatsApp and Call (side by side from 390 px, one above the other below). Phones: a tighter padding keeps "WhatsApp
+ * 咨询" or "راسلنا عبر واتساب" on one line in half a 390 px card, and a longer label wraps inside its button instead of
+ * spilling out of it.
+ */
+const CONTACT_BUTTON =
+  "h-11 rounded-xl max-sm:h-auto max-sm:min-h-11 max-sm:min-w-0 max-sm:gap-1.5 max-sm:whitespace-normal max-sm:px-2 max-sm:py-2 max-sm:text-center max-sm:leading-tight";
+
+/** A Chinese date ("2026年11月22日") may wrap after its year, the one place it reads well split. */
+const wrapAfterYear = (date: string) => {
+  const i = date.indexOf("年");
+  return i < 0 ? date : (
+    <>
+      {date.slice(0, i + 1)}
+      <wbr />
+      {date.slice(i + 1)}
+    </>
+  );
+};
+
+/**
+ * The page in its own stacking context (relative isolate: the gold glow and grid sit behind it), and the phone action
+ * bar after it, outside: inside, its z-40 counted only there, and the footer, which comes later, was painted over it.
+ */
+function DealFrame({ bar, children }: { bar: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <>
+      <div className="relative isolate">{children}</div>
+      {bar}
+    </>
+  );
+}
+
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+/** A plan row named by its own due date ("26-SEP-2026", "23/07/2026", "2026-07-23"), as imported plans are. */
+function labelIsDueDate(label: string, due: string | null) {
+  if (!due) return false;
+  const s = label.trim();
+  let m = /^(\d{1,2})[-/ ]([A-Za-z]{3})[-/ ](\d{4})$/.exec(s);
+  if (m) return MONTHS.indexOf(m[2].toLowerCase()) === Number(due.slice(5, 7)) - 1 && Number(m[1]) === Number(due.slice(8, 10)) && m[3] === due.slice(0, 4);
+  m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(s);
+  if (m) return Number(m[1]) === Number(due.slice(8, 10)) && Number(m[2]) === Number(due.slice(5, 7)) && m[3] === due.slice(0, 4);
+  return s === due.slice(0, 10);
+}
 
 export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): Promise<Metadata> {
   const { ref } = await params;
@@ -140,13 +196,14 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     after(() => db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, l.id)));
   }
 
-  const [similar, watched, t, tc, td, tl, locale, myAccepted] = await Promise.all([
+  const [similar, watched, t, tc, td, tl, ta, locale, myAccepted] = await Promise.all([
     similarDeals(l),
     watchedIds(user?.id),
     getT("deal"),
     getT("common"),
     getT("deals"),
     getT("legal"),
+    getT("app"),
     getLocale(),
     // The signed-in buyer holds the accepted offer: the deal is theirs (no backup offer from them, makeOffer agrees).
     user && !isOwner
@@ -168,6 +225,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const community = communityName(tc, l.community, l.communityOther);
   const developer = developerName(tc, l.developer, l.developerOther);
   const paidWidth = Math.min(100, Math.max(0, wholePct(a.paidPct) ?? 0));
+  // Phones: paid and remaining share one size, the one that fits the longer figure in half the card.
+  const planFit = fitAmount(
+    [formatAED(l.amountPaid, locale), formatAED(a.remaining, locale)].reduce((x, y) => (y.length > x.length ? y : x)),
+    "1.125rem",
+    "(100vw - 5.625rem) / 2",
+  );
   const plan = l.paymentPlan ?? [];
   // Sample listings are seeded with English copy; Arabic and Chinese visitors get a translated version.
   const translatedSample = l.isSample && locale !== DEFAULT_LOCALE;
@@ -193,6 +256,33 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     return n ? t("plan.sample.milestone", { n }) : label;
   };
   const loginHref = `/login?next=${encodeURIComponent(`/deals/${refCode(l.refNo)}`)}`;
+  // The advert's own address in this language: shared, and quoted in the WhatsApp message.
+  const canonicalUrl = `${siteUrl()}${localePath(`/deals/${refCode(l.refNo)}`, locale)}`;
+  const waHref = BRAND.whatsapp
+    ? `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(t("side.waMessage", { ref: refCode(l.refNo), project: l.projectName, url: canonicalUrl }))}`
+    : null;
+  // "Back to deals" returns to the list this page was opened from, with its filters, sort and page: the Referer when it
+  // is this site's /deals in any language. A page drawn again by a server action (Watch) has the deal as its Referer,
+  // and BackToDeals keeps the list it was first given.
+  const listReferer = (() => {
+    try {
+      const url = new URL(h.get("referer") ?? "");
+      return url.host === (h.get("x-forwarded-host") ?? h.get("host")) && stripLocale(url.pathname) === "/deals" ? url : null;
+    } catch {
+      return null;
+    }
+  })();
+  // The phone action bar (DealActionBar): only on a public advert, for its buyers and visitors. Under the price, the
+  // discount the chips lead with (below the original price, else below launch), or what the price is.
+  const dealBar = advertised && !l.isSample && !isOwner && !isAdmin;
+  const originalPct = discountPct(a.discountVsOriginal);
+  const launchPct = discountPct(a.discountVsLaunch);
+  const barNote =
+    originalPct != null && originalPct >= 1
+      ? ta("dealBar.belowOriginal", { pct: originalPct })
+      : launchPct != null && launchPct >= 1
+        ? ta("dealBar.belowLaunch", { pct: launchPct })
+        : null;
 
   // Arrears with the developer (overdue instalments + late fees): cleared before the NOC, so paid on transfer day.
   // Known once our team checked the statement (arrearsCheckedAt) or the seller gave a figure; null amounts = unknown.
@@ -228,6 +318,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   // pays later; only what is left is "schedule not listed".
   const pastDueOpen = Math.min(Math.max(schedule.pastDue.sum - a.overdue, 0), Math.max(unlisted, 0));
   const unscheduled = unlisted - pastDueOpen;
+  // Phones: a long plan shows the next five instalments still to come and the last one (often the handover payment);
+  // the rest wait behind "Show all" (CollapsiblePlan). Short plans show every row.
+  const planFirstAhead = plan.findIndex((p) => !(p.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(p.dueDate) && p.dueDate < today));
+  const planStart = planFirstAhead < 0 ? Math.max(0, plan.length - 5) : planFirstAhead;
+  const planShown = (i: number) => plan.length <= 8 || (i >= planStart && i < planStart + 5) || i === plan.length - 1;
+  const planHidden = plan.filter((_, i) => !planShown(i)).length;
   const dueSoon = schedule.dueSoon;
   const dueSoonText = dueSoon
     ? richText(t(dueSoon.amount ? "side.dueSoon" : "side.dueSoonNoAmount"), {
@@ -303,15 +399,16 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     [t("cost.noc"), a.noc],
   ];
 
-  const facts: [string, string, typeof Mountain][] = [
+  // The fourth item marks an amount (kept on one line on phones).
+  const facts: [string, string, typeof Mountain, boolean?][] = [
     [t("facts.view"), (!translatedSample && l.view) || "—", Mountain],
     [
       tc("handover"),
       isReady({ ...l, planRows: plan.length }, today) ? tc("handoverReady") : formatQuarter(l.handoverDate, locale),
       CalendarClock,
     ],
-    [t("facts.originalPrice"), formatAED(l.originalPrice, locale), Tag],
-    [t("facts.launchPrice"), l.launchPrice ? formatAED(l.launchPrice, locale) : t("facts.beingAssessed"), Sparkles],
+    [t("facts.originalPrice"), formatAED(l.originalPrice, locale), Tag, true],
+    [t("facts.launchPrice"), l.launchPrice ? formatAED(l.launchPrice, locale) : t("facts.beingAssessed"), Sparkles, !!l.launchPrice],
   ];
 
   // Structured data for search engines — real listings only (samples aren't for sale).
@@ -348,21 +445,64 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
       }
     : null;
 
+  const actionBar = dealBar && (
+    <DealActionBar
+      watchId="deal-actions"
+      priceId="deal-price"
+      price={formatAED(l.askingPrice, locale)}
+      priceCompact={formatAEDCompact(l.askingPrice, locale)}
+      note={barNote ?? t("side.payNow")}
+      noteIsDiscount={barNote != null}
+      whatsapp={waHref ? { href: waHref, label: t("side.whatsapp") } : null}
+      cta={
+        yourDeal ? (
+          <Link href="/dashboard/offers?tab=sent" className={buttonVariants({ variant: "gold", className: "h-11 rounded-xl px-4 font-semibold max-[359px]:px-3" })}>
+            {t("offer.yourDeal")}
+          </Link>
+        ) : (
+          <OfferDialog
+            listingId={l.id}
+            project={l.projectName}
+            asking={l.askingPrice}
+            signedIn={!!user}
+            loginHref={loginHref}
+            variant="bar"
+          />
+        )
+      }
+    />
+  );
+
   return (
-    <div className="relative isolate">
+    <DealFrame bar={actionBar}>
       {listingJsonLd && <JsonLd data={listingJsonLd} />}
       {breadcrumbJsonLd && <JsonLd data={breadcrumbJsonLd} />}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-gradient-to-b from-gold-soft/60 via-background to-background" />
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-grid-light opacity-40 mask-fade-b" />
 
       <div className="container-page pb-20 pt-6 sm:pt-8">
-        <Link
-          href="/deals"
-          className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/80 px-3.5 py-1.5 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur transition-colors hover:border-foreground/25 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
-          {t("back")}
-        </Link>
+        {/* Back to the list (its filters and place kept), then Share and, on phones, Save: the card is far below there. */}
+        <div className="flex items-center justify-between gap-3">
+          <BackToDeals
+            list={listReferer ? `/deals${listReferer.search}` : null}
+            fromList={listReferer?.pathname === localePath("/deals", locale)}
+            className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/80 px-3.5 py-1.5 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur transition-colors hover:border-foreground/25 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:min-h-11 max-lg:px-4"
+          >
+            {t("back")}
+          </BackToDeals>
+          <div className="flex items-center gap-2">
+            {advertised && !l.isSample && (
+              <ShareButton
+                url={canonicalUrl}
+                title={l.projectName}
+                text={ta("share.dealText", { project: l.projectName, price: formatAED(l.askingPrice, locale) })}
+                // Desktop: as tall as the back link, so nothing below moves.
+                className="h-11 w-11 lg:h-[2.125rem] lg:w-[2.125rem]"
+              />
+            )}
+            <WatchButton listingId={l.id} watching={watched.has(l.id)} className="h-11 w-11 lg:hidden" />
+          </div>
+        </div>
 
         {(l.status !== "live" || !advertised) && (
           <div className="mt-4 flex items-start gap-3 rounded-2xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-foreground">
@@ -392,7 +532,8 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           images={l.images}
           alt={`${l.projectName}, ${community}`}
           badge={
-            <div className="absolute start-4 top-4 flex flex-wrap items-center gap-2 sm:start-5 sm:top-5">
+            // Taps go through to the photo, which opens the viewer on phones.
+            <div className="absolute start-4 top-4 flex flex-wrap items-center gap-2 max-lg:pointer-events-none sm:start-5 sm:top-5">
               <DiscountBadges a={a} tc={tc} size="md" />
               {l.verified && !l.isSample && (
                 <span className="glass-dark inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium text-primary-foreground">
@@ -491,8 +632,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
             )}
           </div>
 
-          {/* Price & actions — right after the title on mobile, a sticky column on desktop */}
-          <aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          {/* Price & actions — right after the title on mobile, a sticky column on desktop. min-w-0: nothing in the card
+              (a long figure, a button label) may widen the page's column past a phone's screen. */}
+          <aside id="deal-price" className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1">
             {/* On a short desktop screen the card scrolls inside itself (like the /deals filter panel), so the permit,
                 QR code and report link at its foot stay reachable while it is stuck. */}
             <div className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-lift [scrollbar-width:thin] lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
@@ -500,8 +642,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 <div aria-hidden className="absolute inset-0 bg-dots-dark opacity-70 mask-fade-b" />
                 <div aria-hidden className="absolute -end-16 -top-20 h-48 w-48 bg-glow-gold opacity-60" />
                 <div className="relative">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">{t("side.payNow")}</p>
-                  <p className="mt-2 font-display text-4xl font-semibold leading-none tabular sm:text-[2.6rem]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold max-lg:text-xs">{t("side.payNow")}</p>
+                  {/* Phones: one line, scaled to fit (card and page padding: 5.25rem). */}
+                  <p
+                    className="mt-2 font-display text-4xl font-semibold leading-none tabular max-sm:whitespace-nowrap max-sm:text-[length:var(--fit)] sm:text-[2.6rem]"
+                    style={fitAmount(formatAED(l.askingPrice, locale), "2.25rem", "100vw - 5.25rem")}
+                  >
                     {formatAED(l.askingPrice, locale)}
                   </p>
                   <p className="mt-1.5 text-xs text-primary-foreground/60 tabular">
@@ -521,14 +667,15 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   )}
                   {/* Next to the equity figure (unchanged): what the buyer actually needs on the day, an estimate. */}
                   <div className="mt-4 border-t border-primary-foreground/15 pt-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">{t("side.cashAtTransfer")}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold max-lg:text-xs">{t("side.cashAtTransfer")}</p>
                     <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                       <p className="font-display text-2xl font-semibold leading-none tabular" data-cash-at-transfer={a.cashToClose}>
                         {t("side.approx", { amount: formatAED(a.cashToClose, locale) })}
                       </p>
+                      {/* Phones: a taller tap area than the line of text (after:), with the same look. */}
                       <a
                         href="#cash-timeline"
-                        className="inline-flex shrink-0 items-center gap-1 rounded-sm text-xs font-medium text-gold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                        className="relative inline-flex shrink-0 items-center gap-1 rounded-sm text-xs font-medium text-gold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold max-lg:after:absolute max-lg:after:-inset-x-2 max-lg:after:-inset-y-3 max-lg:after:content-['']"
                       >
                         {t("side.timelineLink")}
                         <ArrowDown className="h-3.5 w-3.5" aria-hidden />
@@ -560,7 +707,10 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     </p>
                   )
                 )}
-                <div className={dueSoon || nextInstalment ? "mt-5 grid gap-2.5" : "grid gap-2.5"}>
+                {/* #deal-actions: while these buttons are on screen, the phone action bar (DealActionBar) steps aside.
+                    grid-cols-1: one column as wide as the card, never wider (a long label used to widen it past a 320 px
+                    phone's card, clipping every button). */}
+                <div id="deal-actions" className={dueSoon || nextInstalment ? "mt-5 grid grid-cols-1 gap-2.5" : "grid grid-cols-1 gap-2.5"}>
                   {/* Offers only on an advert (the server refuses any other way too), and not from the buyer whose
                       offer was accepted: the deal is theirs, followed in their dashboard. */}
                   {advertised && yourDeal && (
@@ -585,24 +735,19 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       listingId={l.id}
                       project={l.projectName}
                       defaults={user ? { name: user.fullName, email: user.email, phone: user.phone } : undefined}
-                      triggerClassName="h-12 text-muted-foreground hover:text-foreground"
+                      triggerClassName="h-12 text-muted-foreground hover:text-foreground max-sm:h-auto max-sm:min-h-12 max-sm:whitespace-normal max-sm:px-4 max-sm:leading-tight"
                       formToken={issueFormToken()}
                     />
                   )}
                   {!l.isSample && (BRAND.whatsapp || BRAND.phone) && (
-                    <div className="grid grid-cols-2 gap-2.5">
-                      {BRAND.whatsapp && (
+                    // Side by side from 390 px; on narrower phones one above the other, each label on one line.
+                    <div className="grid grid-cols-1 gap-2.5 min-[390px]:grid-cols-2">
+                      {waHref && (
                         <a
-                          href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(
-                            t("side.waMessage", {
-                              ref: refCode(l.refNo),
-                              project: l.projectName,
-                              url: `${siteUrl()}${localePath(`/deals/${refCode(l.refNo)}`, locale)}`,
-                            }),
-                          )}`}
+                          href={waHref}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={buttonVariants({ variant: "outline", className: "h-11 rounded-xl" })}
+                          className={buttonVariants({ variant: "outline", className: CONTACT_BUTTON })}
                         >
                           <MessageCircle className="text-[#1DA851]" aria-hidden /> {t("side.whatsapp")}
                         </a>
@@ -610,7 +755,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       {BRAND.phone && (
                         <a
                           href={`tel:${BRAND.phone.replace(/\s/g, "")}`}
-                          className={buttonVariants({ variant: "outline", className: cn("h-11 rounded-xl", !BRAND.whatsapp && "col-span-2") })}
+                          className={buttonVariants({ variant: "outline", className: cn(CONTACT_BUTTON, !BRAND.whatsapp && "min-[390px]:col-span-2") })}
                         >
                           <Phone aria-hidden /> {t("side.call")}
                         </a>
@@ -669,7 +814,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   {BRAND.email && !l.isSample && (
                     <a
                       href={`mailto:${BRAND.email}?subject=${encodeURIComponent(t("listedBy.reportSubject", { ref: refCode(l.refNo) }))}`}
-                      className="mt-2 inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:text-foreground hover:underline"
+                      className="relative mt-2 inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:text-foreground hover:underline max-lg:after:absolute max-lg:after:inset-x-0 max-lg:after:-inset-y-2.5 max-lg:after:content-['']"
                     >
                       <Flag className="h-3.5 w-3.5" aria-hidden /> {t("listedBy.report")}
                     </a>
@@ -682,7 +827,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           {/* Details */}
           <div className="min-w-0 space-y-14 lg:col-start-1 lg:row-start-2">
             <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {facts.map(([k, v, Icon]) => (
+              {facts.map(([k, v, Icon, money]) => (
                 <div key={k} className="rounded-2xl border border-border/80 bg-card p-4 shadow-card">
                   <dt className="text-xs text-muted-foreground">
                     <span aria-hidden className="mb-3 grid h-9 w-9 place-items-center rounded-xl bg-gold-soft text-gold-foreground">
@@ -690,8 +835,16 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     </span>
                     {k}
                   </dt>
-                  {/* wrap-anywhere: the seller's view can be one long run ("BurjKhalifa,DubaiCanal"), wider than its card. */}
-                  <dd dir="auto" className="mt-1 text-sm font-semibold leading-snug tabular wrap-anywhere sm:text-base">
+                  {/* wrap-anywhere: the seller's view can be one long run ("BurjKhalifa,DubaiCanal"), wider than its card.
+                      An amount stays on one line on phones, scaled to fit half the row. */}
+                  <dd
+                    dir="auto"
+                    className={cn(
+                      "mt-1 text-sm font-semibold leading-snug tabular wrap-anywhere sm:text-base",
+                      money && "max-sm:whitespace-nowrap max-sm:text-[length:var(--fit)]",
+                    )}
+                    style={money ? fitAmount(v, "0.875rem", "(100vw - 2.75rem) / 2 - 2.25rem") : undefined}
+                  >
                     {v}
                   </dd>
                 </div>
@@ -716,14 +869,25 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-ink" />
                       {t("plan.paid")}
                     </p>
-                    <p className="mt-1 text-lg font-semibold tabular sm:text-2xl">{formatAED(l.amountPaid, locale)}</p>
+                    {/* Phones: one line, scaled to fit half the card. */}
+                    <p
+                      className="mt-1 text-lg font-semibold tabular max-sm:whitespace-nowrap max-sm:text-[length:var(--fit)] sm:text-2xl"
+                      style={planFit}
+                    >
+                      {formatAED(l.amountPaid, locale)}
+                    </p>
                   </div>
                   <div className="min-w-0 text-end">
                     <p className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted ring-1 ring-inset ring-border" />
                       {t("plan.remaining")}
                     </p>
-                    <p className="mt-1 text-lg font-semibold text-foreground/80 tabular sm:text-2xl">{formatAED(a.remaining, locale)}</p>
+                    <p
+                      className="mt-1 text-lg font-semibold text-foreground/80 tabular max-sm:whitespace-nowrap max-sm:text-[length:var(--fit)] sm:text-2xl"
+                      style={planFit}
+                    >
+                      {formatAED(a.remaining, locale)}
+                    </p>
                   </div>
                 </div>
                 <div
@@ -753,49 +917,62 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 </p>
 
                 {plan.length > 0 && (
-                  <div className="mt-6 overflow-x-auto rounded-2xl border border-border/80">
+                  <CollapsiblePlan
+                    hidden={planHidden}
+                    showAll={t("plan.showAll", { count: plan.length })}
+                    showFewer={t("plan.showFewer")}
+                    className="mt-6 overflow-x-auto rounded-2xl border border-border/80"
+                  >
                     <Table>
                       <TableHeader className="bg-muted/50">
                         <TableRow className="hover:bg-transparent">
-                          <TableHead className="h-10 ps-4 text-xs font-semibold uppercase tracking-wide">{t("plan.milestone")}</TableHead>
+                          <TableHead className="h-10 ps-4 text-xs font-semibold uppercase tracking-wide max-sm:ps-3">{t("plan.milestone")}</TableHead>
                           <TableHead className="hidden h-10 text-xs font-semibold uppercase tracking-wide sm:table-cell">{t("plan.due")}</TableHead>
-                          <TableHead className="h-10 pe-4 text-end text-xs font-semibold uppercase tracking-wide">{t("plan.amount")}</TableHead>
+                          <TableHead className="h-10 pe-4 text-end text-xs font-semibold uppercase tracking-wide max-sm:pe-3">{t("plan.amount")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {plan.map((s, i) => (
-                          <TableRow key={`${s.label}-${i}`}>
-                            <TableCell className="py-3 ps-4 font-medium">
-                              <span className="flex items-center gap-3">
+                          <TableRow key={`${s.label}-${i}`} className={cn(!planShown(i) && "group-data-[collapsed]/plan:max-lg:hidden")}>
+                            <TableCell className="py-3 ps-4 font-medium max-sm:ps-3 max-[359px]:pe-1">
+                              <span className="flex items-center gap-3 max-sm:gap-2">
+                                {/* Smaller on phones, and left out below 360 px, where the date and the amount need the row. */}
                                 <span
                                   aria-hidden
-                                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gold-soft text-[11px] font-semibold text-gold-foreground tabular"
+                                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gold-soft text-[11px] font-semibold text-gold-foreground tabular max-lg:text-xs max-sm:h-6 max-sm:w-6 max-[359px]:hidden"
                                 >
                                   {i + 1}
                                 </span>
                                 <span className="min-w-0">
-                                  <span dir="auto" className="block">
+                                  {/* An imported plan names most rows by their date ("26-SEP-2026"): on phones the date line says it. */}
+                                  <span dir="auto" className={cn("block", labelIsDueDate(s.label, s.dueDate) && "max-sm:hidden")}>
                                     {milestoneLabel(s.label)}
                                   </span>
-                                  {/* Phones: the due date sits under the label instead of in its own column. */}
-                                  <span className="mt-0.5 block text-xs font-normal text-muted-foreground tabular sm:hidden">
-                                    {formatDate(s.dueDate, locale)}
+                                  {/* Phones: the due date sits under the label instead of in its own column (keep-all: a
+                                      Chinese date wraps after its year, never before its last character). */}
+                                  <span
+                                    className={cn(
+                                      "mt-0.5 block text-xs font-normal text-muted-foreground tabular [word-break:keep-all] sm:hidden",
+                                      labelIsDueDate(s.label, s.dueDate) && "mt-0 text-sm font-medium text-foreground",
+                                    )}
+                                  >
+                                    {wrapAfterYear(formatDate(s.dueDate, locale))}
                                   </span>
                                 </span>
                               </span>
                             </TableCell>
                             <TableCell className="hidden whitespace-nowrap py-3 text-muted-foreground tabular sm:table-cell">{formatDate(s.dueDate, locale)}</TableCell>
-                            <TableCell className="whitespace-nowrap py-3 pe-4 text-end font-semibold tabular">{formatAED(s.amount, locale)}</TableCell>
+                            <TableCell className="whitespace-nowrap py-3 pe-4 text-end font-semibold tabular max-sm:pe-3">{formatAED(s.amount, locale)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
-                  </div>
+                  </CollapsiblePlan>
                 )}
               </div>
             </section>
 
-            <section id="cash-timeline" aria-labelledby="cash-timeline-title" className="scroll-mt-28">
+            <section id="cash-timeline" aria-labelledby="cash-timeline-title" className="lg:scroll-mt-28">
               <h2 id="cash-timeline-title" className="text-2xl font-semibold sm:text-3xl">
                 {t("timeline.title")}
               </h2>
@@ -834,7 +1011,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       <span
                         aria-hidden
                         className={cn(
-                          "absolute start-0 top-0.5 grid h-7 w-7 place-items-center rounded-full text-[11px] font-semibold tabular ring-4 ring-card",
+                          "absolute start-0 top-0.5 grid h-7 w-7 place-items-center rounded-full text-[11px] font-semibold tabular ring-4 ring-card max-lg:text-xs",
                           s.lead ? "bg-ink text-gold" : "bg-gold-soft text-gold-foreground",
                         )}
                       >
@@ -863,9 +1040,10 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                               ...(a.arrears > 0 ? [[t("timeline.transferArrears"), formatAED(a.arrears, locale)]] : []),
                             ] as [string, string][]
                           ).map(([k, v]) => (
-                            <div key={k} className="flex items-baseline justify-between gap-4">
+                            // Phones: a label too long to share its line takes the whole width, the amount below it.
+                            <div key={k} className="flex items-baseline justify-between gap-4 max-sm:flex-wrap max-sm:gap-y-0.5">
                               <dt className="text-muted-foreground">{k}</dt>
-                              <dd className="shrink-0 whitespace-nowrap font-medium tabular">{v}</dd>
+                              <dd className="shrink-0 whitespace-nowrap font-medium tabular max-sm:ms-auto">{v}</dd>
                             </div>
                           ))}
                         </dl>
@@ -895,9 +1073,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     </span>
                   </p>
                 )}
-                <div className="mt-5 flex items-baseline justify-between gap-4 border-t border-border/70 pt-4">
+                <div className="mt-5 flex items-baseline justify-between gap-4 border-t border-border/70 pt-4 max-sm:flex-wrap max-sm:gap-y-1">
                   <p className="text-sm font-semibold">{t("timeline.total")}</p>
-                  <p className="shrink-0 whitespace-nowrap text-lg font-semibold tabular" data-timeline-total={a.totalCost}>
+                  <p className="shrink-0 whitespace-nowrap text-lg font-semibold tabular max-sm:ms-auto" data-timeline-total={a.totalCost}>
                     {t("side.approx", { amount: formatAED(a.totalCost, locale) })}
                   </p>
                 </div>
@@ -919,7 +1097,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   <dl className="space-y-4">
                     <div>
                       <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("cost.total")}</dt>
-                      <dd className="mt-1 text-3xl font-semibold tabular">{formatAED(a.totalCost, locale)}</dd>
+                      <dd
+                        className="mt-1 text-3xl font-semibold tabular max-sm:whitespace-nowrap max-sm:text-[length:var(--fit)]"
+                        style={fitAmount(formatAED(a.totalCost, locale), "1.875rem", "100vw - 4.75rem")}
+                      >
+                        {formatAED(a.totalCost, locale)}
+                      </dd>
                     </div>
                     <div className="border-t border-border/70 pt-4">
                       <dt className="text-xs leading-snug text-muted-foreground">{t("cost.transferDay")}</dt>
@@ -942,7 +1125,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                         <TrendingDown className="h-5 w-5" aria-hidden />
                         {t("cost.saving")}
                       </p>
-                      <p className="relative mt-1 text-3xl font-semibold tabular">{formatAED(a.savingVsLaunch, locale)}</p>
+                      <p
+                        className="relative mt-1 text-3xl font-semibold tabular max-sm:whitespace-nowrap max-sm:text-[length:var(--fit)]"
+                        style={fitAmount(formatAED(a.savingVsLaunch, locale), "1.875rem", "100vw - 6.75rem")}
+                      >
+                        {formatAED(a.savingVsLaunch, locale)}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -964,6 +1152,6 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           </section>
         )}
       </div>
-    </div>
+    </DealFrame>
   );
 }

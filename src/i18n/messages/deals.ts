@@ -12,6 +12,8 @@ export default defineMessages({
     subtitle: "Off-plan units from motivated sellers: take over the payment plan, often below the original price.",
 
     "search.placeholder": "Search project, developer or community",
+    // The search box's hint on phones, where the one above is cut off.
+    "search.placeholderShort": "Project, developer, area",
     "search.label": "Search deals",
 
     "sort.label": "Sort",
@@ -45,6 +47,10 @@ export default defineMessages({
     "filters.motivation": "Seller motivation",
     "filters.verifiedOnly": "Verified listings only",
     "filters.reset": "Reset filters",
+    // The phone filters sheet's main button: closes it on the results, with the live count.
+    "filters.showOne": "Show {count} deal",
+    "filters.showMany": "Show {count} deals",
+    "filters.updating": "Updating…",
 
     "results.one": "{count} deal found",
     "results.many": "{count} deals found",
@@ -101,6 +107,7 @@ export default defineMessages({
     subtitle: "وحدات على الخارطة من بائعين جادّين: تولَّ خطة الدفع، وغالباً بأقل من السعر الأصلي.",
 
     "search.placeholder": "ابحث باسم المشروع أو المطوّر أو المنطقة",
+    "search.placeholderShort": "مشروع، مطوّر، منطقة",
     "search.label": "البحث في الصفقات",
 
     "sort.label": "الترتيب",
@@ -134,6 +141,9 @@ export default defineMessages({
     "filters.motivation": "مدى استعجال البائع",
     "filters.verifiedOnly": "الإعلانات الموثّقة فقط",
     "filters.reset": "إعادة ضبط الفلاتر",
+    "filters.showOne": "عرض الصفقات (⁨{count}⁩)",
+    "filters.showMany": "عرض الصفقات (⁨{count}⁩)",
+    "filters.updating": "جارٍ التحديث…",
 
     "results.one": "عدد الصفقات: {count}",
     "results.many": "عدد الصفقات: {count}",
@@ -190,6 +200,7 @@ export default defineMessages({
     subtitle: "有意出售的卖家转让的期房：接手付款计划，售价往往低于原始合同价。",
 
     "search.placeholder": "搜索项目、开发商或社区",
+    "search.placeholderShort": "项目、开发商、社区",
     "search.label": "搜索房源",
 
     "sort.label": "排序",
@@ -222,6 +233,9 @@ export default defineMessages({
     "filters.motivation": "卖家出售意愿",
     "filters.verifiedOnly": "仅显示已核实房源",
     "filters.reset": "重置筛选",
+    "filters.showOne": "查看 {count} 套房源",
+    "filters.showMany": "查看 {count} 套房源",
+    "filters.updating": "正在更新…",
 
     "results.one": "找到 {count} 套房源",
     "results.many": "找到 {count} 套房源",

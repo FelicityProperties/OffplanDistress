@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "@/components/LocaleLink";
 import { redirect } from "next/navigation";
-import { AuthShell } from "@/components/AuthShell";
+import { AuthAltLink, AuthShell } from "@/components/AuthShell";
 import { LoginForm } from "@/components/auth/AuthForms";
 import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
@@ -27,15 +26,9 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <AuthShell title={t("login.title")} sub={t("login.sub", { brand: BRAND.name })}>
       <LoginForm next={target || undefined} lead={leadId} />
-      <p className="mt-8 border-t border-border/70 pt-6 text-center text-sm text-muted-foreground">
-        {t("login.newHere")}{" "}
-        <Link
-          href={authHref("/signup", target, leadId)}
-          className="rounded-sm font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {t("login.createAccount")}
-        </Link>
-      </p>
+      <AuthAltLink lead={t("login.newHere")} href={authHref("/signup", target, leadId)}>
+        {t("login.createAccount")}
+      </AuthAltLink>
     </AuthShell>
   );
 }

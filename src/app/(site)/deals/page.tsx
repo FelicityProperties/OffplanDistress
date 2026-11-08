@@ -153,8 +153,9 @@ function pageList(page: number, pages: number): (number | "gap")[] {
   return out;
 }
 
+// 44px below lg (Previous / Next are the only page links on phones), 36px on desktop as before.
 const pill =
-  "inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:h-11 max-lg:min-w-11 max-lg:px-4";
 
 export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
   const raw = await searchParams;
@@ -220,7 +221,7 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
       </div>
 
       <div className="container-page pb-20">
-        <DealsToolbar activeCount={filterCount} facets={facets} />
+        <DealsToolbar activeCount={filterCount} facets={facets} total={total} />
 
         <div className="mt-6 grid gap-8 lg:grid-cols-[16.25rem_minmax(0,1fr)]">
           <aside className="hidden lg:block">
@@ -261,14 +262,15 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
                             href={c.href}
                             scroll={false}
                             aria-label={t("chips.remove", { label: c.label })}
-                            className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-ink/15 bg-card py-1 ps-3 pe-1 text-xs font-medium text-foreground shadow-sm transition-colors hover:border-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            // Below lg: 40px tall with a 28px remove disc (the whole chip removes the filter).
+                            className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-ink/15 bg-card py-1 ps-3 pe-1 text-xs font-medium text-foreground shadow-sm transition-colors hover:border-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:min-h-10 max-lg:ps-3.5 max-lg:pe-1.5"
                           >
                             <span dir="auto" className="truncate">
                               {c.label}
                             </span>
                             <span
                               aria-hidden
-                              className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground transition-colors group-hover:bg-ink group-hover:text-primary-foreground"
+                              className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground transition-colors group-hover:bg-ink group-hover:text-primary-foreground max-lg:h-7 max-lg:w-7"
                             >
                               <X className="h-3 w-3" />
                             </span>
@@ -279,7 +281,7 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
                         <Link
                           href={clearHref}
                           scroll={false}
-                          className="rounded-full px-2 py-1 text-xs font-semibold text-foreground underline decoration-gold decoration-2 underline-offset-4 transition-colors hover:text-gold-foreground hover:decoration-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="rounded-full px-2 py-1 text-xs font-semibold text-foreground underline decoration-gold decoration-2 underline-offset-4 transition-colors hover:text-gold-foreground hover:decoration-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:inline-flex max-lg:min-h-10 max-lg:items-center max-lg:px-3"
                         >
                           {t("chips.clearAll")}
                         </Link>
@@ -342,7 +344,7 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
 
             {pages > 1 && (
               <nav className="mt-14 flex flex-col items-center gap-3" aria-label={t("pagination.label")}>
-                <div className="inline-flex max-w-full items-center gap-1 rounded-full border border-border/80 bg-card p-1 shadow-card">
+                <div className="inline-flex max-w-full items-center gap-1 rounded-full border border-border/80 bg-card p-1 shadow-card max-lg:gap-2">
                   <Link
                     href={pageHref(filters.page - 1)}
                     aria-disabled={filters.page <= 1 || undefined}

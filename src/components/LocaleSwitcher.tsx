@@ -66,7 +66,8 @@ function isPlainClick(e: MouseEvent) {
  * plain click goes through useSwitchLocale() instead, which also remembers the choice for the account's emails.
  * `compact` hides the label below xl (icon only), so the desktop header fits on one line at 1024–1279px; `dense` (the
  * signed-in header, which also holds the admin link, the bell and the account button) keeps the icon alone up to 2xl;
- * `full` (the phone menu) lays the three languages out side by side instead of behind a second menu.
+ * `full` (the phone menu) lays the three languages out side by side instead of behind a second menu: one row of three
+ * 44px choices, the current one filled (a check mark would not fit "English" in a third of the 288px sheet).
  */
 export function LocaleSwitcher({ className, full, compact, dense }: { className?: string; full?: boolean; compact?: boolean; dense?: boolean }) {
   const locale = useLocale();
@@ -89,7 +90,7 @@ export function LocaleSwitcher({ className, full, compact, dense }: { className?
     return (
       <nav aria-label={t("langMenu.choose")} className={cn("grid gap-2", className)}>
         <p className="text-xs font-medium text-muted-foreground">{t("langMenu.label")}</p>
-        <ul className="flex flex-wrap gap-1.5">
+        <ul className="grid grid-cols-3 gap-2">
           {LOCALES.map((l) => (
             <li key={l}>
               <a
@@ -101,11 +102,10 @@ export function LocaleSwitcher({ className, full, compact, dense }: { className?
                 onClick={(e) => pick(e, l)}
                 data-testid={`locale-link-${l}`}
                 className={cn(
-                  "inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "flex h-11 items-center justify-center rounded-full border px-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   l === locale ? "border-ink bg-ink text-primary-foreground" : "border-border/70 bg-card hover:bg-accent",
                 )}
               >
-                {l === locale && <Check className="size-3.5" aria-hidden />}
                 {LOCALE_NAMES[l]}
               </a>
             </li>

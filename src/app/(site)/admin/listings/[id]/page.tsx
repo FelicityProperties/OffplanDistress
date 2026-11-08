@@ -7,6 +7,7 @@ import { FormAConfirm, OwnerForm } from "@/components/admin/OwnerCard";
 import { PublishAttestedListingButton } from "@/components/admin/PublishAttested";
 import { DealFileCard } from "@/components/admin/DealFileCard";
 import { HistoryPanel } from "@/components/admin/HistoryPanel";
+import { PHONE_BUTTON, PHONE_LINK } from "@/components/admin/phone";
 import { StatusPill } from "@/components/badges";
 import { isPlaceholderEmail } from "@/lib/claim";
 import { isImportOwner } from "@/lib/import";
@@ -24,15 +25,21 @@ import { adminListing, adminOffers, confirmedByBroker, confirmedByFormA } from "
 import { listingFiles } from "@/lib/dashboard";
 import { formatAED, formatDate, formatNumber, formatPct, formatQuarter, refCode, timeAgo } from "@/lib/format";
 import { storedFileName } from "@/lib/uploads";
-import { isUuid } from "@/lib/utils";
+import { cn, isUuid } from "@/lib/utils";
 import { dubaiToday, expiryDateBounds, isAdvertised } from "@/lib/permits";
 import { WhatsAppCopy } from "@/components/admin/WhatsAppCopy";
 import { dealPosts } from "@/lib/whatsapp-post";
 import { communityName, developerName } from "@/lib/place-names";
 
-export default async function AdminListingPage({ params }: PageProps<"/admin/listings/[id]">) {
+export default async function AdminListingPage({ params, searchParams }: PageProps<"/admin/listings/[id]">) {
   await requireAdmin();
   const { id } = await params;
+  // Opened from the verification queue (its links say so): the back link returns there, else to the pipeline.
+  const from = (await searchParams).from;
+  const back =
+    from === "queue" || from === "imported"
+      ? { href: from === "imported" ? "/admin?tab=imported" : "/admin", label: "nav.queue" as const }
+      : { href: "/admin/pipeline", label: "listing.back" as const };
   if (!isUuid(id)) notFound();
   const row = await adminListing(id);
   if (!row) notFound();
@@ -87,8 +94,8 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
 
   return (
     <div className="space-y-6">
-      <Link href="/admin/pipeline" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" /> {t("listing.back")}
+      <Link href={back.href} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground max-lg:min-h-10">
+        <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" /> {t(back.label)}
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
         {/* wrap-anywhere: typed names (and project names) can be one word wider than a phone. */}
@@ -108,10 +115,11 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
             )}
           </p>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        {/* Phones (below sm): under the title and aligned with it, the actions across the width. */}
+        <div className="flex flex-col items-end gap-2 max-sm:w-full max-sm:items-start">
           <ToneStatus label={tc(`listing.${l.status}`)} tone={LISTING_STATUS[l.status].tone} />
           {(l.createdByStaff || contactFound.length > 0) && (
-            <div className="flex flex-wrap justify-end gap-1.5">
+            <div className="flex flex-wrap justify-end gap-1.5 max-sm:justify-start">
               {l.createdByStaff && <StatusPill tone="muted">{t("claim.staffBadge")}</StatusPill>}
               {awaitingSeller && <StatusPill tone="warning">{t("claim.pendingBadge")}</StatusPill>}
               {placeholderOwner && <StatusPill tone="warning">{ti("owner.badge")}</StatusPill>}
@@ -123,13 +131,15 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
             </div>
           )}
           {/* Wraps on a phone: an imported unit in review has four buttons here. */}
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button asChild size="sm" variant="outline">
+          <div className="flex flex-wrap justify-end gap-2 max-sm:w-full max-sm:justify-start">
+            <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
               <Link href={`/deals/${refCode(l.refNo)}`}>
                 <ExternalLink /> {t("listing.publicPage")}
               </Link>
             </Button>
-            {l.status === "pending_review" && <ReviewButtons listingId={l.id} savedAt={l.updatedAt.toISOString()} />}
+            {l.status === "pending_review" && (
+              <ReviewButtons listingId={l.id} savedAt={l.updatedAt.toISOString()} refCode={refCode(l.refNo)} project={l.projectName} />
+            )}
             {/* An imported unit still under its placeholder owner can't be approved; it goes live on the account owner's
                 statement instead, as the whole import can from the Imported tab (src/lib/attestation.ts). */}
             {l.status === "pending_review" && placeholderOwner && l.createdByStaff && !l.isSample && !l.dldPermit && (
@@ -163,7 +173,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
                 href={imported.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 underline underline-offset-4 hover:no-underline"
+                className="inline-flex items-center gap-1 underline underline-offset-4 hover:no-underline max-lg:min-h-10"
               >
                 {ti("note.open", { source: importSource })} <ExternalLink className="h-3.5 w-3.5" aria-hidden />
               </a>
@@ -181,8 +191,9 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border bg-card p-5 shadow-card lg:col-span-2">
+      {/* grid-cols-1, not the implicit column: that one grows with its widest line (a phone's page with it). */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="rounded-xl border bg-card p-5 shadow-card max-sm:p-4 lg:col-span-2">
           <h2 className="font-sans font-semibold">{t("listing.numbers")}</h2>
           <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
             {[
@@ -222,9 +233,13 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
               ],
               [t("listing.motivation"), tc(`motivation.${l.motivation}`)],
             ].map(([k, v]) => (
-              <div key={k} className="flex justify-between gap-3 border-b py-1.5">
+              // Phones: a figure too long to share the line with its label ("AED 8,584 on 25 Nov 2026") goes under it,
+              // still at the end, rather than past the card's edge.
+              <div key={k} className="flex justify-between gap-3 border-b py-1.5 max-sm:flex-wrap max-sm:gap-y-0.5">
                 <dt className="text-muted-foreground">{k}</dt>
-                <dd className="shrink-0 whitespace-nowrap text-end font-medium tabular">{v}</dd>
+                <dd className="shrink-0 whitespace-nowrap text-end font-medium tabular max-sm:ms-auto max-sm:min-w-0 max-sm:shrink max-sm:whitespace-normal">
+                  {v}
+                </dd>
               </div>
             ))}
           </dl>
@@ -239,7 +254,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
             <div
               id="contact-warning"
               role="note"
-              className="mt-4 flex scroll-mt-24 items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm"
+              className="mt-4 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm lg:scroll-mt-24"
             >
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
               <div className="min-w-0">
@@ -256,7 +271,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
             </div>
           )}
         </div>
-        <div className="rounded-xl border bg-card p-5 shadow-card">
+        <div className="rounded-xl border bg-card p-5 shadow-card max-sm:p-4">
           <h2 className="font-sans font-semibold">{t("listing.seller")}</h2>
           <p className="mt-3 font-medium">
             {placeholderOwner && importSource ? ti("owner.placeholderName", { source: importSource }) : seller.fullName}
@@ -265,14 +280,16 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
             <p className="text-sm text-muted-foreground">{t("users.noEmail")}</p>
           ) : (
             <p className="text-sm">
-              <a href={`mailto:${seller.email}`} className="hover:underline">
-                <bdi dir="ltr">{seller.email}</bdi>
+              <a href={`mailto:${seller.email}`} className={cn("hover:underline", PHONE_LINK)}>
+                <bdi dir="ltr" className="wrap-anywhere">
+                  {seller.email}
+                </bdi>
               </a>
             </p>
           )}
           {seller.phone && (
             <p className="text-sm">
-              <a href={`tel:${seller.phone}`} className="hover:underline">
+              <a href={`tel:${seller.phone}`} className={cn("hover:underline", PHONE_LINK)}>
                 <bdi dir="ltr">{seller.phone}</bdi>
               </a>
             </p>
@@ -297,7 +314,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
       {/* Staff-created listings: the seller confirms ownership through their claim link (or our team from the owner's
           signed Form A) before approval. */}
       {l.createdByStaff && !l.isSample && (
-        <section aria-labelledby="claim-title" className="rounded-xl border bg-card p-6 shadow-card">
+        <section aria-labelledby="claim-title" className="rounded-xl border bg-card p-4 shadow-card sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 max-w-2xl">
               <h2 id="claim-title" className="flex items-center gap-2 font-sans text-lg font-semibold">
@@ -335,7 +352,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
               )}
             </div>
             {placeholderOwner ? (
-              <Button asChild size="sm" variant="outline">
+              <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
                 <a href="#owner">{ti("imported.setOwner")}</a>
               </Button>
             ) : (
@@ -360,7 +377,7 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         </section>
       )}
 
-      <section className="rounded-xl border bg-card p-6 shadow-card">
+      <section className="rounded-xl border bg-card p-4 shadow-card sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-sans text-lg font-semibold">{t("listing.documents")}</h2>
           <DocumentUploader listingId={l.id} kinds={["photo", "spa", "soa", "oqood", "id", "form_a", "other"]} />
@@ -371,11 +388,12 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 text-sm">
                 <span className="flex min-w-0 items-center gap-2">
                   {d.kind === "photo" ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
-                  <a href={`/api/files/${d.id}`} target="_blank" rel="noreferrer" className="truncate hover:underline">
+                  <a href={`/api/files/${d.id}`} target="_blank" rel="noreferrer" className="truncate hover:underline max-lg:leading-10">
                     <bdi>{d.filename}</bdi>
                   </a>
                 </span>
-                <span className="shrink-0 text-xs text-muted-foreground">
+                {/* Phones: the kind, size and date on a line of their own under the name (beside it, they ran past the card). */}
+                <span className="shrink-0 text-xs text-muted-foreground max-sm:basis-full">
                   {tc(`file.${d.kind}`)} · {t("listing.fileSize", { n: (d.size / 1024 / 1024).toFixed(1) })} ·{" "}
                   {formatDate(d.createdAt, locale)}
                 </span>
@@ -387,13 +405,14 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
         )}
       </section>
 
-      <section className="rounded-xl border bg-card p-6 shadow-card">
+      <section className="rounded-xl border bg-card p-4 shadow-card sm:p-6">
         <h2 className="font-sans text-lg font-semibold">{t("listing.offers")}</h2>
         {offers.length ? (
           <ul className="mt-3 divide-y">
             {offers.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-                <div>
+                {/* min-w-0 + wrap-anywhere: the meta line holds the buyer's e-mail, one unbreakable word. */}
+                <div className="min-w-0 wrap-anywhere">
                   <p className="font-semibold tabular">
                     {formatAED(o.amount, locale)}
                     {o.counterAmount && o.status === "countered" && (
@@ -408,7 +427,9 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
                   </p>
                   {o.message && <p className="mt-1 text-muted-foreground">{t("listing.quote", { text: o.message })}</p>}
                 </div>
-                <div className="flex items-center gap-3">
+                {/* Phones: the status, then the answers on a line of their own when they don't fit beside it (three
+                    buttons are wider than a 320 px card). */}
+                <div className="flex items-center gap-3 max-sm:w-full max-sm:flex-wrap max-sm:justify-between max-sm:gap-2">
                   <ToneStatus label={tc(`offer.${o.status}`)} tone={OFFER_STATUS[o.status].tone} />
                   <SellerOfferActions
                     offerId={o.id}
@@ -430,7 +451,8 @@ export default async function AdminListingPage({ params }: PageProps<"/admin/lis
       {/* The deal file (contracts, NOC, transfer) once an offer is accepted; opened lazily for older deals. */}
       <DealFileCard listing={l} />
 
-      <section className="rounded-xl border bg-card p-6 shadow-card">
+      {/* p-4 on a phone: the form's Save row spans the card (PHONE_SAVE_BAR expects it). */}
+      <section className="rounded-xl border bg-card p-4 shadow-card sm:p-6">
         <h2 className="mb-4 font-sans text-lg font-semibold">{t("listing.manage")}</h2>
         <AdminListingForm
           listingId={l.id}
