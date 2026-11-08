@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { MessageCircle, RotateCcw, Send, Sparkles, X } from "lucide-react";
 import type { AssistantEvent } from "@/app/api/assistant/route";
@@ -175,6 +175,11 @@ export function AssistantWidget() {
   const nudgeRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const place = floatingPlaces(pathname).assistant;
+  // The window is on the page: open, on a page that has the chat. Open stays true across a page without it (the admin
+  // console, an account page): the chat is back on the next page that has it.
+  const shown = open && place !== "never";
+  // Typing in the full-screen window (phones): the keyboard leaves little room, the lines under the box step aside.
+  const [typing, setTyping] = useState(false);
   const launcherClear = useClearOfPage(launcherRef, pathname, place === "always" && !open);
 
   // The conversation so far in this tab (after hydration, so the server and first client render agree).
@@ -209,6 +214,11 @@ export function AssistantWidget() {
     return () => screen.removeEventListener("change", update);
   }, []);
 
+  // The text box goes with the window, and no blur may come then (iOS): its lines are back next time.
+  useEffect(() => {
+    if (shown) return () => setTyping(false);
+  }, [shown]);
+
   useEffect(() => {
     if (!open) return;
     // Phones: no keyboard over the greeting and the suggestions; the window itself takes focus (screen readers start there).
@@ -217,10 +227,11 @@ export function AssistantWidget() {
   }, [open]);
 
   // Full screen: the page behind stays put, and the window follows the visible area, so the text box sits right above
-  // the on-screen keyboard (iOS and Android shrink and shift the visual viewport, not the page).
+  // the on-screen keyboard (iOS and Android shrink and shift the visual viewport, not the page). Only while the window
+  // is on the page: Back to a page without the chat takes it away, and the page scrolls again.
   useEffect(() => {
     const panel = panelRef.current;
-    if (!open || !full || !panel) return;
+    if (!shown || !full || !panel) return;
     const html = document.documentElement;
     const overflow = html.style.overflow;
     html.style.overflow = "hidden";
@@ -248,7 +259,24 @@ export function AssistantWidget() {
       panel.style.removeProperty("--assistant-safe-b");
       panel.style.transform = "";
     };
-  }, [open, full]);
+  }, [shown, full]);
+
+  // Full screen it is a modal window, so the rest of the page is out of reach for screen readers and the keyboard too
+  // (inert, as behind the site's dialogs), the launcher under it included: the window has its own Close. Undone before
+  // close() hands focus back to the launcher.
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!shown || !full || !panel) return;
+    const quieted: Element[] = [];
+    for (let node: Element = panel; node.parentElement && node !== document.body; node = node.parentElement) {
+      for (const other of node.parentElement.children) {
+        if (other === node || other.hasAttribute("inert") || other instanceof HTMLScriptElement || other instanceof HTMLStyleElement) continue;
+        other.setAttribute("inert", "");
+        quieted.push(other);
+      }
+    }
+    return () => quieted.forEach((el) => el.removeAttribute("inert"));
+  }, [shown, full]);
 
   // The hello, unless this browser has seen it (or chatted) before.
   useEffect(() => {
@@ -263,15 +291,17 @@ export function AssistantWidget() {
   }, [loaded, open, msgs.length]);
 
   // Due: from lg it shows at once, as it always did. On phones only once it can't hide anything: the launcher is on
-  // screen, nothing else has the screen, and no text, picture or control of the page is where the bubble goes.
+  // screen, nothing else has the screen, and no text, picture or control of the page is where the bubble goes. Never on
+  // a page without the chat (the admin console, an account page): it is seen only once shown, on the next page with it.
   useEffect(() => {
-    if (nudge !== "wait") return;
+    if (nudge !== "wait" || place === "never") return;
     const phone = window.matchMedia(PHONE_SHELL);
     const check = () => {
       const launcher = launcherRef.current;
       const bubble = nudgeRef.current;
+      if (!bubble) return;
       if (phone.matches) {
-        if (!launcher || !bubble || !launcher.offsetWidth || screenBusy()) return;
+        if (!launcher || !launcher.offsetWidth || screenBusy()) return;
         // The launcher's own look runs in the same pass and may not have rendered yet: ask the page directly.
         if (pageUnder(restBox(launcher)) || pageUnder(restBox(bubble), true)) return;
       }
@@ -287,7 +317,7 @@ export function AssistantWidget() {
       stop();
       cancelAnimationFrame(first);
     };
-  }, [nudge]);
+  }, [nudge, place]);
 
   // On screen: gone after a while, and on phones as soon as the page scrolls under it.
   useEffect(() => {
@@ -522,7 +552,7 @@ export function AssistantWidget() {
           </div>
 
           <form
-            className="group border-t p-3"
+            className="border-t p-3"
             style={full ? { paddingBottom: "max(0.75rem, var(--assistant-safe-b, env(safe-area-inset-bottom, 0px)))" } : undefined}
             onSubmit={(e) => {
               e.preventDefault();
@@ -537,6 +567,8 @@ export function AssistantWidget() {
                 maxLength={MAX_INPUT}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onFocus={() => setTyping(true)}
+                onBlur={() => setTyping(false)}
                 onKeyDown={(e) => {
                   // Enter sends; Shift+Enter is a new line, and Enter that picks a Chinese or Arabic IME candidate is neither.
                   if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -566,8 +598,9 @@ export function AssistantWidget() {
                 <Send className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
               </button>
             </div>
-            {/* Phones: while typing, the keyboard leaves little room; these two come back when it closes. */}
-            <p className={cn("mt-2 text-muted-foreground", full ? "text-xs group-has-[textarea:focus]:hidden" : "text-[11px]", "leading-snug")}>
+            {/* Phones: while typing, the keyboard leaves little room; these two come back when it closes. (React state,
+                not a :has() rule: one of those made every attribute change on the page restyle all of it.) */}
+            <p className={cn("mt-2 text-muted-foreground", full ? cn("text-xs", typing && "hidden") : "text-[11px]", "leading-snug")}>
               {t("disclaimer")}
             </p>
             {BRAND.whatsapp && (
@@ -578,7 +611,7 @@ export function AssistantWidget() {
                 data-wa="assistant"
                 className={cn(
                   "flex w-fit items-center gap-1.5 font-medium text-emerald-700 hover:underline focus-visible:underline focus-visible:outline-none dark:text-emerald-400",
-                  full ? "min-h-11 text-sm group-has-[textarea:focus]:hidden" : "mt-1.5 text-xs",
+                  full ? cn("min-h-11 text-sm", typing && "hidden") : "mt-1.5 text-xs",
                 )}
               >
                 <MessageCircle className={full ? "h-4 w-4" : "h-3.5 w-3.5"} aria-hidden />
