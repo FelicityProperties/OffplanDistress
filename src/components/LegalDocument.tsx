@@ -1,18 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "@/components/LocaleLink";
-import {
-  ArrowUp,
-  CalendarDays,
-  ChevronDown,
-  Cookie,
-  FileText,
-  Languages,
-  ListOrdered,
-  Mail,
-  Scale,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import { ArrowUp, CalendarDays, Cookie, FileText, Languages, ListOrdered, Mail, Scale, ShieldCheck, Sparkles } from "lucide-react";
+import { LegalToc } from "@/components/LegalToc";
 import { Button } from "@/components/ui/button";
 import { richText } from "@/content/legal/rich-text";
 import type { LegalContent, LegalDoc } from "@/content/legal/types";
@@ -73,14 +62,15 @@ function bullet(text: string): ReactNode {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+/** The section links: the side column from lg, the phone list (LegalToc) below it, with 44px rows there. */
 function TocLinks({ sections, className }: { sections: LegalDoc["sections"]; className?: string }) {
   return (
-    <ol className={cn("space-y-0.5 text-sm", className)}>
+    <ol className={cn("space-y-0.5 text-sm max-lg:space-y-1", className)}>
       {sections.map((s, i) => (
         <li key={s.id}>
           <a
             href={`#${s.id}`}
-            className="flex gap-3 rounded-lg px-2.5 py-1.5 leading-snug text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex gap-3 rounded-lg px-2.5 py-1.5 leading-snug text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:min-h-11 max-lg:items-center max-lg:py-2.5 max-lg:active:bg-muted"
           >
             <span className="shrink-0 pt-px text-xs font-semibold tabular text-gold-foreground/70">{pad(i + 1)}</span>
             <span>{s.heading}</span>
@@ -158,16 +148,9 @@ export async function LegalDocument({ doc, current }: { doc: LegalContent; curre
         </aside>
 
         <article className="min-w-0 max-w-3xl">
-          <details className="group mb-8 rounded-2xl border bg-card shadow-card lg:hidden">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 py-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-              <span className="inline-flex items-center gap-2">
-                <ListOrdered className="size-4 text-gold" aria-hidden />
-                {t("toc")}
-              </span>
-              <ChevronDown className="size-4 text-muted-foreground transition group-open:rotate-180" aria-hidden />
-            </summary>
-            <TocLinks sections={d.sections} className="border-t px-2.5 py-3" />
-          </details>
+          <LegalToc label={t("toc")} sections={d.sections.map(({ id, heading }) => ({ id, heading }))}>
+            <TocLinks sections={d.sections} />
+          </LegalToc>
 
           <div className="rounded-2xl border border-gold/30 bg-gold-soft p-6 shadow-card sm:p-7">
             <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold-foreground">
@@ -180,7 +163,8 @@ export async function LegalDocument({ doc, current }: { doc: LegalContent; curre
           <div className="mt-2">
             {d.sections.map((s, i) => (
               <section key={s.id} aria-labelledby={s.id} className="border-b border-border/70 py-9 last:border-b-0">
-                <h2 id={s.id} className="flex scroll-mt-24 items-baseline gap-3 text-2xl font-semibold leading-snug">
+                {/* Below lg the page's scroll-padding clears the header; the sticky contents bar needs 4rem more. */}
+                <h2 id={s.id} className="flex scroll-mt-16 items-baseline gap-3 text-2xl font-semibold leading-snug lg:scroll-mt-24">
                   <span className="font-sans text-sm font-semibold tabular text-gold-foreground/70">{pad(i + 1)}</span>
                   <span>{s.heading}</span>
                 </h2>
@@ -227,7 +211,7 @@ export async function LegalDocument({ doc, current }: { doc: LegalContent; curre
 
           <a
             href="#top"
-            className="mt-6 inline-flex items-center gap-1.5 rounded-md text-sm text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="mt-6 inline-flex items-center gap-1.5 rounded-md text-sm text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:min-h-11"
           >
             <ArrowUp className="size-4" aria-hidden />
             {t("backToTop")}

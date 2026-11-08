@@ -75,6 +75,8 @@ export default defineMessages({
     "pipeline.page": "Page {page} of {pages}",
     "pipeline.prev": "Previous",
     "pipeline.next": "Next",
+    // Phones: the stages as chips (the board's columns don't fit).
+    "pipeline.stages": "Stages",
 
     "listing.back": "Pipeline",
     "listing.listed": "listed {date}",
@@ -114,6 +116,8 @@ export default defineMessages({
     "offers.sub": "Every offer on the platform with both parties' contact details.",
     "offers.empty": "No offers yet",
     "offers.asking": "asking {amount}",
+    "offers.filter": "Filter by status",
+    "offers.all": "All",
 
     "inquiries.title": "Inquiries",
     "inquiries.sub": "Viewing requests, deal questions and contact-form messages.",
@@ -151,6 +155,12 @@ export default defineMessages({
     "users.title": "Users",
     "users.sub": "{count} registered accounts.",
     "users.activity": "{listings} listings · {offers} offers",
+    "users.search": "Name, email or phone",
+    "users.results": "Accounts matching “{q}”: {count}",
+    "users.noResults": "No account matches “{q}”.",
+    "users.clearSearch": "Show everyone",
+    // On a phone's card, with the type and activity: "Seller · 2 listings · 0 offers · joined 3 Nov 2026".
+    "users.joinedOn": "joined {date}",
 
     "review.approve": "Approve",
     "review.approved": "Listing approved and published",
@@ -160,6 +170,9 @@ export default defineMessages({
     "review.rejectPlaceholder": "e.g. Statement of account doesn't match the developer's records.",
     "review.rejectSubmit": "Reject listing",
     "review.rejected": "Listing rejected",
+    // On a phone Approve asks first (a big button under the thumb that publishes the advert at once).
+    "review.confirmTitle": "Approve {ref}?",
+    "review.confirmBody": "{project} goes live on the site now, and its seller is told.",
 
     "form.status": "Status",
     "form.askingPrice": "Asking price (AED)",
@@ -231,6 +244,8 @@ export default defineMessages({
     "reset.confirm": "Reset {name}'s password? They'll be signed out everywhere.",
     "reset.dialogTitle": "Temporary password",
     "reset.dialogDesc": "Share this with {name} securely. They can sign in with it right away.",
+    "reset.copy": "Copy password",
+    "reset.copied": "Password copied",
 
     // /admin/leads: sellers who used the free estimate without an account
     "leads.title": "Seller leads",
@@ -732,6 +747,7 @@ export default defineMessages({
     "pipeline.page": "الصفحة ⁨{page}⁩ من ⁨{pages}⁩",
     "pipeline.prev": "السابق",
     "pipeline.next": "التالي",
+    "pipeline.stages": "المراحل",
 
     "listing.back": "مسار الصفقات",
     "listing.listed": "أُدرج في {date}",
@@ -771,6 +787,8 @@ export default defineMessages({
     "offers.sub": "جميع العروض على المنصة مع بيانات التواصل للطرفين.",
     "offers.empty": "لا توجد عروض بعد",
     "offers.asking": "السعر المطلوب {amount}",
+    "offers.filter": "التصفية حسب الحالة",
+    "offers.all": "الكل",
 
     "inquiries.title": "الاستفسارات",
     "inquiries.sub": "طلبات المعاينة والأسئلة عن الصفقات ورسائل نموذج التواصل.",
@@ -807,6 +825,11 @@ export default defineMessages({
     "users.title": "المستخدمون",
     "users.sub": "عدد الحسابات المسجّلة: {count}.",
     "users.activity": "الإعلانات: {listings} · العروض: {offers}",
+    "users.search": "الاسم أو البريد الإلكتروني أو رقم الهاتف",
+    "users.results": "الحسابات المطابقة لـ «⁨{q}⁩»: ⁨{count}⁩",
+    "users.noResults": "لا يوجد حساب يطابق «⁨{q}⁩».",
+    "users.clearSearch": "عرض الجميع",
+    "users.joinedOn": "انضم في {date}",
 
     "review.approve": "موافقة",
     "review.approved": "تمت الموافقة على الإعلان ونشره",
@@ -816,6 +839,8 @@ export default defineMessages({
     "review.rejectPlaceholder": "مثال: كشف الحساب لا يطابق سجلات المطوّر.",
     "review.rejectSubmit": "رفض الإعلان",
     "review.rejected": "تم رفض الإعلان",
+    "review.confirmTitle": "الموافقة على ⁨{ref}⁩؟",
+    "review.confirmBody": "سيُنشر ⁨{project}⁩ على الموقع الآن، ويُبلَّغ البائع بذلك.",
 
     "form.status": "الحالة",
     "form.askingPrice": "السعر المطلوب (درهم)",
@@ -884,6 +909,8 @@ export default defineMessages({
     "reset.confirm": "هل تريد إعادة تعيين كلمة مرور {name}؟ سيتم تسجيل خروجه من جميع الأجهزة.",
     "reset.dialogTitle": "كلمة مرور مؤقتة",
     "reset.dialogDesc": "شارك كلمة المرور هذه مع {name} بطريقة آمنة، ويمكنه تسجيل الدخول بها فوراً.",
+    "reset.copy": "نسخ كلمة المرور",
+    "reset.copied": "تم نسخ كلمة المرور",
 
     "leads.title": "طلبات البائعين",
     "leads.sub": "بائعون طلبوا تقديراً مجانياً. اتصل بالحالات العاجلة أولاً.",
@@ -1367,6 +1394,7 @@ export default defineMessages({
     "pipeline.page": "第 {page} 页，共 {pages} 页",
     "pipeline.prev": "上一页",
     "pipeline.next": "下一页",
+    "pipeline.stages": "阶段",
 
     "listing.back": "进度看板",
     "listing.listed": "发布于 {date}",
@@ -1406,6 +1434,8 @@ export default defineMessages({
     "offers.sub": "平台上的全部报价，含买卖双方的联系方式。",
     "offers.empty": "暂无报价",
     "offers.asking": "要价 {amount}",
+    "offers.filter": "按状态筛选",
+    "offers.all": "全部",
 
     "inquiries.title": "咨询",
     "inquiries.sub": "看房预约、交易问题及联系表单留言。",
@@ -1442,6 +1472,11 @@ export default defineMessages({
     "users.title": "用户",
     "users.sub": "共 {count} 个注册账户。",
     "users.activity": "{listings} 套房源 · {offers} 个报价",
+    "users.search": "姓名、邮箱或电话",
+    "users.results": "匹配“{q}”的账户：{count} 个",
+    "users.noResults": "没有与“{q}”匹配的账户。",
+    "users.clearSearch": "显示全部账户",
+    "users.joinedOn": "注册于 {date}",
 
     "review.approve": "批准",
     "review.approved": "房源已批准并发布",
@@ -1451,6 +1486,8 @@ export default defineMessages({
     "review.rejectPlaceholder": "例如：付款对账单与开发商记录不符。",
     "review.rejectSubmit": "拒绝房源",
     "review.rejected": "房源已拒绝",
+    "review.confirmTitle": "批准 {ref}？",
+    "review.confirmBody": "{project} 将立即在网站上线，并通知卖家。",
 
     "form.status": "状态",
     "form.askingPrice": "要价（AED）",
@@ -1513,6 +1550,8 @@ export default defineMessages({
     "reset.confirm": "确定重置 {name} 的密码？其所有设备都将被退出登录。",
     "reset.dialogTitle": "临时密码",
     "reset.dialogDesc": "请通过安全方式告知 {name}。对方可立即用它登录。",
+    "reset.copy": "复制密码",
+    "reset.copied": "密码已复制",
 
     "leads.title": "卖家线索",
     "leads.sub": "申请免费估价的卖家。请优先致电急售的卖家。",

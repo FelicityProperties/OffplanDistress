@@ -67,7 +67,9 @@ function badgeText(count: number) {
 
 /**
  * Header bell: unread badge plus a dropdown of the latest notifications. Data is fetched on the server
- * (SiteHeader) and passed in; marking as read goes through server actions that refresh the page.
+ * (SiteHeader) and passed in; marking as read goes through server actions that refresh the page. The `full` variant,
+ * in the phone menu, is a row that opens /dashboard/notifications instead: a dropdown inside the menu sheet was a
+ * scroller in a scroller, its actions out of sight on a phone.
  */
 export function NotificationBell({
   unread,
@@ -109,40 +111,46 @@ export function NotificationBell({
     });
   }
 
+  // dir: "9+" stays "9+" on Arabic pages (not "+9").
   const badge =
     state.unread > 0 ? (
       <span
         aria-hidden
+        dir="ltr"
         className={cn(
-          "grid h-4 min-w-4 place-items-center rounded-full bg-gold px-1 text-[10px] font-semibold leading-none text-gold-foreground tabular",
-          variant === "icon" && "absolute -top-0.5 -end-0.5",
+          "grid place-items-center rounded-full bg-gold font-semibold leading-none text-gold-foreground tabular",
+          variant === "icon" ? "absolute -top-0.5 -end-0.5 h-4 min-w-4 px-1 text-[10px]" : "h-5 min-w-5 px-1.5 text-xs",
         )}
       >
         {badgeText(state.unread)}
       </span>
     ) : null;
 
+  if (variant === "full") {
+    return (
+      <Button asChild variant="outline" className={cn("h-11 justify-between", className)}>
+        <Link href="/dashboard/notifications" aria-label={label}>
+          <span className="inline-flex items-center gap-2">
+            <Bell />
+            {t("title")}
+          </span>
+          {badge}
+        </Link>
+      </Button>
+    );
+  }
+
   return (
     <DropdownMenu dir={dir}>
       <DropdownMenuTrigger asChild>
-        {variant === "icon" ? (
-          <Button variant="ghost" size="icon" aria-label={label} title={label} className={cn("relative", className)}>
-            <Bell />
-            {badge}
-          </Button>
-        ) : (
-          <Button variant="outline" aria-label={label} className={cn("justify-between", className)}>
-            <span className="inline-flex items-center gap-2">
-              <Bell />
-              {t("title")}
-            </span>
-            {badge}
-          </Button>
-        )}
+        <Button variant="ghost" size="icon" aria-label={label} title={label} className={cn("relative", className)}>
+          <Bell />
+          {badge}
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         // Popper alignment is physical: keep the panel growing inwards from the header's end edge in both directions.
-        align={variant === "icon" ? (dir === "rtl" ? "start" : "end") : "center"}
+        align={dir === "rtl" ? "start" : "end"}
         collisionPadding={16}
         className="w-[min(22rem,calc(100vw-2rem))] p-0"
       >

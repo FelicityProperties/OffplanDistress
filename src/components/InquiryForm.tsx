@@ -17,6 +17,28 @@ import { useT } from "@/i18n/client";
 
 type Defaults = { name?: string; email?: string; phone?: string | null };
 
+/**
+ * On a phone the keyboard's Next key (enterKeyHint="next") moves on to the following field, as in an app, rather than
+ * sending a half-filled form; Enter at a desktop keyboard still sends it.
+ */
+function nextFieldOnEnter(e: React.KeyboardEvent<HTMLFormElement>) {
+  const field = e.target;
+  if (e.key !== "Enter" || !(field instanceof HTMLInputElement) || field.enterKeyHint !== "next") return;
+  if (!window.matchMedia("(pointer: coarse)").matches) return;
+  // The visible fields in order: not the hidden ones nor the honeypot (tabIndex -1, inside aria-hidden).
+  const fields = [...e.currentTarget.elements].filter(
+    (el): el is HTMLInputElement | HTMLTextAreaElement =>
+      ((el instanceof HTMLInputElement && el.type !== "hidden") || el instanceof HTMLTextAreaElement) &&
+      el.tabIndex >= 0 &&
+      !el.disabled &&
+      !el.closest('[aria-hidden="true"]'),
+  );
+  const next = fields[fields.indexOf(field) + 1];
+  if (!next) return;
+  e.preventDefault();
+  next.focus();
+}
+
 export function InquiryFields({
   listingId,
   type,
@@ -67,14 +89,24 @@ export function InquiryFields({
   }
 
   return (
-    <form action={action} onInput={keepTyped} className="relative space-y-4">
+    <form action={action} onInput={keepTyped} onKeyDown={nextFieldOnEnter} className="relative space-y-4">
       {listingId && <input type="hidden" name="listingId" value={listingId} />}
       <input type="hidden" name="type" value={type} />
       <AttributionField />
       <SpamGuard token={formToken} resetKey={attempt} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t("inquiry.name")} htmlFor="inq-name" error={fe.name}>
-          <Input id="inq-name" name="name" defaultValue={typed.name ?? defaults?.name} required autoComplete="name" />
+          {/* Phones: 44 px fields, a comfortable tap. */}
+          <Input
+            id="inq-name"
+            name="name"
+            className="max-md:h-11"
+            defaultValue={typed.name ?? defaults?.name}
+            required
+            autoComplete="name"
+            autoCapitalize="words"
+            enterKeyHint="next"
+          />
         </Field>
         <Field label={t("inquiry.phone")} htmlFor="inq-phone" error={fe.phone}>
           <Input
@@ -82,9 +114,10 @@ export function InquiryFields({
             name="phone"
             type="tel"
             dir="ltr"
-            className="rtl:text-end"
+            className="rtl:text-end max-md:h-11"
             defaultValue={typed.phone ?? defaults?.phone ?? ""}
             autoComplete="tel"
+            enterKeyHint="next"
           />
         </Field>
       </div>
@@ -94,13 +127,15 @@ export function InquiryFields({
           name="email"
           type="email"
           dir="ltr"
-          className="rtl:text-end"
+          className="rtl:text-end max-md:h-11"
           defaultValue={typed.email ?? defaults?.email}
           required
           autoComplete="email"
+          enterKeyHint="next"
         />
       </Field>
       <Field label={t("inquiry.message")} htmlFor="inq-message" error={fe.message}>
+        {/* No "send" key here: in a message, return starts a new line. */}
         <Textarea id="inq-message" name="message" rows={4} placeholder={messagePlaceholder} defaultValue={typed.message} />
       </Field>
       <FormMessage state={state} />

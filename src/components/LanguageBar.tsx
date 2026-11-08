@@ -24,7 +24,8 @@ const BAR_STYLE: Partial<Record<Locale, React.CSSProperties>> = {
  * "View in English" on an Arabic page, "عرض بالعربية" or "查看中文版" on an English one: offered when the browser
  * prefers another language and the visitor hasn't chosen yet (src/i18n/server.ts offeredLocale). Written in the
  * language it offers. The link opens the same page (filters kept) in that language; dismissing keeps the page's
- * language (od_locale), so the bar doesn't come back.
+ * language (od_locale), so the bar doesn't come back. On phones it is one short row: the link as a pill, the sentence
+ * for screen readers only, so the page below loses as little of the first screen as possible.
  */
 export function LanguageBar({ to, current, copy }: { to: Locale; current: Locale; copy: LanguageBarCopy }) {
   const [open, setOpen] = useState(true);
@@ -41,15 +42,15 @@ export function LanguageBar({ to, current, copy }: { to: Locale; current: Locale
       style={BAR_STYLE[to]}
       className="border-b border-gold/30 bg-gold-soft text-gold-foreground"
     >
-      <div className="container-page flex min-h-11 items-center gap-3 py-1.5 text-sm">
+      <div className="container-page flex min-h-11 items-center gap-3 py-1 text-sm sm:py-1.5">
         <Languages className="h-4 w-4 shrink-0" aria-hidden />
         <p className="min-w-0 flex-1">
-          {copy.body}{" "}
+          <span className="max-sm:sr-only">{copy.body} </span>
           <a
             href={href(to)}
             hrefLang={htmlLang(to)}
             aria-disabled={pending || undefined}
-            className="whitespace-nowrap rounded-sm font-semibold text-foreground underline decoration-gold decoration-2 underline-offset-4 hover:decoration-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="whitespace-nowrap rounded-sm font-semibold text-foreground underline decoration-gold decoration-2 underline-offset-4 hover:decoration-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:inline-flex max-sm:min-h-10 max-sm:items-center max-sm:rounded-full max-sm:bg-ink max-sm:px-4 max-sm:text-primary-foreground max-sm:no-underline max-sm:active:opacity-80"
             onClick={(e) => {
               if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
               e.preventDefault();
@@ -63,7 +64,7 @@ export function LanguageBar({ to, current, copy }: { to: Locale; current: Locale
           type="button"
           aria-label={copy.dismiss}
           title={copy.dismiss}
-          className="-me-2 grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors hover:bg-gold/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="-me-2 grid h-10 w-10 shrink-0 place-items-center rounded-full transition-colors hover:bg-gold/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-9 lg:w-9"
           onClick={() => {
             setOpen(false);
             start(async () => {

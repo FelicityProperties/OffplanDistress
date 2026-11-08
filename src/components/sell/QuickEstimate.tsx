@@ -22,6 +22,7 @@ import { nextQuarters, sellerEstimate, type EstimatePrefill } from "@/lib/estima
 import { formatAED, formatNumber, formatPct, formatQuarter } from "@/lib/format";
 import { developerName, searchKey } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
+import { nextFieldOnEnter, revealFirstError, syncEnterKeyHints } from "./form-ux";
 
 type Missed = "none" | "one" | "more";
 
@@ -189,6 +190,13 @@ export function QuickEstimate({
   useEffect(() => {
     if (done) doneHeading.current?.focus();
   }, [done]);
+  /** Bumped when a step fails its checks: its first field to fix is then shown and focused (./form-ux.ts). */
+  const [reveal, setReveal] = useState(0);
+  useEffect(() => {
+    if (reveal) revealFirstError(form.current);
+  }, [reveal]);
+  // The keyboard's action key: "next" from field to field; "go" to step 2, "send" on its last field.
+  useEffect(() => syncEnterKeyHints(form.current, step === 1 ? "go" : "send"));
 
   const developerOptions = useMemo<ComboboxOption[]>(() => {
     const collator = new Intl.Collator(locale);
@@ -221,8 +229,12 @@ export function QuickEstimate({
   }
 
   async function submit() {
-    if (!validate(1)) return setStep(1);
-    if (!validate(2)) return;
+    if (!validate(1)) {
+      setStep(1);
+      setReveal((n) => n + 1);
+      return;
+    }
+    if (!validate(2)) return setReveal((n) => n + 1);
     const fd = new FormData();
     fd.set("spaPrice", String(spa ?? 0));
     fd.set("amountPaid", String(paid ?? 0));
@@ -251,6 +263,7 @@ export function QuickEstimate({
       for (const [k, v] of Object.entries(res.fieldErrors ?? {})) if (v?.[0]) fe[SERVER_FIELD[k] ?? k] = v[0];
       setErrors(fe);
       if (Object.keys(fe).some((k) => STEP1.has(k))) setStep(1);
+      if (Object.keys(fe).length) setReveal((n) => n + 1);
       setFormError({ text: res.error ?? t("error.checkDetails"), throttled: res.throttled });
     } catch {
       setFormError({ text: t("error.checkDetails") });
@@ -269,7 +282,8 @@ export function QuickEstimate({
     <div
       id={id}
       className={cn(
-        "grid scroll-mt-24 gap-6 rounded-3xl border border-border/80 bg-card p-5 shadow-lift sm:p-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:gap-8",
+        // Below lg the page's scroll-padding alone clears the header: an extra margin left a gap above #estimate.
+        "grid gap-6 rounded-3xl border border-border/80 bg-card p-5 shadow-lift sm:p-7 lg:scroll-mt-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:gap-8",
         className,
       )}
     >
@@ -337,11 +351,12 @@ export function QuickEstimate({
             ref={form}
             noValidate
             className={cn("relative", showHeader && "mt-6")}
+            onKeyDown={nextFieldOnEnter}
             onSubmit={(e) => {
               e.preventDefault();
               if (busy) return;
               if (step === 1) {
-                if (!validate(1)) return;
+                if (!validate(1)) return setReveal((n) => n + 1);
                 setStep(2);
                 requestAnimationFrame(() => document.getElementById(fid("name"))?.focus());
               } else void submit();
@@ -375,6 +390,20 @@ export function QuickEstimate({
                     describedBy={errors.paid || paidOver ? `${fid("paid")}-msg` : undefined}
                   />
                 </Field>
+                {/* Below lg the full estimate is under the whole form: its figure shows here too, as it is typed. */}
+                {est && (
+                  <div className="rounded-xl bg-ink-gradient px-4 py-3 text-primary-foreground sm:col-span-2 lg:hidden">
+                    <p className="text-xs text-primary-foreground/75">{t("estimate.result.receive")}</p>
+                    <p className="mt-0.5 text-xl font-semibold leading-tight">
+                      <span className="text-gradient-gold">
+                        <AedRange low={est.low} high={est.high} locale={locale} />
+                      </span>
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-primary-foreground/70">
+                      {richText(t("estimate.result.takeover"), { amount: <span className="font-semibold text-primary-foreground">{money(est.remaining)}</span> })}
+                    </p>
+                  </div>
+                )}
                 <Field id={fid("developer")} label={t("estimate.field.developer")} error={errors.developer ?? errors.developerOther}>
                   <Combobox
                     id={fid("developer")}
@@ -473,7 +502,7 @@ export function QuickEstimate({
                     {(["no", "yes"] as const).map((v) => (
                       <label
                         key={v}
-                        className="flex min-w-24 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-accent/60"
+                        className="flex min-w-24 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-accent/60 max-lg:min-h-11"
                       >
                         <RadioGroupItem value={v} />
                         {t(`estimate.notice.${v}`)}
@@ -602,7 +631,8 @@ export function QuickEstimate({
                   <button
                     type="button"
                     onClick={() => setMarket(null)}
-                    className="inline-flex items-center gap-1 rounded-md font-medium text-gold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                    // Phones: a 40px-tall tap area around the one-line link, without moving the text.
+                    className="inline-flex items-center gap-1 rounded-md font-medium text-gold underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold max-lg:-mx-2 max-lg:-my-3 max-lg:px-2 max-lg:py-3"
                   >
                     <X className="h-3 w-3" aria-hidden /> {t("estimate.fromCalculator.clear")}
                   </button>

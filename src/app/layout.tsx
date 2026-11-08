@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, IBM_Plex_Sans_Arabic, Inter, Noto_Naskh_Arabic } from "next/font/google";
+import { InstallPrompt } from "@/components/app/InstallPrompt";
+import { OfflineBanner } from "@/components/app/OfflineBanner";
+import { ServiceWorkerRegistrar } from "@/components/app/ServiceWorker";
 import { JsonLd, organizationJsonLd } from "@/components/JsonLd";
 import { LocaleGuard } from "@/components/LocaleGuard";
 import { Toaster } from "@/components/ui/sonner";
@@ -7,22 +10,12 @@ import { I18nProvider } from "@/i18n/client";
 import { dirOf, htmlLang, type Locale } from "@/i18n/config";
 import { getLocale, getPagePath } from "@/i18n/server";
 import { BRAND } from "@/lib/config";
+import { BRAND_INK, manifestHref, PWA_THEME } from "@/lib/pwa";
 import { alternatesFor, openGraphBase } from "@/lib/seo";
+import { SITE_DESCRIPTION, SITE_TAGLINE } from "@/lib/site-copy";
 import { siteUrl } from "@/lib/site-url";
 import "./globals.css";
 
-// The site's one-line description in each language, for <title> and the meta description (the English comes from
-// BRAND); the Chinese follows the glossary (期房 = off-plan, 急售 = distressed, 开发商无异议函 = developer NOC).
-const TAGLINE: Record<Locale, string> = {
-  en: BRAND.tagline,
-  ar: "منصة دبي للوحدات على الخارطة المتعثرة",
-  zh: "迪拜急售期房交易平台",
-};
-const DESCRIPTION: Record<Locale, string> = {
-  en: BRAND.description,
-  ar: "اشترِ وحدات دبي على الخارطة بأقل من سعر الإطلاق. يعرض الملاك الذين يرغبون في الخروج وحداتهم، ونتحقق نحن من المستندات ونطابق المشترين ونتولى شهادة عدم الممانعة ونقل الملكية.",
-  zh: "以低于开发商售价购入迪拜期房。急需退出的业主在此挂牌，我们核实文件、撮合买家，并办理开发商无异议函（NOC）与迪拜土地局（DLD）过户。",
-};
 /** The toast region's accessible name, in the page's language. */
 const NOTIFICATIONS: Record<Locale, string> = { en: "Notifications", ar: "الإشعارات", zh: "通知" };
 
@@ -51,16 +44,26 @@ export async function generateMetadata(): Promise<Metadata> {
   const alternates = path ? alternatesFor(path, locale) : undefined;
   return {
     metadataBase: new URL(siteUrl()),
-    title: { default: `${BRAND.name} — ${TAGLINE[locale]}`, template: `%s · ${BRAND.name}` },
-    description: DESCRIPTION[locale],
+    title: { default: `${BRAND.name} — ${SITE_TAGLINE[locale]}`, template: `%s · ${BRAND.name}` },
+    description: SITE_DESCRIPTION[locale],
     ...(alternates ? { alternates } : {}),
     openGraph: { ...openGraphBase(locale), ...(alternates?.canonical ? { url: alternates.canonical } : {}) },
     twitter: { card: "summary_large_image" },
+    // The installable app in the page's language (src/lib/pwa.ts). On iOS: its home-screen name, and a status bar that
+    // stays dark-on-light over the cream header. No phone or address links made up from the licence numbers (ORN
+    // 33951, BRN 59244, …): real tel: and mailto: links still work.
+    manifest: manifestHref(locale),
+    appleWebApp: { capable: true, title: BRAND.name, statusBarStyle: "default" },
+    formatDetection: { telephone: false, email: false, address: false },
   };
 }
 
+// viewport-fit=cover: the page runs under the notch and the home indicator, and the fixed bars keep clear of them with
+// the safe-area insets (globals.css). The browser's bar stays ink; the installed app's status bar is cream like the
+// header (the first matching theme-color wins).
 export const viewport: Viewport = {
-  themeColor: "#141c33",
+  viewportFit: "cover",
+  themeColor: [{ media: "(display-mode: standalone)", color: PWA_THEME }, { color: BRAND_INK }],
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -79,6 +82,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <LocaleGuard />
           {children}
           <Toaster position="top-center" richColors dir={dirOf(locale)} containerAriaLabel={NOTIFICATIONS[locale]} />
+          {/* The installable app: the offline page's service worker, the install card and the offline notice. */}
+          <ServiceWorkerRegistrar />
+          <InstallPrompt />
+          <OfflineBanner />
         </I18nProvider>
       </body>
     </html>

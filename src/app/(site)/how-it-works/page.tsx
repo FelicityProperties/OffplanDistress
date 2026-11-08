@@ -74,7 +74,7 @@ export default async function HowItWorks() {
               <a
                 key={href}
                 href={href}
-                className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-card px-4 py-2 text-sm font-medium shadow-card transition hover:-translate-y-0.5 hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-card px-4 py-2 text-sm font-medium shadow-card transition hover:-translate-y-0.5 hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:min-h-11"
               >
                 <span className={cn("h-2 w-2 rounded-full", dot)} aria-hidden />
                 {label}
@@ -88,11 +88,12 @@ export default async function HowItWorks() {
       {/* The two journeys */}
       <section className="container-page py-20 reveal sm:py-24">
         <SectionHeading center eyebrow={t("how.journeys.eyebrow")} title={th("how.title")} sub={th("how.sub")} />
+        {/* lg:scroll-mt-28: below lg the page's scroll-padding alone clears the header (both added a 130px gap). */}
         <div className="mt-14 grid gap-6">
-          <div id="sellers" className="scroll-mt-28">
+          <div id="sellers" className="lg:scroll-mt-28">
             <StepsFlow title={th("how.sellers")} steps={SELLER_STEPS} tone="ink" />
           </div>
-          <div id="buyers" className="scroll-mt-28">
+          <div id="buyers" className="lg:scroll-mt-28">
             <StepsFlow title={th("how.buyers")} steps={BUYER_STEPS} tone="gold" />
           </div>
         </div>
@@ -173,7 +174,7 @@ export default async function HowItWorks() {
                   </span>
                   <span
                     className={cn(
-                      "rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                      "rounded-full px-2.5 py-0.5 text-[11px] font-semibold max-lg:text-xs",
                       feature
                         ? "bg-primary-foreground/10 text-gold"
                         : b.tag === "verify"

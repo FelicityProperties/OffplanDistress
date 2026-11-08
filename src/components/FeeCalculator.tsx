@@ -28,6 +28,8 @@ export function FeeCalculator({ className }: { className?: string }) {
           // Larger, gold-edged thumb with a clear focus halo (the shared slider stays untouched).
           "[&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:border-2 [&_[role=slider]]:border-gold [&_[role=slider]]:shadow-gold",
           "[&_[role=slider]:focus-visible]:ring-4 [&_[role=slider]:focus-visible]:ring-gold/40",
+          // Phones (below lg): a 28px thumb on a 44px-tall strip, easy to grab and drag with a thumb.
+          "max-lg:min-h-11 max-lg:[&_[role=slider]]:size-7",
         )}
         dir={dir}
         min={MIN}
@@ -37,22 +39,23 @@ export function FeeCalculator({ className }: { className?: string }) {
         onValueChange={(v) => setValue(v[0] ?? value)}
         aria-label={t("calc.saleValue")}
       />
-      <div aria-hidden className="mt-1 flex justify-between text-[11px] font-medium text-muted-foreground tabular">
+      <div aria-hidden className="mt-1 flex justify-between text-[11px] font-medium text-muted-foreground tabular max-lg:text-xs">
         <span>{formatAEDCompact(MIN, locale)}</span>
         <span>{formatAEDCompact(MAX, locale)}</span>
       </div>
+      {/* Amounts stay on one line ("AED 2,500", not "AED" over "2,500" in a narrow Arabic or Chinese row); labels wrap. */}
       <dl className="mt-6 text-sm">
         <div className="flex items-center justify-between gap-4 border-b border-border/70 py-3">
           <dt className="text-muted-foreground">{t("calc.commission")}</dt>
-          <dd className="font-medium tabular">{formatAED(f.commission, locale)}</dd>
+          <dd className="shrink-0 whitespace-nowrap font-medium tabular">{formatAED(f.commission, locale)}</dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-b border-border/70 py-3">
           <dt className="text-muted-foreground">{t("calc.vat")}</dt>
-          <dd className="font-medium tabular">{formatAED(f.vat, locale)}</dd>
+          <dd className="shrink-0 whitespace-nowrap font-medium tabular">{formatAED(f.vat, locale)}</dd>
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-2xl bg-ink-gradient px-5 py-4 text-primary-foreground shadow-card">
           <dt className="text-sm text-primary-foreground/80">{t("calc.total")}</dt>
-          <dd className="text-xl font-semibold tabular sm:text-2xl">{formatAED(f.total, locale)}</dd>
+          <dd className="whitespace-nowrap text-xl font-semibold tabular sm:text-2xl">{formatAED(f.total, locale)}</dd>
         </div>
       </dl>
       <p className="mt-4 flex items-start gap-2 rounded-xl bg-success-soft px-3.5 py-2.5 text-xs font-medium leading-relaxed text-success">

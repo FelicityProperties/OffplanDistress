@@ -6,8 +6,9 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+// Phones (below lg): a label that wraps (narrow screens, Arabic, Chinese) gets room between its lines.
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 max-lg:leading-snug",
 );
 
 const Label = React.forwardRef<

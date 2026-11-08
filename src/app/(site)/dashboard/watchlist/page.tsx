@@ -39,10 +39,10 @@ export default async function WatchlistPage() {
             const available = isAdvertised(d);
             const body = (
               <>
-                <div className="h-24 w-28 shrink-0 overflow-hidden rounded-lg">
+                <div className="h-24 w-28 shrink-0 overflow-hidden rounded-lg max-sm:h-36 max-sm:w-full">
                   <DealImage src={d.images[0]} alt={d.projectName} />
                 </div>
-                <div className="min-w-0 flex-1 pe-8">
+                <div className="min-w-0 flex-1 pe-8 max-sm:pe-0">
                   <p className="truncate font-semibold">{d.projectName}</p>
                   {/* A typed community name can be one long word, or Arabic in an English line. */}
                   <p className="truncate text-xs text-muted-foreground">
@@ -65,17 +65,19 @@ export default async function WatchlistPage() {
               </>
             );
             return (
-              // min-w-0: a grid item otherwise grows to its longest unbroken line, past the screen on a phone.
+              // min-w-0: a grid item otherwise grows to its longest unbroken line, past the screen on a phone. Phones: the
+              // photo across the card and the text under it (beside a 112 px photo the text had 102 px at 320), the heart
+              // on the photo's corner.
               <div key={d.id} className="relative flex min-w-0 gap-4 rounded-xl border bg-card p-3 shadow-card card-lift">
                 {/* Its deal page is public only while it is an advert: otherwise the card would link to a 404. */}
                 {available ? (
-                  <Link href={`/deals/${refCode(d.refNo)}`} className="flex min-w-0 flex-1 gap-4">
+                  <Link href={`/deals/${refCode(d.refNo)}`} className="flex min-w-0 flex-1 gap-4 max-sm:flex-col max-sm:gap-3">
                     {body}
                   </Link>
                 ) : (
-                  <div className="flex min-w-0 flex-1 gap-4">{body}</div>
+                  <div className="flex min-w-0 flex-1 gap-4 max-sm:flex-col max-sm:gap-3">{body}</div>
                 )}
-                <WatchButton listingId={d.id} watching className="absolute end-3 top-3" />
+                <WatchButton listingId={d.id} watching className="absolute end-3 top-3 max-sm:end-5 max-sm:top-5 max-sm:h-11 max-sm:w-11" />
               </div>
             );
           })}

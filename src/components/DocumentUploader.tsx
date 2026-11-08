@@ -222,12 +222,14 @@ export function DocumentUploader({
   }
 
   return (
-    <div className="min-w-0 space-y-2">
+    // Phones: the type and the Upload button across the card, 44 px tall; the type in 16 px text below md (iOS zooms
+    // into a smaller one), and never wider than the card (its longest option set its width, past a 320 px screen).
+    <div className="min-w-0 space-y-2 max-sm:w-full">
       <div className="flex flex-wrap items-center gap-2">
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value as keyof typeof FILE_KINDS)}
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+          className="h-9 max-w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm max-lg:h-11 max-md:text-base max-sm:w-full"
           aria-label={t("uploader.kind")}
         >
           {kinds.map((k) => (
@@ -244,7 +246,7 @@ export function DocumentUploader({
           className="hidden"
           onChange={(e) => onFiles(e.target.files)}
         />
-        <Button type="button" variant="outline" disabled={busy} onClick={() => input.current?.click()}>
+        <Button type="button" variant="outline" disabled={busy} onClick={() => input.current?.click()} className="max-lg:h-11 max-sm:w-full">
           {busy ? <Loader2 className="animate-spin" /> : <FileUp />} {t("uploader.button")}
         </Button>
         <span className="text-xs text-muted-foreground" aria-live="polite">

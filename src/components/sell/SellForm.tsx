@@ -22,6 +22,7 @@ import { analyzeDeal } from "@/lib/deal-math";
 import { formatAED, formatPct, formatQuarter, timeAgo } from "@/lib/format";
 import { communityName, developerName, searchKey } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
+import { nextFieldOnEnter, revealFirstError, syncEnterKeyHints } from "./form-ux";
 import { readSellDraft, removeSellDraft, writeSellDraft, type SellDraft } from "./sell-draft";
 
 const STEPS = ["step.unit", "step.payment", "step.price", "step.documents", "step.review"] as const;
@@ -159,7 +160,10 @@ function control(id: string, error?: string, hint?: boolean) {
   } as const;
 }
 
-/** `id` labels the control with that id; its label is `${id}-label` and the error / hint `${id}-msg`. */
+/**
+ * `id` labels the control with that id; its label is `${id}-label` and the error / hint `${id}-msg`. `after` comes
+ * under the error / hint line.
+ */
 function Field({
   label,
   error,
@@ -167,6 +171,7 @@ function Field({
   children,
   className,
   id,
+  after,
 }: {
   label: string;
   error?: string;
@@ -174,6 +179,7 @@ function Field({
   children: React.ReactNode;
   className?: string;
   id?: string;
+  after?: React.ReactNode;
 }) {
   const msgId = id && `${id}-msg`;
   return (
@@ -191,6 +197,32 @@ function Field({
           {hint}
         </p>
       ) : null}
+      {after}
+    </div>
+  );
+}
+
+/** A file name, with line-break chances after "_", "-" and "." (a scan's name is often one long word). */
+function breakable(name: string) {
+  return name.split(/([_.-])/).map((part, i) => (i % 2 ? [part, <wbr key={i} />] : part));
+}
+
+/**
+ * Below lg the "Your numbers" card sits under the whole form, two screens away from the fields: these lines repeat the
+ * figures that follow from the field above them, as they are typed.
+ */
+function LiveNumbers({ rows, note }: { rows: [string, string][]; note?: React.ReactNode }) {
+  return (
+    <div className="lg:hidden">
+      <dl className="space-y-1 rounded-xl bg-ink-gradient px-3.5 py-2.5 text-sm text-primary-foreground">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex flex-wrap items-baseline justify-between gap-x-3">
+            <dt className="text-primary-foreground/70">{k}</dt>
+            <dd className="ms-auto font-semibold tabular">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      {note}
     </div>
   );
 }
@@ -230,6 +262,45 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
   /** A saved draft of another unit, not restored because this visit's link brings an estimate (see below). */
   const otherDraft = useRef(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const stepList = useRef<HTMLOListElement>(null);
+  /** Bumped when a step fails its checks: the first field to fix is then shown and focused (./form-ux.ts). */
+  const [reveal, setReveal] = useState(0);
+  /** Bumped by Continue / Back: on a phone the new step is brought into view (see below). */
+  const [moved, setMoved] = useState(0);
+
+  useEffect(() => {
+    if (reveal) revealFirstError(formRef.current);
+  }, [reveal]);
+
+  // The keyboard's action key: "next" from field to field, "go" (Continue) on the step's last one.
+  useEffect(() => syncEnterKeyHints(formRef.current, "go"));
+
+  // Phones (below lg): Continue is at the end of a long step, so the next one would open scrolled past its start: its
+  // heading comes back into view, and takes focus so a screen reader reads the new step. Desktop is left as it was.
+  useEffect(() => {
+    const h = headingRef.current;
+    if (!moved || !h || !window.matchMedia("(max-width: 1023.98px)").matches) return;
+    // Above the screen or under the sticky header (which the page's scroll-padding-top clears).
+    const header = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    if (h.getBoundingClientRect().top < header) h.scrollIntoView({ block: "start" });
+    h.focus({ preventScroll: true });
+  }, [moved]);
+
+  // From sm the steps are listed in a row that can be wider than the screen (up to lg): keep the current one in view.
+  useEffect(() => {
+    const ol = stepList.current;
+    const li = ol?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!ol || !li || ol.scrollWidth <= ol.clientWidth) return;
+    const o = ol.getBoundingClientRect();
+    const r = li.getBoundingClientRect();
+    ol.scrollBy({ left: r.left + r.width / 2 - (o.left + o.width / 2) });
+  }, [step]);
+
+  const goTo = (i: number) => {
+    setStep(i);
+    setMoved((n) => n + 1);
+  };
 
   const applyDraft = (d: SellDraft) => {
     setS({ ...EMPTY_STATE, ...stateFromDraft(d.state, qs) });
@@ -437,6 +508,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
     for (let i = 0; i < STEPS.length; i++) {
       if (!validate(i)) {
         setStep(i);
+        setReveal((n) => n + 1);
         return;
       }
     }
@@ -472,6 +544,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
       setErrors(fe);
       const first = Math.min(...Object.keys(fe).map((k) => FIELD_STEP[k] ?? STEPS.length - 1));
       if (Number.isFinite(first)) setStep(first);
+      setReveal((n) => n + 1);
       toast.error(res.error ?? t("error.checkDetails"));
       return;
     }
@@ -519,7 +592,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
             </ul>
           </div>
         )}
-        <div className="mt-8 flex justify-center gap-2">
+        <div className="mt-8 flex flex-wrap justify-center gap-2">
           <Button asChild>
             <Link href={`/dashboard/listings/${done.id}`}>{t("done.viewListing")}</Link>
           </Button>
@@ -543,10 +616,12 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
             <History className="mt-0.5 h-4 w-4 shrink-0 text-gold-foreground" aria-hidden />
             <p className="min-w-0">{t("draft.body", { when: timeAgo(new Date(restoredAt), locale) })}</p>
           </div>
+          {/* Phones: the two choices share the width (each on its own line when one doesn't fit). */}
           <div className="flex shrink-0 flex-wrap gap-2">
             <Button
               type="button"
               size="sm"
+              className="max-sm:grow"
               onClick={() => {
                 setRestoredAt(null);
                 focusForm();
@@ -555,15 +630,15 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
               {t("draft.continue")}
             </Button>
             {/* Not while photos are being prepared: they would land in the cleared form once ready. */}
-            <Button type="button" size="sm" variant="outline" onClick={startOver} disabled={preparing}>
+            <Button type="button" size="sm" variant="outline" className="max-sm:grow" onClick={startOver} disabled={preparing}>
               {t("draft.startOver")}
             </Button>
           </div>
         </div>
       )}
-      <ol className={cn("flex gap-2 overflow-x-auto pb-2", restoredAt != null ? "mt-5" : "mt-8")}>
+      <ol ref={stepList} className={cn("hidden gap-2 overflow-x-auto pb-2 sm:flex", restoredAt != null ? "mt-5" : "mt-8")}>
         {STEPS.map((key, i) => (
-          <li key={key} className="flex min-w-fit items-center gap-2">
+          <li key={key} aria-current={i === step ? "step" : undefined} className="flex min-w-fit items-center gap-2">
             <span
               className={cn(
                 "grid h-7 w-7 place-items-center rounded-full border text-xs font-semibold tabular transition",
@@ -578,22 +653,36 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
           </li>
         ))}
       </ol>
+      {/* Phones: the five steps don't fit in a row, so "Step 2 of 5" over a progress bar (the form names the step). */}
+      <div className={cn("sm:hidden", restoredAt != null && "mt-5")}>
+        <p className="text-sm font-medium text-muted-foreground tabular">{t("step.progress", { n: step + 1, total: STEPS.length })}</p>
+        <div aria-hidden className="mt-2 h-1.5 overflow-hidden rounded-full bg-border">
+          <div
+            className="h-full rounded-full bg-primary transition-[width] duration-300 motion-reduce:transition-none"
+            style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+          />
+        </div>
+      </div>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_340px]">
+      {/* grid-cols-1 (minmax(0, 1fr)): a long name or a wide button row can't make the form wider than a phone. */}
+      <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_340px]">
         <form
+          ref={formRef}
           className="rounded-2xl border bg-card p-6 shadow-card sm:p-8"
+          onKeyDown={nextFieldOnEnter}
           onSubmit={(e) => {
             e.preventDefault();
             if (busy || preparing) return;
             if (step < STEPS.length - 1) {
-              if (validate(step)) setStep(step + 1);
+              if (validate(step)) goTo(step + 1);
+              else setReveal((n) => n + 1);
             } else void submit();
           }}
         >
           <h2 ref={headingRef} tabIndex={-1} className="text-xl font-semibold outline-none">
             {t(STEPS[step])}
           </h2>
-          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
             {step === 0 && (
               <>
                 {(
@@ -697,19 +786,44 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
 
             {step === 1 && (
               <>
+                {/* Money fields: autoComplete off, so a phone doesn't offer earlier entries (a phone number) as a price. */}
                 <Field id="originalPrice" label={t("field.originalPrice")} error={errors.originalPrice} hint={t("field.originalPrice.hint")}>
                   <Input
                     {...control("originalPrice", errors.originalPrice, true)}
                     inputMode="numeric"
+                    autoComplete="off"
                     value={s.originalPrice}
                     onChange={(e) => set("originalPrice")(e.target.value)}
                     placeholder="2,350,000"
                   />
                 </Field>
-                <Field id="amountPaid" label={t("field.amountPaid")} error={errors.amountPaid}>
+                <Field
+                  id="amountPaid"
+                  label={t("field.amountPaid")}
+                  error={errors.amountPaid}
+                  after={
+                    num(s.originalPrice) > 0 && (
+                      <LiveNumbers
+                        rows={[
+                          [t("numbers.paid"), formatPct(preview.paidPct)],
+                          [t("numbers.takesOver"), aed(preview.remaining)],
+                        ]}
+                        note={
+                          preview.paidPct < FEES.nocMinPaidPct && (
+                            <p className="mt-2 flex gap-2 text-xs leading-relaxed text-warning">
+                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                              {t("nocWarning")}
+                            </p>
+                          )
+                        }
+                      />
+                    )
+                  }
+                >
                   <Input
                     {...control("amountPaid", errors.amountPaid)}
                     inputMode="numeric"
+                    autoComplete="off"
                     value={s.amountPaid}
                     onChange={(e) => set("amountPaid")(e.target.value)}
                     placeholder="940,000"
@@ -728,6 +842,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                   <Input
                     {...control("nextInstalmentAmount", errors.nextInstalmentAmount)}
                     inputMode="numeric"
+                    autoComplete="off"
                     value={s.nextInstalmentAmount}
                     onChange={(e) => set("nextInstalmentAmount")(e.target.value)}
                     placeholder="117,500"
@@ -764,6 +879,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                     <Input
                       id="overdueAmount"
                       inputMode="numeric"
+                      autoComplete="off"
                       value={s.overdueAmount}
                       onChange={(e) => {
                         set("overdueAmount")(e.target.value);
@@ -793,19 +909,20 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                   )}
                   {/* The server's answer for the rows (an amount past what it can store, say): shown here, not just a toast. */}
                   {errors.paymentPlan && (
-                    <p id="paymentPlan-msg" className="text-xs font-medium text-destructive">
+                    <p id="paymentPlan-msg" data-error className="text-xs font-medium text-destructive">
                       {errors.paymentPlan}
                     </p>
                   )}
                   {plan.map((p, i) => (
-                    // Phones: the milestone on its own line, then date, amount and remove (one line is wider than a phone).
+                    // Phones: the milestone, then the date, each on its own line (a date needs about 140px), then the
+                    // amount beside the remove button; from sm one line.
                     <div
                       key={i}
-                      className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2 border-b border-border/60 pb-3 last:border-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:border-0 sm:pb-0"
+                      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border/60 pb-3 last:border-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:border-0 sm:pb-0"
                     >
-                      <Input aria-label={t("plan.milestone")} maxLength={MAX_LEN.milestone} className="col-span-3 sm:col-span-1" value={p.label} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
-                      <Input aria-label={t("plan.dueDate")} type="date" {...DATE_RANGE} className="min-w-0 sm:w-40" value={p.dueDate} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, dueDate: e.target.value } : x)))} />
-                      <Input aria-label={t("plan.amount")} inputMode="numeric" className="min-w-0 sm:w-32" placeholder={t("plan.amount.placeholder")} value={p.amount} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} />
+                      <Input aria-label={t("plan.milestone")} maxLength={MAX_LEN.milestone} className="col-span-2 sm:col-span-1" value={p.label} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
+                      <Input aria-label={t("plan.dueDate")} type="date" {...DATE_RANGE} className="col-span-2 min-w-0 sm:col-span-1 sm:w-40" value={p.dueDate} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, dueDate: e.target.value } : x)))} />
+                      <Input aria-label={t("plan.amount")} inputMode="numeric" autoComplete="off" className="min-w-0 sm:w-32" placeholder={t("plan.amount.placeholder")} value={p.amount} onChange={(e) => setPlan((all) => all.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} />
                       <Button type="button" size="icon" variant="ghost" aria-label={tc("remove")} onClick={() => setPlan((all) => all.filter((_, j) => j !== i))}>
                         <Trash2 />
                       </Button>
@@ -822,10 +939,21 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                   label={t("field.asking")}
                   error={errors.askingPrice}
                   hint={num(s.amountPaid) ? t("field.asking.paid", { amount: aed(num(s.amountPaid)) }) : t("field.asking.hint")}
+                  after={
+                    s.askingPrice !== "" && (
+                      <LiveNumbers
+                        rows={[
+                          [t("numbers.saleValue"), aed(preview.saleValue)],
+                          [t("numbers.youReceive"), aed(preview.sellerNet)],
+                        ]}
+                      />
+                    )
+                  }
                 >
                   <Input
                     {...control("askingPrice", errors.askingPrice, true)}
                     inputMode="numeric"
+                    autoComplete="off"
                     value={s.askingPrice}
                     onChange={(e) => set("askingPrice")(e.target.value)}
                     placeholder="770,000"
@@ -837,6 +965,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                       {...control("phone", errors.phone, true)}
                       type="tel"
                       dir="ltr"
+                      autoComplete="tel"
                       className="rtl:text-end"
                       value={s.phone}
                       onChange={(e) => set("phone")(e.target.value)}
@@ -883,20 +1012,34 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                     key={k}
                     className={cn(
                       // The file input inside is visually hidden: the tile shows its keyboard focus.
-                      "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition hover:border-gold hover:bg-gold-soft/40 focus-within:border-gold focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background",
+                      "flex min-w-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition hover:border-gold hover:bg-gold-soft/40 focus-within:border-gold focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background max-sm:p-4",
                       docs[k] && "border-success bg-success-soft/40",
                     )}
                   >
                     {docs[k] ? <Check className="h-6 w-6 text-success" /> : <FileUp className="h-6 w-6 text-muted-foreground" />}
                     <span className="text-sm font-medium">{tc(`file.${k}`)}</span>
-                    <span className="line-clamp-1 text-xs text-muted-foreground">{docs[k]?.name ?? t("docs.tileHint")}</span>
-                    {errors[k] && <span className="text-xs font-medium text-destructive">{errors[k]}</span>}
-                    <input type="file" accept={DOC_ACCEPT} className="sr-only" onChange={(e) => pickDoc(k, e.currentTarget)} />
+                    {/* A file name is often one long word: it breaks anywhere, over two lines at most, inside the tile. */}
+                    <span dir="auto" className="line-clamp-2 w-full text-xs text-muted-foreground wrap-anywhere">
+                      {docs[k] ? breakable(docs[k].name) : t("docs.tileHint")}
+                    </span>
+                    {errors[k] && (
+                      <span id={`doc-${k}-msg`} className="w-full text-xs font-medium text-destructive wrap-anywhere">
+                        {errors[k]}
+                      </span>
+                    )}
+                    <input
+                      type="file"
+                      accept={DOC_ACCEPT}
+                      className="sr-only"
+                      aria-invalid={errors[k] ? true : undefined}
+                      aria-describedby={errors[k] ? `doc-${k}-msg` : undefined}
+                      onChange={(e) => pickDoc(k, e.currentTarget)}
+                    />
                   </label>
                 ))}
                 <label
                   className={cn(
-                    "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition hover:border-gold hover:bg-gold-soft/40 focus-within:border-gold focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background sm:col-span-2",
+                    "flex min-w-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition hover:border-gold hover:bg-gold-soft/40 focus-within:border-gold focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background max-sm:p-4 sm:col-span-2",
                     photos.length > 0 && !errors.photos && "border-success bg-success-soft/40",
                   )}
                 >
@@ -911,13 +1054,19 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                   <span className="text-xs text-muted-foreground" aria-live="polite">
                     {preparing ? t("docs.preparing") : photos.length ? t("docs.photosSelected", { n: photos.length }) : t("docs.photosHint")}
                   </span>
-                  {errors.photos && <span className="max-w-prose text-xs font-medium text-destructive">{errors.photos}</span>}
+                  {errors.photos && (
+                    <span id="photos-msg" className="w-full max-w-prose text-xs font-medium text-destructive wrap-anywhere">
+                      {errors.photos}
+                    </span>
+                  )}
                   <input
                     type="file"
                     multiple
                     accept="image/*"
                     className="sr-only"
                     disabled={preparing}
+                    aria-invalid={errors.photos ? true : undefined}
+                    aria-describedby={errors.photos ? "photos-msg" : undefined}
                     onChange={(e) => void pickPhotos(e.currentTarget)}
                   />
                 </label>
@@ -944,9 +1093,11 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                       `${t("review.docsCount", { n: Object.values(docs).filter(Boolean).length, total: DOCS.length })}${photos.length ? ` · ${t("review.photosCount", { n: photos.length })}` : ""}`,
                     ],
                   ].map(([k, v]) => (
-                    <div key={k} className="flex justify-between gap-4 px-4 py-2.5">
-                      <dt className="text-muted-foreground">{k}</dt>
-                      <dd className="text-end font-medium tabular">{v}</dd>
+                    // A value too long to share the line goes under its label; a long name (one word, typed under
+                    // "Other") breaks anywhere rather than widen the page.
+                    <div key={k} className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 px-4 py-2.5">
+                      <dt className="min-w-0 text-muted-foreground">{k}</dt>
+                      <dd className="ms-auto min-w-0 text-end font-medium tabular wrap-anywhere">{v}</dd>
                     </div>
                   ))}
                 </dl>
@@ -1000,10 +1151,15 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
             )}
           </div>
           <div className="mt-8 flex items-center justify-between gap-3">
-            <Button type="button" variant="ghost" disabled={step === 0 || !!busy} onClick={() => setStep(step - 1)}>
+            <Button type="button" variant="ghost" className="shrink-0" disabled={step === 0 || !!busy} onClick={() => goTo(step - 1)}>
               {tc("back")}
             </Button>
-            <Button type="submit" disabled={!!busy || preparing}>
+            {/* Phones: Continue takes the rest of the row, a big target; its label (or "Uploading… 2/5") may wrap. */}
+            <Button
+              type="submit"
+              disabled={!!busy || preparing}
+              className="max-sm:h-auto max-sm:min-h-11 max-sm:min-w-0 max-sm:flex-1 max-sm:whitespace-normal max-sm:py-2"
+            >
               {busy ? (
                 <>
                   <Loader2 className="animate-spin" /> {busy}

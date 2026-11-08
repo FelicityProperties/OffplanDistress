@@ -23,15 +23,17 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6">
       <PageTitle title={t("profile.title")} />
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border bg-card p-6 shadow-card">
+      {/* grid-cols-1 (minmax(0, 1fr)): an auto track grew with a long e-mail address, past the screen on a phone. */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="rounded-xl border bg-card p-6 shadow-card max-sm:p-4">
           <p className="mb-4 text-sm text-muted-foreground">
             {t("profile.signedInAs")}{" "}
-            <bdi className="font-medium text-foreground">{user.email}</bdi>
+            {/* An address is one long word: it breaks anywhere rather than run out of the card. */}
+            <bdi className="font-medium text-foreground wrap-anywhere">{user.email}</bdi>
           </p>
           <ProfileForm fullName={user.fullName} phone={user.phone} intent={user.intent} />
         </div>
-        <div className="rounded-xl border bg-card p-6 shadow-card">
+        <div className="rounded-xl border bg-card p-6 shadow-card max-sm:p-4">
           <div className="flex items-center justify-between">
             <p className="font-semibold">{t("profile.kycStatus")}</p>
             <StatusPill tone={KYC_TONE[user.kycStatus]}>{tc(`kyc.${user.kycStatus}`)}</StatusPill>

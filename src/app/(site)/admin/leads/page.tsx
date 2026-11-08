@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FilePlus2, MessageCircle, Phone } from "lucide-react";
 import { LeadNotes, LeadStatusSelect } from "@/components/admin/LeadControls";
+import { PHONE_BUTTON, PHONE_LINK } from "@/components/admin/phone";
 import { EmptyState, PageTitle } from "@/components/Kpi";
 import { StatusPill } from "@/components/badges";
 import { AedRange } from "@/components/exit/Aed";
@@ -47,7 +48,10 @@ export default async function LeadsPage() {
               <div
                 key={l.id}
                 id={`lead-${l.refNo}`}
-                className={cn("grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_260px]", (l.status === "lost" || l.status === "converted") && "opacity-70")}
+                className={cn(
+                  "grid gap-4 p-5 max-sm:p-4 lg:grid-cols-[minmax(0,1fr)_260px]",
+                  (l.status === "lost" || l.status === "converted") && "opacity-70",
+                )}
               >
                 {/* wrap-anywhere: names, typed developers, projects and campaign tags can be one long word (phones). */}
                 <div className="min-w-0 space-y-1.5 wrap-anywhere">
@@ -100,7 +104,7 @@ export default async function LeadsPage() {
                         (tabs.has(l.userId) ? (
                           <Link
                             href={`/admin/users${tabs.get(l.userId) === "pending" ? "?tab=pending" : ""}#user-${l.userId}`}
-                            className="font-medium underline-offset-4 hover:underline"
+                            className={cn("font-medium underline-offset-4 hover:underline", PHONE_LINK)}
                           >
                             {t("leads.account")}: {userName ?? "—"}
                           </Link>
@@ -110,20 +114,21 @@ export default async function LeadsPage() {
                           </span>
                         ))}
                       {l.listingId && listingRef != null && (
-                        <Link href={`/admin/listings/${l.listingId}`} className="font-medium underline-offset-4 hover:underline">
+                        <Link href={`/admin/listings/${l.listingId}`} className={cn("font-medium underline-offset-4 hover:underline", PHONE_LINK)}>
                           {t("leads.listing", { ref: refCode(listingRef) })}
                         </Link>
                       )}
                     </p>
                   )}
+                  {/* Below lg 44 px buttons: calling a seller back is done from a phone. */}
                   <div className="flex flex-wrap gap-2 pt-1.5">
-                    <Button asChild size="sm" variant="outline">
+                    <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
                       <a href={`tel:${l.phone.replace(/[^\d+]/g, "")}`}>
                         <Phone aria-hidden /> {t("leads.call")} <bdi dir="ltr">{l.phone}</bdi>
                       </a>
                     </Button>
                     {wa && (
-                      <Button asChild size="sm" variant="outline">
+                      <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
                         <a
                           href={`https://wa.me/${wa}?text=${encodeURIComponent(t("leads.wa.text", { name: l.name, brand: BRAND.name, ref }))}`}
                           target="_blank"
@@ -133,16 +138,19 @@ export default async function LeadsPage() {
                         </a>
                       </Button>
                     )}
+                    {/* A long address wraps (buttons don't), or a phone's page scrolls sideways. */}
                     {l.email && (
-                      <Button asChild size="sm" variant="ghost">
+                      <Button asChild size="sm" variant="ghost" className="h-auto min-h-8 max-w-full whitespace-normal py-1.5 text-start max-lg:min-h-11 max-lg:text-sm">
                         <a href={`mailto:${l.email}`}>
-                          <bdi dir="ltr">{l.email}</bdi>
+                          <bdi dir="ltr" className="min-w-0 wrap-anywhere">
+                            {l.email}
+                          </bdi>
                         </a>
                       </Button>
                     )}
                     {/* Staff-assisted intake: the seller sent their documents on WhatsApp instead of the sell form. */}
                     {!l.listingId && (
-                      <Button asChild size="sm" variant="outline">
+                      <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
                         <Link href={`/admin/listings/new?lead=${l.id}`}>
                           <FilePlus2 aria-hidden /> {t("leads.createListing")}
                         </Link>

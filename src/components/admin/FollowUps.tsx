@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ListTodo, Mail, MessageCircle, Phone } from "lucide-react";
+import { PHONE_BUTTON, PHONE_LINK } from "@/components/admin/phone";
 import { StatusPill } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { listSeparator } from "@/i18n/config";
@@ -8,6 +9,7 @@ import { BRAND } from "@/lib/config";
 import { formatAED, formatDate, formatNumber, timeAgo } from "@/lib/format";
 import { whatsappNumber } from "@/lib/leads";
 import { FOLLOW_UP_KEYS, followUpCounts, followUps, type FollowUpItem, type FollowUpKey } from "@/lib/reminders";
+import { cn } from "@/lib/utils";
 
 // "Follow-ups" on /admin: every rule of src/lib/reminders.ts with its open items, from the same queries as the admins'
 // daily digest, so the numbers here and in the digest agree. Each item links to where it is handled and has call /
@@ -44,7 +46,7 @@ export async function FollowUps() {
   // Every rule failed (the database is unreachable, say): the same as the whole lookup failing.
   if (!f || f.failedRules.length === FOLLOW_UP_KEYS.length) {
     return (
-      <section id="follow-ups" aria-labelledby="follow-ups-title" className="scroll-mt-24 space-y-2" data-testid="follow-ups">
+      <section id="follow-ups" aria-labelledby="follow-ups-title" className="space-y-2 lg:scroll-mt-24" data-testid="follow-ups">
         <h2 id="follow-ups-title" className="text-xl font-semibold">
           {t("followups.title")}
         </h2>
@@ -100,7 +102,7 @@ export async function FollowUps() {
     return (
       <li key={it.id} className="space-y-1.5 px-4 py-3 wrap-anywhere" data-followup-id={it.id}>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <Link href={it.href} className="font-medium underline-offset-4 hover:underline">
+          <Link href={it.href} className={cn("font-medium underline-offset-4 hover:underline", PHONE_LINK)}>
             <bdi>{it.title}</bdi>
           </Link>
           {it.ref && <bdi className="text-xs font-medium text-muted-foreground tabular">{it.ref}</bdi>}
@@ -115,8 +117,9 @@ export async function FollowUps() {
               <bdi>{it.contact.name}</bdi>
             </span>
           )}
+          {/* Below lg Call and WhatsApp are 44 px: calling sellers is the console's most phone-native task. */}
           {it.contact.phone ? (
-            <Button asChild size="sm" variant="outline">
+            <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
               <a href={`tel:${it.contact.phone.replace(/[^\d+]/g, "")}`}>
                 <Phone aria-hidden /> {t("leads.call")} <bdi dir="ltr">{it.contact.phone}</bdi>
               </a>
@@ -125,7 +128,7 @@ export async function FollowUps() {
             <span className="text-xs text-muted-foreground">{t("followups.noPhone")}</span>
           )}
           {wa && (
-            <Button asChild size="sm" variant="outline">
+            <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
               <a
                 href={`https://wa.me/${wa}?text=${encodeURIComponent(waText(key, it))}`}
                 target="_blank"
@@ -138,7 +141,7 @@ export async function FollowUps() {
           )}
           {!it.contact.phone && it.contact.email && (
             // A long address wraps (buttons don't), or the page scrolls sideways on a phone.
-            <Button asChild size="sm" variant="ghost" className="h-auto min-h-8 max-w-full whitespace-normal py-1.5 text-start">
+            <Button asChild size="sm" variant="ghost" className="h-auto min-h-8 max-w-full whitespace-normal py-1.5 text-start max-lg:min-h-11 max-lg:text-sm">
               <a href={`mailto:${it.contact.email}`}>
                 <Mail aria-hidden /> <bdi dir="ltr" className="min-w-0 wrap-anywhere">{it.contact.email}</bdi>
               </a>
@@ -152,7 +155,7 @@ export async function FollowUps() {
   const groups = FOLLOW_UP_KEYS.filter((k) => counts[k] > 0);
 
   return (
-    <section id="follow-ups" aria-labelledby="follow-ups-title" className="scroll-mt-24 space-y-4" data-testid="follow-ups">
+    <section id="follow-ups" aria-labelledby="follow-ups-title" className="space-y-4 lg:scroll-mt-24" data-testid="follow-ups">
       <div className="flex items-start gap-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gold-soft text-gold-foreground">
           <ListTodo className="h-4.5 w-4.5" aria-hidden />

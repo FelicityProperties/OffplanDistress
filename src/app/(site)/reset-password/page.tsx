@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "@/components/LocaleLink";
 import { createHash } from "node:crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
-import { AuthShell } from "@/components/AuthShell";
+import { AuthAltLink, AuthShell } from "@/components/AuthShell";
 import { ClaimView } from "@/components/auth/ClaimView";
 import { ResetPasswordForm } from "@/components/auth/PasswordForms";
 import { Button } from "@/components/ui/button";
@@ -54,11 +54,7 @@ export default async function ResetPasswordPage({ searchParams }: { searchParams
         <Button asChild className="w-full" size="lg">
           <Link href="/forgot-password">{t("reset.requestNew")}</Link>
         </Button>
-        <p className="mt-8 border-t border-border/70 pt-6 text-center text-sm text-muted-foreground">
-          <Link href="/login" className="rounded-sm font-medium text-foreground underline decoration-gold/60 underline-offset-4 transition hover:decoration-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            {t("backToLogin")}
-          </Link>
-        </p>
+        <AuthAltLink href="/login">{t("backToLogin")}</AuthAltLink>
       </AuthShell>
     );
   }

@@ -11,6 +11,7 @@ import { nextQuarters, prefillFromParams } from "@/lib/estimate";
 import { formatNumber } from "@/lib/format";
 import { leadForSeller } from "@/lib/leads";
 import { issueFormToken } from "@/lib/spam";
+import { cn } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("sell");
@@ -79,14 +80,15 @@ export default async function SellPage({ searchParams }: PageProps<"/sell">) {
       <section className="relative isolate overflow-hidden border-b border-border/60">
         <div aria-hidden className="absolute inset-0 -z-10 bg-grid-light mask-fade-b" />
         <div aria-hidden className="absolute -end-40 -top-32 -z-10 h-[28rem] w-[28rem] bg-glow-gold opacity-40" />
-        <div className="container-page pb-10 pt-12 sm:pb-12 sm:pt-16">
+        <div className={cn("container-page pb-10 pt-12 sm:pb-12 sm:pt-16", user && "max-sm:pb-6 max-sm:pt-8")}>
           <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold-soft/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gold-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-gold" aria-hidden />
             {tm("sell.eyebrow")}
           </p>
           <h1 className="mt-5 text-4xl font-semibold leading-[1.08] sm:text-5xl">{t("page.title")}</h1>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">{t("page.subtitle")}</p>
-          <ul className="mt-8 grid gap-3 sm:grid-cols-3">
+          {/* A signed-in seller came to list: on phones the pitch cards go, so the form starts on the first screens. */}
+          <ul className={cn("mt-8 grid gap-3 sm:grid-cols-3", user && "max-sm:hidden")}>
             {REASSURANCE.map(([Icon, key]) => (
               <li key={key} className="flex items-start gap-3 rounded-2xl border border-border/70 bg-card/80 p-4 shadow-card backdrop-blur">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gold-soft text-gold-foreground">
@@ -108,11 +110,31 @@ export default async function SellPage({ searchParams }: PageProps<"/sell">) {
               </Link>
             </span>
           </p>
-          {/* WhatsApp intake: our team prepares the listing from the documents, the seller confirms it by link. */}
+          {/* WhatsApp intake: our team prepares the listing from the documents, the seller confirms it by link. A
+              signed-in seller on a phone gets it as one line (the link below), the full card from sm. */}
+          {BRAND.whatsapp && user && (
+            <a
+              href={`https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(tm("whatsapp.prefill.sell"))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="sell-whatsapp-compact"
+              className="mt-5 flex min-h-11 items-center gap-3 rounded-2xl border border-border/70 bg-card/80 px-4 py-2.5 text-sm font-medium shadow-card active:bg-accent sm:hidden"
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#25D366] text-white">
+                <MessageCircle className="h-4 w-4" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1 leading-snug">{t("whatsapp.title")}</span>
+              <ExternalLink className="size-3.5 shrink-0 text-muted-foreground rtl:-scale-x-100" aria-hidden />
+              <span className="sr-only">{tl("newTab")}</span>
+            </a>
+          )}
           {BRAND.whatsapp && (
             <section
               aria-labelledby="sell-whatsapp"
-              className="mt-6 flex flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 p-5 shadow-card backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+              className={cn(
+                "mt-6 flex flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 p-5 shadow-card backdrop-blur sm:flex-row sm:items-center sm:justify-between",
+                user && "max-sm:hidden",
+              )}
             >
               <div className="flex min-w-0 items-start gap-3">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#25D366] text-white">
@@ -151,7 +173,8 @@ export default async function SellPage({ searchParams }: PageProps<"/sell">) {
             <SellForm needsPhone={!user.phone} initial={start} userId={user.id} />
           </div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          // grid-cols-1 (minmax(0, 1fr)): a wide button can't stretch the column past a 320px screen.
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
             {/* Free estimate first: a number before any sign-up wall. #estimate is where the exit calculator links to. */}
             <QuickEstimate id="estimate" initial={prefill} signedIn={false} className="lg:col-span-2" formToken={issueFormToken()} />
             <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-lift sm:p-10">
@@ -166,11 +189,12 @@ export default async function SellPage({ searchParams }: PageProps<"/sell">) {
                   <span className="text-sm text-muted-foreground">{t("pitch.buyers.body")}</span>
                 </span>
               </div>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button asChild size="lg">
+              {/* Phones: full-width buttons, one under the other; a label longer than the screen wraps. */}
+              <div className="mt-8 flex flex-wrap gap-3 max-sm:flex-col">
+                <Button asChild size="lg" className="max-sm:h-auto max-sm:min-h-12 max-sm:whitespace-normal max-sm:px-4 max-sm:py-2">
                   <Link href={`/signup?intent=sell&next=${sellNext}`}>{t("pitch.signup")}</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline">
+                <Button asChild size="lg" variant="outline" className="max-sm:h-auto max-sm:min-h-12 max-sm:whitespace-normal max-sm:px-4 max-sm:py-2">
                   <Link href={`/login?next=${sellNext}`}>{t("pitch.login")}</Link>
                 </Button>
               </div>

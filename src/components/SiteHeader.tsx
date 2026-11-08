@@ -1,8 +1,15 @@
 // Links follow the page's language (/ar/deals on Arabic pages); /dashboard and /admin keep one address.
 import Link from "@/components/LocaleLink";
+import { Suspense } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { LayoutDashboard, LogOut, ShieldCheck } from "lucide-react";
+import { AutoHideHeader } from "@/components/app/AutoHideHeader";
+import { ChromeState } from "@/components/app/ChromeState";
+import { HeaderBack } from "@/components/app/HeaderBack";
+import { InstallMenuItem } from "@/components/app/InstallMenuItem";
+import { MobileTabBar } from "@/components/app/MobileTabBar";
+import { NavProgress } from "@/components/app/NavProgress";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { Logo } from "@/components/Logo";
 import { MobileMenu } from "@/components/MobileMenu";
@@ -81,94 +88,111 @@ export async function SiteHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/75 backdrop-blur-xl backdrop-saturate-150">
-      <div className="container-page flex h-[4.25rem] items-center justify-between gap-4">
-        <Link href="/" aria-label={BRAND.name}>
-          <Logo />
-        </Link>
-        <NavLinks
-          items={nav}
-          label={t("menu")}
-          className="hidden items-center gap-0.5 rounded-full border border-border/70 bg-card/70 p-1 shadow-sm lg:flex"
-          linkClassName="whitespace-nowrap rounded-full px-2.5 py-1.5 xl:px-4"
-          activeClassName="bg-ink text-primary-foreground hover:bg-ink hover:text-primary-foreground"
-        />
-        <div className="hidden items-center gap-2 lg:flex">
-          {/* Signed in, the bar also holds the admin link, the bell and the account button: the language name waits for 2xl. */}
-          <LocaleSwitcher compact dense={!!user} />
-          {user ? (
-            <>
-              {user.role === "admin" && (
-                <Button asChild variant="ghost" className="rounded-full max-xl:px-2.5">
-                  {/* icon-only below xl so the bar fits on one line at 1024–1279px */}
-                  <Link href="/admin" aria-label={t("admin")} title={t("admin")}>
-                    <ShieldCheck /> <span className="hidden xl:inline">{t("admin")}</span>
+    <>
+      {/* Phones: 56px, nearly opaque (over dark sections a see-through bar turned grey), hides while reading down. */}
+      <AutoHideHeader className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur-xl backdrop-saturate-150 lg:bg-background/75">
+        <div className="container-page flex h-14 items-center justify-between gap-4 lg:h-[4.25rem]">
+          <div className="flex min-w-0 items-center gap-1">
+            <HeaderBack />
+            <Link href="/" aria-label={BRAND.name}>
+              <Logo />
+            </Link>
+          </div>
+          <NavLinks
+            items={nav}
+            label={t("menu")}
+            className="hidden items-center gap-0.5 rounded-full border border-border/70 bg-card/70 p-1 shadow-sm lg:flex"
+            linkClassName="whitespace-nowrap rounded-full px-2.5 py-1.5 xl:px-4"
+            activeClassName="bg-ink text-primary-foreground hover:bg-ink hover:text-primary-foreground"
+          />
+          <div className="hidden items-center gap-2 lg:flex">
+            {/* Signed in, the bar also holds the admin link, the bell and the account button: the language name waits for 2xl. */}
+            <LocaleSwitcher compact dense={!!user} />
+            {user ? (
+              <>
+                {user.role === "admin" && (
+                  <Button asChild variant="ghost" className="rounded-full max-xl:px-2.5">
+                    {/* icon-only below xl so the bar fits on one line at 1024–1279px */}
+                    <Link href="/admin" aria-label={t("admin")} title={t("admin")}>
+                      <ShieldCheck /> <span className="hidden xl:inline">{t("admin")}</span>
+                    </Link>
+                  </Button>
+                )}
+                {bell && <NotificationBell unread={bell.unread} items={bell.items} />}
+                <Button asChild className="rounded-full max-xl:px-3">
+                  <Link href="/dashboard" aria-label={t("myAccount")}>
+                    <LayoutDashboard />
+                    <span className="hidden xl:inline">{firstName ? t("accountOf", { name: firstName }) : t("myAccount")}</span>
                   </Link>
                 </Button>
-              )}
-              {bell && <NotificationBell unread={bell.unread} items={bell.items} />}
-              <Button asChild className="rounded-full max-xl:px-3">
-                <Link href="/dashboard" aria-label={t("myAccount")}>
-                  <LayoutDashboard />
-                  <span className="hidden xl:inline">{firstName ? t("accountOf", { name: firstName }) : t("myAccount")}</span>
-                </Link>
-              </Button>
-              <form action={logout}>
-                <Button variant="ghost" size="icon" aria-label={t("logOut")} title={t("logOut")}>
-                  <LogOut className="rtl:-scale-x-100" />
+                <form action={logout}>
+                  <Button variant="ghost" size="icon" aria-label={t("logOut")} title={t("logOut")}>
+                    <LogOut className="rtl:-scale-x-100" />
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="ghost" className="rounded-full">
+                  <Link href="/login">{t("logIn")}</Link>
                 </Button>
-              </form>
-            </>
-          ) : (
-            <>
-              <Button asChild variant="ghost" className="rounded-full">
-                <Link href="/login">{t("logIn")}</Link>
-              </Button>
-              <Button asChild className="rounded-full px-4 xl:px-5">
-                <Link href="/signup">{t("getStarted")}</Link>
-              </Button>
-            </>
-          )}
-        </div>
-        {/* Closes itself when a page opens from it (src/components/MobileMenu.tsx). */}
-        <MobileMenu
-          title={t("menu")}
-          label={bell && bell.unread > 0 ? `${t("openMenu")} (${tn("menu.hasUnread", { count: bell.unread })})` : t("openMenu")}
-          unread={!!bell && bell.unread > 0}
-        >
-          <div className="mt-8 flex flex-col gap-1 px-2">
-            <NavLinks items={nav} label={t("menu")} className="flex flex-col gap-1" linkClassName="py-2.5 text-base" />
-            <div className="mt-4 grid gap-2">
-              {user ? (
-                <>
-                  <Button asChild>
-                    <Link href="/dashboard">{t("myAccount")}</Link>
-                  </Button>
-                  {bell && <NotificationBell variant="full" unread={bell.unread} items={bell.items} />}
-                  {user.role === "admin" && (
-                    <Button asChild variant="outline">
-                      <Link href="/admin">{t("admin")}</Link>
-                    </Button>
-                  )}
-                  <form action={logout} className="grid">
-                    <Button variant="ghost">{t("logOut")}</Button>
-                  </form>
-                </>
-              ) : (
-                <>
-                  <Button asChild variant="outline">
-                    <Link href="/login">{t("logIn")}</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link href="/signup">{t("getStarted")}</Link>
-                  </Button>
-                </>
-              )}
-              <LocaleSwitcher full className="justify-start" />
-            </div>
+                <Button asChild className="rounded-full px-4 xl:px-5">
+                  <Link href="/signup">{t("getStarted")}</Link>
+                </Button>
+              </>
+            )}
           </div>
-        </MobileMenu>
-      </div>
-    </header>
+          {/* Closes itself when a page opens from it (src/components/MobileMenu.tsx). */}
+          <MobileMenu
+            title={t("menu")}
+            label={bell && bell.unread > 0 ? `${t("openMenu")} (${tn("menu.hasUnread", { count: bell.unread })})` : t("openMenu")}
+            unread={!!bell && bell.unread > 0}
+          >
+            <div className="mt-8 flex flex-col gap-1 px-2">
+              <NavLinks items={nav} label={t("menu")} className="flex flex-col gap-1" linkClassName="py-2.5 text-base" />
+              {/* 44px rows; the bell is a row to the notifications page here (src/components/NotificationBell.tsx). */}
+              <div className="mt-4 grid gap-2">
+                {user ? (
+                  <>
+                    <Button asChild className="h-11">
+                      <Link href="/dashboard">{t("myAccount")}</Link>
+                    </Button>
+                    {bell && <NotificationBell variant="full" unread={bell.unread} items={bell.items} />}
+                    {user.role === "admin" && (
+                      <Button asChild variant="outline" className="h-11">
+                        <Link href="/admin">{t("admin")}</Link>
+                      </Button>
+                    )}
+                    <form action={logout} className="grid">
+                      <Button variant="ghost" className="h-11">
+                        {t("logOut")}
+                      </Button>
+                    </form>
+                  </>
+                ) : (
+                  <>
+                    <Button asChild variant="outline" className="h-11">
+                      <Link href="/login">{t("logIn")}</Link>
+                    </Button>
+                    <Button asChild className="h-11">
+                      <Link href="/signup">{t("getStarted")}</Link>
+                    </Button>
+                  </>
+                )}
+                <LocaleSwitcher full className="mt-2" />
+                {/* Only where the browser can install the site (Chrome on Android, iOS Safari). */}
+                <InstallMenuItem />
+              </div>
+            </div>
+          </MobileMenu>
+        </div>
+      </AutoHideHeader>
+      {/* Below lg: the bottom tab bar, the on-screen keyboard watch and, everywhere, the navigation progress bar. */}
+      <MobileTabBar role={user?.role === "admin" ? "admin" : user ? "user" : "visitor"} unread={bell?.unread ?? 0} />
+      <ChromeState />
+      <Suspense fallback={null}>
+        <NavProgress />
+      </Suspense>
+    </>
   );
 }

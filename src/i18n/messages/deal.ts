@@ -51,6 +51,11 @@ export default defineMessages({
     // The sell form's own names for new rows (sell plan.next / plan.nth), shown in the visitor's language.
     "plan.defaultNext": "Next instalment",
     "plan.defaultNth": "Instalment {n}",
+    // Phones: a long plan shows the next instalments and the last one, the rest behind this button.
+    "plan.showAll": "Show all {count} instalments",
+    "plan.showFewer": "Show fewer",
+    // Phones: a tap on the main photo opens the photos full screen (src/components/deals/Gallery.tsx).
+    "gallery.open": "View the photos full screen",
     "sample.description":
       "Sample listing for illustration. {unit} in {project} by {developer}, {community}, with {paid} of the purchase price already paid to the developer. A buyer can step into the remaining payment plan below today's launch price.",
 
@@ -205,6 +210,9 @@ export default defineMessages({
     "plan.sample.onHandover": "عند التسليم",
     "plan.defaultNext": "القسط التالي",
     "plan.defaultNth": "القسط {n}",
+    "plan.showAll": "عرض جميع الأقساط (⁨{count}⁩)",
+    "plan.showFewer": "عرض أقل",
+    "gallery.open": "عرض الصور بملء الشاشة",
     "sample.description":
       "إعلان توضيحي فقط. وحدة ({unit}) في {project} من تطوير {developer}، {community}، وقد سُدِّد {paid} من سعر الشراء للمطوّر. يمكن للمشتري تولّي ما تبقّى من خطة الدفع بأقل من سعر الإطلاق الحالي.",
 
@@ -356,6 +364,9 @@ export default defineMessages({
     "plan.sample.onHandover": "交房时",
     "plan.defaultNext": "下一期分期款",
     "plan.defaultNth": "第 {n} 期分期款",
+    "plan.showAll": "显示全部 {count} 期分期款",
+    "plan.showFewer": "收起",
+    "gallery.open": "全屏查看照片",
     "sample.description":
       "示例房源，仅供说明。{project}，{unit}，开发商 {developer}，位于 {community}；购房款的 {paid} 已付给开发商。买家可以低于开发商当前售价的价格接手剩余付款计划。",
 
@@ -426,7 +437,7 @@ export default defineMessages({
     "side.feeNote": "服务费 2%，过户完成后收取。我们负责办理 NOC、转让及 DLD 手续。",
     "side.usd": "≈ {amount}（按迪拉姆兑美元固定汇率）",
     "side.sellerLoss": "卖家以低于已付金额 {amount} 的价格出售",
-    "side.whatsapp": "WhatsApp 联系我们",
+    "side.whatsapp": "WhatsApp 咨询",
     "side.call": "致电",
     "side.waMessage": "您好 OffplanDistress，我对 {ref}（{project}）感兴趣。{url}",
     "listedBy.title": "发布方",

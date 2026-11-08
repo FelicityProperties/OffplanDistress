@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useTransition } from "react";
 import { toast } from "sonner";
 import { adminConfirmFormA, adminSetListingOwner } from "@/app/actions/admin";
+import { PHONE_BUTTON } from "@/components/admin/phone";
 import { Field, FormMessage } from "@/components/forms";
 import { selectClass } from "@/components/form-styles";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,7 @@ export function OwnerForm({ listingId, placeholder, open = true }: { listingId: 
   if (!open) return null;
 
   return (
-    <section id="owner" aria-labelledby="owner-title" className="scroll-mt-24 rounded-xl border bg-card p-6 shadow-card">
+    <section id="owner" aria-labelledby="owner-title" className="rounded-xl border bg-card p-4 shadow-card sm:p-6 lg:scroll-mt-24">
       <h2 id="owner-title" className="mb-2 font-sans text-lg font-semibold">
         {ti("owner.title")}
       </h2>
@@ -103,7 +104,7 @@ export function OwnerForm({ listingId, placeholder, open = true }: { listingId: 
           </div>
         )}
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" className="max-lg:h-11" disabled={pending}>
             {pending ? ti("owner.saving") : ti(placeholder ? "owner.submitSet" : "owner.submitChange")}
           </Button>
           {/* A field's own message says it; the banner only for the rest. */}
@@ -167,7 +168,7 @@ export function FormAConfirm({
             </div>
           )}
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" size="sm" disabled={pending}>
+            <Button type="submit" size="sm" className={PHONE_BUTTON} disabled={pending}>
               {pending ? ti("formA.confirming") : ti("formA.submit")}
             </Button>
             <FormMessage state={state} />

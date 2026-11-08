@@ -159,7 +159,8 @@ function PercentInput({
         if (Number.isFinite(v)) onValue(Math.min(Math.max(v, 0), 100));
       }}
       onBlur={() => setDraft(null)}
-      className="h-full w-full min-w-0 bg-transparent text-sm font-semibold tabular outline-none disabled:opacity-40 rtl:text-end"
+      // 16px below lg: iOS zooms into a smaller field when it is focused.
+      className="h-full w-full min-w-0 bg-transparent text-sm font-semibold tabular outline-none disabled:opacity-40 rtl:text-end max-lg:text-base"
     />
   );
 }
@@ -194,7 +195,8 @@ function RangeSlider({
       value={[Math.min(Math.max(value, min), max)]}
       onValueChange={(v) => onValue(v[0] ?? value)}
       disabled={disabled}
-      className="relative mt-3 flex h-6 w-full touch-none select-none items-center data-[disabled]:opacity-40"
+      // Phones (below lg): a 40px-tall strip to press on and a 28px thumb to drag.
+      className="relative mt-3 flex h-6 w-full touch-none select-none items-center data-[disabled]:opacity-40 max-lg:h-10"
     >
       <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/12">
         <SliderPrimitive.Range className="absolute h-full rounded-full bg-gold" />
@@ -202,7 +204,7 @@ function RangeSlider({
       <SliderPrimitive.Thumb
         aria-label={label}
         aria-valuetext={valueText}
-        className="block h-5 w-5 cursor-grab rounded-full border-2 border-gold bg-background shadow-gold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold/40 active:cursor-grabbing data-[disabled]:cursor-not-allowed motion-safe:transition-shadow"
+        className="block h-5 w-5 cursor-grab rounded-full border-2 border-gold bg-background shadow-gold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold/40 active:cursor-grabbing data-[disabled]:cursor-not-allowed motion-safe:transition-shadow max-lg:size-7"
       />
     </SliderPrimitive.Root>
   );
@@ -288,7 +290,7 @@ function OptionCard({
           <Icon className="h-5 w-5" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <p className={cn("text-[11px] font-semibold uppercase tracking-[0.16em] tabular", dark ? "text-gold" : "text-muted-foreground")}>
+          <p className={cn("text-[11px] font-semibold uppercase tracking-[0.16em] tabular max-lg:text-xs", dark ? "text-gold" : "text-muted-foreground")}>
             {t("out.option", { n })}
           </p>
           <h3 className={cn("mt-0.5 font-sans text-lg font-semibold leading-snug", dark && "text-primary-foreground")}>{title}</h3>
@@ -392,7 +394,7 @@ export function ExitCalculator() {
               }}
               valueText={formatAED(price ?? 0, locale)}
             />
-            <div aria-hidden className="mt-1 flex justify-between text-[11px] font-medium text-muted-foreground tabular">
+            <div aria-hidden className="mt-1 flex justify-between text-[11px] font-medium text-muted-foreground tabular max-lg:text-xs">
               <span>{formatAEDCompact(PRICE_MIN, locale)}</span>
               <span>{formatAEDCompact(PRICE_MAX, locale)}</span>
             </div>
@@ -466,7 +468,7 @@ export function ExitCalculator() {
                 />
               </div>
               <div className="mt-3 w-20 shrink-0">
-                <div className="flex h-9 items-center gap-1 rounded-lg border border-input bg-background px-2 shadow-sm focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">
+                <div className="flex h-9 items-center gap-1 rounded-lg border border-input bg-background px-2 shadow-sm focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40 max-lg:h-11">
                   <PercentInput
                     id={id("progress")}
                     value={progress}
@@ -480,9 +482,15 @@ export function ExitCalculator() {
                 </div>
               </div>
             </div>
+            {/* Phones: a 24px box, and the label fills the rest of a 44px row, so the whole line is the target. */}
             <div className="mt-3 flex items-center gap-2.5">
-              <Checkbox id={id("not-started")} checked={notStarted} onCheckedChange={(v) => setNotStarted(v === true)} className="h-5 w-5 rounded-md" />
-              <label htmlFor={id("not-started")} className="cursor-pointer text-sm">
+              <Checkbox
+                id={id("not-started")}
+                checked={notStarted}
+                onCheckedChange={(v) => setNotStarted(v === true)}
+                className="h-5 w-5 rounded-md max-lg:size-6"
+              />
+              <label htmlFor={id("not-started")} className="cursor-pointer text-sm max-lg:flex max-lg:min-h-11 max-lg:flex-1 max-lg:items-center">
                 {t("in.notStarted")}
               </label>
             </div>
@@ -507,7 +515,8 @@ export function ExitCalculator() {
                   <button
                     type="button"
                     onClick={() => setMarket(null)}
-                    className="rounded-md text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    // Phones: a 40px-tall tap area around the word, without moving it.
+                    className="rounded-md text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:-mx-2 max-lg:-my-3 max-lg:px-2 max-lg:py-3"
                   >
                     {t("in.market.clear")}
                   </button>

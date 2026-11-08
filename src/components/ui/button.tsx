@@ -22,11 +22,13 @@ const buttonVariants = cva(
           "border border-primary-foreground/30 bg-primary-foreground/5 text-primary-foreground backdrop-blur hover:bg-primary-foreground/15",
         success: "bg-success text-success-foreground shadow-sm hover:bg-success/90",
       },
+      // Phones (below lg): small and icon buttons grow to a comfortable tap (40 / 44 px); desktop is unchanged. A
+      // minimum, not a height: a caller's own taller size, or h-auto for a label that wraps, still applies.
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-8 px-3 text-xs",
+        sm: "h-8 px-3 text-xs max-lg:min-h-10",
         lg: "h-12 px-7 text-base",
-        icon: "h-9 w-9",
+        icon: "h-9 w-9 max-lg:min-h-11 max-lg:min-w-11",
       },
     },
     defaultVariants: {

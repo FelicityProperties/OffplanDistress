@@ -55,7 +55,6 @@ export default defineMessages({
     "fees.table.paidTo.dld": "Dubai Land Department",
     "fees.table.paidTo.developer": "The developer",
     "fees.table.paidTo.trustee": "DLD trustee office",
-    "fees.table.scrollHint": "Swipe sideways to see every column",
 
     "how.metaTitle": "How it works",
     "how.metaDescription": "From SPA verification to DLD transfer: how distressed off-plan assignments work, end to end.",
@@ -215,7 +214,6 @@ export default defineMessages({
     "fees.table.paidTo.dld": "دائرة الأراضي والأملاك",
     "fees.table.paidTo.developer": "المطوّر",
     "fees.table.paidTo.trustee": "مكتب أمين التسجيل",
-    "fees.table.scrollHint": "اسحب أفقياً لعرض جميع الأعمدة",
 
     "how.metaTitle": "كيف نعمل",
     "how.metaDescription":
@@ -372,7 +370,6 @@ export default defineMessages({
     "fees.table.paidTo.dld": "迪拜土地局（DLD）",
     "fees.table.paidTo.developer": "开发商",
     "fees.table.paidTo.trustee": "迪拜土地局产权登记受托机构",
-    "fees.table.scrollHint": "左右滑动查看所有列",
 
     "how.metaTitle": "运作流程",
     "how.metaDescription": "从买卖协议（SPA）核实到迪拜土地局（DLD）过户：急售期房转让的完整流程。",
