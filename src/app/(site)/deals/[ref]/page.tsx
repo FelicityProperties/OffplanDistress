@@ -97,6 +97,19 @@ const wrapAfterYear = (date: string) => {
   );
 };
 
+/**
+ * The page in its own stacking context (relative isolate: the gold glow and grid sit behind it), and the phone action
+ * bar after it, outside: inside, its z-40 counted only there, and the footer, which comes later, was painted over it.
+ */
+function DealFrame({ bar, children }: { bar: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <>
+      <div className="relative isolate">{children}</div>
+      {bar}
+    </>
+  );
+}
+
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 /** A plan row named by its own due date ("26-SEP-2026", "23/07/2026", "2026-07-23"), as imported plans are. */
 function labelIsDueDate(label: string, due: string | null) {
@@ -432,8 +445,36 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
       }
     : null;
 
+  const actionBar = dealBar && (
+    <DealActionBar
+      watchId="deal-actions"
+      priceId="deal-price"
+      price={formatAED(l.askingPrice, locale)}
+      priceCompact={formatAEDCompact(l.askingPrice, locale)}
+      note={barNote ?? t("side.payNow")}
+      noteIsDiscount={barNote != null}
+      whatsapp={waHref ? { href: waHref, label: t("side.whatsapp") } : null}
+      cta={
+        yourDeal ? (
+          <Link href="/dashboard/offers?tab=sent" className={buttonVariants({ variant: "gold", className: "h-11 rounded-xl px-4 font-semibold max-[359px]:px-3" })}>
+            {t("offer.yourDeal")}
+          </Link>
+        ) : (
+          <OfferDialog
+            listingId={l.id}
+            project={l.projectName}
+            asking={l.askingPrice}
+            signedIn={!!user}
+            loginHref={loginHref}
+            variant="bar"
+          />
+        )
+      }
+    />
+  );
+
   return (
-    <div className="relative isolate">
+    <DealFrame bar={actionBar}>
       {listingJsonLd && <JsonLd data={listingJsonLd} />}
       {breadcrumbJsonLd && <JsonLd data={breadcrumbJsonLd} />}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-gradient-to-b from-gold-soft/60 via-background to-background" />
@@ -1110,35 +1151,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
             </div>
           </section>
         )}
-
-        {dealBar && (
-          <DealActionBar
-            watchId="deal-actions"
-            priceId="deal-price"
-            price={formatAED(l.askingPrice, locale)}
-            priceCompact={formatAEDCompact(l.askingPrice, locale)}
-            note={barNote ?? t("side.payNow")}
-            noteIsDiscount={barNote != null}
-            whatsapp={waHref ? { href: waHref, label: t("side.whatsapp") } : null}
-            cta={
-              yourDeal ? (
-                <Link href="/dashboard/offers?tab=sent" className={buttonVariants({ variant: "gold", className: "h-11 rounded-xl px-4 font-semibold max-[359px]:px-3" })}>
-                  {t("offer.yourDeal")}
-                </Link>
-              ) : (
-                <OfferDialog
-                  listingId={l.id}
-                  project={l.projectName}
-                  asking={l.askingPrice}
-                  signedIn={!!user}
-                  loginHref={loginHref}
-                  variant="bar"
-                />
-              )
-            }
-          />
-        )}
       </div>
-    </div>
+    </DealFrame>
   );
 }

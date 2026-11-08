@@ -184,9 +184,12 @@ html:lang(zh) :is(h1, h2, h3, h4, [class*="tracking-tight"]) {
  * The app shell on phones (below lg, where the header shows the menu button): bottom tab bar, auto-hiding header,
  * floating buttons, the deal page's action bar. Everything that reads these variables passes a fallback, so each piece
  * also works alone. --app-bottom is the height of the bar on screen at the bottom (safe area included, 0 when none),
- * --app-bottom-reserve the room the page keeps for it at its end. State on <html>: data-scroll="down" (header hidden
- * while reading down: src/components/app/AutoHideHeader.tsx), data-keyboard (on-screen keyboard up: ChromeState.tsx),
- * data-install-prompt (the install card is up).
+ * --app-bottom-reserve the room the page keeps for it at its end: the bars set them while they are on the page, in a
+ * <style> of their own (MobileTabBar.tsx, DealActionBar.tsx; AppShell.tsx its section row's scroll padding), never
+ * with html:has(), which made every attribute change anywhere restyle the whole page. State on <html>:
+ * data-scroll="down" (header hidden while reading down: src/components/app/AutoHideHeader.tsx), data-keyboard (on-screen
+ * keyboard up: ChromeState.tsx), data-install-prompt (the install card is up), data-dealbar-hidden (the deal page's
+ * action bar stepped aside). Each of them restyles only the elements it moves: no root variable changes with them.
  */
 :root {
   --app-header-h: 3.5rem;
@@ -231,31 +234,24 @@ html:lang(zh) :is(h1, h2, h3, h4, [class*="tracking-tight"]) {
   }
 }
 @media screen and (max-width: 1023.98px) {
-  html:has([data-tabbar]) {
-    --app-bottom: calc(var(--app-tabbar-h) + var(--app-safe-b));
-    --app-bottom-reserve: var(--app-bottom);
-  }
-  /* A deal page's action bar replaces the tab bar and the WhatsApp button (it has its own). */
-  html:has([data-dealbar]) {
-    --app-bottom: var(--app-safe-b);
-    --app-bottom-reserve: calc(var(--app-dealbar-h) + var(--app-safe-b));
-    --fab-wa-slot: 0px;
-  }
-  html:has([data-dealbar][data-state="shown"]) {
-    --app-bottom: calc(var(--app-dealbar-h) + var(--app-safe-b));
-  }
-  html:has([data-dealbar]) :is([data-tabbar], [data-wa="floating"]) {
-    display: none;
-  }
   html {
     /* focused fields and links stop above the bottom bar */
     scroll-padding-bottom: calc(var(--app-bottom-reserve) + 0.75rem);
   }
-  html[data-scroll="down"] {
-    --app-header-offset: 0px;
-  }
   html[data-scroll="down"] [data-app-header] {
     transform: translateY(-100%);
+  }
+  /* The legal pages' sticky contents (LegalToc.tsx) move up with the header. */
+  html[data-scroll="down"] [data-legal-toc] {
+    --app-header-offset: 0px;
+  }
+  /* The deal page's action bar stepped aside (the price card's own buttons are on screen): the floating buttons and the
+     install card come down to the bottom edge. */
+  html[data-dealbar-hidden] :is([data-fab], [data-assistant]) {
+    --fab-base: var(--app-safe-b);
+  }
+  html[data-dealbar-hidden] [data-install-card] {
+    --app-bottom: var(--app-safe-b);
   }
   html[data-keyboard] :is([data-tabbar], [data-dealbar]) {
     transform: translateY(100%);
@@ -291,10 +287,6 @@ html:lang(zh) :is(h1, h2, h3, h4, [class*="tracking-tight"]) {
   }
   html[data-scroll="down"] [data-shell-nav] {
     transform: translateY(calc(-100% - var(--app-header-h)));
-  }
-  /* focused / anchored elements clear that row too (it is 61px tall) */
-  html:has([data-shell-nav]) {
-    scroll-padding-top: calc(var(--app-header-h) + 5rem);
   }
 }
 /* iOS zooms into a field whose text is under 16px when it's focused: on phones none is (text-xs utilities included). */

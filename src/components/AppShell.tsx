@@ -44,6 +44,12 @@ const ICONS = {
 
 export type ShellItem = { href: string; label: string; icon: keyof typeof ICONS; count?: number; exact?: boolean };
 
+/**
+ * Below lg, focused and anchored elements clear the section row too (it is 61px tall, under the header). A plain rule
+ * while the shell is on the page, not html:has([data-shell-nav]), which restyled the whole page on any attribute change.
+ */
+const SCROLL_PAD = "@media screen and (max-width:1023.98px){html{scroll-padding-top:calc(var(--app-header-h) + 5rem)}}";
+
 /** A page with no section of its own: a listing opened in the console belongs to the pipeline (its back link). */
 function sectionOf(pathname: string) {
   return /^\/admin\/listings\/(?!import(?:\/|$))/.test(pathname) ? "/admin/pipeline" : pathname;
@@ -76,6 +82,7 @@ export function AppShell({ items, title, children }: { items: ShellItem[]; title
   }, [pathname]);
   return (
     <div className="container-page grid grid-cols-[minmax(0,1fr)] gap-6 pb-8 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-8 lg:pt-8">
+      <style>{SCROLL_PAD}</style>
       <aside
         data-shell-nav
         className="min-w-0 max-lg:border-b max-lg:border-border/60 max-lg:bg-background/95 max-lg:backdrop-blur-xl max-lg:backdrop-saturate-150 lg:sticky lg:top-24 lg:self-start"

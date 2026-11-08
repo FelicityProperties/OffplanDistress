@@ -73,9 +73,10 @@ export function LegalToc({
   return (
     <details
       ref={ref}
+      data-legal-toc
       className="group sticky z-30 mb-8 rounded-2xl border bg-card/95 shadow-card backdrop-blur-xl motion-safe:transition-[top] motion-safe:duration-200 lg:hidden"
-      // Under the header, which slides away while reading down (--app-header-offset is 0 then); 4.25rem = its height
-      // without the app shell's variables.
+      // Under the header, which slides away while reading down (globals.css sets --app-header-offset to 0 here then, on
+      // this element alone); 4.25rem = its height without the app shell's variables.
       style={{ top: "calc(var(--app-header-offset, 4.25rem) + 0.5rem)" }}
       onToggle={(e) => {
         const el = e.currentTarget;
