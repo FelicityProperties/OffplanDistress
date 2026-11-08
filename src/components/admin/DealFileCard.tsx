@@ -118,7 +118,16 @@ export async function DealFileCard({ listing }: { listing: Listing }) {
             <bdi>{p.importOwner && importSource ? ti("owner.placeholderName", { source: importSource }) : p.fullName}</bdi>
           </p>
           <p className="text-xs text-muted-foreground wrap-anywhere">
-            {p.phone ? <bdi dir="ltr">{p.phone}</bdi> : isPlaceholderEmail(p.email) ? t("users.noEmail") : <bdi dir="ltr">{p.email}</bdi>}
+            {/* The number as a link (the pages tell iPhones not to make one themselves). */}
+            {p.phone ? (
+              <a href={`tel:${p.phone.replace(/[^\d+]/g, "")}`} className={cn("hover:underline", PHONE_LINK)}>
+                <bdi dir="ltr">{p.phone}</bdi>
+              </a>
+            ) : isPlaceholderEmail(p.email) ? (
+              t("users.noEmail")
+            ) : (
+              <bdi dir="ltr">{p.email}</bdi>
+            )}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
             {/* The NOC gate checks this KYC: set here, or on Admin → Users. A placeholder is nobody, so its KYC waits for the

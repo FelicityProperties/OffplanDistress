@@ -24,7 +24,8 @@
   h1 { font: 600 1.6rem/1.2 Georgia, "Times New Roman", serif; margin: 1rem 0 .5rem; letter-spacing: -.01em; }
   p { margin: 0; color: var(--muted); }
   button { margin-top: 1.75rem; width: 100%; height: 3rem; border: 0; border-radius: 999px; background: var(--ink); color: var(--cream); font: inherit; font-weight: 600; cursor: pointer; }
-  a { display: inline-flex; align-items: center; min-height: 44px; margin-top: .5rem; color: var(--ink); font-weight: 500; text-underline-offset: 4px; }
+  /* gap: in a flex box the label's trailing space is dropped ("Call us:+971…") */
+  a { display: inline-flex; align-items: center; gap: .3em; min-height: 44px; margin-top: .5rem; color: var(--ink); font-weight: 500; text-underline-offset: 4px; }
   [data-lang] { display: none; }
   html[lang="en"] [data-lang="en"], html[lang="ar"] [data-lang="ar"], html[lang="zh-CN"] [data-lang="zh"] { display: block; }
   html[lang="ar"] body { font-family: "Noto Naskh Arabic", "Geeza Pro", "Noto Sans Arabic", system-ui, sans-serif; }

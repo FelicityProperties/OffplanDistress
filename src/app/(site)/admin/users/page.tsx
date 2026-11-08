@@ -66,11 +66,13 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           type="search"
           name="q"
           defaultValue={q}
+          // What is typed sets the direction (an e-mail, a phone number, an Arabic name); empty, the field follows the
+          // page, so an Arabic placeholder starts at the right and its start is what shows when it is cut off.
           dir="auto"
           maxLength={100}
           aria-label={t("users.search")}
           placeholder={t("users.search")}
-          className="min-w-0 flex-1 bg-card max-lg:h-11"
+          className="min-w-0 flex-1 bg-card rtl:placeholder-shown:[direction:rtl] max-lg:h-11"
         />
         <Button type="submit" variant="outline" className="max-lg:h-11">
           <Search aria-hidden /> {t("pipeline.searchSubmit")}
@@ -120,10 +122,13 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                         {u.phone && (
                           <>
                             {" · "}
-                            {/* Never broken across lines: "+971 50 765" / "4321" reads as two numbers. */}
-                            <bdi dir="ltr" className="whitespace-nowrap">
-                              {u.phone}
-                            </bdi>
+                            {/* Never broken across lines: "+971 50 765" / "4321" reads as two numbers. A link, as on Leads and
+                                Inquiries: the pages tell iPhones not to make phone numbers into links themselves. */}
+                            <a href={`tel:${u.phone.replace(/[^\d+]/g, "")}`} className={cn("hover:underline", PHONE_LINK)}>
+                              <bdi dir="ltr" className="whitespace-nowrap">
+                                {u.phone}
+                              </bdi>
+                            </a>
                           </>
                         )}
                       </p>
@@ -191,9 +196,11 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                       {u.phone && (
                         <>
                           {" · "}
-                          <bdi dir="ltr" className="whitespace-nowrap">
-                            {u.phone}
-                          </bdi>
+                          <a href={`tel:${u.phone.replace(/[^\d+]/g, "")}`} className={cn("hover:underline", PHONE_LINK)}>
+                            <bdi dir="ltr" className="whitespace-nowrap">
+                              {u.phone}
+                            </bdi>
+                          </a>
                         </>
                       )}
                     </p>

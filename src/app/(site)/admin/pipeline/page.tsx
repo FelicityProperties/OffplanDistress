@@ -85,11 +85,12 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
           id="pipeline-q"
           name="q"
           type="search"
+          // Typed text sets the direction; empty, the field follows the page (an Arabic placeholder starts at the right).
           dir="auto"
           maxLength={80}
           defaultValue={q}
           placeholder={t("pipeline.searchPlaceholder")}
-          className="max-lg:h-11"
+          className="rtl:placeholder-shown:[direction:rtl] max-lg:h-11"
         />
       </div>
       <Button type="submit" variant="outline" className="max-lg:h-11">

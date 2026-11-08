@@ -11,7 +11,7 @@
  * KILL SWITCH (README, "Installable app"): copy scripts/sw-kill.js over this file and deploy with NEXT_PUBLIC_SW=off.
  * Browsers fetch this file past every cache (no-store in next.config.ts, updateViaCache "none"), on every page load.
  */
-const VERSION = "1";
+const VERSION = "2";
 const CACHE = `od-offline-v${VERSION}`;
 const OFFLINE_URL = "/offline.html";
 
