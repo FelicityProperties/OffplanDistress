@@ -639,7 +639,9 @@ export function buildEntry(u, plan, today, rules) {
   if (dev == null) [dev, devOther] = ["Other", "Not stated"];
   const [com, comOther] = canon(f.Area, rules.COM, COM_MAP, COM_NAMES);
   if (com == null) return { skip: "no area" };
-  const floor = cut(pyStrip(f.Floor).replace(/^[() ]+|[() ]+$/g, ""), 40) || null;
+  // "NONE" (a townhouse, or a floor not given) means no floor, like the view's "None": the deal page would print "Floor NONE".
+  const floorText = pyStrip(f.Floor).replace(/^[() ]+|[() ]+$/g, "");
+  const floor = /^(none|n\/?a|-+|—)$/i.test(floorText) ? null : cut(floorText, 40) || null;
   const viewText = pyStrip(f.View);
   const view = ["", "none", "-"].includes(viewText.toLowerCase()) ? null : cut(viewText, 80);
   const listing = {

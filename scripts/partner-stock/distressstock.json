@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-07T01:40:08Z",
+ "generatedAt": "2026-11-10T01:41:11Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -644,6 +644,70 @@
     }
    ],
    "notes": "Posted on DistressStock September 24, 2026: DISTRESS DEAL: 1-BR IN SOBHA SEAHAVEN - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,270,492; selling price AED 2,900,000."
+  },
+  {
+   "ref": "5fTg83",
+   "url": "https://distressonly.deals/u/5fTg83",
+   "posted": "2026-11-09",
+   "listing": {
+    "projectName": "Safa Two",
+    "developer": "DAMAC",
+    "developerOther": null,
+    "community": "Business Bay",
+    "communityOther": null,
+    "unitType": "3br",
+    "sizeSqft": 1490,
+    "floor": "67-72",
+    "view": "Sea",
+    "originalPrice": 3895050,
+    "amountPaid": 3252375,
+    "askingPrice": 3027325,
+    "handoverDate": "2027-06-30",
+    "nextInstalmentDate": "2026-12-05",
+    "nextInstalmentAmount": 136325,
+    "paymentPlan": [
+     {
+      "label": "05-DEC-2026",
+      "dueDate": "2026-12-05",
+      "amount": 136325
+     },
+     {
+      "label": "06-MAR-2027",
+      "dueDate": "2027-03-06",
+      "amount": 116850
+     },
+     {
+      "label": "On Completion",
+      "dueDate": null,
+      "amount": 389500
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "5fTg83-4b433f13.webp",
+     "url": "https://distressonly.deals/media/units/431/6b4a8d50dba4.webp"
+    },
+    {
+     "filename": "5fTg83-20d34836.webp",
+     "url": "https://distressonly.deals/media/units/431/f54d26e830bc.webp"
+    },
+    {
+     "filename": "5fTg83-cf1349c2.webp",
+     "url": "https://distressonly.deals/media/units/431/cfddc6991f63.webp"
+    },
+    {
+     "filename": "5fTg83-ae1c088e.webp",
+     "url": "https://distressonly.deals/media/units/431/82a87e0deddc.webp"
+    },
+    {
+     "filename": "5fTg83-k0.webp",
+     "url": "https://distressonly.deals/media/units/431/e784b8e4128c.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 09, 2026: DISTRESS DEAL: 3-BR IN SAFA TWO. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 4,050,840; selling price AED 3,670,000."
   },
   {
    "ref": "6FDbrU",
@@ -1665,7 +1729,8 @@
      "url": "https://distressonly.deals/media/units/424/bb31fd0f4025.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 28, 2026: DISTRESS DEAL: 1-BR IN SOBHA ONE - TOWER D. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 1,392,920; selling price AED 1,130,000."
+   "notes": "Posted on DistressStock October 28, 2026: DISTRESS DEAL: 1-BR IN SOBHA ONE - TOWER D. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 1,392,920; selling price AED 1,130,000.",
+   "removed": "2026-11-10"
   },
   {
    "ref": "K1kdRE",
@@ -2184,7 +2249,7 @@
     "communityOther": "Rashid Yachts & Marina",
     "unitType": "3br",
     "sizeSqft": 1619,
-    "floor": "NONE",
+    "floor": null,
     "view": "Community",
     "originalPrice": 3733900,
     "amountPaid": 2240345,
@@ -5071,6 +5136,60 @@
     }
    ],
    "notes": "Posted on DistressStock July 16, 2026: DISTRESS DEAL: 2-BR IN ONDA. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: The first instalment is a construction milestone ('70% Construction') and has no date. 454799+1345201=1800000; instalments sum to 1345201; transfer lines sum to 581889; total 1927090. All checks pass. The DLD fee of 84040 is 4% of 2,100,000 plus 40, so the original price (OP) is above the unit price shown. No OP row is printed. Source: original price + DLD 4% = AED 2,184,000; selling price AED 1,800,000."
+  },
+  {
+   "ref": "sQ482C",
+   "url": "https://distressonly.deals/u/sQ482C",
+   "posted": "2026-11-06",
+   "listing": {
+    "projectName": "Cotier House 2",
+    "developer": "Imtiaz",
+    "developerOther": null,
+    "community": "Dubai Islands",
+    "communityOther": null,
+    "unitType": "townhouse",
+    "sizeSqft": 2026,
+    "floor": null,
+    "view": null,
+    "originalPrice": 5576025,
+    "amountPaid": 3345619,
+    "askingPrice": 2969594,
+    "handoverDate": "2027-05-31",
+    "nextInstalmentDate": "2027-04-30",
+    "nextInstalmentAmount": 2230406,
+    "paymentPlan": [
+     {
+      "label": "On Handover (30-APR-2027)",
+      "dueDate": "2027-04-30",
+      "amount": 2230406
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "sQ482C-8369c734.webp",
+     "url": "https://distressonly.deals/media/units/430/724418cee6cf.webp"
+    },
+    {
+     "filename": "sQ482C-8846e367.webp",
+     "url": "https://distressonly.deals/media/units/430/880d14913e01.webp"
+    },
+    {
+     "filename": "sQ482C-e5104a72.webp",
+     "url": "https://distressonly.deals/media/units/430/76acce0d2cb8.webp"
+    },
+    {
+     "filename": "sQ482C-9f050c2a.webp",
+     "url": "https://distressonly.deals/media/units/430/c2576eeab528.webp"
+    },
+    {
+     "filename": "sQ482C-k0.webp",
+     "url": "https://distressonly.deals/media/units/430/801406ccaa26.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 06, 2026: DISTRESS DEAL: 3-BR+MAID'S IN COTIER HOUSE 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 5,799,055; selling price AED 5,200,000."
   },
   {
    "ref": "tGyvVW",
