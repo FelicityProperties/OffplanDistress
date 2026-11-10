@@ -10,7 +10,7 @@ export const BRAND = {
   name: "OffplanDistress",
   tagline: "Dubai off-plan resales below the original price",
   description:
-    "Buy Dubai off-plan below launch price. Owners who need out list their units; we verify the paperwork, match buyers and handle the developer NOC and DLD transfer.",
+    "Buy Dubai off-plan resales below the original price. Owners who need out list their units; we verify the paperwork, match buyers and handle the developer NOC and DLD transfer.",
   // Licensed operator. Values come from the trade licence, the RERA office registration and the broker card;
   // each can be overridden with the NEXT_PUBLIC_* variable next to it (an empty variable keeps the default).
   company: "Felicity Properties L.L.C",

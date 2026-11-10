@@ -93,9 +93,10 @@ export async function DealCard({
           </div>
         </div>
         <h3 className="mt-2 line-clamp-1 text-lg font-semibold leading-snug">
-          {/* One link per card, stretched over it: screen readers hear every chip above as plain text. */}
+          {/* One link per card, stretched over it: screen readers hear every chip above as plain text. bdi: a Latin name
+              on an Arabic page keeps its own order ("330 Riverside Crescent"). */}
           <Link href={href} className="after:absolute after:inset-0 focus-visible:outline-none">
-            {deal.projectName}
+            <bdi>{deal.projectName}</bdi>
           </Link>
         </h3>
         <p className="truncate text-sm text-muted-foreground">{community}</p>

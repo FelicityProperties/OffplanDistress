@@ -273,17 +273,17 @@ export async function searchDeals(f: DealFilters) {
 }
 
 /**
- * The real adverts (no samples) of the given project names, as the /deals list shows them by default (sort=discount:
- * the same cards in the same order), `limit` at most: a project's page (projectDeals in src/lib/projects.ts).
+ * Every real advert (no samples) of the given project names, the same cards as /deals: the available units first (status
+ * live), then those under offer, each in the /deals default order (sort=discount). A project's page (projectDeals in
+ * src/lib/projects.ts) lists them all.
  */
-export async function dealsInProjects(names: string[], limit: number) {
+export async function dealsInProjects(names: string[]) {
   if (!names.length) return [];
   const rows = await db
     .select(cardColumns)
     .from(listings)
     .where(and(advertisedSql(), eq(listings.isSample, false), inArray(listings.projectName, names)))
-    .orderBy(...dealOrder("discount"), desc(listings.createdAt))
-    .limit(limit);
+    .orderBy(sql`(${listings.status} = 'live') desc`, ...dealOrder("discount"), desc(listings.createdAt));
   return rows as ListingCard[];
 }
 
@@ -446,4 +446,5 @@ export {
   discount as discountSql,
   belowOriginalPct as belowOriginalPctSql,
   paidPct as paidPctSql,
+  planRows as planRowsSql,
 };

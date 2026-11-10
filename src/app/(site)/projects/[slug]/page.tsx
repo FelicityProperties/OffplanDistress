@@ -13,8 +13,11 @@ import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { getCurrentUser } from "@/lib/auth";
 import { BRAND, FEES } from "@/lib/config";
-import { formatPct, refCode } from "@/lib/format";
+import { analyzeDeal, isReady } from "@/lib/deal-math";
+import { discountPct } from "@/lib/discount-labels";
+import { formatAEDCompact, formatPct, refCode } from "@/lib/format";
 import { watchedIds } from "@/lib/listings";
+import { dubaiToday } from "@/lib/permits";
 import { communityName } from "@/lib/place-names";
 import {
   getProject,
@@ -27,6 +30,7 @@ import {
   projectHandoverRange,
   projectPath,
   projectSlug,
+  projectsT,
   projectTitle,
   type Project,
 } from "@/lib/projects";
@@ -37,7 +41,7 @@ import { cn } from "@/lib/utils";
 /**
  * The project an address names. Another spelling of an existing project's slug ("/projects/Volta", "/projects/Bluewaters
  * Bay - Building 2") moves for good to the slug's own address, in the page's language; anything else (no such project,
- * or none of its units is an advert any more) is a 404.
+ * or none of its units is available any more) is a 404.
  */
 async function resolve(segment: string, locale: Locale): Promise<Project> {
   const project = await getProject(segment);
@@ -51,13 +55,16 @@ async function resolve(segment: string, locale: Locale): Promise<Project> {
   notFound();
 }
 
-/** "3 resale units in Volta. By DAMAC in Downtown Dubai. Handover Q1 2028 – Q2 2028. Up to 17% below the original price." */
+/**
+ * "2 resale units available in Volta. By DAMAC in Downtown Dubai. Handover Q1 2028 – Q2 2028. Up to 17% below the original
+ * price." Only the available units count; a developer the listings don't name is left out (In Palm Jumeirah.).
+ */
 function describe(project: Project, locale: Locale, t: TFn<"projects">) {
-  const developer = projectDevelopers(project, locale);
+  const developer = projectDevelopers(project, locale, undefined, true);
   const community = projectCommunities(project, locale);
   const pct = projectBestPct(project);
   return [
-    t(project.dealCount === 1 ? "meta.units.one" : "meta.units.many", { count: project.dealCount, project: project.name }),
+    t(project.liveCount === 1 ? "meta.units.one" : "meta.units.many", { count: project.liveCount, project: project.name }),
     developer && community
       ? t("meta.byIn", { developer, community })
       : developer
@@ -73,7 +80,8 @@ function describe(project: Project, locale: Locale, t: TFn<"projects">) {
 }
 
 export async function generateMetadata({ params }: PageProps<"/projects/[slug]">): Promise<Metadata> {
-  const [{ slug }, t, locale] = await Promise.all([params, getT("projects"), getLocale()]);
+  const [{ slug }, locale] = await Promise.all([params, getLocale()]);
+  const t = projectsT(locale);
   const project = await getProject(slug);
   // Another spelling (the page moves it to the slug) or no such project (a 404): nothing to index here.
   if (!project) return { robots: { index: false }, alternates: null };
@@ -91,9 +99,13 @@ export async function generateMetadata({ params }: PageProps<"/projects/[slug]">
 export default async function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
   const [{ slug }, locale, user] = await Promise.all([params, getLocale(), getCurrentUser()]);
   const project = await resolve(slug, locale);
-  const [deals, watched, t, tc] = await Promise.all([projectDeals(project), watchedIds(user?.id), getT("projects"), getT("common")]);
-  // Its last advert came down between the two queries.
-  if (!deals.length) notFound();
+  const [deals, watched, tc] = await Promise.all([projectDeals(project), watchedIds(user?.id), getT("common")]);
+  const t = projectsT(locale);
+  // The available units, then those under offer (backup offers are still possible), apart.
+  const available = deals.filter((d) => d.status === "live");
+  const reserved = deals.filter((d) => d.status !== "live");
+  // Its last available unit went under offer or came down between the two queries.
+  if (!available.length) notFound();
 
   const title = projectTitle(project, locale);
   const developer = projectDeveloperInSentence(project, locale);
@@ -101,14 +113,45 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
   // The rates as the site writes them ("2%", "5%", "4%"), from FEES.
   const rates = { commission: formatPct(FEES.commissionRate), vat: formatPct(FEES.vatRate), dld: formatPct(FEES.dldRate) };
   const buyerPays = FEES.payer === "buyer";
+  // Sentences of one paragraph (Chinese runs them together).
+  const join = (...parts: (string | null)[]) => parts.filter(Boolean).join(locale === "zh" ? "" : " ");
+
+  // What the units listed have in common, for the copy: fully paid (nothing left to take over) and handed over (a title
+  // deed rather than an Oqood), each for all of them, some or none, as the cards and the deal pages decide it.
+  const today = dubaiToday();
+  const paid = deals.filter((d) => d.originalPrice - d.amountPaid <= 0).length;
+  const ready = deals.filter((d) => isReady(d, today)).length;
+  const allPaid = paid === deals.length;
+  const share = (all: boolean, some: boolean) => (all ? "all" : some ? "some" : "none");
+  const paidState = share(allPaid, paid > 0);
+  const readyState = share(ready === deals.length, ready > 0);
 
   // The handover range breaks only between its two ends ("Q1 2028 –" / "Q2 2028"), never inside a quarter.
-  const handover = projectHandoverRange(project, locale);
+  const handover = projectHandoverRange(project, locale, today);
   const handoverRange = handover.from !== handover.to;
   const developers = projectDevelopers(project, locale) || "—";
   const communities = projectCommunities(project, locale) || "—";
-  // `wide`: a value that needs the whole row on a phone (a name too long for two lines of half a card, a range).
+  const underOffer = project.dealCount - project.liveCount;
+  // `wide`: a value that needs the whole row on a phone (a name too long for two lines of half a card, a range, a Chinese
+  // quarter, which half a 320px card would split before its last character). The buyer's reason to look comes first, and
+  // stays clear of the floating buttons in the bottom corner.
   const facts: { key: string; label: string; value: React.ReactNode; icon: typeof Building2; wide?: boolean; good?: boolean }[] = [
+    ...(best != null
+      ? [{ key: "below", label: t("facts.belowOriginal"), value: t("facts.upTo", { pct: best }), icon: TrendingDown, good: true }]
+      : []),
+    {
+      key: "units",
+      label: t("facts.units"),
+      value: (
+        <>
+          {project.liveCount}
+          {underOffer > 0 && (
+            <span className="mt-0.5 block text-xs font-medium text-muted-foreground">{t("facts.reserved", { count: underOffer })}</span>
+          )}
+        </>
+      ),
+      icon: Layers,
+    },
     // A name may be in Latin letters on an Arabic page: isolated, the card keeps its alignment.
     { key: "developer", label: t("facts.developer"), value: <bdi>{developers}</bdi>, icon: Building2, wide: developers.length > 24 },
     { key: "community", label: t("facts.community"), value: <bdi>{communities}</bdi>, icon: MapPin, wide: communities.length > 24 },
@@ -122,12 +165,8 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
           })
         : handover.from,
       icon: CalendarClock,
-      wide: handoverRange,
+      wide: handoverRange || (locale === "zh" && /\d/.test(handover.from)),
     },
-    { key: "units", label: t("facts.units"), value: project.dealCount, icon: Layers },
-    ...(best != null
-      ? [{ key: "below", label: t("facts.belowOriginal"), value: t("facts.upTo", { pct: best }), icon: TrendingDown, good: true }]
-      : []),
   ];
   // Phones (two columns): no card left alone in a row. One before a wide card, or the last one on its own, takes the row.
   const phoneRow = facts.map((f) => !!f.wide);
@@ -141,22 +180,73 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
   if (column === 1) phoneRow[phoneRow.length - 1] = true;
 
   const steps = [
-    { key: "plan", title: t("how.plan.title"), body: t("how.plan.body", { developer }) },
-    { key: "noc", title: t("how.noc.title"), body: t("how.noc.body", { developer }) },
-    { key: "transfer", title: t("how.transfer.title"), body: t("how.transfer.body", rates) },
+    allPaid
+      ? { key: "plan", title: t("how.paid.title"), body: t("how.paid.body", { developer }) }
+      : {
+          key: "plan",
+          title: t("how.plan.title"),
+          body: join(t("how.plan.body", { developer }), paidState === "some" ? t("how.plan.mixed") : null),
+        },
+    { key: "noc", title: t("how.noc.title"), body: t(allPaid ? "how.noc.bodyPaid" : "how.noc.body", { developer }) },
+    {
+      key: "transfer",
+      title: t("how.transfer.title"),
+      body: t(
+        readyState === "all" ? "how.transfer.bodyReady" : readyState === "some" ? "how.transfer.bodyMixed" : "how.transfer.body",
+        rates,
+      ),
+    },
     { key: "fee", title: t("how.fee.title", rates), body: t(buyerPays ? "how.fee.body" : "how.fee.bodySeller", rates) },
   ];
 
-  // Shown as they are and repeated word for word in the FAQPage data.
+  // The project's own figures for the FAQ, from its available units as their cards show them (analyzeDeal).
+  const n = available.length;
+  const named = { project: project.name, count: n };
+  const analyses = available.map((d) => analyzeDeal(d));
+  const spread = (key: "faq.cash" | "faq.fee", amounts: number[]) => {
+    const min = formatAEDCompact(Math.min(...amounts), locale);
+    const max = formatAEDCompact(Math.max(...amounts), locale);
+    if (n === 1) return t(`${key}.one` as const, { ...named, amount: min });
+    return min === max ? t(`${key}.each` as const, { ...named, amount: min }) : t(`${key}.many` as const, { ...named, min, max });
+  };
+  const pcts = analyses.map((a) => discountPct(a.discountVsOriginal)).filter((p): p is number => p != null && p >= 1);
+  const below = !pcts.length
+    ? t(n === 1 ? "faq.below.oneNone" : "faq.below.manyNone", named)
+    : n === 1
+      ? t("faq.below.one", { ...named, pct: pcts[0] })
+      : t(pcts.length === n ? "faq.below.all" : pcts.length === 1 ? "faq.below.manyOne" : "faq.below.many", {
+          ...named,
+          below: pcts.length,
+          pct: Math.max(...pcts),
+        });
+  // Shown as they are and repeated word for word in the FAQPage data. Each question names the project and each answer
+  // ends on its figures, so no two project pages carry the same questions and answers.
   const faqs = [
-    { q: t("faq.cash.q"), a: t(buyerPays ? "faq.cash.a" : "faq.cash.aSeller", { ...rates, developer }) },
-    { q: t("faq.plan.q"), a: t("faq.plan.a", { developer }) },
-    { q: t("faq.time.q"), a: t("faq.time.a", { developer }) },
-    { q: t("faq.fee.q"), a: t(buyerPays ? "faq.fee.a" : "faq.fee.aSeller", rates) },
-    { q: t("faq.below.q"), a: t("faq.below.a") },
+    {
+      q: t("faq.cash.q", named),
+      a: join(
+        t(buyerPays ? "faq.cash.a" : "faq.cash.aSeller", { ...rates, developer }),
+        spread("faq.cash", analyses.map((a) => a.cashToClose)),
+      ),
+    },
+    allPaid
+      ? { q: t("faq.paid.q", named), a: t("faq.paid.a", { ...named, developer }) }
+      : { q: t("faq.plan.q", named), a: join(t("faq.plan.a", { developer }), paidState === "some" ? t("how.plan.mixed") : null) },
+    {
+      q: t("faq.time.q", named),
+      a: t(readyState === "all" ? "faq.time.aReady" : readyState === "some" ? "faq.time.aMixed" : "faq.time.a", { developer }),
+    },
+    {
+      q: t("faq.fee.q", named),
+      a: buyerPays
+        ? join(t("faq.fee.a", rates), spread("faq.fee", analyses.map((a) => a.commission + a.vat)))
+        : t("faq.fee.aSeller", rates),
+    },
+    { q: t("faq.below.q", named), a: join(t("faq.below.a"), below) },
   ];
 
-  // Structured data: absolute addresses in the page's language.
+  // Structured data: absolute addresses in the page's language. The trail is the one shown above the title (Browse
+  // deals › Projects), ending on this project; /projects and the deal pages use the same one.
   const base = siteUrl();
   const url = (path: string) => `${base}${localePath(path, locale)}`;
   const pageUrl = url(projectPath(project));
@@ -166,15 +256,18 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
     itemListElement: [
       { "@type": "ListItem", position: 1, name: BRAND.name, item: url("/") },
       { "@type": "ListItem", position: 2, name: tc("browseDeals"), item: url("/deals") },
-      { "@type": "ListItem", position: 3, name: project.name, item: pageUrl },
+      { "@type": "ListItem", position: 3, name: t("projects"), item: url("/projects") },
+      { "@type": "ListItem", position: 4, name: project.name, item: pageUrl },
     ],
   };
+  // Every card, in the order shown: the available units, then those under offer.
+  const listed = [...available, ...reserved];
   const itemListLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: title,
-    numberOfItems: deals.length,
-    itemListElement: deals.map((d, i) => ({
+    numberOfItems: listed.length,
+    itemListElement: listed.map((d, i) => ({
       "@type": "ListItem",
       position: i + 1,
       url: url(`/deals/${refCode(d.refNo)}`),
@@ -190,6 +283,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
 
   const crumb =
     "rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:inline-flex max-lg:min-h-11 max-lg:items-center";
+  const grid = "grid gap-x-6 gap-y-8 sm:grid-cols-2 xl:grid-cols-3";
 
   return (
     <div className="relative isolate">
@@ -219,10 +313,16 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
               </li>
             </ol>
           </nav>
-          {/* wrap-anywhere: a project name can be one long word, wider than a phone at this size. */}
-          <h1 className="mt-3 max-w-4xl text-4xl font-semibold leading-[1.08] text-balance wrap-anywhere sm:text-5xl">{title}</h1>
-          <p className="mt-4 max-w-2xl text-muted-foreground sm:text-lg">{t("intro", { project: project.name })}</p>
-          <dl className={cn("mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3", facts.length > 4 ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
+          {/* A sentence, so a size down on phones (3-4 lines for a long name). wrap-anywhere: a project name can be one long
+              word, wider than a phone at this size. Chinese breaks between words (转售 stays whole), at the spaces and
+              after the punctuation; 28px under 360px keeps its longest run of characters on one line. */}
+          <h1 className="mt-3 max-w-4xl text-3xl font-semibold leading-[1.1] text-balance wrap-anywhere max-[359px]:text-[1.75rem] sm:text-5xl sm:leading-[1.08] [&:lang(zh)]:break-keep">
+            {title}
+          </h1>
+          <p className="mt-4 max-w-2xl text-muted-foreground sm:text-lg">
+            {t(allPaid ? "introPaid" : paidState === "some" || readyState !== "none" ? "introMixed" : "intro", { project: project.name })}
+          </p>
+          <dl className={cn("mt-8 grid grid-cols-2 gap-3", facts.length > 4 ? "sm:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-2 md:grid-cols-4")}>
             {facts.map((f, i) => (
               <div
                 key={f.key}
@@ -251,27 +351,27 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
       </div>
 
       <div className="container-page pb-20">
-        {/* The units: the /deals cards, in the /deals order */}
+        {/* The units: the /deals cards in the /deals order, the available ones first and those under offer apart */}
         <section aria-labelledby="project-deals" className="pt-10 sm:pt-12">
           <h2 id="project-deals" className="text-2xl font-semibold text-balance wrap-anywhere sm:text-3xl">
             {t("deals.title", { project: project.name })}
           </h2>
           <WhatsAppCommunity locale={locale} variant="compact" className="mt-5" />
-          <div className="mt-6 grid gap-x-6 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
-            {deals.map((d, i) => (
+          <div className={cn("mt-6", grid)}>
+            {available.map((d, i) => (
               <DealCard key={d.id} deal={d} watching={watched.has(d.id)} priority={i < 3} />
             ))}
           </div>
-          {project.dealCount > deals.length && (
-            <p className="mt-6 text-sm text-muted-foreground tabular">
-              {t("deals.more", { shown: deals.length, total: project.dealCount })}{" "}
-              <Link
-                href={`/deals?q=${encodeURIComponent(project.name)}`}
-                className="font-semibold text-foreground underline decoration-gold decoration-2 underline-offset-4 hover:decoration-ink"
-              >
-                {t("deals.moreLink")}
-              </Link>
-            </p>
+          {reserved.length > 0 && (
+            <div className="mt-14" data-reserved>
+              <h3 className="font-sans text-xl font-semibold sm:text-2xl">{t("deals.reservedTitle", { count: reserved.length })}</h3>
+              <p className="mt-1.5 max-w-prose text-sm text-muted-foreground">{t("deals.reservedNote")}</p>
+              <div className={cn("mt-6", grid)}>
+                {reserved.map((d) => (
+                  <DealCard key={d.id} deal={d} watching={watched.has(d.id)} />
+                ))}
+              </div>
+            </div>
           )}
         </section>
 
@@ -291,7 +391,10 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
                   >
                     {i + 1}
                   </span>
-                  <h3 className="min-w-0 pt-1 font-sans text-base font-semibold leading-snug sm:text-lg sm:leading-snug">{s.title}</h3>
+                  {/* No one-word last line; Chinese keeps its words whole (收取 rather than 收 / 取). */}
+                  <h3 className="min-w-0 pt-1 font-sans text-base font-semibold leading-snug text-pretty wrap-anywhere sm:text-lg sm:leading-snug [&:lang(zh)]:break-keep">
+                    {s.title}
+                  </h3>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
               </li>
@@ -299,15 +402,16 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
           </ol>
         </section>
 
-        {/* The FAQ, every answer visible */}
+        {/* The FAQ, every answer visible; on desktop the heading stays in view beside them */}
         <section aria-labelledby="project-faq" className="mt-16 grid gap-6 sm:mt-20 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
-          <h2 id="project-faq" className="text-2xl font-semibold text-balance sm:text-3xl">
-            {t("faq.title")}
+          <h2 id="project-faq" className="text-2xl font-semibold text-balance wrap-anywhere sm:text-3xl lg:sticky lg:top-28 lg:self-start">
+            {t("faq.title", { project: project.name })}
           </h2>
           <dl className="divide-y divide-border/70 overflow-hidden rounded-3xl border border-border/80 bg-card shadow-card">
             {faqs.map((f) => (
               <div key={f.q} className="px-5 py-5 sm:px-7">
-                <dt className="font-semibold leading-snug">{f.q}</dt>
+                {/* Balanced: a question naming a long project never ends on a word or two (a lone 思？ in Chinese). */}
+                <dt className="font-semibold leading-snug text-balance">{f.q}</dt>
                 <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.a}</dd>
               </div>
             ))}
@@ -322,7 +426,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
             <div className="grid items-center gap-8 lg:grid-cols-[1.4fr_1fr]">
               <div>
                 <h2 className="text-3xl font-semibold leading-tight text-primary-foreground max-lg:text-balance">{t("cta.title")}</h2>
-                <p className="mt-3 max-w-xl text-primary-foreground/75">{t("cta.body")}</p>
+                <p className="mt-3 max-w-xl text-primary-foreground/75">{t("cta.body", { brand: BRAND.name })}</p>
               </div>
               <div className="flex flex-wrap gap-3 lg:justify-end">
                 <Button asChild size="lg" variant="gold">
