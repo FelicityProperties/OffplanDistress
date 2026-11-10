@@ -3,7 +3,7 @@
 Dubai off-plan resales below the original price. Owners who can't keep up with a developer payment plan list
 their unit; buyers take over the remaining plan below today's launch price. We verify the SPA and payment history,
 broker the offer, and handle the developer NOC and DLD transfer. Fee: **2% + 5% VAT of the sale value, paid by the
-buyer, only when the transfer completes**. Listing is free for sellers.
+buyer, when the transfer completes**. Listing is free for sellers.
 
 Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 

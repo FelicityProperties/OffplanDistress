@@ -84,9 +84,9 @@ export default defineMessages({
     "faq.title": "Questions about buying a resale in {project}",
     "faq.cash.q": "How much cash do I need on transfer day for a unit in {project}?",
     "faq.cash.a":
-      "The cash needed on transfer day covers the seller's asking price, our {commission} fee plus VAT, the DLD transfer fee of {dld} of the sale value, the DLD registration and trustee office fees and {developer}'s NOC fee, plus any overdue instalments and late fees, which the developer wants cleared before it issues the NOC. Each deal page shows its own estimate.",
+      "The cash needed on transfer day covers the seller's asking price, our {commission} fee plus VAT, the DLD transfer fee of {dld} of the sale value, the DLD registration and trustee office fees and the NOC fee charged by {developer}, plus any overdue instalments and late fees, which the developer wants cleared before it issues the NOC. Each deal page shows its own estimate.",
     "faq.cash.aSeller":
-      "The cash needed on transfer day covers the seller's asking price, the DLD transfer fee of {dld} of the sale value, the DLD registration and trustee office fees and {developer}'s NOC fee, plus any overdue instalments and late fees, which the developer wants cleared before it issues the NOC. Each deal page shows its own estimate.",
+      "The cash needed on transfer day covers the seller's asking price, the DLD transfer fee of {dld} of the sale value, the DLD registration and trustee office fees and the NOC fee charged by {developer}, plus any overdue instalments and late fees, which the developer wants cleared before it issues the NOC. Each deal page shows its own estimate.",
     "faq.cash.one": "For the unit available in {project}, it comes to about {amount}.",
     "faq.cash.each": "For each of the {count} units available in {project}, it comes to about {amount}.",
     "faq.cash.many": "For the {count} units available in {project}, it ranges from about {min} to {max}.",

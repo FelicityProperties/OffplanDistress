@@ -53,7 +53,7 @@ export async function GET() {
   const text = [
     `# ${BRAND.name}`,
     "",
-    `> ${BRAND.tagline}. ${BRAND.name} lists Dubai off-plan units that their owners are reselling before handover, often for less than they agreed to pay the developer: a buyer pays the seller's asking price and takes over the remaining payment plan. Run by ${BRAND.company}, a RERA-licensed brokerage in Dubai (ORN ${BRAND.orn}), which handles the developer NOC and the DLD transfer.`,
+    `> ${BRAND.tagline}. ${BRAND.name} lists Dubai off-plan units that their owners are reselling, mostly before handover, often for less than they agreed to pay the developer: a buyer pays the seller's asking price and takes over any remaining payment plan. Run by ${BRAND.company}, a RERA-licensed brokerage in Dubai (ORN ${BRAND.orn}), which handles the developer NOC and the DLD transfer.`,
     "",
     "**For buyers: buying a resale below the original price**",
     "",

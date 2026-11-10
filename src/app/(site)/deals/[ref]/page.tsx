@@ -620,7 +620,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                   className="inline-flex items-center gap-1.5 rounded-sm text-sm font-semibold text-foreground underline decoration-gold decoration-2 underline-offset-4 transition-colors wrap-anywhere hover:decoration-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:min-h-11"
                 >
                   <Layers className="h-4 w-4 shrink-0 text-gold" aria-hidden />
-                  <span>
+                  <span className="[&:lang(zh)]:break-keep">
                     {tp("dealLink", { project: project.name })}
                     <span className="whitespace-nowrap">{tp("dealLinkCount", { n: project.liveCount })}</span>
                   </span>

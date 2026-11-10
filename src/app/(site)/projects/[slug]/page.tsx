@@ -353,7 +353,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
       <div className="container-page pb-20">
         {/* The units: the /deals cards in the /deals order, the available ones first and those under offer apart */}
         <section aria-labelledby="project-deals" className="pt-10 sm:pt-12">
-          <h2 id="project-deals" className="text-2xl font-semibold text-balance wrap-anywhere sm:text-3xl">
+          <h2 id="project-deals" className="text-2xl font-semibold text-balance wrap-anywhere sm:text-3xl [&:lang(zh)]:break-keep">
             {t("deals.title", { project: project.name })}
           </h2>
           <WhatsAppCommunity locale={locale} variant="compact" className="mt-5" />
@@ -377,7 +377,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
 
         {/* How buying a resale here works: four steps, the rates from FEES */}
         <section aria-labelledby="project-how" className="mt-16 sm:mt-20">
-          <h2 id="project-how" className="text-2xl font-semibold text-balance wrap-anywhere sm:text-3xl">
+          <h2 id="project-how" className="text-2xl font-semibold text-balance wrap-anywhere sm:text-3xl [&:lang(zh)]:break-keep">
             {t("how.title", { project: project.name })}
           </h2>
           <p className="mt-2 max-w-prose text-sm text-muted-foreground sm:text-base">{t("how.sub")}</p>
@@ -404,7 +404,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
 
         {/* The FAQ, every answer visible; on desktop the heading stays in view beside them */}
         <section aria-labelledby="project-faq" className="mt-16 grid gap-6 sm:mt-20 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
-          <h2 id="project-faq" className="text-2xl font-semibold text-balance wrap-anywhere sm:text-3xl lg:sticky lg:top-28 lg:self-start">
+          <h2 id="project-faq" className="text-2xl font-semibold text-balance wrap-anywhere sm:text-3xl lg:sticky lg:top-28 lg:self-start [&:lang(zh)]:break-keep">
             {t("faq.title", { project: project.name })}
           </h2>
           <dl className="divide-y divide-border/70 overflow-hidden rounded-3xl border border-border/80 bg-card shadow-card">
