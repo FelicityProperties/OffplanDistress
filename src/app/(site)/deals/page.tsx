@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Info, RotateCcw, SearchX, SlidersHorizontal,
 import { DealCard } from "@/components/DealCard";
 import { DealsToolbar, FilterPanel, SaveSearchButton } from "@/components/deals/DealFilters";
 import { NewsletterForm } from "@/components/NewsletterForm";
+import { WhatsAppCommunity } from "@/components/WhatsAppCommunity";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
@@ -248,6 +249,8 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
           </aside>
 
           <div className="min-w-0">
+            {/* The WhatsApp deals community, one line over the results (not over "no deals match": the band below has it) */}
+            {rows.length > 0 && <WhatsAppCommunity locale={locale} variant="compact" className="mb-5" />}
             {(chips.length > 0 || rows.length > 0) && (
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                 {chips.length > 0 ? (
@@ -392,8 +395,10 @@ export default async function DealsPage({ searchParams }: PageProps<"/deals">) {
               </nav>
             )}
 
-            {/* The daily newsletter, under the results (and under "no deals match", for the next ones) */}
-            <NewsletterForm variant="inline" source="deals" defaultEmail={prefillEmail(user)} className="mt-12" />
+            {/* After the results (and after "no deals match", for the next ones): the WhatsApp deals community, then the
+                daily newsletter */}
+            <WhatsAppCommunity locale={locale} className="mt-14" />
+            <NewsletterForm variant="inline" source="deals" defaultEmail={prefillEmail(user)} className="mt-8" />
           </div>
         </div>
       </div>

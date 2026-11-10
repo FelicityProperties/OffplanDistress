@@ -384,6 +384,17 @@ ${more > 0 ? `<p style="margin:8px 0 0;font-size:14px"><a href="${escape(allDeal
   const textSection = (title: string, rows: Described[], more: number) =>
     [title.toUpperCase(), ...rows.map(textRow), more > 0 ? `${t("issue.more", { n: more })}: ${allDealsUrl}` : null].filter(Boolean).join("\n");
 
+  // One line for the WhatsApp deals community (BRAND.whatsappCommunity), under the button to the deals.
+  const community = BRAND.whatsappCommunity
+    ? {
+        html: escape(t("issue.community")).replace(
+          "{link}",
+          `<a href="${escape(BRAND.whatsappCommunity)}" style="${LINK_STYLE}">${escape(t("issue.communityLink"))}</a>`,
+        ),
+        text: t("issue.communityText", { url: BRAND.whatsappCommunity }),
+      }
+    : null;
+
   const footerLines = [
     td("listedBy.office", { company, orn: BRAND.orn }),
     td("listedBy.broker", { name: broker, brn: BRAND.broker.brn }),
@@ -394,6 +405,7 @@ ${newDeals.length ? section(t("issue.new.title"), newDeals, moreNew) : ""}
 ${drops.length ? section(t("issue.drops.title"), drops, moreDrops) : ""}
 ${gone ? `<p style="margin:24px 0 0;font-size:14px;line-height:1.6;${MUTED}">${escape(gone)}</p>` : ""}
 <p style="margin:24px 0 0;font-size:14px"><a href="${escape(allDealsUrl)}" style="display:inline-block;background:#141c33;color:#faf8f3;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px">${escape(t("issue.allDeals"))}</a></p>
+${community ? `<p style="margin:16px 0 0;font-size:14px;line-height:1.6;${MUTED}">${community.html}</p>` : ""}
 <p style="margin:28px 0 0;padding-top:16px;border-top:1px solid #ebe6dc;font-size:12px;line-height:1.6;color:#8a8fa3">${footerLines.map(escape).join("<br>")}</p>
 <p style="margin:12px 0 0;font-size:12px;line-height:1.6;color:#8a8fa3">${escape(t("issue.why", { site }))} <a href="${escape(unsubscribeUrl)}" style="color:#4a5068;text-decoration:underline">${escape(t("issue.unsubscribe"))}</a></p>`;
 
@@ -404,6 +416,7 @@ ${gone ? `<p style="margin:24px 0 0;font-size:14px;line-height:1.6;${MUTED}">${e
     drops.length ? textSection(t("issue.drops.title"), drops, moreDrops) : null,
     gone,
     `${t("issue.allDeals")}: ${allDealsUrl}`,
+    community?.text,
     footerLines.join("\n"),
     `${t("issue.why", { site })}\n${t("issue.unsubscribeText", { url: unsubscribeUrl })}`,
   ]
