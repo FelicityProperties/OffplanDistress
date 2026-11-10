@@ -80,7 +80,8 @@ export async function SiteHeader() {
   const bell = user ? await loadBell(user.id) : null;
   const firstName = user?.fullName.split(" ")[0];
   const nav = [
-    { href: "/deals", label: t("browseDeals") },
+    // The project pages are part of browsing deals.
+    { href: "/deals", label: t("browseDeals"), also: ["/projects"] },
     { href: "/sell", label: t("sellMyUnit") },
     { href: "/how-it-works", label: t("howItWorks") },
     { href: "/fees", label: t("fees") },

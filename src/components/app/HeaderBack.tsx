@@ -11,6 +11,7 @@ const TAB_ROOTS = new Set(["/", "/deals", "/sell", "/dashboard", "/dashboard/wat
 /** Where "back" leads when there is no history: the section's list, else home. */
 function parentOf(path: string) {
   if (path.startsWith("/deals/")) return "/deals";
+  if (path.startsWith("/projects/")) return "/projects";
   if (path.startsWith("/dashboard/listings/")) return "/dashboard/listings";
   if (path.startsWith("/dashboard/")) return "/dashboard";
   if (path.startsWith("/admin/")) return "/admin";
