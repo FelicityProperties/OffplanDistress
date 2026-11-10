@@ -193,6 +193,10 @@ export default defineMessages({
     "issue.why": "You get this email because you subscribed to the daily deals on {site}.",
     "issue.unsubscribe": "Unsubscribe",
     "issue.unsubscribeText": "Unsubscribe: {url}",
+    // The WhatsApp deals community's line (BRAND.whatsappCommunity): {link} is the link with issue.communityLink's words.
+    "issue.community": "Get new deals on WhatsApp first. {link}",
+    "issue.communityLink": "Join our free WhatsApp community",
+    "issue.communityText": "Get new deals on WhatsApp first. Join our free WhatsApp community: {url}",
 
     // Admin preview and test send (src/components/admin/NewsletterPreview.tsx)
     "preview.title": "Today's issue",
@@ -390,6 +394,9 @@ export default defineMessages({
     "issue.why": "تصلك هذه الرسالة لأنك اشتركت في نشرة الصفقات اليومية على ⁨{site}⁩.",
     "issue.unsubscribe": "إلغاء الاشتراك",
     "issue.unsubscribeText": "إلغاء الاشتراك: ⁨{url}⁩",
+    "issue.community": "احصل على الصفقات الجديدة عبر واتساب قبل غيرك. {link}",
+    "issue.communityLink": "انضم إلى مجتمعنا المجاني على واتساب",
+    "issue.communityText": "احصل على الصفقات الجديدة عبر واتساب قبل غيرك. انضم إلى مجتمعنا المجاني على واتساب: ⁨{url}⁩",
 
     // Admin preview and test send (src/components/admin/NewsletterPreview.tsx)
     "preview.title": "عدد اليوم",
@@ -587,6 +594,9 @@ export default defineMessages({
     "issue.why": "您收到本邮件是因为您在 {site} 订阅了每日资讯。",
     "issue.unsubscribe": "退订",
     "issue.unsubscribeText": "退订：{url}",
+    "issue.community": "在 WhatsApp 上抢先获取新房源。{link}",
+    "issue.communityLink": "免费加入我们的 WhatsApp 社群",
+    "issue.communityText": "在 WhatsApp 上抢先获取新房源。免费加入我们的 WhatsApp 社群：{url}",
 
     // Admin preview and test send (src/components/admin/NewsletterPreview.tsx)
     "preview.title": "当日期刊",

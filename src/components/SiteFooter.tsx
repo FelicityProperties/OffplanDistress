@@ -1,7 +1,8 @@
 import Link from "@/components/LocaleLink";
-import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { Mail, MapPin, MessageCircle, Phone, UsersRound } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { NewsletterForm } from "@/components/NewsletterForm";
+import { CommunityLink } from "@/components/WhatsAppCommunity";
 import { getLocale, getT } from "@/i18n/server";
 import { assistantEnabled } from "@/lib/assistant";
 import { getCurrentUser } from "@/lib/auth";
@@ -10,7 +11,7 @@ import { prefillEmail } from "@/lib/newsletter";
 import { cn } from "@/lib/utils";
 
 export async function SiteFooter() {
-  const [t, tn, locale, user] = await Promise.all([getT("common"), getT("newsletter"), getLocale(), getCurrentUser()]);
+  const [t, tn, tw, locale, user] = await Promise.all([getT("common"), getT("newsletter"), getT("community"), getLocale(), getCurrentUser()]);
   // The floating buttons in the end corner (WhatsAppButton, AssistantWidget).
   const floating = Boolean(BRAND.whatsapp) || assistantEnabled();
   // RERA: the office's licence details belong on every page of a broker's site.
@@ -82,6 +83,16 @@ export async function SiteFooter() {
                   <MessageCircle className="h-4 w-4 text-gold" />
                   WhatsApp
                 </a>
+              </li>
+            )}
+            {/* Next to the chat: the WhatsApp deals community (src/components/WhatsAppCommunity.tsx). */}
+            {BRAND.whatsappCommunity && (
+              <li>
+                <CommunityLink className="inline-flex items-center gap-2.5 transition-colors hover:text-gold max-lg:min-h-11">
+                  <UsersRound className="h-4 w-4 shrink-0 text-gold" aria-hidden />
+                  {tw("footer")}
+                  <span className="sr-only"> {tw("opens")}</span>
+                </CommunityLink>
               </li>
             )}
             <li>

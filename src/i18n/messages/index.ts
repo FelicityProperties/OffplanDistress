@@ -4,6 +4,7 @@ import app from "./app";
 import assistant from "./assistant";
 import auth from "./auth";
 import common from "./common";
+import community from "./community";
 import dashboard from "./dashboard";
 import deal from "./deal";
 import deals from "./deals";
@@ -28,6 +29,7 @@ export const messages = {
   assistant,
   auth,
   common,
+  community,
   dashboard,
   deal,
   deals,

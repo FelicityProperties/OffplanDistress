@@ -20,6 +20,14 @@ export const BRAND = {
   phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "+971 56 352 0611",
   /** Digits only, e.g. 9715XXXXXXXX */
   whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP || "971563520611").replace(/\D/g, ""),
+  /**
+   * The join link of our WhatsApp deals community, "OffplanDistress Deals | Dubai" (announcement-only: only we post,
+   * members can't see each other's numbers). Shown by src/components/WhatsAppCommunity.tsx, the footer and the daily
+   * newsletter.
+   */
+  whatsappCommunity: process.env.NEXT_PUBLIC_WHATSAPP_COMMUNITY?.trim() || "https://chat.whatsapp.com/IrEJALeJV8wGquzlrcFYPz",
+  /** The community's name as WhatsApp shows it (in every language), on the band over its title. */
+  whatsappCommunityName: "OffplanDistress Deals | Dubai",
   /** RERA office registration number (ORN) */
   orn: process.env.NEXT_PUBLIC_RERA_ORN || "33951",
   /** Commercial licence number, issued by the Dubai Department of Economy and Tourism */
