@@ -63,8 +63,10 @@ export function WhatsAppCommunity({
         data-testid={`community-line-${line}`}
         className={cn(
           // 44 px at least: one target for the thumb, whichever part of the line it lands on. Below 360 px (a deal's
-          // price card is 238 px wide there) a tighter gap and no arrow leave the words a line less.
-          "group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-gold/40 bg-card px-3 py-2.5 text-sm shadow-card transition hover:border-gold hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-[359px]:gap-2.5",
+          // price card is 238 px wide there) a tighter gap and no arrow leave the words a line less. break-keep: a
+          // Chinese word (加入, 我们, 社群) is never split, its lines break at the spaces around "WhatsApp" and after
+          // punctuation (as the install card's title); a run too long for the line still wraps rather than overflow.
+          "group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-gold/40 bg-card px-3 py-2.5 text-sm shadow-card transition break-keep wrap-break-word hover:border-gold hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-[359px]:gap-2.5",
           className,
         )}
       >
@@ -72,7 +74,8 @@ export function WhatsAppCommunity({
           <WhatsAppGlyph className="h-5 w-5 max-[359px]:h-[1.125rem] max-[359px]:w-[1.125rem]" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-x-4 gap-y-0.5 sm:flex-row sm:items-center sm:justify-between">
-          <span className="font-medium leading-snug text-foreground">{words}</span>
+          {/* Balanced lines: a phrase ("قبل غيرك", "every week") stays together, no word is left alone on a line. */}
+          <span className="font-medium leading-snug text-foreground text-balance">{words}</span>
           {/* On /deals the title asks, the button's words answer (under it on phones, at the end of the line from sm). */}
           {line === "deals" && (
             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-gold-foreground underline decoration-gold decoration-2 underline-offset-4">
@@ -91,7 +94,8 @@ export function WhatsAppCommunity({
 
   return (
     <section aria-labelledby="community-band-title" data-testid="community-band" className={cn("reveal", className)}>
-      <div className="relative isolate overflow-hidden rounded-3xl bg-ink-gradient px-5 py-9 text-primary-foreground shadow-lift sm:px-12 sm:py-12 lg:px-14">
+      {/* The side padding of the newsletter band (NewsletterBand.tsx), stacked under it on the home page: one edge. */}
+      <div className="relative isolate overflow-hidden rounded-3xl bg-ink-gradient px-5 py-9 text-primary-foreground shadow-lift sm:px-14 sm:py-12">
         <div aria-hidden className="absolute inset-0 -z-10 bg-dots-dark opacity-50 mask-fade-b" />
         <div aria-hidden className="absolute -bottom-32 -start-24 -z-10 h-80 w-80 bg-glow-gold opacity-50" />
         {/* WhatsApp's glyph, large and faint, off the end edge: this band is the WhatsApp one. */}
@@ -112,9 +116,11 @@ export function WhatsAppCommunity({
             </h2>
             <p className="mt-3 max-w-2xl leading-relaxed text-primary-foreground/75">{t("text")}</p>
           </div>
+          {/* One line down to 320 px (a tighter padding and gap below 360 px); if it ever wraps, the lines are balanced
+              and a Chinese word stays whole ("免费加入 / WhatsApp 社群"). */}
           <CommunityLink
             data-testid="community-join"
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-gold px-6 py-3 text-center text-base font-semibold leading-tight text-gold-foreground shadow-gold transition hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-ink sm:w-auto sm:justify-self-start lg:justify-self-end"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-gold px-6 py-3 text-center text-base font-semibold leading-tight text-gold-foreground text-balance break-keep shadow-gold transition hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-ink max-[359px]:gap-2 max-[359px]:px-4 sm:w-auto sm:justify-self-start lg:justify-self-end"
           >
             <WhatsAppGlyph className="h-5 w-5 shrink-0" />
             {t("button")}

@@ -3,7 +3,6 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "@/components/LocaleLink";
 import { MessageSquare } from "lucide-react";
-import { toast } from "sonner";
 import { createInquiry } from "@/app/actions/market";
 import { AttributionField } from "@/components/Attribution";
 import { Field, FormMessage, SubmitButton } from "@/components/forms";
@@ -42,8 +41,9 @@ function nextFieldOnEnter(e: React.KeyboardEvent<HTMLFormElement>) {
 
 /**
  * In place of the form once it is sent (the contact page, the deal page's dialog): the thanks, then the WhatsApp deals
- * community to join while our team replies; in the dialog, a Close button. Focus moves here from the send button, which
- * is gone, so a keyboard or a screen reader carries on from the message.
+ * community to join while our team replies; in the dialog, a Close button. It is the only confirmation (no toast: one
+ * would sit over it on a phone's screen, the join line included), announced as a status. Focus moves here from the
+ * send button, which is gone, so a keyboard or a screen reader carries on from the message.
  */
 function InquirySent({ inDialog }: { inDialog?: boolean }) {
   const t = useT("marketing");
@@ -51,11 +51,19 @@ function InquirySent({ inDialog }: { inDialog?: boolean }) {
   const locale = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    ref.current?.focus({ preventScroll: true });
-  }, []);
+    const el = ref.current;
+    if (!el) return;
+    // Sent from the foot of a long form, the shorter message can start above the screen or under the sticky header
+    // (which the page's scroll-padding-top clears): it comes back into view. In the dialog it is always in view.
+    const header = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    if (!inDialog && el.getBoundingClientRect().top < header) el.scrollIntoView({ block: "start" });
+    el.focus({ preventScroll: true });
+  }, [inDialog]);
   return (
     <div ref={ref} tabIndex={-1} data-testid="inquiry-sent" className="space-y-3 outline-none">
-      <p className="rounded-lg bg-success-soft px-4 py-3 text-sm font-medium text-success">{t("inquiry.thanks")}</p>
+      <p role="status" className="rounded-lg bg-success-soft px-4 py-3 text-sm font-medium text-success">
+        {t("inquiry.thanks")}
+      </p>
       <WhatsAppCommunity locale={locale} variant="compact" line="sent" />
       {inDialog && (
         <DialogClose asChild>
@@ -101,13 +109,7 @@ export function InquiryFields({
     if (el.name && el.type !== "hidden") setTyped((v) => ({ ...v, [el.name]: el.value }));
   };
   useEffect(() => {
-    if (state.ok) {
-      toast.success(t("inquiry.sentTitle"), { description: t("inquiry.sentBody") });
-    } else if (state.error || state.fieldErrors) {
-      setAttempt((n) => n + 1);
-    }
-    // `t` only changes with the locale; the toast should fire once per submission.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!state.ok && (state.error || state.fieldErrors)) setAttempt((n) => n + 1);
   }, [state]);
   const fe = state.fieldErrors ?? {};
 

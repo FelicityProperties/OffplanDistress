@@ -741,7 +741,10 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     />
                   )}
                   {!l.isSample && (BRAND.whatsapp || BRAND.phone) && (
-                    // Side by side from 390 px; on narrower phones one above the other, each label on one line.
+                    // Side by side from 390 px; on narrower phones one above the other, each label on one line. Right
+                    // under the WhatsApp button, the WhatsApp deals community's line, for the next deals like this one:
+                    // under both buttons from 390 px; below, Call moves after it (the reading order stays WhatsApp, Call,
+                    // the line).
                     <div className="grid grid-cols-1 gap-2.5 min-[390px]:grid-cols-2">
                       {waHref && (
                         <a
@@ -756,16 +759,20 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       {BRAND.phone && (
                         <a
                           href={`tel:${BRAND.phone.replace(/\s/g, "")}`}
-                          className={buttonVariants({ variant: "outline", className: cn(CONTACT_BUTTON, !BRAND.whatsapp && "min-[390px]:col-span-2") })}
+                          className={buttonVariants({
+                            variant: "outline",
+                            className: cn(CONTACT_BUTTON, !BRAND.whatsapp && "min-[390px]:col-span-2", waHref && "max-[390px]:order-last"),
+                          })}
                         >
                           <Phone aria-hidden /> {t("side.call")}
                         </a>
                       )}
+                      {waHref && <WhatsAppCommunity locale={locale} variant="compact" line="deal" className="min-[390px]:col-span-2" />}
                     </div>
                   )}
                 </div>
-                {/* Under the WhatsApp button: the WhatsApp deals community, for the next deals like this one. */}
-                {!l.isSample && <WhatsAppCommunity locale={locale} variant="compact" line="deal" className="mt-3" />}
+                {/* Without a WhatsApp button, the community's line comes after the card's buttons. */}
+                {!l.isSample && !waHref && <WhatsAppCommunity locale={locale} variant="compact" line="deal" className="mt-3" />}
                 <p className="mt-5 flex items-start gap-2.5 border-t border-border/70 pt-4 text-xs leading-relaxed text-muted-foreground">
                   <FileCheck2 className="h-4 w-4 shrink-0 text-gold" aria-hidden />
                   {t("side.feeNote")}
