@@ -76,7 +76,14 @@ export function MobileTabBar({ role, unread }: { role: TabRole; unread: number }
 
   const tabs: Tab[] = [
     { href: "/", root: "/", label: t("tabs.home"), icon: House, active: path === "/" },
-    { href: "/deals", root: "/deals", label: t("tabs.deals"), icon: Search, active: under(path, "/deals") },
+    {
+      href: "/deals",
+      root: "/deals",
+      label: t("tabs.deals"),
+      icon: Search,
+      // The project pages are part of browsing deals.
+      active: under(path, "/deals") || under(path, "/projects"),
+    },
     { href: "/sell", root: "/sell", label: t("tabs.sell"), icon: Tag, active: under(path, "/sell") },
     role === "admin"
       ? { href: "/admin", root: "/admin", label: tc("admin"), icon: ShieldCheck, active: under(path, "/admin") }

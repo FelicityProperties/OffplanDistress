@@ -11,8 +11,8 @@ export default defineMessages({
 
     "fees.metaTitle": "Fees: 2% commission, after transfer",
     "fees.metaDescription":
-      "A flat 2% commission on the sale value, charged only when the transfer completes. No listing or upfront fees.",
-    "fees.title": "2% commission. Only when the transfer completes.",
+      "A flat 2% commission on the sale value, charged when the transfer completes. No listing or upfront fees.",
+    "fees.title": "2% commission, paid when the transfer completes.",
     "fees.sub":
       "The sale value is the seller's asking price plus the remaining balance owed to the developer — the figure registered with DLD.",
     "fees.freeForSellers": "Free for sellers — the buyer pays our fee",
@@ -42,7 +42,7 @@ export default defineMessages({
     "fees.compare.sub":
       "Estimated on the worked example's sale value of {value}. DLD and developer fees are confirmed when the NOC is issued.",
     "fees.compare.us": "Paid to {brand}",
-    "fees.compare.usNote": "2% commission, charged only when the transfer completes (amount includes VAT on the fee)",
+    "fees.compare.usNote": "2% commission, charged when the transfer completes (amount includes VAT on the fee)",
     "fees.compare.dld": "Paid to DLD",
     "fees.compare.dldNote": "4% transfer fee, plus registration and trustee office fees",
     "fees.compare.developer": "Paid to the developer",
@@ -168,8 +168,8 @@ export default defineMessages({
 
     "fees.metaTitle": "الرسوم: عمولة 2%، بعد نقل الملكية",
     "fees.metaDescription":
-      "عمولة ثابتة بنسبة 2% من قيمة البيع، تُستحق فقط عند إتمام نقل الملكية. لا رسوم إعلان ولا رسوم مقدّمة.",
-    "fees.title": "عمولة 2%. فقط عند إتمام نقل الملكية.",
+      "عمولة ثابتة بنسبة 2% من قيمة البيع، تُستحق عند إتمام نقل الملكية. لا رسوم إعلان ولا رسوم مقدّمة.",
+    "fees.title": "عمولة 2%، تُدفع عند إتمام نقل الملكية.",
     "fees.sub":
       "قيمة البيع هي السعر الذي يطلبه البائع مضافاً إليه الرصيد المتبقي المستحق للمطوّر، وهي القيمة المسجّلة لدى دائرة الأراضي والأملاك.",
     "fees.freeForSellers": "مجاني للبائعين، والمشتري هو من يدفع رسومنا",
@@ -199,7 +199,7 @@ export default defineMessages({
     "fees.compare.sub":
       "تقديرات محسوبة على قيمة البيع في المثال التوضيحي، وهي {value}. وتُؤكَّد رسوم دائرة الأراضي والأملاك والمطوّر عند إصدار شهادة عدم الممانعة.",
     "fees.compare.us": "يُدفع إلى {brand}",
-    "fees.compare.usNote": "عمولة وساطة بنسبة 2%، تُستحق فقط عند إتمام نقل الملكية (المبلغ يشمل ضريبة القيمة المضافة على العمولة)",
+    "fees.compare.usNote": "عمولة وساطة بنسبة 2%، تُستحق عند إتمام نقل الملكية (المبلغ يشمل ضريبة القيمة المضافة على العمولة)",
     "fees.compare.dld": "يُدفع لدائرة الأراضي والأملاك",
     "fees.compare.dldNote": "رسوم نقل الملكية بنسبة 4%، إضافةً إلى رسوم التسجيل ومكتب أمين التسجيل",
     "fees.compare.developer": "يُدفع للمطوّر",
@@ -322,8 +322,8 @@ export default defineMessages({
 
     "fees.metaTitle": "服务费：2%，过户后收取",
     "fees.metaDescription":
-      "固定收取交易总价的 2% 作为服务费，仅在过户完成时收取。无挂牌费，无预付费用。",
-    "fees.title": "服务费 2%。仅在过户完成时收取。",
+      "固定收取交易总价的 2% 作为服务费，于过户完成时收取。无挂牌费，无预付费用。",
+    "fees.title": "服务费 2%，过户完成时收取。",
     "fees.sub":
       "交易总价为卖家要价加上尚欠开发商的剩余款项，即在迪拜土地局（DLD）登记的金额。",
     "fees.freeForSellers": "卖家免费，服务费由买家支付",
@@ -353,7 +353,7 @@ export default defineMessages({
     "fees.compare.sub":
       "按计算示例中 {value} 的交易总价估算。迪拜土地局（DLD）和开发商的费用在无异议函（NOC）签发时确认。",
     "fees.compare.us": "支付给 {brand}",
-    "fees.compare.usNote": "2% 服务费，仅在过户完成时收取（金额含服务费增值税）",
+    "fees.compare.usNote": "2% 服务费，于过户完成时收取（金额含服务费增值税）",
     "fees.compare.dld": "支付给迪拜土地局（DLD）",
     "fees.compare.dldNote": "4% 过户费，另加登记费及产权登记受托机构费用",
     "fees.compare.developer": "支付给开发商",

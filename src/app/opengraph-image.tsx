@@ -28,10 +28,10 @@ export default function Image() {
         <OgWordmark size={40} />
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", fontSize: 76, fontWeight: 700, lineHeight: 1.05, letterSpacing: -2 }}>
-            Buy Dubai off-plan
+            Dubai off-plan resales
           </div>
           <div style={{ display: "flex", fontSize: 76, fontWeight: 700, lineHeight: 1.05, letterSpacing: -2, color: OG.gold }}>
-            below launch price.
+            below the original price.
           </div>
           <div style={{ display: "flex", marginTop: 28, fontSize: 30, color: OG.muted, maxWidth: 900 }}>
             Take over verified payment plans from owners who need out.

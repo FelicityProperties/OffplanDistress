@@ -244,31 +244,47 @@ function dealConditions(f: DealFilters): SQL[] {
   return where;
 }
 
+/** The ORDER BY of a /deals sort; the caller adds the newest first as the last tiebreak. */
+function dealOrder(sort: DealFilters["sort"]): SQL[] {
+  return sort === "cash"
+    ? [sql`${cashToClose} asc`]
+    : sort === "handover"
+      ? [sql`${readyUndated} desc`, sql`${listings.handoverDate} asc nulls last`]
+      : sort === "newest"
+        ? [desc(sql`coalesce(${listings.publishedAt}, ${listings.createdAt})`)]
+        : // The default view: sellers who need out now come first, then the furthest below the original price.
+          [sql`(${listings.motivation} = 'urgent') desc`, sql`${belowOriginal} desc nulls last`];
+}
+
 export async function searchDeals(f: DealFilters) {
   const where = dealConditions(f);
-
-  const order =
-    f.sort === "cash"
-      ? [sql`${cashToClose} asc`]
-      : f.sort === "handover"
-        ? [sql`${readyUndated} desc`, sql`${listings.handoverDate} asc nulls last`]
-        : f.sort === "newest"
-          ? [desc(sql`coalesce(${listings.publishedAt}, ${listings.createdAt})`)]
-          : // The default view: sellers who need out now come first, then the furthest below the original price.
-            [sql`(${listings.motivation} = 'urgent') desc`, sql`${belowOriginal} desc nulls last`];
-
   const condition = and(...where);
   const [rows, [{ total }]] = await Promise.all([
     db
       .select(cardColumns)
       .from(listings)
       .where(condition)
-      .orderBy(...order, desc(listings.createdAt))
+      .orderBy(...dealOrder(f.sort), desc(listings.createdAt))
       .limit(PAGE_SIZE)
       .offset((f.page - 1) * PAGE_SIZE),
     db.select({ total: sql<number>`count(*)::int` }).from(listings).where(condition),
   ]);
   return { rows: rows as ListingCard[], total };
+}
+
+/**
+ * Every real advert (no samples) of the given project names, the same cards as /deals: the available units first (status
+ * live), then those under offer, each in the /deals default order (sort=discount). A project's page (projectDeals in
+ * src/lib/projects.ts) lists them all.
+ */
+export async function dealsInProjects(names: string[]) {
+  if (!names.length) return [];
+  const rows = await db
+    .select(cardColumns)
+    .from(listings)
+    .where(and(advertisedSql(), eq(listings.isSample, false), inArray(listings.projectName, names)))
+    .orderBy(sql`(${listings.status} = 'live') desc`, ...dealOrder("discount"), desc(listings.createdAt));
+  return rows as ListingCard[];
 }
 
 /** Filters from a saved /deals query string ("community=Business+Bay&type=1br&type=2br"). */
@@ -428,5 +444,7 @@ export {
   cashToClose as cashToCloseSql,
   remaining as remainingSql,
   discount as discountSql,
+  belowOriginalPct as belowOriginalPctSql,
   paidPct as paidPctSql,
+  planRows as planRowsSql,
 };

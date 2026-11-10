@@ -16,6 +16,7 @@ import {
   Flag,
   Info,
   Landmark,
+  Layers,
   MapPin,
   Maximize2,
   MessageCircle,
@@ -58,6 +59,7 @@ import { siteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 import { getListingByRef, similarDeals, watchedIds } from "@/lib/listings";
 import { dubaiToday, isAdvertised, permitQrSvg } from "@/lib/permits";
+import { getProject, projectPath, projectSlug, projectsT } from "@/lib/projects";
 import { BackToDeals } from "./BackToDeals";
 import { CollapsiblePlan } from "./CollapsiblePlan";
 
@@ -197,7 +199,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     after(() => db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, l.id)));
   }
 
-  const [similar, watched, t, tc, td, tl, ta, locale, myAccepted] = await Promise.all([
+  const [similar, watched, t, tc, td, tl, ta, locale, project, myAccepted] = await Promise.all([
     similarDeals(l),
     watchedIds(user?.id),
     getT("deal"),
@@ -206,6 +208,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     getT("legal"),
     getT("app"),
     getLocale(),
+    // The project's page (src/app/(site)/projects/[slug]): a real advert's project has one while one of its units is
+    // available (and its name has a Latin letter or digit to make an address of).
+    advertised && !l.isSample ? getProject(projectSlug(l.projectName)) : Promise.resolve(null),
     // The signed-in buyer holds the accepted offer: the deal is theirs (no backup offer from them, makeOffer agrees).
     user && !isOwner
       ? db
@@ -433,16 +438,28 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
           provider: { "@id": `${siteUrl()}/#organization` },
         }
       : null;
-  // Home › Browse deals › this unit: the trail search results show above the page's title.
+  // Home › Browse deals › Projects › the project (when it has its page, the trail that page shows) › this unit: the trail
+  // search results show above the title.
+  const tp = projectsT(locale);
+  const trail = [
+    { name: BRAND.name, item: `${siteUrl()}${localePath("/", locale)}` },
+    { name: tc("browseDeals"), item: `${siteUrl()}${localePath("/deals", locale)}` },
+    ...(project
+      ? [
+          { name: tp("projects"), item: `${siteUrl()}${localePath("/projects", locale)}` },
+          { name: project.name, item: `${siteUrl()}${localePath(projectPath(project), locale)}` },
+        ]
+      : []),
+  ];
   const breadcrumbJsonLd = listingJsonLd
     ? {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
-        itemListElement: [
-          { "@type": "ListItem", position: 1, name: BRAND.name, item: `${siteUrl()}${localePath("/", locale)}` },
-          { "@type": "ListItem", position: 2, name: tc("browseDeals"), item: `${siteUrl()}${localePath("/deals", locale)}` },
-          { "@type": "ListItem", position: 3, name: listingJsonLd.name, item: listingJsonLd.url },
-        ],
+        itemListElement: [...trail, { name: listingJsonLd.name, item: listingJsonLd.url }].map((c, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          ...c,
+        })),
       }
     : null;
 
@@ -558,7 +575,10 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
               {developer}
             </p>
             {/* wrap-anywhere: so may the project name ("SobhaHartlandWavesOpulence"), wider than a phone at this size. */}
-            <h1 className="mt-3 text-4xl font-semibold leading-[1.05] text-balance wrap-anywhere sm:text-5xl">{l.projectName}</h1>
+            {/* bdi: a Latin name on an Arabic page keeps its own order ("330 Riverside Crescent"). */}
+            <h1 className="mt-3 text-4xl font-semibold leading-[1.05] text-balance wrap-anywhere sm:text-5xl">
+              <bdi>{l.projectName}</bdi>
+            </h1>
             <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-muted-foreground sm:gap-x-3">
               <span className="inline-flex items-center gap-1.5 font-medium text-foreground wrap-anywhere">
                 <MapPin className="h-4 w-4 text-gold" aria-hidden />
@@ -590,6 +610,23 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 </>
               ) : null}
             </p>
+            {/* Every resale unit in the same project, on its page, with how many are available; the count never sits on a
+                line of its own (it starts with a no-break space, or in Chinese a word joiner). */}
+            {project && (
+              <p className="mt-3">
+                <Link
+                  href={projectPath(project)}
+                  data-project-link
+                  className="inline-flex items-center gap-1.5 rounded-sm text-sm font-semibold text-foreground underline decoration-gold decoration-2 underline-offset-4 transition-colors wrap-anywhere hover:decoration-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-lg:min-h-11"
+                >
+                  <Layers className="h-4 w-4 shrink-0 text-gold" aria-hidden />
+                  <span className="[&:lang(zh)]:break-keep">
+                    {tp("dealLink", { project: project.name })}
+                    <span className="whitespace-nowrap">{tp("dealLinkCount", { n: project.liveCount })}</span>
+                  </span>
+                </Link>
+              </p>
+            )}
             <div className="mt-5 flex flex-wrap items-center gap-2">
               {l.verified && !l.isSample && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-semibold text-success">
