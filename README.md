@@ -17,7 +17,7 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Marketplace | Browse deals (filters incl. cash at transfer, sort, search by project, developer or community in English or Arabic, saved searches), deal page (cash needed on transfer day, arrears with the developer, dated cash timeline, payment plan, true-cost breakdown, offer, watchlist, viewing request) |
 | Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; "Prefer WhatsApp?" card; 5-step "Sell my unit" form (saved on the device between sittings, type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline), deal milestones |
 | Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts (the same filters are saved once, keeping only what the deals page reads) |
-| Everyone | Notification bell + notifications page, email notifications, self-service password reset, daily deals newsletter (`/newsletter`, no account needed, double opt-in, one-click unsubscribe), English / العربية (full right-to-left layout) / 中文 |
+| Everyone | Notification bell + notifications page, email notifications, self-service password reset, daily deals newsletter (`/newsletter`, no account needed, double opt-in, one-click unsubscribe), WhatsApp deals community "OffplanDistress Deals \| Dubai" (announcement-only; its join link on the home page, `/deals`, every deal page, after an enquiry, in the footer and in the newsletter, each tap counted under "Deals community" in `/admin/analytics`), English / العربية (full right-to-left layout) / 中文 |
 | Admin (`/admin`) | Verification queue (approve / reject with reason), staff-created listings from WhatsApp with seller claim links, bulk import of a partner network's units (`/admin/listings/import`, owner set later, claim link or signed Form A), daily follow-ups, seller leads (`/admin/leads`: status, notes, call / WhatsApp, where each lead came from), deals pipeline with CSV export, per-listing review with documents, permit details, arrears, both parties' contacts, the deal file and its history, all offers, inquiries, users (KYC, roles, password reset, pending claims), visit statistics (`/admin/analytics`), newsletter subscribers and issues (`/admin/newsletter`, CSV export), remove sample data |
 
 Buyers stay anonymous to sellers in the app — every negotiation goes through our team, so neither side can
@@ -484,8 +484,10 @@ and deploy; browsers drop the worker on their next visit.
      visitors (default 300); each visitor also gets 15 messages per 10 minutes and 80 a day. Every answer logs one
      `{"assistant": …}` line with its token use in the Vercel logs.
    - Company details (trade licence 1145910, RERA ORN 33951, broker BRN 59244, phone/WhatsApp +971 56 352 0611,
-     office address in Bay Square) are built in (`BRAND` in `src/lib/config.ts`). Each can be overridden with its
-     `NEXT_PUBLIC_*` variable (see `.env.example`); an empty variable keeps the built-in value.
+     office address in Bay Square, the WhatsApp deals community's join link) are built in (`BRAND` in
+     `src/lib/config.ts`). Each can be overridden with its `NEXT_PUBLIC_*` variable (see `.env.example`;
+     `NEXT_PUBLIC_WHATSAPP_COMMUNITY` for the community's `https://chat.whatsapp.com/…` link); an empty variable keeps
+     the built-in value.
 3. Deploy. `vercel.json` pins the Next.js framework preset, so it doesn't matter what Vercel detected when the
    project was created. `npm run build` first runs `scripts/migrate.mjs`: it applies database migrations (a
    production build fails if Vercel has no database URL for Production, so a broken deploy never goes live),

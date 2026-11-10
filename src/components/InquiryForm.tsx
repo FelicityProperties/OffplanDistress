@@ -9,11 +9,12 @@ import { AttributionField } from "@/components/Attribution";
 import { Field, FormMessage, SubmitButton } from "@/components/forms";
 import { SpamGuard } from "@/components/SpamGuard";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { WhatsAppCommunity } from "@/components/WhatsAppCommunity";
 import { richText } from "@/content/legal/rich-text";
-import { useT } from "@/i18n/client";
+import { useLocale, useT } from "@/i18n/client";
 
 type Defaults = { name?: string; email?: string; phone?: string | null };
 
@@ -39,11 +40,39 @@ function nextFieldOnEnter(e: React.KeyboardEvent<HTMLFormElement>) {
   next.focus();
 }
 
+/**
+ * In place of the form once it is sent (the contact page, the deal page's dialog): the thanks, then the WhatsApp deals
+ * community to join while our team replies; in the dialog, a Close button. Focus moves here from the send button, which
+ * is gone, so a keyboard or a screen reader carries on from the message.
+ */
+function InquirySent({ inDialog }: { inDialog?: boolean }) {
+  const t = useT("marketing");
+  const tc = useT("common");
+  const locale = useLocale();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.focus({ preventScroll: true });
+  }, []);
+  return (
+    <div ref={ref} tabIndex={-1} data-testid="inquiry-sent" className="space-y-3 outline-none">
+      <p className="rounded-lg bg-success-soft px-4 py-3 text-sm font-medium text-success">{t("inquiry.thanks")}</p>
+      <WhatsAppCommunity locale={locale} variant="compact" line="sent" />
+      {inDialog && (
+        <DialogClose asChild>
+          <Button variant="outline" className="w-full max-sm:h-11">
+            {tc("close")}
+          </Button>
+        </DialogClose>
+      )}
+    </div>
+  );
+}
+
 export function InquiryFields({
   listingId,
   type,
   defaults,
-  onDone,
+  inDialog,
   submitLabel,
   messagePlaceholder,
   formToken,
@@ -51,7 +80,8 @@ export function InquiryFields({
   listingId?: string;
   type: "info" | "viewing" | "contact";
   defaults?: Defaults;
-  onDone?: () => void;
+  /** Inside InquiryDialog: once sent, the dialog stays open on the "sent" message, with a Close button. */
+  inDialog?: boolean;
   submitLabel?: string;
   messagePlaceholder?: string;
   /** issueFormToken() from the page that renders the form (src/lib/spam.ts). */
@@ -70,12 +100,9 @@ export function InquiryFields({
     const el = e.target as HTMLInputElement;
     if (el.name && el.type !== "hidden") setTyped((v) => ({ ...v, [el.name]: el.value }));
   };
-  const done = useRef(onDone);
-  done.current = onDone;
   useEffect(() => {
     if (state.ok) {
       toast.success(t("inquiry.sentTitle"), { description: t("inquiry.sentBody") });
-      done.current?.();
     } else if (state.error || state.fieldErrors) {
       setAttempt((n) => n + 1);
     }
@@ -84,9 +111,7 @@ export function InquiryFields({
   }, [state]);
   const fe = state.fieldErrors ?? {};
 
-  if (state.ok && !onDone) {
-    return <p className="rounded-lg bg-success-soft px-4 py-3 text-sm font-medium text-success">{t("inquiry.thanks")}</p>;
-  }
+  if (state.ok) return <InquirySent inDialog={inDialog} />;
 
   return (
     <form action={action} onInput={keepTyped} onKeyDown={nextFieldOnEnter} className="relative space-y-4">
@@ -192,7 +217,7 @@ export function InquiryDialog({
           listingId={listingId}
           type="viewing"
           defaults={defaults}
-          onDone={() => setOpen(false)}
+          inDialog
           messagePlaceholder={t("inquiry.dialogPlaceholder")}
           formToken={formToken}
         />

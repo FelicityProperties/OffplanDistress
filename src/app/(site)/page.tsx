@@ -21,6 +21,7 @@ import { FeeCalculator } from "@/components/FeeCalculator";
 import { NewsletterBand } from "@/components/NewsletterBand";
 import { SellerEstimateSection } from "@/components/sell/SellerEstimateSection";
 import { StepsFlow } from "@/components/Steps";
+import { WhatsAppCommunity } from "@/components/WhatsAppCommunity";
 import { SampleBadge, SectionHeading } from "@/components/badges";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -244,7 +245,8 @@ export default async function Home() {
         )}
       </section>
 
-      {/* The daily newsletter, right under the deals it will carry */}
+      {/* The WhatsApp deals community, then the daily newsletter: two ways to get the deals above first */}
+      <WhatsAppCommunity locale={locale} className="container-page pb-8 sm:pb-12" />
       <NewsletterBand defaultEmail={prefillEmail(user)} />
 
       {/* How it works */}

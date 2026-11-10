@@ -32,6 +32,7 @@ import { discountPct } from "@/lib/discount-labels";
 import { JsonLd } from "@/components/JsonLd";
 import { ShareButton } from "@/components/ShareButton";
 import { WatchButton } from "@/components/WatchButton";
+import { WhatsAppCommunity } from "@/components/WhatsAppCommunity";
 import { MotivationBadge, SampleBadge, StatusPill } from "@/components/badges";
 import { DealActionBar } from "@/components/deals/DealActionBar";
 import { Gallery } from "@/components/deals/Gallery";
@@ -763,6 +764,8 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                     </div>
                   )}
                 </div>
+                {/* Under the WhatsApp button: the WhatsApp deals community, for the next deals like this one. */}
+                {!l.isSample && <WhatsAppCommunity locale={locale} variant="compact" line="deal" className="mt-3" />}
                 <p className="mt-5 flex items-start gap-2.5 border-t border-border/70 pt-4 text-xs leading-relaxed text-muted-foreground">
                   <FileCheck2 className="h-4 w-4 shrink-0 text-gold" aria-hidden />
                   {t("side.feeNote")}

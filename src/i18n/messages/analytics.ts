@@ -143,6 +143,7 @@ export default defineMessages({
     "wa.place.deal": "Deal page",
     "wa.place.claim": "Listing confirmation",
     "wa.place.assistant": "AI assistant (FeliBot)",
+    "wa.place.community": "Deals community (join link)",
     "wa.place.other": "Other button",
     "journey.title": "Leads and their journey",
     "journey.sub":
@@ -329,6 +330,7 @@ export default defineMessages({
     "wa.place.deal": "صفحة الصفقة",
     "wa.place.claim": "تأكيد الإعلان",
     "wa.place.assistant": "المساعد الذكي (⁨FeliBot⁩)",
+    "wa.place.community": "مجتمع الصفقات (رابط الانضمام)",
     "wa.place.other": "زر آخر",
     "journey.title": "العملاء المحتملون ومسار زياراتهم",
     "journey.sub": "أحدث العملاء المحتملين في هذه الفترة، وكيف وصلت زياراتهم، والصفحات التي تصفحوها قبل التواصل معنا.",
@@ -513,6 +515,7 @@ export default defineMessages({
     "wa.place.deal": "房源页面",
     "wa.place.claim": "房源确认",
     "wa.place.assistant": "AI 助手（FeliBot）",
+    "wa.place.community": "房源社群（加入链接）",
     "wa.place.other": "其他按钮",
     "journey.title": "潜在客户及其访问路径",
     "journey.sub":
