@@ -11,7 +11,14 @@ import { prefillEmail } from "@/lib/newsletter";
 import { cn } from "@/lib/utils";
 
 export async function SiteFooter() {
-  const [t, tn, tw, locale, user] = await Promise.all([getT("common"), getT("newsletter"), getT("community"), getLocale(), getCurrentUser()]);
+  const [t, tn, tw, tp, locale, user] = await Promise.all([
+    getT("common"),
+    getT("newsletter"),
+    getT("community"),
+    getT("projects"),
+    getLocale(),
+    getCurrentUser(),
+  ]);
   // The floating buttons in the end corner (WhatsAppButton, AssistantWidget).
   const floating = Boolean(BRAND.whatsapp) || assistantEnabled();
   // RERA: the office's licence details belong on every page of a broker's site.
@@ -25,6 +32,7 @@ export async function SiteFooter() {
       title: t("marketplace"),
       links: [
         { href: "/deals", label: t("browseDeals") },
+        { href: "/projects", label: tp("projects") },
         { href: "/sell", label: t("sellMyUnit") },
         { href: "/market", label: t("marketIndex") },
         { href: "/exit-calculator", label: t("exitCalculator") },

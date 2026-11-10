@@ -8,7 +8,7 @@ const addressOverride = (process.env.NEXT_PUBLIC_ADDRESS ?? "").trim().replace(/
 
 export const BRAND = {
   name: "OffplanDistress",
-  tagline: "Dubai's marketplace for distressed off-plan units",
+  tagline: "Dubai off-plan resales below the original price",
   description:
     "Buy Dubai off-plan below launch price. Owners who need out list their units; we verify the paperwork, match buyers and handle the developer NOC and DLD transfer.",
   // Licensed operator. Values come from the trade licence, the RERA office registration and the broker card;

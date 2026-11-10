@@ -1,6 +1,6 @@
 # OffplanDistress
 
-Dubai's marketplace for distressed off-plan units. Owners who can't keep up with a developer payment plan list
+Dubai off-plan resales below the original price. Owners who can't keep up with a developer payment plan list
 their unit; buyers take over the remaining plan below today's launch price. We verify the SPA and payment history,
 broker the offer, and handle the developer NOC and DLD transfer. Fee: **2% + 5% VAT of the sale value, paid by the
 buyer, only when the transfer completes**. Listing is free for sellers.
@@ -14,7 +14,7 @@ Goal: 30% of the Dubai distressed off-plan market in Q1 2027.
 | Marketing | Home, How it works, Fees (with calculator), Contact |
 | Market tools | Distress Index (`/market`: live stats on real listings — discounts, cash needed, developers, communities), seller exit calculator (`/exit-calculator`: keep paying vs stop paying vs sell here) |
 | Legal | Terms of Use, Privacy Policy, Cookie Policy (`/terms`, `/privacy`, `/cookies`) |
-| Marketplace | Browse deals (filters incl. cash at transfer, sort, search by project, developer or community in English or Arabic, saved searches), deal page (cash needed on transfer day, arrears with the developer, dated cash timeline, payment plan, true-cost breakdown, offer, watchlist, viewing request) |
+| Marketplace | Browse deals (filters incl. cash at transfer, sort, search by project, developer or community in English or Arabic, saved searches), deal page (cash needed on transfer day, arrears with the developer, dated cash timeline, payment plan, true-cost breakdown, offer, watchlist, viewing request), project pages (`/projects`, `/projects/<slug>`: every project with a resale unit, its units, how buying a resale there works, an FAQ; linked from each deal page) |
 | Sellers | Free estimate without an account (`/sell`, from the exit calculator and the home page) that records a seller lead; "Prefer WhatsApp?" card; 5-step "Sell my unit" form (saved on the device between sittings, type-to-search developer and community, "Other" keeps the typed name, phone photos resized in the browser) with SPA / Oqood / statement / ID upload, listing management, offers received (accept / counter / decline), deal milestones |
 | Buyers | Watchlist with price-drop flags, offers sent (accept counter / withdraw), saved searches with daily alerts (the same filters are saved once, keeping only what the deals page reads) |
 | Everyone | Notification bell + notifications page, email notifications, self-service password reset, daily deals newsletter (`/newsletter`, no account needed, double opt-in, one-click unsubscribe), WhatsApp deals community "OffplanDistress Deals \| Dubai" (announcement-only; its join link on the home page, `/deals`, every deal page, after an enquiry, in the footer and in the newsletter, each tap counted under "Deals community" in `/admin/analytics`), English / العربية (full right-to-left layout) / 中文 |
@@ -397,7 +397,8 @@ Every public page has an Arabic and a Chinese address (`/ar`, `/zh`, `/ar/deals`
 English one and to each other by hreflang and listed in `/sitemap.xml`; `src/proxy.ts` serves them. Visitors who chose
 Arabic or Chinese are sent from plain links to the `/ar` or `/zh` address; the browser's language never redirects anyone
 (it only shows a "عرض بالعربية / 查看中文版 / View in English" bar). `/dashboard` and `/admin` keep one address and follow the visitor's chosen language. Filtered `/deals` views,
-login and sign-up are `noindex`; `robots.txt` names the sitemap and lets search engines see listing photos. Production
+login and sign-up are `noindex`; `robots.txt` names the sitemap and lets search engines see listing photos. `/llms.txt`
+describes the site for AI assistants (buyers first, with every project page; read from the database like the sitemap). Production
 sends every other host name (the `*.vercel.app` address) to the site's own domain (308): `NEXT_PUBLIC_SITE_URL` when
 set, else the domain assigned to the project on Vercel; an address Vercel doesn't serve yet is never redirected to. After deploying, submit
 `/sitemap.xml` in Google Search Console.

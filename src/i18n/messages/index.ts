@@ -18,6 +18,7 @@ import marketing from "./marketing";
 import newsletter from "./newsletter";
 import notifications from "./notifications";
 import password from "./password";
+import projects from "./projects";
 import searches from "./searches";
 import sell from "./sell";
 
@@ -43,6 +44,7 @@ export const messages = {
   newsletter,
   notifications,
   password,
+  projects,
   searches,
   sell,
 };

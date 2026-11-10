@@ -6,6 +6,7 @@ import { DEFAULT_LOCALE, htmlLang, LOCALES, type Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
 import { refCode } from "@/lib/format";
 import { advertisedSql } from "@/lib/permits";
+import { liveProjects, projectPath } from "@/lib/projects";
 import { siteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages = [
     "/",
     "/deals",
+    "/projects",
     "/sell",
     "/how-it-works",
     "/fees",
@@ -51,14 +53,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/privacy",
     "/cookies",
   ].flatMap((p) => both(p));
-  const deals = await db
-    .select({ refNo: listings.refNo, updatedAt: listings.updatedAt, images: listings.images })
-    .from(listings)
-    // adverts only (so not one whose permit or Form A has run out, paused by the daily ops cron yet or not); sample
-    // listings are noindex, so they stay out of the sitemap too
-    .where(and(advertisedSql(), eq(listings.isSample, false)));
+  const [deals, projects] = await Promise.all([
+    db
+      .select({ refNo: listings.refNo, updatedAt: listings.updatedAt, images: listings.images })
+      .from(listings)
+      // adverts only (so not one whose permit or Form A has run out, paused by the daily ops cron yet or not); sample
+      // listings are noindex, so they stay out of the sitemap too
+      .where(and(advertisedSql(), eq(listings.isSample, false))),
+    // The project pages: one per project with such an advert, as fresh as its latest deal.
+    liveProjects(),
+  ]);
   return [
     ...pages,
+    ...projects.flatMap((p) => both(projectPath(p), { lastModified: p.lastModified })),
     ...deals.flatMap((d) => {
       const images = photos(base, d.images ?? []);
       return both(`/deals/${refCode(d.refNo)}`, { lastModified: d.updatedAt, ...(images.length ? { images } : {}) });

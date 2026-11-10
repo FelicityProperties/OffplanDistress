@@ -219,7 +219,7 @@ export default defineMessages({
     estimatesNote: "Prices and fees shown are estimates until confirmed by the developer and Dubai Land Department.",
     operatedBy: "Operated by {company}",
     footerBlurb:
-      "Dubai's marketplace for distressed off-plan units. Verified SPAs, protected settlement, developer NOC and DLD transfer handled for you.",
+      "Dubai off-plan resales below the original price. Verified SPAs, protected settlement, developer NOC and DLD transfer handled for you.",
     marketplace: "Marketplace",
     company: "Company",
     location: "Dubai, United Arab Emirates",
@@ -228,7 +228,7 @@ export default defineMessages({
     notFoundTitle: "Page not found",
     notFoundBody: "The page you're looking for doesn't exist, or the deal has been taken off the market.",
     // The site's share card's description (og:image:alt), in the page's language; the card itself is in English.
-    shareImageAlt: "OffplanDistress — Dubai's marketplace for distressed off-plan units",
+    shareImageAlt: "OffplanDistress — Dubai off-plan resales below the original price",
     goHome: "Go home",
     errorTitle: "This page didn't load",
     errorBody: "Something went wrong on our end. You can try again or head back home.",
@@ -448,7 +448,7 @@ export default defineMessages({
     estimatesNote: "الأسعار والرسوم المعروضة تقديرية حتى يؤكدها المطوّر ودائرة الأراضي والأملاك في دبي.",
     operatedBy: "تديرها {company}",
     footerBlurb:
-      "منصة دبي لبيع وشراء الوحدات على الخارطة المتعثرة. اتفاقيات بيع وشراء موثّقة، وتسوية آمنة، ونتولى عنك شهادة عدم الممانعة من المطوّر ونقل الملكية لدى دائرة الأراضي والأملاك.",
+      "إعادة بيع وحدات دبي على الخارطة بأقل من السعر الأصلي. اتفاقيات بيع وشراء موثّقة، وتسوية آمنة، ونتولى عنك شهادة عدم الممانعة من المطوّر ونقل الملكية لدى دائرة الأراضي والأملاك.",
     marketplace: "السوق",
     company: "الشركة",
     location: "دبي، الإمارات العربية المتحدة",
@@ -456,7 +456,7 @@ export default defineMessages({
     accountOf: "حساب {name}",
     notFoundTitle: "الصفحة غير موجودة",
     notFoundBody: "الصفحة التي تبحث عنها غير موجودة، أو أن الصفقة لم تعد معروضة.",
-    shareImageAlt: "⁨OffplanDistress⁩ — منصة دبي للوحدات على الخارطة المتعثرة",
+    shareImageAlt: "⁨OffplanDistress⁩ — إعادة بيع وحدات دبي على الخارطة بأقل من السعر الأصلي",
     goHome: "الصفحة الرئيسية",
     errorTitle: "تعذّر تحميل هذه الصفحة",
     errorBody: "حدث خطأ من جهتنا. يمكنك المحاولة مرة أخرى أو العودة إلى الصفحة الرئيسية.",
@@ -678,7 +678,7 @@ export default defineMessages({
     estimatesNote: "所示价格与费用均为估算值，以开发商和迪拜土地局（DLD）的最终确认为准。",
     operatedBy: "由 {company} 运营",
     footerBlurb:
-      "迪拜急售期房交易平台。买卖协议（SPA）经过核实，结算受到保护，开发商无异议函（NOC）与迪拜土地局（DLD）过户手续均由我们为您办理。",
+      "低于原始合同价的迪拜期房转售。买卖协议（SPA）经过核实，结算受到保护，开发商无异议函（NOC）与迪拜土地局（DLD）过户手续均由我们为您办理。",
     marketplace: "交易平台",
     company: "公司",
     location: "阿联酋迪拜",
@@ -686,7 +686,7 @@ export default defineMessages({
     accountOf: "{name} 的账户",
     notFoundTitle: "页面不存在",
     notFoundBody: "您要找的页面不存在，或者该房源已下架。",
-    shareImageAlt: "OffplanDistress — 迪拜急售期房交易平台",
+    shareImageAlt: "OffplanDistress — 低于原始合同价的迪拜期房转售",
     goHome: "返回首页",
     errorTitle: "页面加载失败",
     errorBody: "我们这边出了点问题。您可以重试，或返回首页。",
