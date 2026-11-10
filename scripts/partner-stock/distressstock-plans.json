@@ -369,6 +369,38 @@
    "totalCosts": 3091978,
    "notes": "All checks pass (2270552+629448=2900000; on-transfer rows sum to 2462530; 2462530+629448=3091978). Single undated 'On Completion' instalment. DLD fee 125828 implies OP of 3144700 rather than the 2900000 unit price (4% of OP + 40), consistent with the row's label."
   },
+  "5fTg83": {
+   "image": "https://distressonly.deals/media/units/431/7040c0eaed7a.webp",
+   "transcribedAt": "2026-11-10",
+   "legible": true,
+   "unitPrice": 3670000,
+   "paymentToSeller": 3027325,
+   "dldFee": 155842,
+   "trusteeFee": 5250,
+   "commission": 77070,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "05-DEC-2026",
+     "dueDate": "2026-12-05",
+     "amount": 136325
+    },
+    {
+     "label": "06-MAR-2027",
+     "dueDate": "2027-03-06",
+     "amount": 116850
+    },
+    {
+     "label": "On Completion",
+     "dueDate": null,
+     "amount": 389500
+    }
+   ],
+   "totalOnTransfer": 3265487,
+   "totalRemaining": 642675,
+   "totalCosts": 3908162,
+   "notes": "All checks pass. Original price 3,895,050 from the DLD line (4% + 40); the page's 'Original Price + DLD 4%' AED 4,050,840 is AED 12 below 3,895,050 x 1.04, a rounding on the page."
+  },
   "6FDbrU": {
    "image": "https://distressonly.deals/media/units/278/312c7478419b.webp",
    "transcribedAt": "2026-10-27",
@@ -2739,6 +2771,28 @@
    "totalRemaining": 1345201,
    "totalCosts": 1927090,
    "notes": "The first instalment is a construction milestone ('70% Construction') and has no date. 454799+1345201=1800000; instalments sum to 1345201; transfer lines sum to 581889; total 1927090. All checks pass. The DLD fee of 84040 is 4% of 2,100,000 plus 40, so the original price (OP) is above the unit price shown. No OP row is printed."
+  },
+  "sQ482C": {
+   "image": "https://distressonly.deals/media/units/430/afd585bbf68a.webp",
+   "transcribedAt": "2026-11-10",
+   "legible": true,
+   "unitPrice": 5200000,
+   "paymentToSeller": 2969594,
+   "dldFee": 223081,
+   "trusteeFee": 5250,
+   "commission": 109200,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "On Handover (30-APR-2027)",
+     "dueDate": "2027-04-30",
+     "amount": 2230406
+    }
+   ],
+   "totalOnTransfer": 3307125,
+   "totalRemaining": 2230406,
+   "totalCosts": 5537531,
+   "notes": "All checks pass. The balance is due on handover, printed as 30 Apr 2027 (the page says May 2027). Original price 5,576,025 from the DLD line (4% + 40); the page's 'Original Price + DLD 4%' AED 5,799,055 is AED 11 below 5,576,025 x 1.04, a rounding on the page."
   },
   "sZVsVv": {
    "image": "https://distressonly.deals/media/units/295/243d301b1697.webp",
