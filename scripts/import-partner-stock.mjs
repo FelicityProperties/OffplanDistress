@@ -444,11 +444,21 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
     }
     // The overdue instalments are part of the balance still owed, so never above it (src/app/actions/admin.ts): with
     // the price or the paid amount kept as our team's, a file figure above the balance stays out, a conflict.
-    if ("overdueAmount" in diff && after("overdueAmount") != null && after("overdueAmount") > Math.max(after("originalPrice") - after("amountPaid"), 0)) {
-      delete diff.overdueAmount;
-      conflicts.overdueAmount = wanted.overdueAmount;
-      synced.overdueAmount = snap.overdueAmount;
+    // And the other way: with the overdue amount kept as our team's, the file's price / paid that would leave less owed
+    // than it stay out too. The statement's late fees and check date go with its overdue amount (the editor's rule).
+    const hold = (f) => {
+      if (!(f in diff)) return;
+      delete diff[f];
+      conflicts[f] = wanted[f];
+      synced[f] = snap[f];
+    };
+    if (after("overdueAmount") != null && after("overdueAmount") > Math.max(after("originalPrice") - after("amountPaid"), 0)) {
+      if ("overdueAmount" in diff) hold("overdueAmount");
+      else ["amountPaid", "originalPrice"].forEach(hold);
     }
+    // The arrears are one statement's figures: when any of them stays our team's, so do the others (else the file's check
+    // date would vouch for an overdue figure or late fees no statement gave together).
+    if (ARREARS_FIELDS.some((f) => f in conflicts)) ARREARS_FIELDS.forEach(hold);
     // The gallery: the file's photos in its order, the other entries (older import photos, anything our team added)
     // after them as they are — nothing dropped — while the array is still ours; else their arrangement stands.
     let syncedImages;
@@ -473,7 +483,20 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
       await client.query(`update listings set ${sets.join(", ")}, updated_at = $${params.push(now)} where id = $1`, params);
       // Its own action, so History tells the network's changes from our team's edits (listing.update).
       await auditRow(client, actor, "listing.sync_update", id, diff);
-      if (diff.askingPrice && advertised) await tellWatchers(client, row, row.public_price ?? row.asking_price, wanted.askingPrice, mail);
+      // A price drop is the deal getting cheaper: the asking price plus the balance still owed to the developer. A
+      // re-split (the asking price down because more is still owed than the seller said, the total unchanged) is none.
+      const saleOf = (asking, original, paid) => asking + Math.max(original - paid, 0);
+      const from = row.public_price ?? row.asking_price;
+      const cheaper = saleOf(wanted.askingPrice, after("originalPrice"), after("amountPaid")) < saleOf(from, row.original_price, row.amount_paid);
+      if (diff.askingPrice && advertised && cheaper) await tellWatchers(client, row, from, wanted.askingPrice, mail);
+      // The watchlist shows a drop as the asking price saved when watching less today's: when the balance still owed to
+      // the developer moves (a statement corrects the paid amount), the saved prices move against it, so a drop shows
+      // only when the deal got cheaper in all.
+      const owedNow = Math.max(after("originalPrice") - after("amountPaid"), 0);
+      const owedBefore = Math.max(row.original_price - row.amount_paid, 0);
+      if (owedNow !== owedBefore) {
+        await client.query("update watchlist set saved_price = greatest(saved_price - $2, 0) where listing_id = $1", [id, owedNow - owedBefore]);
+      }
       report.updated.push({ code, fields });
     }
     // Conflicts: told once, until the network changes the field again; forgotten once the two agree.

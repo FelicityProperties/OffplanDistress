@@ -77,7 +77,7 @@
      "url": "https://raw.githubusercontent.com/FelicityProperties/OffplanDistress/main/scripts/partner-stock/direct-photos/azizi-venice3-2br-floorplan.webp"
     }
    ],
-   "notes": "Direct seller (inquiry, 6 Nov 2026): 2-bed corner, Building B of Azizi Venice 3, 5th floor. Figures from Azizi's customer statement (received 11 Nov 2026): sales value AED 1,669,920; paid AED 667,906 (40%): instalments 1 to 3 in full, instalment 4 short by AED 61.80 (due 28 Oct 2024), instalment 5 of AED 166,992 unpaid (due 25 Feb 2025); AED 834,960 (50%) on completion (the statement's date, 31 Dec 2025, has passed, but the building is about 76% built per DLD data in Nov 2026, so it is not due yet). DLD 4% (title deed) and admin fees paid. Late fees of AED 3,339.84 unpaid (1% on instalments 2 and 3). Arrears entered from the statement: overdue AED 167,054, late fees AED 3,340, checked 11 Nov 2026. Price kept at the owner's AED 1,408,000 in total (20% below the AED 1,760,000 he gave as paid with DLD): AED 405,986 to the owner plus the AED 1,002,014 still owed to Azizi (it was AED 561,846 to the owner while he said 50% was paid). Handover (Q4 2026 per public listings) to confirm with Azizi.",
+   "notes": "Direct seller (inquiry, 6 Nov 2026): 2-bed corner, Building B of Azizi Venice 3. Figures from Azizi's customer statement (received 11 Nov 2026): sales value AED 1,669,920; paid AED 667,906 (40%): instalments 1 to 3 in full, instalment 4 short by AED 61.80 (due 28 Oct 2024), instalment 5 of AED 166,992 unpaid (due 25 Feb 2025); AED 834,960 (50%) on completion (the statement's date, 31 Dec 2025, has passed, but the building is about 76% built per DLD data in Nov 2026, so it is not due yet). DLD 4% (title deed) and admin fees paid. Late fees of AED 3,339.84 unpaid (1% on instalments 2 and 3). Arrears entered from the statement: overdue AED 167,054, late fees AED 3,340, checked 11 Nov 2026; who bears the late fees is agreed in the MOU. Price kept at the owner's AED 1,408,000 in total (20% below the AED 1,760,000 he gave as paid with DLD): AED 405,986 to the owner plus the AED 1,002,014 still owed to Azizi (it was AED 561,846 to the owner while he said 50% was paid). Handover date left empty (TBC): DLD's registered completion (30 Dec 2025) has passed with the building about 76% built; set it once Azizi confirms. Floor left out on purpose: with the floor plan in the gallery it would give the unit number away.",
    "listing": {
     "projectName": "Azizi Venice 3",
     "developer": "Azizi",
@@ -86,12 +86,12 @@
     "communityOther": null,
     "unitType": "2br",
     "sizeSqft": 1087,
-    "floor": "5",
+    "floor": null,
     "view": null,
     "originalPrice": 1669920,
     "amountPaid": 667906,
     "askingPrice": 405986,
-    "handoverDate": "2026-12-31",
+    "handoverDate": null,
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
     "paymentPlan": [
@@ -115,7 +115,7 @@
     "overduePenalty": 3340,
     "arrearsCheckedAt": "2026-11-11",
     "motivation": "motivated",
-    "description": "2-bedroom corner apartment on the 5th floor of Building B, Azizi Venice 3, Dubai South: 1,087 sq ft in total, a 926 sq ft apartment plus two balconies (161 sq ft). Kitchen with dining area, living room, two bedrooms with a walk-in closet and two bathrooms. AED 1,408,000 in total, AED 261,920 below the original price of AED 1,669,920. The buyer pays the owner AED 405,986, clears the overdue instalments (AED 167,054) and late fees (AED 3,340) with Azizi on transfer day, and takes over the AED 834,960 (50%) due on completion. Figures from Azizi's statement of account."
+    "description": "2-bedroom corner apartment in Building B of Azizi Venice 3, Dubai South: 1,087 sq ft in total, a 926 sq ft apartment plus two balconies (161 sq ft). Kitchen with dining area, living room, two bedrooms with a walk-in closet and two bathrooms. AED 1,408,000 for the unit, AED 261,920 below the original price of AED 1,669,920. The buyer pays the owner AED 405,986 and clears the AED 167,054 of overdue instalments with Azizi on transfer day, then takes over the AED 834,960 (50%) due on completion. Late fees of AED 3,340 are also outstanding; who pays them is agreed in the MOU. Figures from Azizi's statement of account."
    }
   },
   {
@@ -132,7 +132,7 @@
      "url": "https://raw.githubusercontent.com/FelicityProperties/OffplanDistress/main/scripts/partner-stock/direct-photos/azizi-venice8-1br-floorplan.webp"
     }
    ],
-   "notes": "Direct seller (inquiry, 6 Nov 2026): 1-bed corner, Building 8B of Azizi Venice 8, 7th floor. Figures from Azizi's customer statement (received 11 Nov 2026): sales value AED 1,037,820; paid AED 401,524 (38.69%): instalments 1 to 3 in full, instalment 4 short by AED 13,603.80 (due 1 Nov 2024), instalment 5 of AED 103,782 unpaid (due 1 Mar 2025); AED 518,910 (50%) on completion (the statement's date, 31 Dec 2025, has passed, but the building is about 53% built per DLD data in Nov 2026, so it is not due yet). DLD 4% (title deed) and admin fees paid. Late fees of AED 3,113.46 unpaid (1% and 2% on instalment 2). Arrears entered from the statement: overdue AED 117,386, late fees AED 3,113, checked 11 Nov 2026. Price kept at the owner's AED 880,000 in total (20% below the AED 1,100,000 he gave as paid with DLD): AED 243,704 to the owner plus the AED 636,296 still owed to Azizi (it was AED 351,154 to the owner while he said 50% was paid). Handover (Q4 2026 per public listings) to confirm with Azizi: the building is about 53% built.",
+   "notes": "Direct seller (inquiry, 6 Nov 2026): 1-bed corner, Building 8B of Azizi Venice 8. Figures from Azizi's customer statement (received 11 Nov 2026): sales value AED 1,037,820; paid AED 401,524 (38.69%): instalments 1 to 3 in full, instalment 4 short by AED 13,603.80 (due 1 Nov 2024), instalment 5 of AED 103,782 unpaid (due 1 Mar 2025); AED 518,910 (50%) on completion (the statement's date, 31 Dec 2025, has passed, but the building is about 53% built per DLD data in Nov 2026, so it is not due yet). DLD 4% (title deed) and admin fees paid. Late fees of AED 3,113.46 unpaid (1% and 2% on instalment 2, per the statement). Arrears entered from the statement: overdue AED 117,386, late fees AED 3,113, checked 11 Nov 2026; who bears the late fees is agreed in the MOU. Price kept at the owner's AED 880,000 in total (20% below the AED 1,100,000 he gave as paid with DLD): AED 243,704 to the owner plus the AED 636,296 still owed to Azizi (it was AED 351,154 to the owner while he said 50% was paid). Handover date left empty (TBC): no completion date registered with DLD and the building is about 53% built; set it once Azizi confirms. Floor left out on purpose: with the floor plan in the gallery it would give the unit number away.",
    "listing": {
     "projectName": "Azizi Venice 8",
     "developer": "Azizi",
@@ -141,12 +141,12 @@
     "communityOther": null,
     "unitType": "1br",
     "sizeSqft": 678,
-    "floor": "7",
+    "floor": null,
     "view": null,
     "originalPrice": 1037820,
     "amountPaid": 401524,
     "askingPrice": 243704,
-    "handoverDate": "2026-12-31",
+    "handoverDate": null,
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
     "paymentPlan": [
@@ -170,7 +170,7 @@
     "overduePenalty": 3113,
     "arrearsCheckedAt": "2026-11-11",
     "motivation": "motivated",
-    "description": "1-bedroom corner apartment on the 7th floor of Building 8B, Azizi Venice 8, Dubai South: 678 sq ft in total, a 543 sq ft apartment plus a 136 sq ft wraparound balcony. Open kitchen and living room, bedroom, bathroom and guest toilet. AED 880,000 in total, AED 157,820 below the original price of AED 1,037,820. The buyer pays the owner AED 243,704, clears the overdue instalments (AED 117,386) and late fees (AED 3,113) with Azizi on transfer day, and takes over the AED 518,910 (50%) due on completion. Figures from Azizi's statement of account."
+    "description": "1-bedroom corner apartment in Building 8B of Azizi Venice 8, Dubai South: 678 sq ft in total, a 543 sq ft apartment plus a 136 sq ft wraparound balcony. Open kitchen and living room, bedroom, bathroom and guest toilet. AED 880,000 for the unit, AED 157,820 below the original price of AED 1,037,820. The buyer pays the owner AED 243,704 and clears the AED 117,386 of overdue instalments with Azizi on transfer day, then takes over the AED 518,910 (50%) due on completion. Late fees of AED 3,113 are also outstanding; who pays them is agreed in the MOU. Figures from Azizi's statement of account."
    }
   },
   {
