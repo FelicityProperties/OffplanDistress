@@ -127,10 +127,15 @@ the next build; until then the share image converts it as it draws), run again o
 build (one build at a time: a second production build waits for the first, so no photo is stored twice), and an
 in-app notice to admins when units arrive. Each build
 also syncs the units already imported with the file, which is regenerated from the network: a synced field (prices,
-paid, instalments, plan, handover, size, floor, view, description) takes the file's value unless our team edited it
+paid, instalments, plan, handover, size, floor, view, description, and the arrears — `overdueAmount`, `overduePenalty`,
+`arrearsCheckedAt` — only for a unit whose entry gives them, as `direct.json` does from a seller's statement of account,
+and always the three together; set them to `null` to clear them, since an entry that drops the keys keeps the last
+synced figures; elsewhere the arrears our team enters stand) takes the file's value unless our team edited it
 since the last sync (the snapshot in `listings.source.synced` tells; their edit stands and is reported once as a
 conflict), recorded in History as `listing.sync_update` (apart from our team's own edits); a price change on a live
-advert updates the advertised price and tells the watchers; a unit marked `"removed": "YYYY-MM-DD"` (gone from the
+advert updates the advertised price, and only a cut that makes the deal cheaper (the asking price plus the balance
+still owed to the developer) tells the watchers and counts as a price drop in the newsletter; when the balance owed
+changes, the watchers' saved prices move with it, so a corrected paid amount never shows as a drop; a unit marked `"removed": "YYYY-MM-DD"` (gone from the
 network) is withdrawn as a seller's withdrawal is (open offers closed and their buyers told, `listing.sync_withdrawn` in
 History) and put back when it is listed again (live if it was live and can still be published, else into review); the
 buyers and watchers get these notices in the app and by email, as the app's own (in their language; the price drop
