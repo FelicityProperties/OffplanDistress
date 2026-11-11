@@ -210,6 +210,10 @@ export async function composeIssue(now = new Date(), opts: { since?: Date } = {}
     .selectDistinctOn([auditEvents.entityId], {
       listingId: auditEvents.entityId,
       from: sql<number>`round((${priceDiff}->>0)::numeric)::int`,
+      // What was still owed to the developer then, where the same event changed it: a re-split (the asking price down
+      // because more is owed than the seller said, the total unchanged) is no drop.
+      originalFrom: sql<number | null>`round((${auditEvents.diff}->'originalPrice'->>0)::numeric)::int`,
+      paidFrom: sql<number | null>`round((${auditEvents.diff}->'amountPaid'->>0)::numeric)::int`,
     })
     .from(auditEvents)
     .where(
@@ -222,8 +226,8 @@ export async function composeIssue(now = new Date(), opts: { since?: Date } = {}
     )
     .orderBy(auditEvents.entityId, asc(auditEvents.createdAt), asc(auditEvents.id))
     .limit(LIMIT * 5);
-  const firstFrom = new Map<string, number>();
-  for (const e of events) if (!newIds.has(e.listingId) && !firstFrom.has(e.listingId)) firstFrom.set(e.listingId, e.from);
+  const firstFrom = new Map<string, { from: number; originalFrom: number | null; paidFrom: number | null }>();
+  for (const e of events) if (!newIds.has(e.listingId) && !firstFrom.has(e.listingId)) firstFrom.set(e.listingId, e);
   let priceDrops: PriceDrop[] = [];
   if (firstFrom.size) {
     const rows = (await db
@@ -232,9 +236,13 @@ export async function composeIssue(now = new Date(), opts: { since?: Date } = {}
       .where(and(advert, inArray(listings.id, [...firstFrom.keys()])))) as DealRow[];
     priceDrops = rows
       .flatMap((r) => {
-        const from = firstFrom.get(r.id)!;
+        const e = firstFrom.get(r.id)!;
+        const from = e.from;
         const to = r.publicPrice ?? r.askingPrice;
-        return to < from ? [{ deal: toDeal(r), from, to }] : [];
+        // Cheaper in all: the asking price plus what is still owed to the developer, then and now.
+        const owedNow = Math.max(r.originalPrice - r.amountPaid, 0);
+        const owedThen = Math.max((e.originalFrom ?? r.originalPrice) - (e.paidFrom ?? r.amountPaid), 0);
+        return to + owedNow < from + owedThen ? [{ deal: toDeal(r), from, to }] : [];
       })
       // Biggest cut first, as a share of the old price.
       .sort((a, b) => (b.from - b.to) / b.from - (a.from - a.to) / a.from);
