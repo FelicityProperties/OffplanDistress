@@ -3231,14 +3231,14 @@
    "notes": "1092500+607500=1700000; transfer lines sum to 1214490; total 1821990. All checks pass."
   },
   "wiLLaU": {
-   "image": "https://distressonly.deals/media/units/268/470f3b2db03d.webp",
-   "transcribedAt": "2026-11-03",
+   "image": "https://distressonly.deals/media/units/268/7c7b89fb4f94.webp",
+   "transcribedAt": "2026-11-11",
    "legible": true,
-   "unitPrice": 16300000,
-   "paymentToSeller": 7151286,
-   "dldFee": 731937,
+   "unitPrice": 15200000,
+   "paymentToSeller": 6051286,
+   "dldFee": 758787,
    "trusteeFee": 5250,
-   "commission": 342300,
+   "commission": 319200,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -3247,10 +3247,10 @@
      "amount": 9148714
     }
    ],
-   "totalOnTransfer": 8230773,
+   "totalOnTransfer": 7134523,
    "totalRemaining": 9148714,
-   "totalCosts": 17379487,
-   "notes": "Re-posted image: DLD fee corrected from 789,137 to 731,937 (original price 18,297,425), the plan row now reads 'On Handover (31.03.2028)'; unit price and payment to seller unchanged. All checks pass."
+   "totalCosts": 16283237,
+   "notes": "Re-posted image with a price cut: unit price 16,300,000 -> 15,200,000 and payment to seller 7,151,286 -> 6,051,286 (commission 342,300 -> 319,200, 2% + VAT of the new price); DLD fee 731,937 -> 758,787, i.e. original price 18,968,675, matching the page's 'Original Price + DLD 4%' AED 19,727,430 / 1.04; the handover payment 9,148,714 (31.03.2028) is unchanged. All checks pass."
   },
   "wsag9R": {
    "image": "https://distressonly.deals/media/units/52/618c04beb1a4.webp",

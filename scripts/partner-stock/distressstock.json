@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-10T01:41:11Z",
+ "generatedAt": "2026-11-11T01:40:13Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -352,7 +352,8 @@
      "url": "https://distressonly.deals/media/units/269/cea3a7dfdb43.webp"
     }
    ],
-   "notes": "Posted on DistressStock June 13, 2026: DISTRESS DEAL: 2-BR IN OCEAN COVE - BUILDING 1. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,829,724; selling price AED 2,450,000."
+   "notes": "Posted on DistressStock June 13, 2026: DISTRESS DEAL: 2-BR IN OCEAN COVE - BUILDING 1. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,829,724; selling price AED 2,450,000.",
+   "removed": "2026-11-11"
   },
   {
    "ref": "25ClsV",
@@ -851,7 +852,8 @@
      "url": "https://distressonly.deals/media/units/335/4dccad5f0304.webp"
     }
    ],
-   "notes": "Posted on DistressStock August 18, 2026: DISTRESS DEAL: 3-BR IN CANAL HEIGHTS 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 6,062,160; selling price AED 5,750,000."
+   "notes": "Posted on DistressStock August 18, 2026: DISTRESS DEAL: 3-BR IN CANAL HEIGHTS 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 6,062,160; selling price AED 5,750,000.",
+   "removed": "2026-11-11"
   },
   {
    "ref": "6tU9pf",
@@ -1186,7 +1188,8 @@
      "url": "https://distressonly.deals/media/units/26/e0a66f0d16d9.webp"
     }
    ],
-   "notes": "Posted on DistressStock April 18, 2026: HOT LOT: 1-BR IN INDEX TOWER. Figures are as posted — check the current statement of account with the listing broker before approval. Ready property (handover done)."
+   "notes": "Posted on DistressStock April 18, 2026: HOT LOT: 1-BR IN INDEX TOWER. Figures are as posted — check the current statement of account with the listing broker before approval. Ready property (handover done).",
+   "removed": "2026-11-11"
   },
   {
    "ref": "ByVYm1",
@@ -1557,7 +1560,8 @@
      "url": "https://distressonly.deals/media/units/375/02cfc5c69e3b.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 21, 2026: DISTRESS DEAL: 1-BR IN SOCIETY HOUSE. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,120,000; selling price AED 2,600,000. Ready property (handover done)."
+   "notes": "Posted on DistressStock September 21, 2026: DISTRESS DEAL: 1-BR IN SOCIETY HOUSE. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,120,000; selling price AED 2,600,000. Ready property (handover done).",
+   "removed": "2026-11-11"
   },
   {
    "ref": "IVot8Y",
@@ -2552,7 +2556,7 @@
     "amountPaid": 2237000,
     "askingPrice": 1670000,
     "handoverDate": "2028-12-31",
-    "nextInstalmentDate": "2026-11-10",
+    "nextInstalmentDate": "2027-02-10",
     "nextInstalmentAmount": 95000,
     "paymentPlan": [
      {
@@ -2601,7 +2605,7 @@
      "url": "https://distressonly.deals/media/units/379/c6aa21509bdb.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 23, 2026: DISTRESS DEAL: 1-BR IN DAMAC BAY 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Dates printed DD.MM.YYYY. The last row is labelled just '2028' (year only, probably handover), so dueDate is null. All checks pass. Source: original price + DLD 4% = AED 3,278,080; selling price AED 2,585,000."
+   "notes": "Posted on DistressStock September 23, 2026: DISTRESS DEAL: 1-BR IN DAMAC BAY 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Dates printed DD.MM.YYYY. The last row is labelled just '2028' (year only, probably handover), so dueDate is null. All checks pass. Source: original price + DLD 4% = AED 3,278,080; selling price AED 2,585,000. 1 instalment(s) in the posted plan fall before today (10.11.2026): confirm whether they were paid."
   },
   {
    "ref": "SCZjH2",
@@ -2862,7 +2866,8 @@
      "url": "https://distressonly.deals/media/units/425/35d7a2be352a.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 29, 2026: HOT LOT: 1-BR IN ELLINGTON SANDS 1 - BLOCK A. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,277,421; selling price AED 2,280,000."
+   "notes": "Posted on DistressStock October 29, 2026: HOT LOT: 1-BR IN ELLINGTON SANDS 1 - BLOCK A. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,277,421; selling price AED 2,280,000.",
+   "removed": "2026-11-11"
   },
   {
    "ref": "TZlf8T",
@@ -3005,7 +3010,8 @@
      "url": "https://distressonly.deals/media/units/372/1e106f535416.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 21, 2026: DISTRESS DEAL: 2-BR IN MARINA PLACE PHASE 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 5,080,284; selling price AED 4,350,000."
+   "notes": "Posted on DistressStock September 21, 2026: DISTRESS DEAL: 2-BR IN MARINA PLACE PHASE 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 5,080,284; selling price AED 4,350,000.",
+   "removed": "2026-11-11"
   },
   {
    "ref": "V9Gk3R",
@@ -3449,7 +3455,8 @@
      "url": "https://distressonly.deals/media/units/413/f8fa10622319.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 19, 2026: DISTRESS DEAL: 1-BR IN VERVE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,647,840; selling price AED 2,250,000."
+   "notes": "Posted on DistressStock October 19, 2026: DISTRESS DEAL: 1-BR IN VERVE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,647,840; selling price AED 2,250,000.",
+   "removed": "2026-11-11"
   },
   {
    "ref": "ZiQgCZ",
@@ -3675,7 +3682,8 @@
      "url": "https://distressonly.deals/media/units/289/2eccc360d34b.webp"
     }
    ],
-   "notes": "Posted on DistressStock July 03, 2026: DISTRESS DEAL: 3-BR IN PALM BEACH - TOWER 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 8,984,352; selling price AED 7,950,000."
+   "notes": "Posted on DistressStock July 03, 2026: DISTRESS DEAL: 3-BR IN PALM BEACH - TOWER 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 8,984,352; selling price AED 7,950,000.",
+   "removed": "2026-11-11"
   },
   {
    "ref": "dafYpQ",
@@ -4485,7 +4493,8 @@
      "url": "https://distressonly.deals/media/units/397/713c35bdb5f7.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 06, 2026: DISTRESS DEAL: 1-BR IN SEAPOINT - TOWER 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,065,804; selling price AED 2,630,000."
+   "notes": "Posted on DistressStock October 06, 2026: DISTRESS DEAL: 1-BR IN SEAPOINT - TOWER 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,065,804; selling price AED 2,630,000.",
+   "removed": "2026-11-11"
   },
   {
    "ref": "lyA7qm",
@@ -4912,7 +4921,8 @@
      "url": "https://distressonly.deals/media/units/294/f0ab4bf4f4be.webp"
     }
    ],
-   "notes": "Posted on DistressStock July 07, 2026: HOT LOT: 3-BR IN MURABA RESIDENCE. Figures are as posted — check the current statement of account with the listing broker before approval. Ready property (handover done)."
+   "notes": "Posted on DistressStock July 07, 2026: HOT LOT: 3-BR IN MURABA RESIDENCE. Figures are as posted — check the current statement of account with the listing broker before approval. Ready property (handover done).",
+   "removed": "2026-11-11"
   },
   {
    "ref": "obeWtQ",
@@ -5435,9 +5445,9 @@
     "sizeSqft": 2971,
     "floor": "10-15",
     "view": "Burj Khalifa, Canal",
-    "originalPrice": 18297425,
-    "amountPaid": 9148711,
-    "askingPrice": 7151286,
+    "originalPrice": 18968675,
+    "amountPaid": 9819961,
+    "askingPrice": 6051286,
     "handoverDate": "2027-05-31",
     "nextInstalmentDate": "2028-03-31",
     "nextInstalmentAmount": 9148714,
@@ -5473,7 +5483,7 @@
      "url": "https://distressonly.deals/media/units/268/4f9e61708ca5.webp"
     }
    ],
-   "notes": "Posted on DistressStock June 13, 2026: DISTRESS DEAL: 2-BR IN VELA VIENTO. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: DLD fee corrected from 789,137 to 731,937 (original price 18,297,425), the plan row now reads 'On Handover (31.03.2028)'; unit price and payment to seller unchanged. All checks pass. Source: original price + DLD 4% = AED 19,727,430; selling price AED 16,300,000."
+   "notes": "Posted on DistressStock June 13, 2026: DISTRESS DEAL: 2-BR IN VELA VIENTO. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image with a price cut: unit price 16,300,000 -> 15,200,000 and payment to seller 7,151,286 -> 6,051,286 (commission 342,300 -> 319,200, 2% + VAT of the new price); DLD fee 731,937 -> 758,787, i.e. original price 18,968,675, matching the page's 'Original Price + DLD 4%' AED 19,727,430 / 1.04; the handover payment 9,148,714 (31.03.2028) is unchanged. All checks pass. Source: original price + DLD 4% = AED 19,727,430; selling price AED 15,200,000."
   },
   {
    "ref": "wsag9R",
