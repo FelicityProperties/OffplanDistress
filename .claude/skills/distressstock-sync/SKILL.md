@@ -161,7 +161,8 @@ no changes (N units on the site, all already listed)" in one line.
 `scripts/import-partner-stock.mjs` runs on the deploy (one build at a time): new units are imported in review under the
 placeholder owner ("Imported — owner to add" on `/admin`) with their photos; units marked `"removed"` are withdrawn
 (open offers closed, the buyers told in the app and by email) and put back when they reappear; changed figures (asking /
-original price, paid, instalments, plan, handover, size, floor, view, description) are applied unless our team edited
+original price, paid, instalments, plan, handover, size, floor, view, description; the arrears only where a unit's
+entry gives them, which DistressStock's never do) are applied unless our team edited
 that field since — then their edit stands and the conflict is reported to the admins once — and recorded in History as
 `listing.sync_update` (a price cut on a live advert also tells its watchers, in the app and by email); a listing's
 gallery is put in the manifest's photo order (new photos fetched by file name first, nothing deleted, anything else in

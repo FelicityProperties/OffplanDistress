@@ -127,7 +127,9 @@ the next build; until then the share image converts it as it draws), run again o
 build (one build at a time: a second production build waits for the first, so no photo is stored twice), and an
 in-app notice to admins when units arrive. Each build
 also syncs the units already imported with the file, which is regenerated from the network: a synced field (prices,
-paid, instalments, plan, handover, size, floor, view, description) takes the file's value unless our team edited it
+paid, instalments, plan, handover, size, floor, view, description, and the arrears — `overdueAmount`, `overduePenalty`,
+`arrearsCheckedAt` — only for a unit whose entry gives them, as `direct.json` does from a seller's statement of account;
+elsewhere the arrears our team enters stand) takes the file's value unless our team edited it
 since the last sync (the snapshot in `listings.source.synced` tells; their edit stands and is reported once as a
 conflict), recorded in History as `listing.sync_update` (apart from our team's own edits); a price change on a live
 advert updates the advertised price and tells the watchers; a unit marked `"removed": "YYYY-MM-DD"` (gone from the

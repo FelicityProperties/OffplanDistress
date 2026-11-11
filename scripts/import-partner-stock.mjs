@@ -206,7 +206,28 @@ async function importSource(pool, doc, sharp) {
 // ——— Sync: units already imported follow the file, which is regenerated from the network ———————————————————————————
 
 /** The listing fields the file keeps in step; the rest (project, developer, unit type…) are set once, at import. */
-const SYNCED_FIELDS = ["askingPrice", "originalPrice", "amountPaid", "nextInstalmentDate", "nextInstalmentAmount", "paymentPlan", "handoverDate", "sizeSqft", "floor", "view", "description"];
+const SYNCED_FIELDS = [
+  "askingPrice",
+  "originalPrice",
+  "amountPaid",
+  "nextInstalmentDate",
+  "nextInstalmentAmount",
+  "paymentPlan",
+  "handoverDate",
+  "sizeSqft",
+  "floor",
+  "view",
+  "description",
+  "overdueAmount",
+  "overduePenalty",
+  "arrearsCheckedAt",
+];
+/**
+ * The arrears (overdue instalments, late fees, the day they were checked against the developer's statement): kept in
+ * step only for a unit whose entry in the file gives them (a direct seller's statement of account). The networks'
+ * files never do, and there the figures our team enters in /admin stand, untouched and never reported as a conflict.
+ */
+const ARREARS_FIELDS = ["overdueAmount", "overduePenalty", "arrearsCheckedAt"];
 const COLUMNS = {
   askingPrice: "asking_price",
   originalPrice: "original_price",
@@ -219,6 +240,9 @@ const COLUMNS = {
   floor: "floor",
   view: "view",
   description: "description",
+  overdueAmount: "overdue_amount",
+  overduePenalty: "overdue_penalty",
+  arrearsCheckedAt: "arrears_checked_at",
   images: "images",
 };
 /** The statuses the sync may change: in review, live or paused. src/lib/offers.ts DEAL_STATUSES, src/lib/config.ts PUBLIC_STATUSES. */
@@ -250,6 +274,9 @@ function valuesOf(l) {
     floor: text(l.floor),
     view: text(l.view),
     description: text(l.description),
+    overdueAmount: l.overdueAmount ?? l.overdue_amount ?? null,
+    overduePenalty: l.overduePenalty ?? l.overdue_penalty ?? null,
+    arrearsCheckedAt: dateOf(l.arrearsCheckedAt ?? l.arrears_checked_at),
   };
 }
 
@@ -303,7 +330,10 @@ function permitLapsed(r, today) {
  * transaction (the network can be slow), stored once the checks pass under the lock. Returns how many were added.
  */
 async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
-  const wanted = valuesOf(checkListing(unit.listing));
+  const checked = checkListing(unit.listing);
+  const wanted = valuesOf(checked);
+  // Every synced field, but the arrears only where the unit's entry in the file gives them (ARREARS_FIELDS).
+  const managed = (f) => checked.hasArrears || !ARREARS_FIELDS.includes(f);
   const photos = unit.photos ?? [];
   const fetched = (await mayChange(pool, id)) ? await fetchMissing(pool, id, photos, sharp) : [];
   // The notices' emails, queued once the transaction commits (sendMail).
@@ -314,6 +344,7 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
     const { rows } = await client.query(
       `select id, ref_no, status, is_sample, seller_id, project_name, asking_price, public_price, original_price, amount_paid,
               next_instalment_date, next_instalment_amount, payment_plan, handover_date, size_sqft, floor, view, description, images,
+              overdue_amount, overdue_penalty, arrears_checked_at,
               dld_permit, dld_permit_expires_at, form_a_expires_at, permit_attested_at, created_by_staff, ownership_confirmed_at, source
        from listings where id = $1 for update`,
       [id],
@@ -330,7 +361,7 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
     let gallery = await galleryOrder(client, id, row.images ?? [], photos, uploader, src.synced?.images);
     // What the file would change: the fields, the gallery's order, photos the listing doesn't have yet.
     const lacking = await missingPhotos(client, id, photos);
-    const changed = [...SYNCED_FIELDS.filter((f) => !same(wanted[f], have[f])), ...(gallery.changed || lacking.length ? ["images"] : [])];
+    const changed = [...SYNCED_FIELDS.filter((f) => managed(f) && !same(wanted[f], have[f])), ...(gallery.changed || lacking.length ? ["images"] : [])];
     const now = new Date();
     const today = dubaiToday();
     let status = row.status;
@@ -388,6 +419,11 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
     const conflicts = {};
     const synced = {};
     for (const f of SYNCED_FIELDS) {
+      if (!managed(f)) {
+        // Arrears the file's entry doesn't give: our team's figures stand, and the snapshot keeps what it had.
+        synced[f] = snap[f];
+        continue;
+      }
       if (same(wanted[f], have[f]) || same(have[f], snap[f])) {
         synced[f] = wanted[f];
         if (!same(wanted[f], have[f])) diff[f] = [have[f], wanted[f]];
@@ -405,6 +441,13 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
         conflicts[f] = wanted[f];
         synced[f] = snap[f];
       }
+    }
+    // The overdue instalments are part of the balance still owed, so never above it (src/app/actions/admin.ts): with
+    // the price or the paid amount kept as our team's, a file figure above the balance stays out, a conflict.
+    if ("overdueAmount" in diff && after("overdueAmount") != null && after("overdueAmount") > Math.max(after("originalPrice") - after("amountPaid"), 0)) {
+      delete diff.overdueAmount;
+      conflicts.overdueAmount = wanted.overdueAmount;
+      synced.overdueAmount = snap.overdueAmount;
     }
     // The gallery: the file's photos in its order, the other entries (older import photos, anything our team added)
     // after them as they are — nothing dropped — while the array is still ours; else their arrangement stands.
@@ -678,6 +721,9 @@ const FIELD_LABELS = {
     floor: "floor",
     view: "view",
     description: "description",
+    overdueAmount: "overdue instalments",
+    overduePenalty: "late fees",
+    arrearsCheckedAt: "arrears checked with the developer on",
     images: "photos",
   },
   ar: {
@@ -692,6 +738,9 @@ const FIELD_LABELS = {
     floor: "الطابق",
     view: "الإطلالة",
     description: "الوصف",
+    overdueAmount: "الأقساط المتأخرة",
+    overduePenalty: "غرامات التأخير",
+    arrearsCheckedAt: "تاريخ التحقق من المتأخرات لدى المطوّر",
     images: "الصور",
   },
   zh: {
@@ -706,6 +755,9 @@ const FIELD_LABELS = {
     floor: "楼层",
     view: "景观",
     description: "描述",
+    overdueAmount: "逾期分期款",
+    overduePenalty: "滞纳金",
+    arrearsCheckedAt: "与开发商核对欠款日期",
     images: "照片",
   },
 };
@@ -1026,8 +1078,9 @@ async function ensureListing(pool, source, unit, ownerId, actor) {
     `insert into listings (
        seller_id, status, project_name, developer, community, developer_other, community_other, unit_type, size_sqft,
        floor, view, original_price, amount_paid, asking_price, handover_date, next_instalment_date,
-       next_instalment_amount, motivation, description, payment_plan, source, created_by_staff, ownership_confirmed_at
-     ) values ($1, 'pending_review', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, true, null)
+       next_instalment_amount, motivation, description, payment_plan, source, created_by_staff, ownership_confirmed_at,
+       overdue_amount, overdue_penalty, arrears_checked_at
+     ) values ($1, 'pending_review', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, true, null, $21, $22, $23)
      on conflict ((source->>'import'), (source->>'ref')) where source->>'import' is not null do nothing
      returning id`,
     [
@@ -1051,6 +1104,10 @@ async function ensureListing(pool, source, unit, ownerId, actor) {
       l.description,
       JSON.stringify(l.paymentPlan),
       JSON.stringify(provenance),
+      // The arrears, from a direct seller's statement of account when the entry gives them (null = not known).
+      l.overdueAmount,
+      l.overduePenalty,
+      l.arrearsCheckedAt,
     ],
   );
   const row = inserted.rows[0];
@@ -1111,6 +1168,16 @@ function checkListing(v) {
     dueDate: date(i?.dueDate ?? null),
     amount: money(i?.amount),
   }));
+  // The arrears, when the entry gives them (a direct seller's statement of account), by the admin editor's rules
+  // (src/app/actions/admin.ts): whole dirhams; the overdue instalments are part of the balance still owed, so never above
+  // it; the check date goes with the amounts (none = not known) and is never after today.
+  const hasArrears = ARREARS_FIELDS.some((k) => Object.hasOwn(v, k));
+  const overdueAmount = v.overdueAmount == null ? null : money(v.overdueAmount);
+  const overduePenalty = v.overduePenalty == null ? null : money(v.overduePenalty);
+  if (overdueAmount != null && overdueAmount > originalPrice - amountPaid) throw new Error("overdue above the balance owed");
+  const arrearsKnown = overdueAmount != null || overduePenalty != null;
+  const arrearsCheckedAt = arrearsKnown ? date(v.arrearsCheckedAt ?? null) : null;
+  if (arrearsCheckedAt != null && arrearsCheckedAt > dubaiToday()) throw new Error("arrears checked after today");
   return {
     projectName: str(v.projectName, 120, true),
     developer: str(v.developer, 80, true),
@@ -1130,6 +1197,10 @@ function checkListing(v) {
     motivation: v.motivation,
     description: str(v.description, 3000),
     paymentPlan,
+    overdueAmount,
+    overduePenalty,
+    arrearsCheckedAt,
+    hasArrears,
   };
 }
 
