@@ -65,7 +65,8 @@ function isPlainClick(e: MouseEvent) {
  * is a real link to the page in that language (/ar/…, /zh/…, /en/…), so it works in a new tab and without script; a
  * plain click goes through useSwitchLocale() instead, which also remembers the choice for the account's emails.
  * `compact` hides the label below xl (icon only), so the desktop header fits on one line at 1024–1279px; `dense` (the
- * signed-in header, which also holds the admin link, the bell and the account button) keeps the icon alone up to 2xl;
+ * signed-in header, which also holds the admin link, the bell and the account button) keeps the icon alone at every
+ * width: the header's content box stops at 1216px (container-page), so a wider screen gives it no more room;
  * `full` (the phone menu) lays the three languages out side by side instead of behind a second menu: one row of three
  * 44px choices, the current one filled (a check mark would not fit "English" in a third of the 288px sheet).
  */
@@ -131,11 +132,11 @@ export function LocaleSwitcher({ className, full, compact, dense }: { className?
         >
           {/* Named by what it shows (the page's language, in itself) and then what it is, for voice control. */}
           <Languages aria-hidden />
-          <span lang={locale} className={compact ? (dense ? "sr-only 2xl:not-sr-only" : "sr-only xl:not-sr-only") : undefined}>
+          <span lang={locale} className={compact ? (dense ? "sr-only" : "sr-only xl:not-sr-only") : undefined}>
             {LOCALE_NAMES[locale]}
           </span>
           <span className="sr-only"> – {t("langMenu.label")}</span>
-          <ChevronDown aria-hidden className={cn("size-3.5 opacity-60", compact && (dense ? "max-2xl:hidden" : "max-xl:hidden"))} />
+          <ChevronDown aria-hidden className={cn("size-3.5 opacity-60", compact && (dense ? "hidden" : "max-xl:hidden"))} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

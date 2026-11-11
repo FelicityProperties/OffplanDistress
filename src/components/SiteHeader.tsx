@@ -93,7 +93,9 @@ export async function SiteHeader() {
       {/* Phones: 56px, nearly opaque (over dark sections a see-through bar turned grey), hides while reading down. */}
       <AutoHideHeader className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur-xl backdrop-saturate-150 lg:bg-background/75">
         <div className="container-page flex h-14 items-center justify-between gap-4 lg:h-[4.25rem]">
-          <div className="flex min-w-0 items-center gap-1">
+          {/* From lg the logo never gives way: the bar's other parts are sized to fit beside it (1216px at most, the
+              page container's width on any wider screen too). */}
+          <div className="flex min-w-0 items-center gap-1 lg:shrink-0">
             <HeaderBack />
             <Link href="/" aria-label={BRAND.name}>
               <Logo />
@@ -107,7 +109,7 @@ export async function SiteHeader() {
             activeClassName="bg-ink text-primary-foreground hover:bg-ink hover:text-primary-foreground"
           />
           <div className="hidden items-center gap-2 lg:flex">
-            {/* Signed in, the bar also holds the admin link, the bell and the account button: the language name waits for 2xl. */}
+            {/* Signed in, the bar also holds the admin link, the bell and the account button: the language as its icon. */}
             <LocaleSwitcher compact dense={!!user} />
             {user ? (
               <>
@@ -120,10 +122,14 @@ export async function SiteHeader() {
                   </Button>
                 )}
                 {bell && <NotificationBell unread={bell.unread} items={bell.items} />}
-                <Button asChild className="rounded-full max-xl:px-3">
-                  <Link href="/dashboard" aria-label={t("myAccount")}>
+                {/* An admin's bar already names the console beside it: their account button is the icon alone. Anyone
+                    else's shows their name from xl, a long one cut short. */}
+                <Button asChild className={user.role === "admin" ? "rounded-full px-3" : "rounded-full max-xl:px-3"}>
+                  <Link href="/dashboard" aria-label={t("myAccount")} title={t("myAccount")}>
                     <LayoutDashboard />
-                    <span className="hidden xl:inline">{firstName ? t("accountOf", { name: firstName }) : t("myAccount")}</span>
+                    {user.role !== "admin" && (
+                      <span className="hidden max-w-48 truncate xl:block">{firstName ? t("accountOf", { name: firstName }) : t("myAccount")}</span>
+                    )}
                   </Link>
                 </Button>
                 <form action={logout}>
