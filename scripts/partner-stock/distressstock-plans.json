@@ -1134,14 +1134,14 @@
    "notes": "Re-posted image: price cut from 6,750,000 (payment to seller 2,388,068 → 2,338,068; commission 141,750 → 140,700); DLD fee and plan unchanged. All checks pass."
   },
   "QgAGrA": {
-   "image": "https://distressonly.deals/media/units/312/a343f90410f8.webp",
-   "transcribedAt": "2026-11-06",
+   "image": "https://distressonly.deals/media/units/312/a4ab0e77d06d.webp",
+   "transcribedAt": "2026-11-12",
    "legible": true,
-   "unitPrice": 3500000,
-   "paymentToSeller": 2006445,
+   "unitPrice": 3485000,
+   "paymentToSeller": 1991445,
    "dldFee": 149396,
    "trusteeFee": 5250,
-   "commission": 73500,
+   "commission": 73185,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -1165,10 +1165,10 @@
      "amount": 373388
     }
    ],
-   "totalOnTransfer": 2234591,
+   "totalOnTransfer": 2219276,
    "totalRemaining": 1493555,
-   "totalCosts": 3728146,
-   "notes": "Re-posted image: price cut from 3,525,000 (payment to seller 2,031,445 → 2,006,445; commission 74,025 → 73,500); DLD fee and plan unchanged. All checks pass."
+   "totalCosts": 3712831,
+   "notes": "Re-posted image: price cut from 3,500,000 (payment to seller 2,006,445 -> 1,991,445; commission 73,500 -> 73,185); DLD fee and plan unchanged. All checks pass."
   },
   "Qhtgvw": {
    "image": "https://distressonly.deals/media/units/57/f0cdeb3cf468.webp",
@@ -1905,6 +1905,27 @@
    "totalCosts": 8467792,
    "notes": "All checks pass: 4494480 + 3455520 = 7950000; the handover instalment equals the total remaining; totals add up."
   },
+  "d7EGmK": {
+   "image": "https://distressonly.deals/media/units/438/c2eaf8b00058.webp",
+   "transcribedAt": "2026-11-12",
+   "legible": true,
+   "unitPrice": 20300000,
+   "paymentToSeller": 20300000,
+   "dldFee": 812040,
+   "trusteeFee": 4200,
+   "commission": 426300,
+   "otherOnTransfer": [
+    {
+     "label": "5. Title Deed Fee",
+     "amount": 580
+    }
+   ],
+   "instalments": [],
+   "totalOnTransfer": 21543120,
+   "totalRemaining": 0,
+   "totalCosts": 21543120,
+   "notes": "Ready and vacant villa, fully paid: no payment plan and no 'Total Remaining' row printed (0). DLD line labelled '4% + 40 AED', on the selling price (812,040 = 4% of 20,300,000 + 40); the original price comes from the page's 'Original Price + DLD 4%' (AED 23,054,870). Trustee fee 4,200 and a title deed fee of 580. All checks pass."
+  },
   "dafYpQ": {
    "image": "https://distressonly.deals/media/units/339/a65ddc66c3f8.webp",
    "transcribedAt": "2026-10-27",
@@ -2145,6 +2166,60 @@
    "totalCosts": 2338875,
    "notes": "All checks pass: 1763724+436276 = 2200000. The instalments add up to 436276. Transfer rows add up to 1902599. 1902599+436276 = 2338875."
   },
+  "gYihWw": {
+   "image": "https://distressonly.deals/media/units/434/86fef3113be9.webp",
+   "transcribedAt": "2026-11-12",
+   "legible": true,
+   "unitPrice": 2330000,
+   "paymentToSeller": 977600,
+   "dldFee": 93240,
+   "trusteeFee": 5250,
+   "commission": 48930,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 1352400
+    }
+   ],
+   "totalOnTransfer": 1125020,
+   "totalRemaining": 1352400,
+   "totalCosts": 2477420,
+   "notes": "DLD line labelled '4% + 40 AED', charged on the selling price (93,240 = 4% of 2,330,000 + 40), not on the original price: the page's 'Original Price + DLD 4%' (AED 2,344,160) gives an original price of 2,254,000, so the unit is offered above its original price (the page's 0.6% discount is against the original price plus DLD). All checks pass."
+  },
+  "hB24z1": {
+   "image": "https://distressonly.deals/media/units/437/3310f53a895a.webp",
+   "transcribedAt": "2026-11-12",
+   "legible": true,
+   "unitPrice": 1735000,
+   "paymentToSeller": 1006246,
+   "dldFee": 72916,
+   "trusteeFee": 5250,
+   "commission": 36435,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "4-JAN-2027",
+     "dueDate": "2027-01-04",
+     "amount": 182189
+    },
+    {
+     "label": "80% Construction",
+     "dueDate": null,
+     "amount": 182189
+    },
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 364376
+    }
+   ],
+   "totalOnTransfer": 1120847,
+   "totalRemaining": 728754,
+   "totalCosts": 1849601,
+   "notes": "All checks pass."
+  },
   "hMaqAX": {
    "image": "https://distressonly.deals/media/units/373/175691212803.webp",
    "transcribedAt": "2026-10-30",
@@ -2319,6 +2394,28 @@
    "totalRemaining": 884365,
    "totalCosts": 2808436,
    "notes": "All checks pass: 1745635+884365 = 2630000. The instalments add up to 884365 (294789+294789+294787). Transfer rows add up to 1924071. 1924071+884365 = 2808436. The handover row prints an expected date, 30-APR-2028, which I used as its dueDate. The handover amount is 294787, 2 AED less than the other two instalments, exactly as printed."
+  },
+  "kkm6Bx": {
+   "image": "https://distressonly.deals/media/units/436/2bb39e20088f.webp",
+   "transcribedAt": "2026-11-12",
+   "legible": true,
+   "unitPrice": 3440000,
+   "paymentToSeller": 1796790,
+   "dldFee": 164361,
+   "trusteeFee": 5250,
+   "commission": 72240,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 1643210
+    }
+   ],
+   "totalOnTransfer": 2038641,
+   "totalRemaining": 1643210,
+   "totalCosts": 3681851,
+   "notes": "All checks pass."
   },
   "lyA7qm": {
    "image": "https://distressonly.deals/media/units/267/81e9622e004f.webp",
@@ -3294,6 +3391,43 @@
    "totalRemaining": 5839808,
    "totalCosts": 14321436,
    "notes": "All checks pass. Payment to seller plus remaining is 7,896,192 + 5,839,808 = 13,736,000, which equals the unit price. The instalments sum to 1,459,877 + 4,379,931 = 5,839,808. Transfer items sum to 8,481,628, and 8,481,628 + 5,839,808 = 14,321,436, which matches TOTAL COSTS. The DLD row is labelled '2%', unlike the usual '4% + 40 AED'. The printed 291,980 is not 2% of the unit price (that would be 274,720) and not 4%+40 of it either; the image prints it this way. The commission 288,456 equals 2% plus 5% VAT of 13,736,000."
+  },
+  "ym6dtf": {
+   "image": "https://distressonly.deals/media/units/435/3822b2a948a0.webp",
+   "transcribedAt": "2026-11-12",
+   "legible": true,
+   "unitPrice": 1710000,
+   "paymentToSeller": 1042160,
+   "dldFee": 83522,
+   "trusteeFee": 5250,
+   "commission": 35910,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "20-DEC-2026",
+     "dueDate": "2026-12-20",
+     "amount": 83480
+    },
+    {
+     "label": "20-MAR-2027",
+     "dueDate": "2027-03-20",
+     "amount": 83480
+    },
+    {
+     "label": "20-JUN-2027",
+     "dueDate": "2027-06-20",
+     "amount": 83480
+    },
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 417400
+    }
+   ],
+   "totalOnTransfer": 1166842,
+   "totalRemaining": 667840,
+   "totalCosts": 1834682,
+   "notes": "All checks pass."
   },
   "yx5CEt": {
    "image": "https://distressonly.deals/media/units/334/7593051c1356.webp",
