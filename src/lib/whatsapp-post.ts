@@ -67,6 +67,9 @@ function dealLines(d: PostDeal, locale: Locale, today: string) {
     facts: `${unit} · ${tc("sqft", { n: d.sizeSqft.toLocaleString("en-AE") })} · ${when}`,
     price: ta("wa.price", { price: formatAEDCompact(d.askingPrice, locale) }),
     discount,
+    // What the developer wants cleared before the NOC, paid on transfer day: left out, "to the seller" and "per the
+    // plan" read as the whole price of a unit in arrears.
+    arrears: a.arrears > 0 ? ta("wa.arrears", { amount: formatAEDCompact(a.arrears, locale) }) : null,
     remaining: a.remainingAfterTransfer > 0 ? ta("wa.remaining", { amount: formatAEDCompact(a.remainingAfterTransfer, locale) }) : null,
     link: url(`/deals/${refCode(d.refNo)}`, locale),
   };
@@ -82,6 +85,7 @@ export function dealPost(d: PostDeal, locale: Locale, today = dubaiToday()) {
     x.title,
     x.facts,
     withDiscount(x.price, x.discount, locale),
+    x.arrears,
     x.remaining,
     x.link,
     "",
@@ -120,6 +124,7 @@ export async function bestDealsPosts(today = dubaiToday()): Promise<PostTexts | 
       return [
         `${i + 1}. ${x.title} — ${x.facts}`,
         `   ${withDiscount(x.price, x.discount, locale)}`,
+        ...(x.arrears ? [`   ${x.arrears}`] : []),
         `   ${x.link}`,
         `   ${reraLine(d, locale)}`,
       ];

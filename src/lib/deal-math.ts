@@ -192,7 +192,9 @@ export type PlanSchedule = ReturnType<typeof planSchedule>;
  *   - preHandover: due from today up to handover (`months`: from today to the handover date).
  *   - atHandover: the handover payment, by its label ("On handover", "عند التسليم"…), even when dated after the
  *     listing's handover date (`date`: then that later date, else the listing's), or, when no label says so, the last
- *     instalment dated in the handover quarter (up to the handover date). A handover mortgage can finance it.
+ *     instalment dated in the handover quarter (up to the handover date), unless the plan carries on after it and the
+ *     row is no larger than the instalment before or after it (a monthly plan running past handover has no handover
+ *     payment). A handover mortgage can finance it.
  *   - postHandover: labelled post-handover, or due after the handover date.
  *   - undated: no due date given.
  * transferDay is the usual window for the transfer if an offer is agreed today; dueSoon is the next instalment falling
@@ -222,6 +224,25 @@ export function planSchedule(
         }, null)
       : null;
 
+  // A monthly plan that carries on after handover (1% a month, then 0.5% a month for years) has no handover payment:
+  // the quarter's last row is one more instalment, not something a handover mortgage pays, and it stays with the
+  // instalments before handover. So when the plan carries on, the row counts only if it stands out: larger than the
+  // instalment before it and larger than the one after it. A plan that ends with the row keeps it as before.
+  const handoverRow = (() => {
+    if (lastInHandoverQuarter == null) return null;
+    const amount = plan.reduce((sum, p) => (dated(p) === lastInHandoverQuarter ? sum + p.amount : sum), 0);
+    let before: PlanInstalment | null = null;
+    let after: PlanInstalment | null = null;
+    for (const p of plan) {
+      const due = dated(p);
+      if (due == null) continue;
+      if (due < lastInHandoverQuarter && (before == null || due >= (dated(before) as string))) before = p;
+      if (due > lastInHandoverQuarter && (after == null || due < (dated(after) as string))) after = p;
+    }
+    if (after == null) return lastInHandoverQuarter;
+    return amount > after.amount && (before == null || amount > before.amount) ? lastInHandoverQuarter : null;
+  })();
+
   const pastDue = bucket();
   const pre = bucket();
   const at = bucket();
@@ -238,7 +259,7 @@ export function planSchedule(
       add(at, p.amount);
       if (due && (atDate == null || due > atDate)) atDate = due;
     } else if (due && handover && due > handover) add(post, p.amount);
-    else if (due != null && due === lastInHandoverQuarter && !isPreHandover(p.label)) add(at, p.amount);
+    else if (due != null && due === handoverRow && !isPreHandover(p.label)) add(at, p.amount);
     else if (due) add(pre, p.amount);
     else add(undated, p.amount);
   }

@@ -8,6 +8,7 @@ import { BRAND, FEES, UNIT_TYPES, type UnitTypeKey } from "./config";
 import { analyzeDeal, isReady } from "./deal-math";
 import { discountLabels } from "./discount-labels";
 import { formatAED, formatDate, formatPct, formatQuarter, parseRefCode, refCode } from "./format";
+import { PLAN_MAX_ROWS } from "./listing-schema";
 import { dealFacets, getListingByRef, parseFilters, searchDeals, type ListingCard } from "./listings";
 import { dubaiToday, isAdvertised } from "./permits";
 import { communityName, developerName } from "./place-names";
@@ -51,7 +52,7 @@ Units and figures: never invent units, prices, discounts, payment plans or avail
 How a resale (assignment) of an off-plan unit works:
 - The buyer pays the seller the asking price, which buys the seller's equity (what they have paid the developer so far, or part of it), and takes over the remaining payments to the developer under the original payment plan.
 - Sale value = asking price + the balance still owed to the developer. It is registered with the Dubai Land Department (DLD), and the fees are worked out on it.
-- Cash needed on transfer day ≈ asking price + DLD transfer fee (${pct(FEES.dldRate)} of the sale value) + DLD registration and trustee office fees (about AED ${FEES.dldAdminEstimate.toLocaleString("en-US")}) + the developer's NOC fee (often about AED ${FEES.nocEstimate.toLocaleString("en-US")}; set by each developer) + our fee${FEES.payer === "buyer" ? "" : " (paid by the seller, not the buyer)"} + any overdue instalments the seller has not paid. DLD and developer fees are estimates until the NOC is issued.
+- Cash needed on transfer day ≈ asking price + DLD transfer fee (${pct(FEES.dldRate)} of the sale value) + DLD registration and trustee office fees (about AED ${FEES.dldAdminEstimate.toLocaleString("en-US")}) + the developer's NOC fee (often about AED ${FEES.nocEstimate.toLocaleString("en-US")}; set by each developer) + our fee${FEES.payer === "buyer" ? "" : " (paid by the seller, not the buyer)"} + any overdue instalments the seller has not paid and the developer's late fees on them. Developers want both cleared before the NOC; the late fees are outside the sale value, who bears them is agreed in the MOU, and the tools' cash and all-in estimates count them as the buyer's. DLD and developer fees are estimates until the NOC is issued.
 - Our fee: ${pct(FEES.commissionRate)} of the sale value plus ${pct(FEES.vatRate)} VAT on the fee, paid by the ${FEES.payer}, and only when the transfer completes. ${FEES.payer === "buyer" ? "Listing is free for sellers." : "Buying is free of our fee."} No listing, upfront or retainer fees; no fee if the deal falls through. Developer NOC paperwork, the trustee office appointment and settlement are included.
 - Steps: the seller uploads the SPA, Oqood, statement of account and ID through a secure form; we verify the unit and the payments with the developer; the seller signs RERA Form A and the DLD advertising permit (Trakheesi) is issued; the listing goes live; buyers make offers; we apply for the developer's NOC; settlement at a DLD trustee office; DLD transfer and a new Oqood in the buyer's name. Typical timeline: 2 to 5 weeks from an accepted offer to the new Oqood, depending on the developer.
 - Most developers only allow a resale once a minimum share of the price is paid (often 30 to 40%); below ${pct(FEES.nocMinPaidPct)} paid, the developer may want more payments before it issues the NOC.
@@ -235,12 +236,18 @@ async function dealTool(input: z.infer<typeof DealInput>, pageLocale: Locale) {
     ...summary(d, locale, today),
     floor: l.floor ?? undefined,
     seller_description: l.description?.slice(0, 1500) || undefined,
-    payment_plan_remaining: plan.slice(0, 40).map((p) => ({
+    // Every row the plan may hold (PLAN_MAX_ROWS): cut at 40, a monthly plan that runs years past handover read as
+    // ending early, tens of thousands of dirhams short. The count says how long the plan is at a glance.
+    payment_plan_instalments: plan.length || undefined,
+    payment_plan_remaining: plan.slice(0, PLAN_MAX_ROWS).map((p) => ({
       instalment: p.label,
       due: p.dueDate ? formatDate(p.dueDate, locale) : undefined,
       amount: formatAED(p.amount, locale),
     })),
+    // The arrears and their two parts: the late fees are not instalments, and who bears them is agreed in the MOU.
     overdue_to_clear_at_transfer: a.arrears > 0 ? formatAED(a.arrears, locale) : undefined,
+    overdue_instalments: a.overdue > 0 ? formatAED(a.overdue, locale) : undefined,
+    developer_late_fees: a.penalty > 0 ? formatAED(a.penalty, locale) : undefined,
     buyer_fees_estimate: {
       dld_transfer_fee: formatAED(a.dld, locale),
       dld_registration_and_trustee: formatAED(a.dldAdmin, locale),
