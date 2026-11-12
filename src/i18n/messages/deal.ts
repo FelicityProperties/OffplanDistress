@@ -12,6 +12,16 @@ export default defineMessages({
       "{developer}, {community}. {paid} paid, handover {handover}. Take over the payment plan for {upfront} upfront.",
     // A unit already handed over (isReady in src/lib/deal-math.ts), and / or one with no plan left to take over.
     "meta.descriptionReady": "{developer}, {community}. Ready unit, {paid} paid. Take over the payment plan for {upfront} upfront.",
+    // A unit in arrears: the seller's price alone would read as the whole cash needed on transfer day.
+    "meta.descriptionArrears":
+      "{developer}, {community}. {paid} paid, handover {handover}. {upfront} to the seller plus {overdue} of overdue instalments to clear with the developer on transfer day, then take over the payment plan.",
+    "meta.descriptionReadyArrears":
+      "{developer}, {community}. Ready unit, {paid} paid. {upfront} to the seller plus {overdue} of overdue instalments to clear with the developer on transfer day, then take over the payment plan.",
+    // Added after the description when the developer has charged late fees: they are outside the price and its discount.
+    "meta.lateFees":
+      "The developer's late fees ({amount} on its statement of {date}, and they can grow while unpaid) are not in the price; who pays them is agreed in the MOU.",
+    "meta.lateFeesUndated":
+      "The developer's late fees ({amount} when last checked, and they can grow while unpaid) are not in the price; who pays them is agreed in the MOU.",
     "meta.descriptionPaid":
       "{developer}, {community}. Fully paid, handover {handover}. {upfront} to the seller, with nothing left to pay the developer.",
     "meta.descriptionReadyPaid":
@@ -71,8 +81,12 @@ export default defineMessages({
     "cost.launchAllIn": "Buying new from the developer today (incl. {rate} DLD)",
     "cost.saving": "Your net saving",
     "cost.disclaimer": "DLD and developer fees are estimates and are confirmed when the NOC is issued.",
-    "cost.arrears": "Overdue instalments + late fees to clear before NOC (checked {date})",
-    "cost.arrearsSeller": "Overdue instalments + late fees to clear before NOC (seller's figure, being checked)",
+    "cost.overdue": "Overdue instalments to clear before NOC, part of the price (checked {date})",
+    "cost.overdueSeller": "Overdue instalments to clear before NOC, part of the price (seller's figure, being checked)",
+    "cost.lateFees":
+      "Developer's late fees on them, not in the price: they can grow while unpaid, and who pays them is agreed in the MOU (checked {date})",
+    "cost.lateFeesSeller":
+      "Developer's late fees on them, not in the price: they can grow while unpaid, and who pays them is agreed in the MOU (seller's figure, being checked)",
     "cost.upToDate": "Up to date with the developer (checked {date})",
     "cost.arrearsUnknown": "Overdue instalments + late fees: not yet checked with the developer",
     "cost.remainingAfterArrears": "Remaining balance to developer (after the overdue instalments)",
@@ -87,7 +101,8 @@ export default defineMessages({
     "timeline.transferWhen": "Usually between {from} and {to}, 2–5 weeks after the MOU",
     "timeline.transferEquity": "Equity to the seller",
     "timeline.transferFees": "Fees: ours, DLD and developer NOC (estimated)",
-    "timeline.transferArrears": "Overdue instalments + late fees",
+    "timeline.transferOverdue": "Overdue instalments (part of the price)",
+    "timeline.transferLateFees": "Developer's late fees (not in the price; who pays them is agreed in the MOU)",
     "timeline.pre": "Before handover",
     "timeline.instalments.one": "1 instalment",
     "timeline.instalments.many": "{count} instalments",
@@ -102,7 +117,7 @@ export default defineMessages({
     "timeline.pastDueStepHint":
       "Paid since, or overdue and then paid on transfer day. We check the developer's statement of account before the MOU.",
     "timeline.pastDueStepChecked":
-      "Not in the arrears on the developer's statement checked {date}; we reconcile the balance with it before the MOU.",
+      "Not in the arrears on the developer's statement checked {date}: paid since, or overdue and then also cleared on transfer day, on top of the figure above. We reconcile the balance with it before the MOU.",
     "timeline.pastDue":
       "The listed plan also has {amount} dated before today: paid since, or overdue. We confirm it with the developer's statement of account before the MOU.",
     "timeline.pastDueChecked":
@@ -173,6 +188,14 @@ export default defineMessages({
       "{developer}، {community}. نسبة المدفوع {paid}، والتسليم {handover}. تولَّ خطة الدفع مقابل دفعة مقدّمة قدرها {upfront}.",
     "meta.descriptionReady":
       "{developer}، {community}. وحدة جاهزة، نسبة المدفوع {paid}. تولَّ خطة الدفع مقابل دفعة مقدّمة قدرها {upfront}.",
+    "meta.descriptionArrears":
+      "{developer}، {community}. نسبة المدفوع {paid}، والتسليم {handover}. تدفع للبائع {upfront}، إضافةً إلى أقساط متأخرة قدرها {overdue} تُسدَّد للمطوّر يوم نقل الملكية، ثم تتولّى خطة الدفع.",
+    "meta.descriptionReadyArrears":
+      "{developer}، {community}. وحدة جاهزة، نسبة المدفوع {paid}. تدفع للبائع {upfront}، إضافةً إلى أقساط متأخرة قدرها {overdue} تُسدَّد للمطوّر يوم نقل الملكية، ثم تتولّى خطة الدفع.",
+    "meta.lateFees":
+      "غرامات التأخير لدى المطوّر ({amount} في كشف حسابه بتاريخ {date}، وقد تزداد ما دامت غير مسدّدة) غير مشمولة في السعر، ويُتفق في مذكرة التفاهم على الطرف الذي يتحمّلها.",
+    "meta.lateFeesUndated":
+      "غرامات التأخير لدى المطوّر ({amount} عند آخر تحقق، وقد تزداد ما دامت غير مسدّدة) غير مشمولة في السعر، ويُتفق في مذكرة التفاهم على الطرف الذي يتحمّلها.",
     "meta.descriptionPaid":
       "{developer}، {community}. مدفوعة بالكامل، والتسليم {handover}. تدفع للبائع {upfront}، ولا يتبقى أي مبلغ للمطوّر.",
     "meta.descriptionReadyPaid":
@@ -228,8 +251,12 @@ export default defineMessages({
     "cost.launchAllIn": "الشراء جديداً من المطوّر اليوم (شاملاً {rate} لدائرة الأراضي والأملاك)",
     "cost.saving": "صافي التوفير لك",
     "cost.disclaimer": "رسوم دائرة الأراضي والأملاك والمطوّر تقديرية، وتُؤكَّد عند إصدار شهادة عدم الممانعة.",
-    "cost.arrears": "الأقساط المتأخرة وغرامات التأخير الواجب سدادها قبل شهادة عدم الممانعة (تم التحقق بتاريخ {date})",
-    "cost.arrearsSeller": "الأقساط المتأخرة وغرامات التأخير الواجب سدادها قبل شهادة عدم الممانعة (بحسب إفادة البائع، وقيد التحقق)",
+    "cost.overdue": "الأقساط المتأخرة الواجب سدادها قبل شهادة عدم الممانعة، وهي جزء من السعر (تم التحقق بتاريخ {date})",
+    "cost.overdueSeller": "الأقساط المتأخرة الواجب سدادها قبل شهادة عدم الممانعة، وهي جزء من السعر (بحسب إفادة البائع، وقيد التحقق)",
+    "cost.lateFees":
+      "غرامات التأخير التي فرضها المطوّر عليها، وهي غير مشمولة في السعر وقد تزداد ما دامت غير مسدّدة، ويُتفق في مذكرة التفاهم على الطرف الذي يتحمّلها (تم التحقق بتاريخ {date})",
+    "cost.lateFeesSeller":
+      "غرامات التأخير التي فرضها المطوّر عليها، وهي غير مشمولة في السعر وقد تزداد ما دامت غير مسدّدة، ويُتفق في مذكرة التفاهم على الطرف الذي يتحمّلها (بحسب إفادة البائع، وقيد التحقق)",
     "cost.upToDate": "لا توجد مبالغ متأخرة لدى المطوّر (تم التحقق بتاريخ {date})",
     "cost.arrearsUnknown": "الأقساط المتأخرة وغرامات التأخير: لم يتم التحقق منها لدى المطوّر بعد",
     "cost.remainingAfterArrears": "الرصيد المتبقي للمطوّر (بعد سداد الأقساط المتأخرة)",
@@ -244,7 +271,8 @@ export default defineMessages({
     "timeline.transferWhen": "عادةً بين {from} و{to}، أي بعد أسبوعين إلى خمسة أسابيع من توقيع مذكرة التفاهم",
     "timeline.transferEquity": "حصة البائع",
     "timeline.transferFees": "الرسوم: رسومنا ورسوم دائرة الأراضي والأملاك وشهادة عدم الممانعة من المطوّر (تقديرية)",
-    "timeline.transferArrears": "الأقساط المتأخرة وغرامات التأخير",
+    "timeline.transferOverdue": "الأقساط المتأخرة (جزء من السعر)",
+    "timeline.transferLateFees": "غرامات التأخير لدى المطوّر (غير مشمولة في السعر، ويُتفق في مذكرة التفاهم على من يتحمّلها)",
     "timeline.pre": "قبل التسليم",
     "timeline.instalments.one": "قسط واحد",
     "timeline.instalments.many": "عدد الأقساط: {count}",
@@ -259,7 +287,7 @@ export default defineMessages({
     "timeline.pastDueStepHint":
       "إمّا سُدِّدت منذ ذلك الحين، وإمّا متأخرة فتُسدَّد يوم نقل الملكية. ونتحقق من كشف حساب المطوّر قبل توقيع مذكرة التفاهم.",
     "timeline.pastDueStepChecked":
-      "غير مدرجة ضمن المتأخرات في كشف حساب المطوّر الذي تم التحقق منه بتاريخ {date}، وسنطابق الرصيد معه قبل توقيع مذكرة التفاهم.",
+      "غير مدرجة ضمن المتأخرات في كشف حساب المطوّر الذي تم التحقق منه بتاريخ {date}: إمّا سُدِّدت منذ ذلك الحين، وإمّا متأخرة فتُسدَّد هي أيضاً يوم نقل الملكية إضافةً إلى المبلغ أعلاه. وسنطابق الرصيد معه قبل توقيع مذكرة التفاهم.",
     "timeline.pastDue":
       "تتضمن خطة الدفع المدرجة أيضاً {amount} بتواريخ سابقة لليوم: إمّا سُدِّدت منذ ذلك الحين وإمّا متأخرة. ونتحقق من ذلك من كشف حساب المطوّر قبل توقيع مذكرة التفاهم.",
     "timeline.pastDueChecked":
@@ -329,6 +357,12 @@ export default defineMessages({
     "meta.description":
       "{developer}，{community}。已付 {paid}，交房时间：{handover}。支付 {upfront} 即可接手剩余付款计划。",
     "meta.descriptionReady": "{developer}，{community}。现房，已付 {paid}。支付 {upfront} 即可接手剩余付款计划。",
+    "meta.descriptionArrears":
+      "{developer}，{community}。已付 {paid}，交房时间：{handover}。向卖家支付 {upfront}，并在过户当日向开发商结清逾期分期款 {overdue}，之后接手剩余付款计划。",
+    "meta.descriptionReadyArrears":
+      "{developer}，{community}。现房，已付 {paid}。向卖家支付 {upfront}，并在过户当日向开发商结清逾期分期款 {overdue}，之后接手剩余付款计划。",
+    "meta.lateFees": "开发商收取的滞纳金（其 {date} 对账单所列为 {amount}，未付期间可能继续增加）不含在价格内，由哪一方承担在谅解备忘录（MOU）中约定。",
+    "meta.lateFeesUndated": "开发商收取的滞纳金（最近一次核实为 {amount}，未付期间可能继续增加）不含在价格内，由哪一方承担在谅解备忘录（MOU）中约定。",
     "meta.descriptionPaid": "{developer}，{community}。已全额付清，交房时间：{handover}。向卖家支付 {upfront}，无需再向开发商付款。",
     "meta.descriptionReadyPaid": "{developer}，{community}。现房，已全额付清。向卖家支付 {upfront}，无需再向开发商付款。",
 
@@ -382,8 +416,10 @@ export default defineMessages({
     "cost.launchAllIn": "今日直接向开发商购买新房（含 DLD 费用 {rate}）",
     "cost.saving": "您的净节省金额",
     "cost.disclaimer": "DLD 及开发商费用为估算值，以 NOC 签发时确认的金额为准。",
-    "cost.arrears": "签发 NOC 前须结清的逾期分期款及滞纳金（{date}核实）",
-    "cost.arrearsSeller": "签发 NOC 前须结清的逾期分期款及滞纳金（卖家提供的数字，核实中）",
+    "cost.overdue": "签发 NOC 前须结清的逾期分期款，属于价格的一部分（{date}核实）",
+    "cost.overdueSeller": "签发 NOC 前须结清的逾期分期款，属于价格的一部分（卖家提供的数字，核实中）",
+    "cost.lateFees": "开发商就上述逾期款收取的滞纳金：不含在价格内，未付期间可能继续增加，由哪一方承担在谅解备忘录（MOU）中约定（{date}核实）",
+    "cost.lateFeesSeller": "开发商就上述逾期款收取的滞纳金：不含在价格内，未付期间可能继续增加，由哪一方承担在谅解备忘录（MOU）中约定（卖家提供的数字，核实中）",
     "cost.upToDate": "对开发商无欠款（{date}核实）",
     "cost.arrearsUnknown": "逾期分期款及滞纳金：尚未向开发商核实",
     "cost.remainingAfterArrears": "应付开发商余款（扣除逾期分期款后）",
@@ -398,7 +434,8 @@ export default defineMessages({
     "timeline.transferWhen": "通常在 {from}至 {to}之间，即签署谅解备忘录（MOU）后 2–5 周",
     "timeline.transferEquity": "支付给卖家的权益款",
     "timeline.transferFees": "费用：我们的服务费、DLD 费用及开发商 NOC 费用（估算）",
-    "timeline.transferArrears": "逾期分期款及滞纳金",
+    "timeline.transferOverdue": "逾期分期款（属于价格的一部分）",
+    "timeline.transferLateFees": "开发商收取的滞纳金（不含在价格内，由哪一方承担在 MOU 中约定）",
     "timeline.pre": "交房前",
     "timeline.instalments.one": "1 期分期款",
     "timeline.instalments.many": "{count} 期分期款",
@@ -413,7 +450,7 @@ export default defineMessages({
     "timeline.pastDueStepHint":
       "或已在此后付清，或已逾期并将在过户当日支付。我们会在签署谅解备忘录（MOU）前核对开发商的付款对账单。",
     "timeline.pastDueStepChecked":
-      "未列入 {date}核实的开发商付款对账单所载欠款中；我们会在签署谅解备忘录（MOU）前据此核对余款。",
+      "未列入 {date}核实的开发商付款对账单所载欠款中：或已在此后付清，或已逾期，须在过户当日另行结清（不在上方金额内）。我们会在签署谅解备忘录（MOU）前据此核对余款。",
     "timeline.pastDue":
       "所列付款计划中另有 {amount} 的到期日早于今日：或已在此后付清，或已逾期。我们会在签署谅解备忘录（MOU）前根据开发商的付款对账单确认。",
     "timeline.pastDueChecked":

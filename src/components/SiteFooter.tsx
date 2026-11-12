@@ -10,6 +10,9 @@ import { BRAND, brandAddress, brandName } from "@/lib/config";
 import { prefillEmail } from "@/lib/newsletter";
 import { cn } from "@/lib/utils";
 
+/** The company's site for Dubai Hills Estate; its Arabic and Chinese pages sit under /ar and /zh, as this site's do. */
+const DUBAI_HILLS_SITE = "https://www.dubaihillsoffplan.com";
+
 export async function SiteFooter() {
   const [t, tn, tw, tp, locale, user] = await Promise.all([
     getT("common"),
@@ -144,15 +147,34 @@ export async function SiteFooter() {
             floating && "max-sm:pe-[calc(var(--fab-size,3rem)+var(--fab-edge,1rem)+0.5rem)] sm:max-2xl:pe-24",
           )}
         >
-          <p>
-            © {new Date().getFullYear()} <bdi>{brandName(locale)}</bdi>
-            {legal.map((item) => (
-              <span key={item as string} className="tabular">
-                {" · "}
-                {item}
-              </span>
-            ))}
-          </p>
+          <div className="space-y-1.5">
+            <p>
+              © {new Date().getFullYear()} <bdi>{brandName(locale)}</bdi>
+              {legal.map((item) => (
+                <span key={item as string} className="tabular">
+                  {" · "}
+                  {item}
+                </span>
+              ))}
+            </p>
+            {/* The company's site for Dubai Hills Estate, in the page's language: an ordinary link, one search engines
+                follow and that keeps the referrer, so that site's visitor numbers name this one as the source. A
+                Chinese lead-in ends in a full-width colon, which takes no space after it. The line asks for no width
+                of its own (w-0) and then fills the column (min-w-full), so on a desktop the © line alone sets how the
+                row is shared and the estimates note beside it wraps as it did before this line was here. */}
+            <p className="w-0 min-w-full text-balance">
+              {t("sisterLead", { company: brandName(locale) })}
+              {locale === "zh" ? "" : " "}
+              <a
+                href={locale === "en" ? DUBAI_HILLS_SITE : `${DUBAI_HILLS_SITE}/${locale}`}
+                target="_blank"
+                rel="noopener"
+                className="py-1.5 underline underline-offset-4 transition-colors hover:text-gold"
+              >
+                {t("sisterDubaiHills")}
+              </a>
+            </p>
+          </div>
           <p className="max-w-xl lg:text-end">{t("estimatesNote")}</p>
         </div>
       </div>

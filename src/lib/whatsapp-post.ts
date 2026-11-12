@@ -8,7 +8,7 @@ import { tFor } from "@/i18n/server";
 import { BRAND, brandName, brokerName, type UnitTypeKey } from "./config";
 import { analyzeDeal, isReady } from "./deal-math";
 import { discountLabels } from "./discount-labels";
-import { formatAEDCompact, formatQuarter, refCode } from "./format";
+import { formatAED, formatAEDCompact, formatDate, formatQuarter, refCode } from "./format";
 import { cardColumns } from "./listings";
 import { advertisedSql, dubaiToday } from "./permits";
 import { communityName } from "./place-names";
@@ -28,6 +28,8 @@ export type PostDeal = {
   launchPrice: number | null;
   overdueAmount?: number | null;
   overduePenalty?: number | null;
+  /** The developer's statement the arrears come from: the late fees are dated by it, as they grow while unpaid. */
+  arrearsCheckedAt?: string | null;
   handoverDate: string | null;
   planRows: number;
   dldPermit: string | null;
@@ -67,6 +69,17 @@ function dealLines(d: PostDeal, locale: Locale, today: string) {
     facts: `${unit} · ${tc("sqft", { n: d.sizeSqft.toLocaleString("en-AE") })} · ${when}`,
     price: ta("wa.price", { price: formatAEDCompact(d.askingPrice, locale) }),
     discount,
+    // What the developer wants cleared before the NOC, paid on transfer day: left out, "to the seller" and "per the
+    // plan" read as the whole price of a unit in arrears. The overdue instalments are part of the price (the balance
+    // owed), so the seller's line, this one and the plan's add up to it; the late fees are not, and who pays them is
+    // agreed in the MOU, so they get their own line, to the dirham, next to the "below original price" claim.
+    overdue: a.overdue > 0 ? ta("wa.overdue", { amount: formatAEDCompact(a.overdue, locale) }) : null,
+    lateFees:
+      a.penalty > 0
+        ? d.arrearsCheckedAt
+          ? ta("wa.lateFees", { amount: formatAED(a.penalty, locale), date: formatDate(d.arrearsCheckedAt, locale) })
+          : ta("wa.lateFeesUndated", { amount: formatAED(a.penalty, locale) })
+        : null,
     remaining: a.remainingAfterTransfer > 0 ? ta("wa.remaining", { amount: formatAEDCompact(a.remainingAfterTransfer, locale) }) : null,
     link: url(`/deals/${refCode(d.refNo)}`, locale),
   };
@@ -82,7 +95,9 @@ export function dealPost(d: PostDeal, locale: Locale, today = dubaiToday()) {
     x.title,
     x.facts,
     withDiscount(x.price, x.discount, locale),
+    x.overdue,
     x.remaining,
+    x.lateFees,
     x.link,
     "",
     reraLine(d, locale),
@@ -120,6 +135,8 @@ export async function bestDealsPosts(today = dubaiToday()): Promise<PostTexts | 
       return [
         `${i + 1}. ${x.title} — ${x.facts}`,
         `   ${withDiscount(x.price, x.discount, locale)}`,
+        // With overdue instalments, the plan line too, so the lines add up to the price the discount is about.
+        ...[x.overdue, x.overdue ? x.remaining : null, x.lateFees].filter((line) => line != null).map((line) => `   ${line}`),
         `   ${x.link}`,
         `   ${reraLine(d, locale)}`,
       ];
