@@ -451,7 +451,8 @@ export function validateEntry(e, rules) {
   int(l.nextInstalmentAmount, "nextInstalmentAmount", { optional: true });
   if (!["urgent", "motivated", "flexible"].includes(l.motivation)) p.push("motivation");
   str(l.description, 3000, "description");
-  if (!Array.isArray(l.paymentPlan) || l.paymentPlan.length > 60) p.push("paymentPlan: at most 60 rows");
+  // PLAN_MAX_ROWS in src/lib/listing-schema.ts.
+  if (!Array.isArray(l.paymentPlan) || l.paymentPlan.length > 120) p.push("paymentPlan: at most 120 rows");
   else {
     l.paymentPlan.forEach((r, i) => {
       str(r?.label, 60, `paymentPlan row ${i + 1} label`, 2);

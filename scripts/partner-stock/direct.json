@@ -5,7 +5,7 @@
   "name": "Direct sellers",
   "url": null
  },
- "generatedAt": "2026-11-11T12:00:00Z",
+ "generatedAt": "2026-11-12T12:00:00Z",
  "units": [
   {
    "ref": "amaal8-1104",
@@ -861,6 +861,909 @@
     }
    ],
    "notes": "Direct seller (WhatsApp intake, 31 Oct 2026); documents received: the developer's Offer to Purchase dated 3 Jun 2025 and the statement of account dated 5 Oct 2026 (received 2 Nov 2026): total paid AED 380,317.46 = AED 343,357.22 towards the unit price + DLD fee AED 34,335.24 + admin fee AED 2,625; outstanding AED 515,023.80; overdue at the statement date AED 42,914.25 (16th instalment balance AED 34,330.44 due 27 Aug 2026 and the 17th AED 8,583.81 due 26 Sep 2026) plus AED 343.61 unpaid late fees; the 18th (AED 8,583.81, 26 Oct 2026) fell due after the statement — enter the arrears and late fees on the listing and confirm the current balance before the MOU. Asking price set at half of the paid amount on the owner's instruction; the seller wants an immediate exit. Photo: project render from the developer's marketing material."
+  },
+  {
+   "ref": "samana-lake-views-studio-15f",
+   "url": null,
+   "posted": "2026-11-12",
+   "listing": {
+    "projectName": "Samana Lake Views",
+    "developer": "Samana",
+    "developerOther": null,
+    "community": "Dubai Production City",
+    "communityOther": null,
+    "unitType": "studio",
+    "sizeSqft": 416,
+    "floor": "15",
+    "view": null,
+    "originalPrice": 673596,
+    "amountPaid": 259334,
+    "askingPrice": 124614,
+    "handoverDate": "2027-12-31",
+    "nextInstalmentDate": "2026-11-25",
+    "nextInstalmentAmount": 6736,
+    "paymentPlan": [
+     {
+      "label": "25-NOV-2025",
+      "dueDate": "2025-11-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-DEC-2025",
+      "dueDate": "2025-12-25",
+      "amount": 43784
+     },
+     {
+      "label": "25-JAN-2026",
+      "dueDate": "2026-01-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-FEB-2026",
+      "dueDate": "2026-02-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-MAR-2026",
+      "dueDate": "2026-03-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-APR-2026",
+      "dueDate": "2026-04-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-MAY-2026",
+      "dueDate": "2026-05-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-JUN-2026",
+      "dueDate": "2026-06-25",
+      "amount": 6735
+     },
+     {
+      "label": "25-JUL-2026",
+      "dueDate": "2026-07-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-AUG-2026",
+      "dueDate": "2026-08-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-SEP-2026",
+      "dueDate": "2026-09-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-OCT-2026",
+      "dueDate": "2026-10-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-NOV-2026",
+      "dueDate": "2026-11-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-DEC-2026",
+      "dueDate": "2026-12-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-JAN-2027",
+      "dueDate": "2027-01-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-FEB-2027",
+      "dueDate": "2027-02-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-MAR-2027",
+      "dueDate": "2027-03-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-APR-2027",
+      "dueDate": "2027-04-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-MAY-2027",
+      "dueDate": "2027-05-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-JUN-2027",
+      "dueDate": "2027-06-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-JUL-2027",
+      "dueDate": "2027-07-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-AUG-2027",
+      "dueDate": "2027-08-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-SEP-2027",
+      "dueDate": "2027-09-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-OCT-2027",
+      "dueDate": "2027-10-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-NOV-2027",
+      "dueDate": "2027-11-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-DEC-2027",
+      "dueDate": "2027-12-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-JAN-2028",
+      "dueDate": "2028-01-25",
+      "amount": 6736
+     },
+     {
+      "label": "25-FEB-2028",
+      "dueDate": "2028-02-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-MAR-2028",
+      "dueDate": "2028-03-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-APR-2028",
+      "dueDate": "2028-04-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-MAY-2028",
+      "dueDate": "2028-05-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JUN-2028",
+      "dueDate": "2028-06-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JUL-2028",
+      "dueDate": "2028-07-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-AUG-2028",
+      "dueDate": "2028-08-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-SEP-2028",
+      "dueDate": "2028-09-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-OCT-2028",
+      "dueDate": "2028-10-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-NOV-2028",
+      "dueDate": "2028-11-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-DEC-2028",
+      "dueDate": "2028-12-25",
+      "amount": 3367
+     },
+     {
+      "label": "25-JAN-2029",
+      "dueDate": "2029-01-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-FEB-2029",
+      "dueDate": "2029-02-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-MAR-2029",
+      "dueDate": "2029-03-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-APR-2029",
+      "dueDate": "2029-04-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-MAY-2029",
+      "dueDate": "2029-05-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JUN-2029",
+      "dueDate": "2029-06-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JUL-2029",
+      "dueDate": "2029-07-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-AUG-2029",
+      "dueDate": "2029-08-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-SEP-2029",
+      "dueDate": "2029-09-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-OCT-2029",
+      "dueDate": "2029-10-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-NOV-2029",
+      "dueDate": "2029-11-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-DEC-2029",
+      "dueDate": "2029-12-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JAN-2030",
+      "dueDate": "2030-01-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-FEB-2030",
+      "dueDate": "2030-02-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-MAR-2030",
+      "dueDate": "2030-03-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-APR-2030",
+      "dueDate": "2030-04-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-MAY-2030",
+      "dueDate": "2030-05-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JUN-2030",
+      "dueDate": "2030-06-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JUL-2030",
+      "dueDate": "2030-07-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-AUG-2030",
+      "dueDate": "2030-08-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-SEP-2030",
+      "dueDate": "2030-09-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-OCT-2030",
+      "dueDate": "2030-10-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-NOV-2030",
+      "dueDate": "2030-11-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-DEC-2030",
+      "dueDate": "2030-12-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JAN-2031",
+      "dueDate": "2031-01-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-FEB-2031",
+      "dueDate": "2031-02-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-MAR-2031",
+      "dueDate": "2031-03-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-APR-2031",
+      "dueDate": "2031-04-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-MAY-2031",
+      "dueDate": "2031-05-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JUN-2031",
+      "dueDate": "2031-06-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JUL-2031",
+      "dueDate": "2031-07-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-AUG-2031",
+      "dueDate": "2031-08-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-SEP-2031",
+      "dueDate": "2031-09-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-OCT-2031",
+      "dueDate": "2031-10-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-NOV-2031",
+      "dueDate": "2031-11-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-DEC-2031",
+      "dueDate": "2031-12-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JAN-2032",
+      "dueDate": "2032-01-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-FEB-2032",
+      "dueDate": "2032-02-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-MAR-2032",
+      "dueDate": "2032-03-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-APR-2032",
+      "dueDate": "2032-04-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-MAY-2032",
+      "dueDate": "2032-05-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JUN-2032",
+      "dueDate": "2032-06-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-JUL-2032",
+      "dueDate": "2032-07-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-AUG-2032",
+      "dueDate": "2032-08-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-SEP-2032",
+      "dueDate": "2032-09-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-OCT-2032",
+      "dueDate": "2032-10-25",
+      "amount": 3368
+     },
+     {
+      "label": "25-NOV-2032",
+      "dueDate": "2032-11-25",
+      "amount": 3368
+     }
+    ],
+    "overdueAmount": 111143,
+    "overduePenalty": 75000,
+    "arrearsCheckedAt": "2026-10-20",
+    "motivation": "urgent",
+    "description": "Studio with a private pool on the 15th floor of Samana Lake Views, Dubai Production City (IMPZ): 416 sq ft. AED 538,876 for the unit, 20% below the original price of AED 673,596; 38.5% of the price is paid. The buyer pays the owners AED 124,614 and clears the overdue instalments with Samana on transfer day (AED 111,143 on the developer's statement of 20 October 2026), then carries on with the developer's plan: about AED 6,736 a month (1%) until January 2028, then about AED 3,368 a month (0.5%) until November 2032. Handover is expected in Q4 2027. Late fees of AED 75,000 were also outstanding on that statement; who pays them is agreed in the MOU."
+   },
+   "photos": [
+    {
+     "filename": "samana-lake-views-studio-15f-1.jpg",
+     "url": "https://www.samanadevelopers.com/storage/projects/covers/2024/09/06/12/57/sm_66dac4102aea6.jpg"
+    },
+    {
+     "filename": "samana-lake-views-studio-15f-2.jpg",
+     "url": "https://www.samanadevelopers.com/storage/projects/gallery/2024/09/06/lg_66dac4ecd6813.jpg"
+    },
+    {
+     "filename": "samana-lake-views-studio-15f-3.jpg",
+     "url": "https://www.samanadevelopers.com/storage/projects/gallery/2024/09/06/lg_66dac4f013de9.jpg"
+    }
+   ],
+   "notes": "Direct sellers (Oqood and the developer's statement received 12 Nov 2026). Studio + Pool, 15th floor, net area 38.69 sq m (416 sq ft) per the Oqood; original price AED 673,596 on the Oqood, not mortgaged. Jointly owned by four co-owners: all four sign Form A and the MOU. Samana's customer statement of 20 Oct 2026: property price AED 673,596; received AED 290,478.30, of which AED 259,334.46 against the price (38.5%), with the Oqood fee (AED 26,943.84) and admin fee (AED 4,200) paid. Instalments 1 to 16 paid (to 25 Oct 2025); 11 instalments unpaid, 25 Nov 2025 to 25 Sep 2026, one of them 6.5% (AED 43,783.74, 25 Dec 2025): overdue AED 111,143.34. Penalty AED 75,000 unpaid. Still to come on the statement: 16 x AED 6,735.96 (25 Oct 2026 to 25 Jan 2028; the 25 Oct 2026 one has fallen due since the statement) and 58 x AED 3,367.98 (25 Feb 2028 to 25 Nov 2032). 38.5% paid is under the 40% many developers want before a resale NOC; clearing the overdue instalments brings it to 55%. The penalty follows AED 1,500 per overdue instalment per month on the statement (the oldest ones stop at their February 2026 figure), so it keeps growing while nothing is paid: get a fresh statement before the MOU. Plan rows are in whole dirhams and add up to the balance. Price: the owners want 20% below the original price, AED 538,876 in total = AED 124,614 to the owners + the AED 414,262 still owed to Samana; who bears the late fees is not agreed yet. Handover October 2027 per Samana's website; construction about 23% per DLD data (Nov 2026). Before the MOU, ask Samana for its resale NOC conditions and fee, and whether a default notice has gone to DLD."
+  },
+  {
+   "ref": "samana-lake-views-studio-5f",
+   "url": null,
+   "posted": "2026-11-12",
+   "listing": {
+    "projectName": "Samana Lake Views",
+    "developer": "Samana",
+    "developerOther": null,
+    "community": "Dubai Production City",
+    "communityOther": null,
+    "unitType": "studio",
+    "sizeSqft": 416,
+    "floor": "5",
+    "view": null,
+    "originalPrice": 674568,
+    "amountPaid": 330538,
+    "askingPrice": 195624,
+    "handoverDate": "2027-12-31",
+    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentAmount": 6746,
+    "paymentPlan": [
+     {
+      "label": "15-NOV-2025",
+      "dueDate": "2025-11-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-DEC-2025",
+      "dueDate": "2025-12-15",
+      "amount": 6745
+     },
+     {
+      "label": "15-JAN-2026",
+      "dueDate": "2026-01-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-FEB-2026",
+      "dueDate": "2026-02-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-MAR-2026",
+      "dueDate": "2026-03-15",
+      "amount": 6745
+     },
+     {
+      "label": "15-APR-2026",
+      "dueDate": "2026-04-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-MAY-2026",
+      "dueDate": "2026-05-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-JUN-2026",
+      "dueDate": "2026-06-15",
+      "amount": 6745
+     },
+     {
+      "label": "15-JUL-2026",
+      "dueDate": "2026-07-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-AUG-2026",
+      "dueDate": "2026-08-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-SEP-2026",
+      "dueDate": "2026-09-15",
+      "amount": 6745
+     },
+     {
+      "label": "15-OCT-2026",
+      "dueDate": "2026-10-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-NOV-2026",
+      "dueDate": "2026-11-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-DEC-2026",
+      "dueDate": "2026-12-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-JAN-2027",
+      "dueDate": "2027-01-15",
+      "amount": 6745
+     },
+     {
+      "label": "15-FEB-2027",
+      "dueDate": "2027-02-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-MAR-2027",
+      "dueDate": "2027-03-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-APR-2027",
+      "dueDate": "2027-04-15",
+      "amount": 6745
+     },
+     {
+      "label": "15-MAY-2027",
+      "dueDate": "2027-05-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-JUN-2027",
+      "dueDate": "2027-06-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-JUL-2027",
+      "dueDate": "2027-07-15",
+      "amount": 6745
+     },
+     {
+      "label": "15-AUG-2027",
+      "dueDate": "2027-08-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-SEP-2027",
+      "dueDate": "2027-09-15",
+      "amount": 6746
+     },
+     {
+      "label": "15-OCT-2027",
+      "dueDate": "2027-10-15",
+      "amount": 6745
+     },
+     {
+      "label": "15-NOV-2027",
+      "dueDate": "2027-11-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-DEC-2027",
+      "dueDate": "2027-12-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JAN-2028",
+      "dueDate": "2028-01-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-FEB-2028",
+      "dueDate": "2028-02-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-MAR-2028",
+      "dueDate": "2028-03-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-APR-2028",
+      "dueDate": "2028-04-15",
+      "amount": 3372
+     },
+     {
+      "label": "15-MAY-2028",
+      "dueDate": "2028-05-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JUN-2028",
+      "dueDate": "2028-06-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JUL-2028",
+      "dueDate": "2028-07-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-AUG-2028",
+      "dueDate": "2028-08-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-SEP-2028",
+      "dueDate": "2028-09-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-OCT-2028",
+      "dueDate": "2028-10-15",
+      "amount": 3372
+     },
+     {
+      "label": "15-NOV-2028",
+      "dueDate": "2028-11-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-DEC-2028",
+      "dueDate": "2028-12-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JAN-2029",
+      "dueDate": "2029-01-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-FEB-2029",
+      "dueDate": "2029-02-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-MAR-2029",
+      "dueDate": "2029-03-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-APR-2029",
+      "dueDate": "2029-04-15",
+      "amount": 3372
+     },
+     {
+      "label": "15-MAY-2029",
+      "dueDate": "2029-05-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JUN-2029",
+      "dueDate": "2029-06-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JUL-2029",
+      "dueDate": "2029-07-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-AUG-2029",
+      "dueDate": "2029-08-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-SEP-2029",
+      "dueDate": "2029-09-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-OCT-2029",
+      "dueDate": "2029-10-15",
+      "amount": 3372
+     },
+     {
+      "label": "15-NOV-2029",
+      "dueDate": "2029-11-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-DEC-2029",
+      "dueDate": "2029-12-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JAN-2030",
+      "dueDate": "2030-01-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-FEB-2030",
+      "dueDate": "2030-02-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-MAR-2030",
+      "dueDate": "2030-03-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-APR-2030",
+      "dueDate": "2030-04-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-MAY-2030",
+      "dueDate": "2030-05-15",
+      "amount": 3372
+     },
+     {
+      "label": "15-JUN-2030",
+      "dueDate": "2030-06-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JUL-2030",
+      "dueDate": "2030-07-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-AUG-2030",
+      "dueDate": "2030-08-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-SEP-2030",
+      "dueDate": "2030-09-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-OCT-2030",
+      "dueDate": "2030-10-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-NOV-2030",
+      "dueDate": "2030-11-15",
+      "amount": 3372
+     },
+     {
+      "label": "15-DEC-2030",
+      "dueDate": "2030-12-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JAN-2031",
+      "dueDate": "2031-01-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-FEB-2031",
+      "dueDate": "2031-02-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-MAR-2031",
+      "dueDate": "2031-03-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-APR-2031",
+      "dueDate": "2031-04-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-MAY-2031",
+      "dueDate": "2031-05-15",
+      "amount": 3372
+     },
+     {
+      "label": "15-JUN-2031",
+      "dueDate": "2031-06-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JUL-2031",
+      "dueDate": "2031-07-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-AUG-2031",
+      "dueDate": "2031-08-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-SEP-2031",
+      "dueDate": "2031-09-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-OCT-2031",
+      "dueDate": "2031-10-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-NOV-2031",
+      "dueDate": "2031-11-15",
+      "amount": 3372
+     },
+     {
+      "label": "15-DEC-2031",
+      "dueDate": "2031-12-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-JAN-2032",
+      "dueDate": "2032-01-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-FEB-2032",
+      "dueDate": "2032-02-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-MAR-2032",
+      "dueDate": "2032-03-15",
+      "amount": 3373
+     },
+     {
+      "label": "15-APR-2032",
+      "dueDate": "2032-04-15",
+      "amount": 3373
+     }
+    ],
+    "overdueAmount": 80948,
+    "overduePenalty": 76500,
+    "arrearsCheckedAt": "2026-11-02",
+    "motivation": "urgent",
+    "description": "Studio with a private pool on the 5th floor of Samana Lake Views, Dubai Production City (IMPZ): 416 sq ft. AED 539,654 for the unit, 20% below the original price of AED 674,568; 49% of the price is paid. The buyer pays the owners AED 195,624 and clears the overdue instalments with Samana on transfer day (AED 80,948 on the developer's statement of 2 November 2026), then carries on with the developer's plan: about AED 6,746 a month (1%) until October 2027, then about AED 3,373 a month (0.5%) until April 2032. Handover is expected in Q4 2027. Late fees of AED 76,500 were also outstanding on that statement; who pays them is agreed in the MOU."
+   },
+   "photos": [
+    {
+     "filename": "samana-lake-views-studio-5f-1.jpg",
+     "url": "https://www.samanadevelopers.com/storage/projects/gallery/2024/09/06/lg_66dac4ef31aa5.jpg"
+    },
+    {
+     "filename": "samana-lake-views-studio-5f-2.jpg",
+     "url": "https://www.samanadevelopers.com/storage/projects/gallery/2024/09/06/lg_66dac4ecd6813.jpg"
+    },
+    {
+     "filename": "samana-lake-views-studio-5f-3.jpg",
+     "url": "https://www.samanadevelopers.com/storage/projects/gallery/2024/09/06/lg_66dac4f013de9.jpg"
+    }
+   ],
+   "notes": "Direct sellers (Oqood and the developer's statement received 12 Nov 2026). Studio + Pool, 5th floor, net area 38.66 sq m (416 sq ft) per the Oqood; original price AED 674,568 on the Oqood, not mortgaged. Jointly owned by four co-owners: all four sign Form A and the MOU. Samana's customer statement of 2 Nov 2026: property price AED 674,568; received AED 361,721.04, of which AED 330,538.32 against the price (49%), with the Oqood fee (AED 26,982.72) and admin fee (AED 4,200) paid. Instalments 1 to 19 paid (to 15 Oct 2025); 12 instalments of AED 6,745.68 unpaid, 15 Nov 2025 to 15 Oct 2026 (overdue AED 80,948.16). Penalty AED 76,500 unpaid. Still to come: 12 x AED 6,745.68 (15 Nov 2026 to 15 Oct 2027) and 54 x AED 3,372.84 (15 Nov 2027 to 15 Apr 2032). The penalty follows AED 1,500 per overdue instalment per month on the statement (the oldest ones stop at their February 2026 figure), so it keeps growing while nothing is paid: get a fresh statement before the MOU. Plan rows are in whole dirhams and add up to the balance. Price: the owners want 20% below the original price, AED 539,654 in total = AED 195,624 to the owners + the AED 344,030 still owed to Samana; who bears the late fees is not agreed yet. Handover October 2027 per Samana's website; construction about 23% per DLD data (Nov 2026). Before the MOU, ask Samana for its resale NOC conditions and fee, and whether a default notice has gone to DLD."
   }
  ]
 }

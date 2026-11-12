@@ -11,7 +11,8 @@ export const SELL_DRAFT_KEY = "od_sell_draft_v1";
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 /** Generous caps, so a tampered entry can't blow up the form. */
 const MAX_TEXT = 5000;
-const MAX_PLAN_ROWS = 40;
+/** As many rows as a listing's plan may hold (PLAN_MAX_ROWS in src/lib/listing-schema.ts), so a long plan survives a refresh. */
+const MAX_PLAN_ROWS = 120;
 
 export type DraftPlanRow = { label: string; dueDate: string; amount: string };
 

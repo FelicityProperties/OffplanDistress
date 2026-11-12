@@ -330,6 +330,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const planStart = planFirstAhead < 0 ? Math.max(0, plan.length - 5) : planFirstAhead;
   const planShown = (i: number) => plan.length <= 8 || (i >= planStart && i < planStart + 5) || i === plan.length - 1;
   const planHidden = plan.filter((_, i) => !planShown(i)).length;
+  // A very long plan (monthly instalments running years past handover: more rows than a plan could hold before
+  // PLAN_MAX_ROWS was raised) folds the same way on desktop too, where every other plan still shows all its rows.
+  const planFoldsEverywhere = plan.length > 60;
   const dueSoon = schedule.dueSoon;
   const dueSoonText = dueSoon
     ? richText(t(dueSoon.amount ? "side.dueSoon" : "side.dueSoonNoAmount"), {
@@ -966,6 +969,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 {plan.length > 0 && (
                   <CollapsiblePlan
                     hidden={planHidden}
+                    everywhere={planFoldsEverywhere}
                     showAll={t("plan.showAll", { count: plan.length })}
                     showFewer={t("plan.showFewer")}
                     className="mt-6 overflow-x-auto rounded-2xl border border-border/80"
@@ -980,7 +984,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       </TableHeader>
                       <TableBody>
                         {plan.map((s, i) => (
-                          <TableRow key={`${s.label}-${i}`} className={cn(!planShown(i) && "group-data-[collapsed]/plan:max-lg:hidden")}>
+                          <TableRow
+                            key={`${s.label}-${i}`}
+                            className={cn(
+                              !planShown(i) && (planFoldsEverywhere ? "group-data-[collapsed]/plan:hidden" : "group-data-[collapsed]/plan:max-lg:hidden"),
+                            )}
+                          >
                             <TableCell className="py-3 ps-4 font-medium max-sm:ps-3 max-[359px]:pe-1">
                               <span className="flex items-center gap-3 max-sm:gap-2">
                                 {/* Smaller on phones, and left out below 360 px, where the date and the amount need the row. */}

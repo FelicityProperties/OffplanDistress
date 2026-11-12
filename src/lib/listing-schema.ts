@@ -29,6 +29,13 @@ const INT4_MAX = 2_147_483_647;
 export const money = (t: T) => z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX);
 
 /**
+ * The most instalments a listing's payment plan holds: ten years of monthly payments. Developers' post-handover plans
+ * run long (1% a month to handover, then 0.5% a month for five more years is about 100 rows). The build-time import
+ * (scripts/import-partner-stock.mjs checkListing) and the DistressStock sync (sync-distressstock.mjs) repeat the figure.
+ */
+export const PLAN_MAX_ROWS = 120;
+
+/**
  * A listing's date as the sell form's date inputs take it (DATE_RANGE in src/components/sell/SellForm.tsx), checked
  * again here for a post that skipped the browser: YYYY-MM-DD, a real calendar day ("2027-02-31" is not) and a year
  * from 2000 to 9999 ("0277-03-15" is a typo).
@@ -88,7 +95,7 @@ export const listingSchema = (t: T) =>
       overdueAmount: money(t).optional(),
       motivation: z.enum(["urgent", "motivated", "flexible"]),
       description: z.string().trim().max(3000).optional(),
-      paymentPlan: z.array(instalment(t)).max(60),
+      paymentPlan: z.array(instalment(t)).max(PLAN_MAX_ROWS),
     })
     .refine((v) => v.amountPaid <= v.originalPrice, {
       path: ["amountPaid"],

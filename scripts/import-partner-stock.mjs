@@ -1185,7 +1185,8 @@ function checkListing(v) {
   const amountPaid = money(v.amountPaid);
   if (amountPaid > originalPrice) throw new Error("paid above the SPA price");
   if (!Number.isInteger(v.sizeSqft) || v.sizeSqft <= 0 || v.sizeSqft > INT_MAX) throw new Error("bad size");
-  if (!Array.isArray(v.paymentPlan) || v.paymentPlan.length > 60) throw new Error("bad plan");
+  // PLAN_MAX_ROWS in src/lib/listing-schema.ts: ten years of monthly instalments.
+  if (!Array.isArray(v.paymentPlan) || v.paymentPlan.length > 120) throw new Error("bad plan");
   const paymentPlan = v.paymentPlan.map((i) => ({
     label: str(i?.label, 60, true),
     dueDate: date(i?.dueDate ?? null),
