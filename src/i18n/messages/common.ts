@@ -218,6 +218,9 @@ export default defineMessages({
     feeLine: "2% commission, after transfer",
     estimatesNote: "Prices and fees shown are estimates until confirmed by the developer and Dubai Land Department.",
     operatedBy: "Operated by {company}",
+    // The footer's link to the company's site for Dubai Hills Estate: the lead-in, then the link's own text.
+    sisterLead: "Also from {company}:",
+    sisterDubaiHills: "DXB Dubai Hills, every Dubai Hills Estate project, off-plan and ready",
     footerBlurb:
       "Dubai off-plan resales below the original price. Verified SPAs, protected settlement, developer NOC and DLD transfer handled for you.",
     marketplace: "Marketplace",
@@ -447,6 +450,8 @@ export default defineMessages({
     feeLine: "عمولة 2%، بعد نقل الملكية",
     estimatesNote: "الأسعار والرسوم المعروضة تقديرية حتى يؤكدها المطوّر ودائرة الأراضي والأملاك في دبي.",
     operatedBy: "تديرها {company}",
+    sisterLead: "من {company} أيضاً:",
+    sisterDubaiHills: "DXB Dubai Hills، جميع مشاريع دبي هيلز إستيت، على الخارطة والجاهزة",
     footerBlurb:
       "إعادة بيع وحدات دبي على الخارطة بأقل من السعر الأصلي. اتفاقيات بيع وشراء موثّقة، وتسوية آمنة، ونتولى عنك شهادة عدم الممانعة من المطوّر ونقل الملكية لدى دائرة الأراضي والأملاك.",
     marketplace: "السوق",
@@ -677,6 +682,8 @@ export default defineMessages({
     feeLine: "服务费 2%，过户后收取",
     estimatesNote: "所示价格与费用均为估算值，以开发商和迪拜土地局（DLD）的最终确认为准。",
     operatedBy: "由 {company} 运营",
+    sisterLead: "{company} 旗下另一网站：",
+    sisterDubaiHills: "DXB Dubai Hills，Dubai Hills Estate 的全部期房与现房项目",
     footerBlurb:
       "低于原始合同价的迪拜期房转售。买卖协议（SPA）经过核实，结算受到保护，开发商无异议函（NOC）与迪拜土地局（DLD）过户手续均由我们为您办理。",
     marketplace: "交易平台",
