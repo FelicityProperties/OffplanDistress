@@ -148,8 +148,12 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
   const description = t(
     a.remaining > 0
       ? ready
-        ? "meta.descriptionReady"
-        : "meta.description"
+        ? a.arrears > 0
+          ? "meta.descriptionReadyArrears"
+          : "meta.descriptionReady"
+        : a.arrears > 0
+          ? "meta.descriptionArrears"
+          : "meta.description"
       : ready
         ? "meta.descriptionReadyPaid"
         : "meta.descriptionPaid",
@@ -159,6 +163,7 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
       paid: paidText(a.paidPct),
       handover: formatQuarter(l.handoverDate, locale),
       upfront: formatAED(l.askingPrice, locale),
+      arrears: formatAED(a.arrears, locale),
     },
   );
   // One address per deal and language: "/deals/od-1001" and "/deals/OD-1001" are the same page, canonical OD-1001.

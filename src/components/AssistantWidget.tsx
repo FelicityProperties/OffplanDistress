@@ -26,6 +26,9 @@ type Msg = { role: "user" | "assistant"; content: string; error?: boolean };
 /** This tab's conversation (sessionStorage): it survives page loads and is gone when the tab closes. */
 const STORE = "od-assistant";
 const MAX_INPUT = 1000;
+/** The history sent with a question: as many turns as the route keeps, each within its per-turn cap. */
+const HISTORY_TURNS = 12;
+const TURN_CHARS = 4000;
 const STARTERS = ["starter.deals", "starter.budget", "starter.how", "starter.sell"] as const;
 /** On a deal page the first suggestion is about that unit. */
 const DEAL_STARTERS = ["starter.thisDeal", "starter.deals", "starter.how", "starter.sell"] as const;
@@ -386,7 +389,13 @@ export function AssistantWidget() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: history.filter((m) => !m.error && m.content).map(({ role, content }) => ({ role, content })),
+          // What the route reads (KEEP_TURNS and its per-turn cap in src/app/api/assistant/route.ts): the last turns, an
+          // answer cut to fit. Sent whole, one long answer (a payment plan recited row by row) was refused and every
+          // later question in the chat failed with it.
+          messages: history
+            .filter((m) => !m.error && m.content)
+            .slice(-HISTORY_TURNS)
+            .map(({ role, content }) => ({ role, content: content.slice(0, TURN_CHARS) })),
           locale,
           path: pathname,
         }),

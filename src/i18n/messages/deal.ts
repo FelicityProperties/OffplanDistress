@@ -12,6 +12,11 @@ export default defineMessages({
       "{developer}, {community}. {paid} paid, handover {handover}. Take over the payment plan for {upfront} upfront.",
     // A unit already handed over (isReady in src/lib/deal-math.ts), and / or one with no plan left to take over.
     "meta.descriptionReady": "{developer}, {community}. Ready unit, {paid} paid. Take over the payment plan for {upfront} upfront.",
+    // A unit in arrears: the seller's price alone would read as the whole cash needed on transfer day.
+    "meta.descriptionArrears":
+      "{developer}, {community}. {paid} paid, handover {handover}. {upfront} to the seller plus {arrears} of arrears to clear with the developer on transfer day, then take over the payment plan.",
+    "meta.descriptionReadyArrears":
+      "{developer}, {community}. Ready unit, {paid} paid. {upfront} to the seller plus {arrears} of arrears to clear with the developer on transfer day, then take over the payment plan.",
     "meta.descriptionPaid":
       "{developer}, {community}. Fully paid, handover {handover}. {upfront} to the seller, with nothing left to pay the developer.",
     "meta.descriptionReadyPaid":
@@ -173,6 +178,10 @@ export default defineMessages({
       "{developer}، {community}. نسبة المدفوع {paid}، والتسليم {handover}. تولَّ خطة الدفع مقابل دفعة مقدّمة قدرها {upfront}.",
     "meta.descriptionReady":
       "{developer}، {community}. وحدة جاهزة، نسبة المدفوع {paid}. تولَّ خطة الدفع مقابل دفعة مقدّمة قدرها {upfront}.",
+    "meta.descriptionArrears":
+      "{developer}، {community}. نسبة المدفوع {paid}، والتسليم {handover}. تدفع للبائع {upfront}، إضافةً إلى متأخرات قدرها {arrears} تُسدَّد للمطوّر يوم نقل الملكية، ثم تتولّى خطة الدفع.",
+    "meta.descriptionReadyArrears":
+      "{developer}، {community}. وحدة جاهزة، نسبة المدفوع {paid}. تدفع للبائع {upfront}، إضافةً إلى متأخرات قدرها {arrears} تُسدَّد للمطوّر يوم نقل الملكية، ثم تتولّى خطة الدفع.",
     "meta.descriptionPaid":
       "{developer}، {community}. مدفوعة بالكامل، والتسليم {handover}. تدفع للبائع {upfront}، ولا يتبقى أي مبلغ للمطوّر.",
     "meta.descriptionReadyPaid":
@@ -329,6 +338,10 @@ export default defineMessages({
     "meta.description":
       "{developer}，{community}。已付 {paid}，交房时间：{handover}。支付 {upfront} 即可接手剩余付款计划。",
     "meta.descriptionReady": "{developer}，{community}。现房，已付 {paid}。支付 {upfront} 即可接手剩余付款计划。",
+    "meta.descriptionArrears":
+      "{developer}，{community}。已付 {paid}，交房时间：{handover}。向卖家支付 {upfront}，并在过户当日向开发商结清欠款 {arrears}，之后接手剩余付款计划。",
+    "meta.descriptionReadyArrears":
+      "{developer}，{community}。现房，已付 {paid}。向卖家支付 {upfront}，并在过户当日向开发商结清欠款 {arrears}，之后接手剩余付款计划。",
     "meta.descriptionPaid": "{developer}，{community}。已全额付清，交房时间：{handover}。向卖家支付 {upfront}，无需再向开发商付款。",
     "meta.descriptionReadyPaid": "{developer}，{community}。现房，已全额付清。向卖家支付 {upfront}，无需再向开发商付款。",
 

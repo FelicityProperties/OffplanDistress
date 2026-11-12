@@ -8,7 +8,7 @@ import { tFor } from "@/i18n/server";
 import { BRAND, brandName, brokerName, type UnitTypeKey } from "./config";
 import { analyzeDeal, isReady } from "./deal-math";
 import { discountLabels } from "./discount-labels";
-import { formatAEDCompact, formatQuarter, refCode } from "./format";
+import { formatAED, formatAEDCompact, formatQuarter, refCode } from "./format";
 import { cardColumns } from "./listings";
 import { advertisedSql, dubaiToday } from "./permits";
 import { communityName } from "./place-names";
@@ -68,8 +68,11 @@ function dealLines(d: PostDeal, locale: Locale, today: string) {
     price: ta("wa.price", { price: formatAEDCompact(d.askingPrice, locale) }),
     discount,
     // What the developer wants cleared before the NOC, paid on transfer day: left out, "to the seller" and "per the
-    // plan" read as the whole price of a unit in arrears.
-    arrears: a.arrears > 0 ? ta("wa.arrears", { amount: formatAEDCompact(a.arrears, locale) }) : null,
+    // plan" read as the whole price of a unit in arrears. The overdue instalments are part of the price (the balance
+    // owed), so the seller's line, this one and the plan's add up to it; the late fees are not, and who pays them is
+    // agreed in the MOU, so they get their own line, to the dirham, next to the "below original price" claim.
+    overdue: a.overdue > 0 ? ta("wa.overdue", { amount: formatAEDCompact(a.overdue, locale) }) : null,
+    lateFees: a.penalty > 0 ? ta("wa.lateFees", { amount: formatAED(a.penalty, locale) }) : null,
     remaining: a.remainingAfterTransfer > 0 ? ta("wa.remaining", { amount: formatAEDCompact(a.remainingAfterTransfer, locale) }) : null,
     link: url(`/deals/${refCode(d.refNo)}`, locale),
   };
@@ -85,8 +88,9 @@ export function dealPost(d: PostDeal, locale: Locale, today = dubaiToday()) {
     x.title,
     x.facts,
     withDiscount(x.price, x.discount, locale),
-    x.arrears,
+    x.overdue,
     x.remaining,
+    x.lateFees,
     x.link,
     "",
     reraLine(d, locale),
@@ -124,7 +128,7 @@ export async function bestDealsPosts(today = dubaiToday()): Promise<PostTexts | 
       return [
         `${i + 1}. ${x.title} — ${x.facts}`,
         `   ${withDiscount(x.price, x.discount, locale)}`,
-        ...(x.arrears ? [`   ${x.arrears}`] : []),
+        ...[x.overdue, x.lateFees].filter((line) => line != null).map((line) => `   ${line}`),
         `   ${x.link}`,
         `   ${reraLine(d, locale)}`,
       ];
