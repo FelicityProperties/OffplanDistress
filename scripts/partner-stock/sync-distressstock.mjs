@@ -626,7 +626,10 @@ export function buildEntry(u, plan, today, rules) {
     // "Original Price + DLD 4%" (else it's taken as the selling price).
     op = origDld ? pyRound(origDld / 1.04) : p.unitPrice;
   } else if (p.dldFee) op = pyRound((p.dldFee - 40) / 0.04);
-  if (!ready && origDld && (op == null || Math.abs(op * 1.04 - origDld) > 0.01 * origDld)) op = op == null ? pyRound(origDld / 1.04) : op;
+  // Some plans charge the DLD line on the selling price ("4% + 40 AED"): it then gives the unit price back, not the
+  // original one. Where the page posts an "Original Price + DLD 4%" that disagrees with it, that is the original price.
+  const posted = origDld ? pyRound(origDld / 1.04) : null;
+  if (!ready && posted != null && (op == null || (op === p.unitPrice && Math.abs(op * 1.04 - origDld) > 0.01 * origDld))) op = posted;
   if (!op) return { skip: "original price unknown" };
   if (op < p.totalRemaining) return { skip: `original price ${op} below the remaining plan ${p.totalRemaining}` };
   const paid = op - p.totalRemaining;

@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-11T01:40:13Z",
+ "generatedAt": "2026-11-12T01:45:08Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -2257,7 +2257,7 @@
     "view": "Community",
     "originalPrice": 3733900,
     "amountPaid": 2240345,
-    "askingPrice": 2006445,
+    "askingPrice": 1991445,
     "handoverDate": "2028-07-31",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -2292,23 +2292,23 @@
      "url": "https://distressonly.deals/media/units/312/e50ea8534e68.webp"
     },
     {
+     "filename": "QgAGrA-70594de7.webp",
+     "url": "https://distressonly.deals/media/units/312/c1586293a74e.webp"
+    },
+    {
      "filename": "QgAGrA-o2.webp",
      "url": "https://distressonly.deals/media/units/312/d05830cc3643.webp"
     },
     {
-     "filename": "QgAGrA-1fab1424.webp",
-     "url": "https://distressonly.deals/media/units/312/5f5b4792bce7.webp"
-    },
-    {
-     "filename": "QgAGrA-o0.webp",
-     "url": "https://distressonly.deals/media/units/312/cae807080bfa.webp"
+     "filename": "QgAGrA-6aa6022c.webp",
+     "url": "https://distressonly.deals/media/units/312/a2e04551cf51.webp"
     },
     {
      "filename": "QgAGrA-k0.webp",
      "url": "https://distressonly.deals/media/units/312/6c1406f23968.webp"
     }
    ],
-   "notes": "Posted on DistressStock July 24, 2026: DISTRESS DEAL: 3-BR IN OCEAN STAR - BUILDING 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 3,525,000 (payment to seller 2,031,445 → 2,006,445; commission 74,025 → 73,500); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 3,883,244; selling price AED 3,500,000."
+   "notes": "Posted on DistressStock July 24, 2026: DISTRESS DEAL: 3-BR IN OCEAN STAR - BUILDING 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 3,500,000 (payment to seller 2,006,445 -> 1,991,445; commission 73,500 -> 73,185); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 3,883,244; selling price AED 3,485,000."
   },
   {
    "ref": "Qhtgvw",
@@ -3686,6 +3686,54 @@
    "removed": "2026-11-11"
   },
   {
+   "ref": "d7EGmK",
+   "url": "https://distressonly.deals/u/d7EGmK",
+   "posted": "2026-11-11",
+   "listing": {
+    "projectName": "Address Villas Hillcrest",
+    "developer": "Emaar",
+    "developerOther": null,
+    "community": "Dubai Hills Estate",
+    "communityOther": null,
+    "unitType": "villa",
+    "sizeSqft": 9918,
+    "floor": "B+G+1+R",
+    "view": null,
+    "originalPrice": 22168144,
+    "amountPaid": 22168144,
+    "askingPrice": 20300000,
+    "handoverDate": "2026-11-11",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [],
+    "motivation": "motivated",
+    "description": "Features: Balcony, Parking. Plot: 7,000 sq.ft. Built-up area: 9,918 sq.ft."
+   },
+   "photos": [
+    {
+     "filename": "d7EGmK-39fc817e.webp",
+     "url": "https://distressonly.deals/media/units/438/205e1bfabcf9.webp"
+    },
+    {
+     "filename": "d7EGmK-67c9c946.webp",
+     "url": "https://distressonly.deals/media/units/438/affe7a44da60.webp"
+    },
+    {
+     "filename": "d7EGmK-67bcdaca.webp",
+     "url": "https://distressonly.deals/media/units/438/acd237aa5c36.webp"
+    },
+    {
+     "filename": "d7EGmK-3dbc1767.webp",
+     "url": "https://distressonly.deals/media/units/438/be9750cac582.webp"
+    },
+    {
+     "filename": "d7EGmK-k0.webp",
+     "url": "https://distressonly.deals/media/units/438/27f354091a00.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 11, 2026: DISTRESS DEAL: 5-BR IN ADDRESS VILLAS HILLCREST. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Ready and vacant villa, fully paid: no payment plan and no 'Total Remaining' row printed (0). DLD line labelled '4% + 40 AED', on the selling price (812,040 = 4% of 20,300,000 + 40); the original price comes from the page's 'Original Price + DLD 4%' (AED 23,054,870). Trustee fee 4,200 and a title deed fee of 580. All checks pass. Source: original price + DLD 4% = AED 23,054,870; selling price AED 20,300,000. Ready property (handover done)."
+  },
+  {
    "ref": "dafYpQ",
    "url": "https://distressonly.deals/u/dafYpQ",
    "posted": "2026-08-20",
@@ -4161,6 +4209,124 @@
    "notes": "Posted on DistressStock September 23, 2026: DISTRESS DEAL: 2-BR IN 330 RIVERSIDE CRESCENT. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,271,998; selling price AED 2,200,000."
   },
   {
+   "ref": "gYihWw",
+   "url": "https://distressonly.deals/u/gYihWw",
+   "posted": "2026-11-10",
+   "listing": {
+    "projectName": "Nautica Two",
+    "developer": "Select Group",
+    "developerOther": null,
+    "community": "Dubai Maritime City",
+    "communityOther": null,
+    "unitType": "2br",
+    "sizeSqft": 1000,
+    "floor": "5-10",
+    "view": "Water, Community",
+    "originalPrice": 2254000,
+    "amountPaid": 901600,
+    "askingPrice": 977600,
+    "handoverDate": "2026-12-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 1352400
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "gYihWw-1391fc76.webp",
+     "url": "https://distressonly.deals/media/units/434/241ed6906f70.webp"
+    },
+    {
+     "filename": "gYihWw-5b5ef391.webp",
+     "url": "https://distressonly.deals/media/units/434/f05ca6dfdec6.webp"
+    },
+    {
+     "filename": "gYihWw-60ffd144.webp",
+     "url": "https://distressonly.deals/media/units/434/bf053890f532.webp"
+    },
+    {
+     "filename": "gYihWw-8a61b5a3.webp",
+     "url": "https://distressonly.deals/media/units/434/b03b2800478f.webp"
+    },
+    {
+     "filename": "gYihWw-k0.webp",
+     "url": "https://distressonly.deals/media/units/434/c7b3e94971ca.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 10, 2026: HOT LOT: 2-BR IN NAUTICA TWO. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: DLD line labelled '4% + 40 AED', charged on the selling price (93,240 = 4% of 2,330,000 + 40), not on the original price: the page's 'Original Price + DLD 4%' (AED 2,344,160) gives an original price of 2,254,000, so the unit is offered above its original price (the page's 0.6% discount is against the original price plus DLD). All checks pass. Source: original price + DLD 4% = AED 2,344,160; selling price AED 2,330,000."
+  },
+  {
+   "ref": "hB24z1",
+   "url": "https://distressonly.deals/u/hB24z1",
+   "posted": "2026-11-11",
+   "listing": {
+    "projectName": "Palace Residences 1",
+    "developer": "Emaar",
+    "developerOther": null,
+    "community": "Dubai Hills Estate",
+    "communityOther": null,
+    "unitType": "1br",
+    "sizeSqft": 752,
+    "floor": "10-15",
+    "view": "Mall",
+    "originalPrice": 1821900,
+    "amountPaid": 1093146,
+    "askingPrice": 1006246,
+    "handoverDate": "2028-04-30",
+    "nextInstalmentDate": "2027-01-04",
+    "nextInstalmentAmount": 182189,
+    "paymentPlan": [
+     {
+      "label": "4-JAN-2027",
+      "dueDate": "2027-01-04",
+      "amount": 182189
+     },
+     {
+      "label": "80% Construction",
+      "dueDate": null,
+      "amount": 182189
+     },
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 364376
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "hB24z1-5004ebaa.webp",
+     "url": "https://distressonly.deals/media/units/437/4b7ae1f34fbe.webp"
+    },
+    {
+     "filename": "hB24z1-ac90e704.webp",
+     "url": "https://distressonly.deals/media/units/437/84b0a4d96ed7.webp"
+    },
+    {
+     "filename": "hB24z1-7f9d16ec.webp",
+     "url": "https://distressonly.deals/media/units/437/f088e35aaf47.webp"
+    },
+    {
+     "filename": "hB24z1-955fb3b1.webp",
+     "url": "https://distressonly.deals/media/units/437/8cd24d29d849.webp"
+    },
+    {
+     "filename": "hB24z1-k0.webp",
+     "url": "https://distressonly.deals/media/units/437/553570ee9a12.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 11, 2026: DISTRESS DEAL: 1-BR IN PALACE RESIDENCES 1. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 1,894,764; selling price AED 1,735,000."
+  },
+  {
    "ref": "hMaqAX",
    "url": "https://distressonly.deals/u/hMaqAX",
    "posted": "2026-09-21",
@@ -4495,6 +4661,60 @@
    ],
    "notes": "Posted on DistressStock October 06, 2026: DISTRESS DEAL: 1-BR IN SEAPOINT - TOWER 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,065,804; selling price AED 2,630,000.",
    "removed": "2026-11-11"
+  },
+  {
+   "ref": "kkm6Bx",
+   "url": "https://distressonly.deals/u/kkm6Bx",
+   "posted": "2026-11-11",
+   "listing": {
+    "projectName": "Al Habtoor Tower",
+    "developer": "Al Habtoor",
+    "developerOther": null,
+    "community": "Business Bay",
+    "communityOther": null,
+    "unitType": "2br",
+    "sizeSqft": 1468,
+    "floor": "50-55",
+    "view": "Burj Khalifa, Dubai Water Canal",
+    "originalPrice": 4108025,
+    "amountPaid": 2464815,
+    "askingPrice": 1796790,
+    "handoverDate": "2026-12-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 1643210
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "kkm6Bx-8e27910b.webp",
+     "url": "https://distressonly.deals/media/units/436/f0b9ebc750c3.webp"
+    },
+    {
+     "filename": "kkm6Bx-fd89d278.webp",
+     "url": "https://distressonly.deals/media/units/436/4722086b2511.webp"
+    },
+    {
+     "filename": "kkm6Bx-7bd6a7e1.webp",
+     "url": "https://distressonly.deals/media/units/436/670ca72e120e.webp"
+    },
+    {
+     "filename": "kkm6Bx-00d2a2aa.webp",
+     "url": "https://distressonly.deals/media/units/436/09246c4d52a8.webp"
+    },
+    {
+     "filename": "kkm6Bx-k0.webp",
+     "url": "https://distressonly.deals/media/units/436/edf1e0fc0bc7.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 11, 2026: DISTRESS DEAL: 2-BR IN AL HABTOOR TOWER. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 4,272,345; selling price AED 3,440,000."
   },
   {
    "ref": "lyA7qm",
@@ -5532,6 +5752,75 @@
     }
    ],
    "notes": "Posted on DistressStock April 18, 2026: HOT LOT: 5-BR+MAID'S IN PARADISE HILLS. Figures are as posted — check the current statement of account with the listing broker before approval."
+  },
+  {
+   "ref": "ym6dtf",
+   "url": "https://distressonly.deals/u/ym6dtf",
+   "posted": "2026-11-11",
+   "listing": {
+    "projectName": "Canal Crown",
+    "developer": "DAMAC",
+    "developerOther": null,
+    "community": "Business Bay",
+    "communityOther": null,
+    "unitType": "1br",
+    "sizeSqft": 834,
+    "floor": "15-17",
+    "view": "Partial Сanal",
+    "originalPrice": 2087050,
+    "amountPaid": 1419210,
+    "askingPrice": 1042160,
+    "handoverDate": "2027-12-31",
+    "nextInstalmentDate": "2026-12-20",
+    "nextInstalmentAmount": 83480,
+    "paymentPlan": [
+     {
+      "label": "20-DEC-2026",
+      "dueDate": "2026-12-20",
+      "amount": 83480
+     },
+     {
+      "label": "20-MAR-2027",
+      "dueDate": "2027-03-20",
+      "amount": 83480
+     },
+     {
+      "label": "20-JUN-2027",
+      "dueDate": "2027-06-20",
+      "amount": 83480
+     },
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 417400
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony, Semi furnished."
+   },
+   "photos": [
+    {
+     "filename": "ym6dtf-69abbaa3.webp",
+     "url": "https://distressonly.deals/media/units/435/7034b443580b.webp"
+    },
+    {
+     "filename": "ym6dtf-e629ab3d.webp",
+     "url": "https://distressonly.deals/media/units/435/fca9e956873d.webp"
+    },
+    {
+     "filename": "ym6dtf-44f80087.webp",
+     "url": "https://distressonly.deals/media/units/435/00dbff2dac29.webp"
+    },
+    {
+     "filename": "ym6dtf-6ff44eb1.webp",
+     "url": "https://distressonly.deals/media/units/435/49c0a3a1249f.webp"
+    },
+    {
+     "filename": "ym6dtf-k0.webp",
+     "url": "https://distressonly.deals/media/units/435/e8055ae7b24b.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 11, 2026: DISTRESS DEAL: 1-BR IN CANAL CROWN. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,170,520; selling price AED 1,710,000."
   },
   {
    "ref": "yx5CEt",
