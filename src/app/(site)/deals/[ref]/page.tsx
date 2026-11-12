@@ -145,11 +145,15 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
   // A unit already handed over says so rather than "handover TBC", and one with nothing left to pay the developer isn't
   // offered as a payment plan to take over.
   const ready = isReady({ ...l, planRows: (l.paymentPlan ?? []).length }, dubaiToday());
-  const description = t(
+  const base = t(
     a.remaining > 0
       ? ready
-        ? "meta.descriptionReady"
-        : "meta.description"
+        ? a.overdue > 0
+          ? "meta.descriptionReadyArrears"
+          : "meta.descriptionReady"
+        : a.overdue > 0
+          ? "meta.descriptionArrears"
+          : "meta.description"
       : ready
         ? "meta.descriptionReadyPaid"
         : "meta.descriptionPaid",
@@ -159,8 +163,18 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
       paid: paidText(a.paidPct),
       handover: formatQuarter(l.handoverDate, locale),
       upfront: formatAED(l.askingPrice, locale),
+      overdue: formatAED(a.overdue, locale),
     },
   );
+  // The developer's late fees are outside the price and its discount, and grow while unpaid: dated, in a sentence of
+  // their own, never inside the amount next to the seller's price.
+  const lateFees =
+    a.penalty > 0
+      ? l.arrearsCheckedAt
+        ? t("meta.lateFees", { amount: formatAED(a.penalty, locale), date: formatDate(l.arrearsCheckedAt, locale) })
+        : t("meta.lateFeesUndated", { amount: formatAED(a.penalty, locale) })
+      : null;
+  const description = [base, lateFees].filter(Boolean).join(locale === "zh" ? "" : " ");
   // One address per deal and language: "/deals/od-1001" and "/deals/OD-1001" are the same page, canonical OD-1001.
   const alternates = alternatesFor(`/deals/${refCode(l.refNo)}`, locale);
   return {
@@ -295,12 +309,22 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const arrearsKnown = l.overdueAmount != null || l.overduePenalty != null;
   const arrearsChecked = arrearsKnown && l.arrearsCheckedAt != null;
   const checkedOn = formatDate(l.arrearsCheckedAt, locale);
-  const arrearsRow: [string, number | null] =
+  // The arrears in their two parts: the overdue instalments are part of the price (the balance owed, paid on transfer
+  // day instead of later); the developer's late fees are not, can grow while unpaid, and who bears them is agreed in
+  // the MOU. Lumped together, the rows added up to well short of the discount the chip shows.
+  const arrearsRows: [string, number | null][] =
     arrearsKnown && a.arrears > 0
-      ? [arrearsChecked ? t("cost.arrears", { date: checkedOn }) : t("cost.arrearsSeller"), a.arrears]
+      ? [
+          ...(a.overdue > 0
+            ? [[arrearsChecked ? t("cost.overdue", { date: checkedOn }) : t("cost.overdueSeller"), a.overdue] as [string, number]]
+            : []),
+          ...(a.penalty > 0
+            ? [[arrearsChecked ? t("cost.lateFees", { date: checkedOn }) : t("cost.lateFeesSeller"), a.penalty] as [string, number]]
+            : []),
+        ]
       : arrearsChecked
-        ? [t("cost.upToDate", { date: checkedOn }), 0]
-        : [t("cost.arrearsUnknown"), null];
+        ? [[t("cost.upToDate", { date: checkedOn }), 0]]
+        : [[t("cost.arrearsUnknown"), null]];
   // "Your cash timeline": the listed plan from today, in Dubai dates.
   const today = dubaiToday();
   const schedule = planSchedule(plan, l.handoverDate, today, {
@@ -330,6 +354,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   const planStart = planFirstAhead < 0 ? Math.max(0, plan.length - 5) : planFirstAhead;
   const planShown = (i: number) => plan.length <= 8 || (i >= planStart && i < planStart + 5) || i === plan.length - 1;
   const planHidden = plan.filter((_, i) => !planShown(i)).length;
+  // A very long plan (monthly instalments running years past handover: more rows than a plan could hold before
+  // PLAN_MAX_ROWS was raised) folds the same way on desktop too, where every other plan still shows all its rows.
+  const planFoldsEverywhere = plan.length > 60;
   const dueSoon = schedule.dueSoon;
   const dueSoonText = dueSoon
     ? richText(t(dueSoon.amount ? "side.dueSoon" : "side.dueSoonNoAmount"), {
@@ -392,7 +419,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
 
   const cost: [string, number | null][] = [
     [t("cost.asking"), l.askingPrice],
-    arrearsRow,
+    ...arrearsRows,
     a.overdue > 0 ? [t("cost.remainingAfterArrears"), a.remainingAfterTransfer] : [t("cost.remaining"), a.remaining],
     ...(FEES.payer === "buyer"
       ? ([
@@ -966,6 +993,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                 {plan.length > 0 && (
                   <CollapsiblePlan
                     hidden={planHidden}
+                    everywhere={planFoldsEverywhere}
                     showAll={t("plan.showAll", { count: plan.length })}
                     showFewer={t("plan.showFewer")}
                     className="mt-6 overflow-x-auto rounded-2xl border border-border/80"
@@ -980,7 +1008,12 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                       </TableHeader>
                       <TableBody>
                         {plan.map((s, i) => (
-                          <TableRow key={`${s.label}-${i}`} className={cn(!planShown(i) && "group-data-[collapsed]/plan:max-lg:hidden")}>
+                          <TableRow
+                            key={`${s.label}-${i}`}
+                            className={cn(
+                              !planShown(i) && (planFoldsEverywhere ? "group-data-[collapsed]/plan:hidden" : "group-data-[collapsed]/plan:max-lg:hidden"),
+                            )}
+                          >
                             <TableCell className="py-3 ps-4 font-medium max-sm:ps-3 max-[359px]:pe-1">
                               <span className="flex items-center gap-3 max-sm:gap-2">
                                 {/* Smaller on phones, and left out below 360 px, where the date and the amount need the row. */}
@@ -1084,7 +1117,8 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
                             [
                               [t("timeline.transferEquity"), formatAED(l.askingPrice, locale)],
                               [t("timeline.transferFees"), t("side.approx", { amount: formatAED(a.buyerFees, locale) })],
-                              ...(a.arrears > 0 ? [[t("timeline.transferArrears"), formatAED(a.arrears, locale)]] : []),
+                              ...(a.overdue > 0 ? [[t("timeline.transferOverdue"), formatAED(a.overdue, locale)]] : []),
+                              ...(a.penalty > 0 ? [[t("timeline.transferLateFees"), formatAED(a.penalty, locale)]] : []),
                             ] as [string, string][]
                           ).map(([k, v]) => (
                             // Phones: a label too long to share its line takes the whole width, the amount below it.

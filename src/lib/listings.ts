@@ -71,6 +71,7 @@ export const cardColumns = {
   launchPrice: listings.launchPrice,
   overdueAmount: listings.overdueAmount,
   overduePenalty: listings.overduePenalty,
+  arrearsCheckedAt: listings.arrearsCheckedAt,
   handoverDate: listings.handoverDate,
   planRows,
   motivation: listings.motivation,
@@ -102,6 +103,8 @@ export type ListingCard = {
   /** Arrears (see schema.ts): part of the cash at transfer. */
   overdueAmount: number | null;
   overduePenalty: number | null;
+  /** The developer's statement those figures come from (null = the seller's figures, not checked yet). */
+  arrearsCheckedAt: string | null;
   handoverDate: string | null;
   /** How many rows the listed payment plan has (isReady in src/lib/deal-math.ts). */
   planRows: number;
