@@ -352,7 +352,10 @@ export default defineMessages({
     "wa.handover": "Handover {q}",
     "wa.price": "💰 {price} to the seller",
     "wa.overdue": "Plus {amount} of overdue instalments to clear with the developer on transfer day",
-    "wa.lateFees": "The developer's late fees ({amount} so far) are not in this price; who pays them is agreed in the MOU",
+    "wa.lateFees":
+      "Not in the amounts above: the developer's late fees, {amount} on its statement of {date}, which can grow while the instalments stay unpaid. Who pays them is agreed in the MOU",
+    "wa.lateFeesUndated":
+      "Not in the amounts above: the developer's late fees, {amount} when last checked, which can grow while the instalments stay unpaid. Who pays them is agreed in the MOU",
     "wa.remaining": "Then {amount} to the developer per the plan",
     "wa.best.headline": "🔥 This week's best distressed off-plan deals in Dubai",
     "wa.best.more": "More deals: {url}",
@@ -1016,7 +1019,10 @@ export default defineMessages({
     "wa.handover": "التسليم ⁨{q}⁩",
     "wa.price": "💰 ⁨{price}⁩ للبائع",
     "wa.overdue": "إضافةً إلى ⁨{amount}⁩ من الأقساط المتأخرة تُسدَّد للمطوّر يوم نقل الملكية",
-    "wa.lateFees": "غرامات التأخير لدى المطوّر (⁨{amount}⁩ حتى الآن) غير مشمولة في هذا السعر، ويُتفق في مذكرة التفاهم على الطرف الذي يتحمّلها",
+    "wa.lateFees":
+      "غير مشمولة في المبالغ أعلاه: غرامات التأخير لدى المطوّر، ⁨{amount}⁩ في كشف حسابه بتاريخ ⁨{date}⁩، وقد تزداد ما دامت الأقساط غير مسدّدة. ويُتفق في مذكرة التفاهم على الطرف الذي يتحمّلها",
+    "wa.lateFeesUndated":
+      "غير مشمولة في المبالغ أعلاه: غرامات التأخير لدى المطوّر، ⁨{amount}⁩ عند آخر تحقق، وقد تزداد ما دامت الأقساط غير مسدّدة. ويُتفق في مذكرة التفاهم على الطرف الذي يتحمّلها",
     "wa.remaining": "ثم ⁨{amount}⁩ للمطوّر حسب خطة السداد",
     "wa.best.headline": "🔥 أفضل صفقات العقارات المتعثّرة على الخارطة في دبي هذا الأسبوع",
     "wa.best.more": "المزيد من الصفقات: ⁨{url}⁩",
@@ -1657,7 +1663,8 @@ export default defineMessages({
     "wa.handover": "交房时间：{q}",
     "wa.price": "💰 付给卖家 {price}",
     "wa.overdue": "另需在过户当日向开发商结清逾期分期款 {amount}",
-    "wa.lateFees": "开发商收取的滞纳金（目前为 {amount}）不含在此价格内，由哪一方承担在谅解备忘录（MOU）中约定",
+    "wa.lateFees": "上述金额不含开发商收取的滞纳金：其 {date} 对账单所列为 {amount}，分期款未付期间可能继续增加；由哪一方承担在谅解备忘录（MOU）中约定",
+    "wa.lateFeesUndated": "上述金额不含开发商收取的滞纳金：最近一次核实为 {amount}，分期款未付期间可能继续增加；由哪一方承担在谅解备忘录（MOU）中约定",
     "wa.remaining": "之后按付款计划向开发商支付 {amount}",
     "wa.best.headline": "🔥 本周迪拜最佳急售期房",
     "wa.best.more": "更多房源：{url}",
