@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
-import { Check, Copy, KeyRound, Loader2, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, Check, Copy, Eye, EyeOff, KeyRound, Loader2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
+  adminSetVisibility,
   adminUpdateListing,
   approveListing,
   deleteSampleListings,
@@ -37,6 +38,93 @@ import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, type ListingStatusKey } from "
 import { formatDate } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
+
+/**
+ * Hide / Show on site / Archive / Restore (adminSetVisibility): what the listing editor's status does for each, in one
+ * tap. Hide keeps the offers and tells nobody; Archive takes the unit off the market (offers closed, buyers told), so
+ * it asks first. Which buttons show follows the status: a unit in a deal or sold has none (the editor handles those).
+ */
+export function VisibilityButtons({
+  listingId,
+  savedAt,
+  status,
+  pausedByAdmin,
+  refCode,
+}: {
+  listingId: string;
+  savedAt: string;
+  status: ListingStatusKey;
+  pausedByAdmin: boolean;
+  refCode: string;
+}) {
+  const t = useT("admin");
+  const tc = useT("common");
+  const [pending, start] = useTransition();
+  const [confirming, setConfirming] = useState(false);
+  const archiveButton = useRef<HTMLButtonElement>(null);
+  const run = (action: "hide" | "show" | "archive" | "restore") =>
+    start(async () => {
+      const res = await adminSetVisibility(listingId, action, savedAt);
+      if ("error" in res && res.error) toast.error(res.error);
+      else toast.success(t(`visibility.done.${action}`));
+    });
+  const canHide = status === "live" || status === "pending_review";
+  const canShow = status === "paused" && pausedByAdmin;
+  const canArchive = canHide || status === "paused" || status === "rejected";
+  const canRestore = status === "withdrawn";
+  if (!canHide && !canShow && !canArchive && !canRestore) return null;
+  const outlined = cn(PHONE_BUTTON, PHONE_OUTLINED);
+  return (
+    <div className="flex flex-wrap justify-end gap-2 max-sm:justify-start" data-testid="visibility-buttons">
+      {canHide && (
+        <Button size="sm" variant="outline" className={PHONE_BUTTON} disabled={pending} onClick={() => run("hide")} title={t("visibility.hint.hide")}>
+          <EyeOff /> {t("visibility.hide")}
+        </Button>
+      )}
+      {canShow && (
+        <Button size="sm" variant="success" className={PHONE_BUTTON} disabled={pending} onClick={() => run("show")} title={t("visibility.hint.show")}>
+          <Eye /> {t("visibility.show")}
+        </Button>
+      )}
+      {canRestore && (
+        <Button size="sm" variant="outline" className={PHONE_BUTTON} disabled={pending} onClick={() => run("restore")} title={t("visibility.hint.restore")}>
+          <ArchiveRestore /> {t("visibility.restore")}
+        </Button>
+      )}
+      {canArchive && (
+        <Button
+          ref={archiveButton}
+          size="sm"
+          variant="ghost"
+          className={cn(outlined, "text-destructive hover:text-destructive")}
+          disabled={pending}
+          onClick={() => setConfirming(true)}
+        >
+          <Archive /> {t("visibility.archive")}
+        </Button>
+      )}
+      <AlertDialog open={confirming} onOpenChange={setConfirming}>
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            archiveButton.current?.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("visibility.archiveTitle", { ref: refCode })}</AlertDialogTitle>
+            <AlertDialogDescription>{t("visibility.archiveBody")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="mt-0 max-lg:h-11">{tc("cancel")}</AlertDialogCancel>
+            <AlertDialogAction className={cn(buttonVariants({ variant: "destructive" }), "max-lg:h-11")} onClick={() => run("archive")}>
+              <Archive /> {t("visibility.archive")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
 
 /**
  * Approve / Reject. `savedAt` is the listing's updated_at as this page shows it: Approve is refused once the listing has
