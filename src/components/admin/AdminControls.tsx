@@ -50,12 +50,15 @@ export function VisibilityButtons({
   status,
   pausedByAdmin,
   refCode,
+  className,
 }: {
   listingId: string;
   savedAt: string;
   status: ListingStatusKey;
   pausedByAdmin: boolean;
   refCode: string;
+  /** The row's own layout (the pipeline board's card footer); none = the listing page's header. */
+  className?: string;
 }) {
   const t = useT("admin");
   const tc = useT("common");
@@ -75,7 +78,7 @@ export function VisibilityButtons({
   if (!canHide && !canShow && !canArchive && !canRestore) return null;
   const outlined = cn(PHONE_BUTTON, PHONE_OUTLINED);
   return (
-    <div className="flex flex-wrap justify-end gap-2 max-sm:justify-start" data-testid="visibility-buttons">
+    <div className={cn("flex flex-wrap gap-2", className ?? "justify-end max-sm:justify-start")} data-testid="visibility-buttons">
       {canHide && (
         <Button size="sm" variant="outline" className={PHONE_BUTTON} disabled={pending} onClick={() => run("hide")} title={t("visibility.hint.hide")}>
           <EyeOff /> {t("visibility.hide")}
