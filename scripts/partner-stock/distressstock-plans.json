@@ -319,6 +319,8 @@
    "totalOnTransfer": 1917412,
    "totalRemaining": 1403544,
    "totalCosts": 3320956,
+   "handoverDate": "2028-12-31",
+   "handoverNote": "DLD registers Greenridge (Emaar, Dubai South) for completion on 31 Dec 2028, 36% built in Nov 2026",
    "notes": "Re-posted image: price cut from 3,150,000 (payment to seller 1,746,456 -> 1,706,456; commission 66,150 -> 65,310); DLD fee and plan unchanged. All checks pass."
   },
   "3NraCZ": {
@@ -442,6 +444,8 @@
    "totalOnTransfer": 3265487,
    "totalRemaining": 642675,
    "totalCosts": 3908162,
+   "handoverDate": "2027-12-30",
+   "handoverNote": "DLD registers Safa Two, Towers A and B alike, for completion on 30 Dec 2027, 31% built in Nov 2026",
    "notes": "All checks pass. Original price 3,895,050 from the DLD line (4% + 40); the page's 'Original Price + DLD 4%' AED 4,050,840 is AED 12 below 3,895,050 x 1.04, a rounding on the page."
   },
   "6FDbrU": {
@@ -479,6 +483,8 @@
    "totalOnTransfer": 713667,
    "totalRemaining": 1818717,
    "totalCosts": 2532384,
+   "handoverDate": "2030-03-31",
+   "handoverNote": "DLD registers Skyvue Spectra for completion on 31 Mar 2030, 11% built in Nov 2026",
    "notes": "The image itself is off by 1 AED: the four transfer rows (554632 + 103944 + 5250 + 49840) add up to 713666, but Total on Transfer is printed as 713667. I checked this digit by digit on a zoomed crop, so it is probably a rounding artifact in the source spreadsheet. TOTAL COSTS (2532384) equals the printed 713667 + 1818717. The other checks pass: seller + remaining = 2373349, and the instalments sum to 1818717. Dates are printed as DD.MM.YYYY (31.08.2028 confirms the day-first order)."
   },
   "6eEks7": {
@@ -689,6 +695,8 @@
    "totalOnTransfer": 1524367,
    "totalRemaining": 864711,
    "totalCosts": 2389078,
+   "handoverDate": "2027-03-01",
+   "handoverNote": "DLD registers Park Views Residences B for completion on 1 Mar 2027, 99% built in Nov 2026",
    "notes": "All checks pass: 1,385,289 + 864,711 = 2,250,000; transfer rows sum to 1,524,367; total 2,389,078. The printed DLD fee (86,578) is not 4% of the unit price + 40 (that would be 90,040). Transcribed as printed."
   },
   "A0h6nb": {
@@ -2029,6 +2037,8 @@
    "totalOnTransfer": 594000,
    "totalRemaining": 1259823,
    "totalCosts": 1853823,
+   "handoverDate": "2027-12-31",
+   "handoverNote": "DLD registers Belmore Residences (Ellington) for completion on 31 Dec 2027, 7% built in Nov 2026",
    "notes": "All checks pass. 'Conscstruction' is misspelled in the image and is kept verbatim. None of the instalments has a calendar date."
   },
   "WbWOpq": {
@@ -2631,6 +2641,8 @@
    "totalOnTransfer": 2541330,
    "totalRemaining": 1286600,
    "totalCosts": 3827930,
+   "handoverDate": "2028-09-15",
+   "handoverNote": "DLD registers Verve City Walk Tower B for completion on 15 Sep 2028, 18% built in Nov 2026",
    "notes": "All checks pass: 2313400+1286600 = 3600000. The instalments add up to 1286600. Transfer rows add up to 2541330. 2541330+1286600 = 3827930. There is no separate On Handover row; the last instalment is the dated 15-AUG-2028 row."
   },
   "k2wIdV": {
@@ -2668,6 +2680,8 @@
    "totalOnTransfer": 3504251,
    "totalRemaining": 3441443,
    "totalCosts": 6945694,
+   "handoverDate": "2028-12-31",
+   "handoverNote": "DLD registers The Valley - Farm Grove, the first phase, for completion on 31 Dec 2028, 10% built in Nov 2026 (Farm Grove 2: 31 Oct 2028); the unit's own payment plan prints On Handover (31-DEC-2028)",
    "notes": "All checks pass: 3086557+3441443 = 6528000. The instalments add up to 3441443 (3x688289 + 1376576). Transfer rows add up to 3504251. 3504251+3441443 = 6945694. The handover row prints an expected date, 31-DEC-2028, which I used as its dueDate. The third row prints a single-digit day: '7-FEB-2028'."
   },
   "kBQp6r": {
@@ -3206,6 +3220,8 @@
    "totalOnTransfer": 581889,
    "totalRemaining": 1345201,
    "totalCosts": 1927090,
+   "handoverDate": "2027-08-31",
+   "handoverNote": "DLD registers Onda by Kasco for completion on 31 Aug 2027, 61% built in Nov 2026",
    "notes": "The first instalment is a construction milestone ('70% Construction') and has no date. 454799+1345201=1800000; instalments sum to 1345201; transfer lines sum to 581889; total 1927090. All checks pass. The DLD fee of 84040 is 4% of 2,100,000 plus 40, so the original price (OP) is above the unit price shown. No OP row is printed."
   },
   "sQ482C": {
@@ -3782,6 +3798,8 @@
    "totalOnTransfer": 1267880,
    "totalRemaining": 0,
    "totalCosts": 1267880,
+   "handoverDate": "2027-03-30",
+   "handoverNote": "DLD registers Luminar Tower 3 for completion on 30 Mar 2027, 18% built in Nov 2026",
    "notes": "The image adds up. It has no Payment Plan section and no Total Remaining row, so totalRemaining is null (in effect 0). This is a ready or fully paid unit: payment to seller equals the unit price. 1190000 + 47640 + 5250 + 24990 = 1267880, which matches both totals. There is no Title Deed Fee row and the trustee fee is 5250. The first reading wrongly listed the standard commission row in otherRows; it is removed here."
   }
  }
