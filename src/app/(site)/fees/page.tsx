@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // The worked example: a unit bought for AED 2M with AED 600K paid; the seller accepts AED 500K for the equity.
-const EXAMPLE = { originalPrice: 2_000_000, amountPaid: 600_000, askingPrice: 500_000, launchPrice: null };
+const EXAMPLE = { originalPrice: 2_000_000, amountPaid: 600_000, askingPrice: 500_000, launchPrice: null, lotUnits: null };
 
 export default async function FeesPage() {
   const [t, tc, th, locale] = await Promise.all([getT("marketing"), getT("common"), getT("home"), getLocale()]);

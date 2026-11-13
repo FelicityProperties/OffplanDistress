@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, max, notInArray } from "drizzle-orm";
+import { and, eq, max, ne, notInArray } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
 import { listings } from "@/db/schema";
@@ -17,7 +17,8 @@ import { communityName, developerName, developerNotStated } from "./place-names"
 // (backup offers are still possible) are listed after the available ones, but nothing the page claims (the title, the
 // unit count, "up to X% below the original price") counts them. A project is the listings' project name; spellings that
 // differ only in case, accents or punctuation ("Sls Residences The Palm", "SLS Residences the Palm") share one page
-// through projectSlug.
+// through projectSlug. A bulk deal (unit type "bulk": several units sold as one lot) is not on them (singleUnitSql): the
+// pages count, price and describe single units ("1 resale unit available", the cash for "the unit available").
 
 /**
  * A project's address segment: "Bluewaters Bay - Building 2" → "bluewaters-bay-building-2", "Rashid Yachts & Marina"
@@ -177,6 +178,9 @@ export function groupProjects(rows: ProjectRow[], touched: ProjectTouch[] = []):
     .sort((a, b) => b.liveCount - a.liveCount || b.dealCount - a.dealCount || a.name.localeCompare(b.name, "en"));
 }
 
+/** A single unit, not a bulk deal: what the project pages list and count. */
+export const singleUnitSql = ne(listings.unitType, "bulk");
+
 /**
  * Every project with an available unit: one query over the public set the sitemap and /deals use (advertisedSql, no
  * samples), grouped by groupProjects, and one for when each project name last changed. Cached for the request (the deal
@@ -202,13 +206,13 @@ export const liveProjects = cache(async (): Promise<Project[]> => {
         planRows: planRowsSql,
       })
       .from(listings)
-      .where(and(advertisedSql(today), eq(listings.isSample, false))),
+      .where(and(advertisedSql(today), eq(listings.isSample, false), singleUnitSql)),
     // A unit sold, withdrawn or paused leaves the page (and moves its updated_at): its project's page changed too. Only a
     // listing that never went public (pending review, rejected) can't have been on a page.
     db
       .select({ name: listings.projectName, updatedAt: max(listings.updatedAt) })
       .from(listings)
-      .where(and(eq(listings.isSample, false), notInArray(listings.status, ["pending_review", "rejected"])))
+      .where(and(eq(listings.isSample, false), notInArray(listings.status, ["pending_review", "rejected"]), singleUnitSql))
       .groupBy(listings.projectName),
   ]);
   return groupProjects(

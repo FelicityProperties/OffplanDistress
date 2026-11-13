@@ -19,7 +19,15 @@ export type DealNumbers = {
    * the FEES.nocEstimate is used.
    */
   nocFee?: number | null;
+  /**
+   * A bulk deal's number of units (src/db/schema.ts lotUnits); null for a single unit. Each unit is its own DLD transfer
+   * and NOC, so the fixed fees count once per unit.
+   */
+  lotUnits: number | null;
 };
+
+/** How many transfers a listing is: a bulk deal's units, else one. */
+export const transfersOf = (d: Pick<DealNumbers, "lotUnits">) => (d.lotUnits != null && d.lotUnits > 1 ? Math.floor(d.lotUnits) : 1);
 
 /** A rate as whole basis points (0.02 → 200), so every fee below is integer arithmetic, in JS and in SQL alike. */
 const bp = (rate: number) => Math.round(rate * 10_000);
@@ -33,7 +41,10 @@ export function applyBp(amount: number, rateBp: number) {
   return Math.round((amount * rateBp) / 10_000);
 }
 
-/** Fees fixed per transfer whatever the price: DLD registration + trustee office, and the developer's NOC (estimates). */
+/**
+ * Fees fixed per transfer whatever the price: DLD registration + trustee office, and the developer's NOC (estimates). A
+ * bulk deal pays them once per unit (transfersOf).
+ */
 export const FIXED_FEES_ESTIMATE = FEES.dldAdminEstimate + FEES.nocEstimate;
 
 /**
@@ -44,8 +55,9 @@ export const FIXED_FEES_ESTIMATE = FEES.dldAdminEstimate + FEES.nocEstimate;
  * /deals minTransfer/maxTransfer filters and the "cash" sort use; change both together:
  *   asking price (equity to the seller)
  *   + buyer fees: our commission + VAT on it (when FEES.payer is the buyer), the DLD transfer fee (FEES.dldRate of the
- *     sale value), DLD registration/trustee and developer NOC fees (FIXED_FEES_ESTIMATE; in a deal file, the NOC fee
- *     invoiced once recorded). Everything but our fee is an estimate, so the figure is always shown as "≈".
+ *     sale value), DLD registration/trustee and developer NOC fees (FIXED_FEES_ESTIMATE per unit: a bulk deal's units
+ *     are a transfer each; in a deal file, the NOC fee invoiced once recorded). Everything but our fee is an estimate,
+ *     so the figure is always shown as "≈".
  *   + arrears: overdue instalments + late fees (null counts as 0), which the developer wants cleared before the NOC.
  * The overdue instalments are already inside the remaining balance, so the all-in total (totalCost) adds only the
  * late fees; they move from the plan to transfer day, and the plan still to pay after transfer is remaining − overdue.
@@ -57,8 +69,10 @@ export function analyzeDeal(d: DealNumbers) {
   const commission = applyBp(saleValue, FEE_BP.commission);
   const vat = applyBp(commission, FEE_BP.vat);
   const dld = applyBp(saleValue, FEE_BP.dld);
-  const noc = d.nocFee != null ? Math.max(d.nocFee, 0) : FEES.nocEstimate;
-  const buyerFees = (FEES.payer === "buyer" ? commission + vat : 0) + dld + FEES.dldAdminEstimate + noc;
+  const transfers = transfersOf(d);
+  const dldAdmin = FEES.dldAdminEstimate * transfers;
+  const noc = d.nocFee != null ? Math.max(d.nocFee, 0) : FEES.nocEstimate * transfers;
+  const buyerFees = (FEES.payer === "buyer" ? commission + vat : 0) + dld + dldAdmin + noc;
   const overdue = Math.max(d.overdueAmount ?? 0, 0);
   const penalty = Math.max(d.overduePenalty ?? 0, 0);
   const arrears = overdue + penalty;
@@ -84,8 +98,9 @@ export function analyzeDeal(d: DealNumbers) {
     commission,
     vat,
     dld,
-    dldAdmin: FEES.dldAdminEstimate,
+    dldAdmin,
     noc,
+    transfers,
     buyerFees,
     overdue,
     penalty,

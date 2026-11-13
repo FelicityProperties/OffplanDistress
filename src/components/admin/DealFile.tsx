@@ -61,7 +61,7 @@ type Props = {
    * The unit's figures behind the buyer's cash on transfer day at the agreed price (analyzeDeal's cashToClose: the
    * agreed price, our fee + VAT, the DLD fee, the registration and NOC estimates, and the arrears with the developer).
    */
-  deal: { originalPrice: number; amountPaid: number; overdueAmount: number | null; overduePenalty: number | null };
+  deal: { originalPrice: number; amountPaid: number; overdueAmount: number | null; overduePenalty: number | null; lotUnits: number | null };
   /** No buyer linked: the form offers to link one by email. */
   needsBuyer: boolean;
   /** Today in Dubai, the latest date for anything that has already happened. */

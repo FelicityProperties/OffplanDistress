@@ -66,7 +66,7 @@ const MASS_REMOVAL_MIN = 3;
 /** The source spreadsheet rounds VAT per line, so its printed totals can be a dirham or two off the rows. */
 const ROUNDING_AED = 2;
 const INT_MAX = 2_147_483_647;
-const UNIT_TYPES = ["studio", "1br", "2br", "3br", "4br", "5br", "townhouse", "villa", "penthouse"];
+const UNIT_TYPES = ["studio", "1br", "2br", "3br", "4br", "5br", "townhouse", "villa", "penthouse", "bulk"];
 /**
  * Areas outside the emirate of Dubai: never listed, no DLD permit applies there. A name counts as a whole word or phrase
  * anywhere in the posted area ("Al Marjan Island" names Marjan), not inside another word nor as a road's name ("Al Ain
@@ -189,6 +189,8 @@ const COM_MAP = {
   "damac hills": "DAMAC Hills",
   "damac hills ii": "DAMAC Hills 2",
   "dubai island": "Dubai Islands",
+  // DLD: Damac Riverside's buildings are registered in Dubai Investment Park Second.
+  "damac riverside": "Dubai Investment Park",
 };
 const COM_NAMES = {
   "sobha hartland ii": "Sobha Hartland II",
@@ -196,9 +198,13 @@ const COM_NAMES = {
   jbr: "JBR",
   "damac sun city": "DAMAC Sun City",
   "damac islands": "DAMAC Islands",
+  // DLD: a master project of its own in Al Yelayiss 1, next to DAMAC Islands.
+  "damac islands 2": "DAMAC Islands 2",
   "port de la mer": "Port de La Mer",
   "rashid yachts & marina": "Rashid Yachts & Marina",
 };
+/** Project names misspelt on the site (lower case) → the developer's spelling, so the units share one project page. */
+const PROJECT_NAMES = { "canal flont residences": "Canal Front Residences" };
 const FEATURE_KEYS = [
   "Balcony",
   "Parking",
@@ -221,6 +227,7 @@ const LISTING_KEYS = [
   "communityOther",
   "unitType",
   "sizeSqft",
+  "lotUnits",
   "floor",
   "view",
   "originalPrice",
@@ -440,6 +447,9 @@ export function validateEntry(e, rules) {
   }
   if (!UNIT_TYPES.includes(l.unitType)) p.push(`unitType "${l.unitType}"`);
   int(l.sizeSqft, "sizeSqft", { min: 1 });
+  // A bulk deal's number of units (src/db/schema.ts lotUnits); no other unit type has one.
+  int(l.lotUnits, "lotUnits", { min: 2, max: 10_000, optional: true });
+  if (l.lotUnits != null && l.unitType !== "bulk") p.push("lotUnits on a unit that is not a bulk deal");
   str(l.floor, 40, "floor");
   str(l.view, 80, "view");
   int(l.originalPrice, "originalPrice", { min: 1 });
@@ -467,13 +477,13 @@ export function validateEntry(e, rules) {
 // From a parsed page + its transcribed plan to a manifest entry.
 
 /**
- * Why the unit never goes in the manifest: a bulk deal, a shop, or not a Dubai (DLD / Trakheesi) unit — a NON_DUBAI
- * name in its area, unless the area is one we know to be in Dubai (with the repo's `rules`, knownDubaiArea).
+ * Why the unit never goes in the manifest: a shop, or not a Dubai (DLD / Trakheesi) unit — a NON_DUBAI name in its
+ * area, unless the area is one we know to be in Dubai (with the repo's `rules`, knownDubaiArea). A bulk deal is listed:
+ * one listing for the lot, unit type "bulk" (isBulk).
  */
 export function exclusion(u, rules) {
   const type = pyStrip(u.fields.Type);
   const area = pyStrip(u.fields.Area);
-  if (/^\d+\s+apartments?$/i.test(type) || /BULK DEAL/i.test(u.title)) return "bulk deal (one listing is one unit)";
   if (/retail/i.test(type)) return "retail unit (the marketplace lists homes only)";
   const outside = NON_DUBAI_RE.some((re) => re.test(area)) && !(rules && knownDubaiArea(area, rules));
   if (outside) return `outside Dubai (${area}; not a DLD / Trakheesi unit)`;
@@ -518,6 +528,9 @@ export function planProblems(p, unit = null) {
   }
   const selling = unit ? money(unit.fields["Selling price"]) : null;
   if (selling && selling !== p.unitPrice) probs.push(`the page's selling price ${selling} ≠ the plan's unit price ${p.unitPrice} (price changed?)`);
+  // A handover our team set from DLD's register in place of the posted one, with the reason.
+  if (p.handoverDate != null && !isCalendarDay(p.handoverDate)) probs.push("handoverDate not a calendar day (YYYY-MM-DD)");
+  if (p.handoverDate != null && (typeof p.handoverNote !== "string" || !pyStrip(p.handoverNote))) probs.push("handoverDate without a handoverNote saying why");
   return probs;
 }
 
@@ -529,6 +542,30 @@ function money(s) {
   return n >= 10_000 ? n : null;
 }
 
+/**
+ * The prices a posted "Original Price + DLD 4%" can stand for. The site writes it two ways: OP × 1.04 rounded to the
+ * dirham, or that + AED 40 (DLD's admin fee). Each reading, where one exists, is the only whole price that gives the line
+ * (1.04 × an integer is never a half), so there are at most two.
+ */
+export function postedPrices(line) {
+  const out = [];
+  if (!line) return out;
+  for (const add of [0, 40]) {
+    const c = Math.round((line - add) / 1.04);
+    for (const x of [c - 1, c, c + 1]) if (Math.round(x * 1.04) + add === line && !out.includes(x)) out.push(x);
+  }
+  return out;
+}
+
+/** How many plan rows are a whole half-percent of `price` to the dirham (1%, 10%, 12.5%…): how developers bill instalments. */
+export function planShares(price, rows) {
+  return (rows ?? []).filter((r) => {
+    if (!(r?.amount > 0) || !(price > 0)) return false;
+    const k = Math.round((r.amount * 200) / price);
+    return k >= 1 && k <= 200 && Math.abs((price * k) / 200 - r.amount) < 1;
+  }).length;
+}
+
 function canon(value, list, mapping, names) {
   const v = pyStrip(value);
   if (!v) return [null, null];
@@ -536,6 +573,25 @@ function canon(value, list, mapping, names) {
   for (const x of list) if (x.toLowerCase() === low) return [x, null];
   if (mapping[low]) return [mapping[low], null];
   return ["Other", names[low] ?? v];
+}
+
+/** Several units sold together: "24 Apartments" as the type, or "BULK DEAL" in the title. */
+export const isBulk = (u) => /^\d+\s+apartments?$/i.test(pyStrip(u.fields.Type)) || /BULK DEAL/i.test(u.title);
+
+/** How many units a bulk deal holds, from its title, project or type ("BULK DEAL - 9 APARTMENTS IN …"), else null. */
+function bulkCount(u) {
+  for (const s of [u.title, u.fields.Project, u.fields.Type]) {
+    const m = /(\d+)\s+(?:apartments?|units?|villas?|townhouses?)\b/i.exec(s ?? "");
+    if (m) return Number(m[1]);
+  }
+  return null;
+}
+
+/** The project's name: a bulk deal's "Bulk Deal - 24 Apartments In <project>" loses its prefix; known misspellings fixed. */
+function projectNameOf(u) {
+  let name = pyStrip(u.fields.Project ?? "");
+  if (isBulk(u)) name = name.replace(/^bulk deal\s*[-–:]?\s*\d+\s+(?:apartments?|units?|villas?|townhouses?)\s+in\s+/i, "");
+  return PROJECT_NAMES[name.toLowerCase()] ?? name;
 }
 
 function unitType(fields) {
@@ -576,6 +632,15 @@ function description(u) {
   const f = u.fields;
   const feats = FEATURE_KEYS.filter((k) => ["✔", "✓"].includes(pyStrip(f[k])));
   const parts = [];
+  if (isBulk(u)) {
+    // The lot as a whole: how many units, the mix as posted ("1-BR (4), 2-BR (4), 3-BR (1)"), the total size.
+    const n = bulkCount(u);
+    const mix = (u.extras ?? []).map(pyStrip).find((x) => /\(\d+\)/.test(x));
+    const total = pyStrip(f.Size ?? f.BUA);
+    parts.push(
+      `Bulk deal: ${n ? `${n} units` : "several units"} sold together${mix ? ` (${mix})` : ""}${total ? `, ${total} in total` : ""}. The price, size and payment plan are for the whole lot.`,
+    );
+  }
   if (feats.length) parts.push(`Features: ${feats.join(", ")}.`);
   if (f.Plot) parts.push(`Plot: ${f.Plot}.${f.BUA ? ` Built-up area: ${f.BUA}.` : ""}`);
   if (f["Rented for"]) parts.push(`Currently rented for ${f["Rented for"]} a year.`);
@@ -600,7 +665,7 @@ export function buildEntry(u, plan, today, rules) {
   const f = u.fields;
   const ref = u.ref;
   const p = { ...plan, totalRemaining: remainingOf(plan) };
-  const ut = unitType(f);
+  const ut = isBulk(u) ? "bulk" : unitType(f);
   if (!ut) return { skip: `unit type not recognised (${f.Type ?? "—"}, ${f.Bedrooms ?? "—"})` };
   const sz = size(f);
   if (!sz) return { skip: "no size" };
@@ -618,8 +683,12 @@ export function buildEntry(u, plan, today, rules) {
   // A ready unit ("READY", "READY AND VACANT", "READY, RENTED (…)") was handed over before it was posted: its handover
   // date is the day it was posted — in the past, and the same from one day to the next — so the site shows it as ready
   // (not "Handover TBC") and the "Handover by" filter finds it.
-  const handoverDate = handover(handoverText) ?? (handedOver ? postedDay(u.posted) : null);
-  if (!handoverDate && /\d{4}/.test(handoverText) && !handedOver) return { skip: `the posted handover can't be read (${handoverText})` };
+  const postedHandover = handover(handoverText) ?? (handedOver ? postedDay(u.posted) : null);
+  if (!postedHandover && /\d{4}/.test(handoverText) && !handedOver) return { skip: `the posted handover can't be read (${handoverText})` };
+  // The plan file's handoverDate replaces a posted handover that DLD's register shows to be too early (the project's
+  // registered completion date is later); its handoverNote says why, for the admin notes. It only ever moves the date
+  // later: once the page posts a later one (or a ready unit's), the page's stands.
+  const handoverDate = p.handoverDate && postedHandover && !handedOver && p.handoverDate > postedHandover ? p.handoverDate : postedHandover;
   const ready = p.totalRemaining === 0;
   let op = null;
   if (ready) {
@@ -631,6 +700,18 @@ export function buildEntry(u, plan, today, rules) {
   // original one. Where the page posts an "Original Price + DLD 4%" that disagrees with it, that is the original price.
   const posted = origDld ? pyRound(origDld / 1.04) : null;
   if (!ready && posted != null && (op == null || (op === p.unitPrice && Math.abs(op * 1.04 - origDld) > 0.01 * origDld))) op = posted;
+  // Both lines are rounded to the dirham, and ÷ 0.04 makes the DLD line's rounding up to AED 50 on the price: between its
+  // price and the posted line's readings within that (postedPrices), the instalments decide, as developers bill them in
+  // whole half-percents of the SPA price (3,508,888: 10% = 350,889; 4,552,000: 5% = 227,600). The price most rows are a
+  // share of wins; with none better, the DLD line's stands.
+  if (!ready && op != null) {
+    let best = planShares(op, p.instalments);
+    for (const c of postedPrices(origDld)) {
+      if (Math.abs(c - op) > 25 * ROUNDING_AED) continue;
+      const n = planShares(c, p.instalments);
+      if (n > best) [op, best] = [c, n];
+    }
+  }
   if (!op) return { skip: "original price unknown" };
   if (op < p.totalRemaining) return { skip: `original price ${op} below the remaining plan ${p.totalRemaining}` };
   const paid = op - p.totalRemaining;
@@ -644,18 +725,22 @@ export function buildEntry(u, plan, today, rules) {
   const [com, comOther] = canon(f.Area, rules.COM, COM_MAP, COM_NAMES);
   if (com == null) return { skip: "no area" };
   // "NONE" (a townhouse, or a floor not given) means no floor, like the view's "None": the deal page would print "Floor NONE".
-  const floorText = pyStrip(f.Floor).replace(/^[() ]+|[() ]+$/g, "");
+  let floorText = pyStrip(f.Floor).replace(/^[() ]+|[() ]+$/g, "");
+  // "(2-6)" loses its brackets, but "FULL FLOOR (30-40)" keeps its closing one.
+  if ((floorText.match(/\(/g) ?? []).length > (floorText.match(/\)/g) ?? []).length) floorText += ")";
   const floor = /^(none|n\/?a|-+|—)$/i.test(floorText) ? null : cut(floorText, 40) || null;
   const viewText = pyStrip(f.View);
   const view = ["", "none", "-"].includes(viewText.toLowerCase()) ? null : cut(viewText, 80);
   const listing = {
-    projectName: cut(f.Project ?? "", 120),
+    projectName: cut(projectNameOf(u), 120),
     developer: dev,
     developerOther: devOther,
     community: com,
     communityOther: comOther,
     unitType: ut,
     sizeSqft: sz,
+    // A bulk deal's number of units, when its title or type gives it: the cost estimates count a transfer per unit.
+    ...(ut === "bulk" && bulkCount(u) >= 2 ? { lotUnits: bulkCount(u) } : {}),
     floor,
     view,
     originalPrice: op,
@@ -674,8 +759,13 @@ export function buildEntry(u, plan, today, rules) {
   const past = dated.filter((i) => i.dueDate < today);
   if (past.length) notes.push(`${past.length} instalment(s) in the posted plan fall before today (${past.map((i) => i.label).join(", ")}): confirm whether they were paid.`);
   if ((f.Handover ?? "").toUpperCase().startsWith("READY")) notes.push("Ready property (handover done).");
+  if (handoverDate !== postedHandover) {
+    notes.push(`Handover: the page says ${handoverText || "nothing"}; the listing shows ${p.handoverDate}${p.handoverNote ? ` (${p.handoverNote})` : ""}.`);
+  }
+  if (ut === "bulk" && !listing.lotUnits) notes.push("Bulk deal: the number of units can't be read from the page; the cost estimates count one transfer until it is known.");
   const over = u.sections.filter((s) => s.heading.toUpperCase().includes("OVERVIE")).flatMap((s) => s.images);
-  const keys = u.sections.filter((s) => s.heading.toUpperCase().includes("KEYPLAN")).flatMap((s) => s.images);
+  // A bulk deal's keyplan is the plan of one of its units (its own size and floors): not a picture of the lot.
+  const keys = ut === "bulk" ? [] : u.sections.filter((s) => s.heading.toUpperCase().includes("KEYPLAN")).flatMap((s) => s.images);
   const photos = [
     ...over.slice(0, 4).map((src, i) => ({ filename: `${ref}-o${i}.webp`, url: absoluteUrl(src) })),
     ...keys.slice(0, 1).map((src, i) => ({ filename: `${ref}-k${i}.webp`, url: absoluteUrl(src) })),
@@ -699,7 +789,8 @@ export function curatedPhotos(u, urls, previous, maxPhotos) {
   const before = Array.isArray(previous) ? previous : [];
   const named = new Map(before.map((p) => [p.url, p.filename]));
   const taken = new Set(before.map((p) => p.filename));
-  const keyplan = sectionImages(u, "KEYPLAN")[0] ?? null;
+  // A bulk deal's keyplan shows one of its units (another size, other floors), so its gallery has none.
+  const keyplan = isBulk(u) ? null : (sectionImages(u, "KEYPLAN")[0] ?? null);
   const onPage = new Set(u.sections.flatMap((s) => s.images).map(absoluteUrl));
   const photos = [];
   const notOnPage = [];
@@ -740,7 +831,7 @@ function entryChanges(before, after) {
 
 /**
  * What today's page means for the manifest, given the plan transcribed for it and the previous entry:
- *   excluded — never listed (bulk, retail, outside Dubai);
+ *   excluded — never listed (retail, outside Dubai);
  *   flag     — the agent has to (re)read the plan image: none transcribed yet (new / not transcribed), the image on
  *              the page is another one (image changed), or the figures don't add up (inconsistent);
  *   skip     — can't be listed as posted (no plan image, plan marked illegible, no size, …);
@@ -1130,7 +1221,7 @@ async function cmdBuild(opts) {
     const a = assess(u, was, plans, rules, today);
     if (a.kind === "excluded") {
       s.excluded.push({ ref: u.ref, title: u.title, reason: a.reason, wasListed: !!was });
-      // Listed before and excluded now (re-posted as a bulk deal, say — or the page's wording drifted): kept as it was,
+      // Listed before and excluded now (re-posted as a shop, say — or the page's wording drifted): kept as it was,
       // so a rule never withdraws it and it is still marked removed the day it really leaves the site; the summary says.
       if (was) out.push(normalizeEntry(curate(was, u, was.photos)));
       continue;

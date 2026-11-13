@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-13T01:42:02Z",
+ "generatedAt": "2026-11-13T09:22:48Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -497,8 +497,8 @@
     "sizeSqft": 2700,
     "floor": "G+1",
     "view": null,
-    "originalPrice": 3508900,
-    "amountPaid": 2105356,
+    "originalPrice": 3508888,
+    "amountPaid": 2105344,
     "askingPrice": 1706456,
     "handoverDate": "2028-06-30",
     "nextInstalmentDate": null,
@@ -605,8 +605,8 @@
     "sizeSqft": 2282,
     "floor": "G+1",
     "view": null,
-    "originalPrice": 2473050,
-    "amountPaid": 1954720,
+    "originalPrice": 2473000,
+    "amountPaid": 1954670,
     "askingPrice": 1981670,
     "handoverDate": "2027-03-31",
     "nextInstalmentDate": null,
@@ -701,6 +701,51 @@
    "notes": "Posted on DistressStock September 24, 2026: DISTRESS DEAL: 1-BR IN SOBHA SEAHAVEN - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,270,492; selling price AED 2,900,000."
   },
   {
+   "ref": "4Yzwgt",
+   "url": "https://distressonly.deals/u/4Yzwgt",
+   "posted": "2026-10-28",
+   "listing": {
+    "projectName": "Canal Front Residences",
+    "developer": "Meydan",
+    "developerOther": null,
+    "community": "Other",
+    "communityOther": "Al Wasl",
+    "unitType": "bulk",
+    "sizeSqft": 29371,
+    "lotUnits": 24,
+    "floor": "LOW",
+    "view": "Community/Canal",
+    "originalPrice": 73225000,
+    "amountPaid": 73225000,
+    "askingPrice": 73225000,
+    "handoverDate": "2026-10-28",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [],
+    "motivation": "motivated",
+    "description": "Bulk deal: 24 units sold together (1-BR (8), 1-BR+STUDY (1), 2-BR+STUDY (1), 2-BR+STORAGE+MAID'S (14)), 29,371 sq.ft in total. The price, size and payment plan are for the whole lot. Features: Balcony, Semi furnished."
+   },
+   "photos": [
+    {
+     "filename": "4Yzwgt-29401530.webp",
+     "url": "https://distressonly.deals/media/units/422/c1d13fee8597.webp"
+    },
+    {
+     "filename": "4Yzwgt-3c7b972b.webp",
+     "url": "https://distressonly.deals/media/units/422/e858dd547ff6.webp"
+    },
+    {
+     "filename": "4Yzwgt-e1750a0a.webp",
+     "url": "https://distressonly.deals/media/units/422/c30179bc3c64.webp"
+    },
+    {
+     "filename": "4Yzwgt-59e0cc54.webp",
+     "url": "https://distressonly.deals/media/units/422/a738a1c0f556.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock October 28, 2026: HOT LOT: BULK DEAL - 24 APARTMENTS IN CANAL FLONT RESIDENCES. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Bulk deal of 24 ready and vacant apartments, fully paid: no payment plan and no 'Total Remaining' row printed (0). DLD line labelled '4% + 40 AED', on the selling price (2,929,040 = 4% of 73,225,000 + 40); the page posts no original price. Trustee fee 4,200 and a title deed fee of 580. All checks pass. Ready property (handover done)."
+  },
+  {
    "ref": "5fTg83",
    "url": "https://distressonly.deals/u/5fTg83",
    "posted": "2026-11-09",
@@ -714,8 +759,8 @@
     "sizeSqft": 1490,
     "floor": "67-72",
     "view": "Sea",
-    "originalPrice": 3895050,
-    "amountPaid": 3252375,
+    "originalPrice": 3895000,
+    "amountPaid": 3252325,
     "askingPrice": 3027325,
     "handoverDate": "2027-06-30",
     "nextInstalmentDate": "2026-12-05",
@@ -979,6 +1024,120 @@
    "notes": "Posted on DistressStock October 28, 2026: DISTRESS DEAL: 2-BR IN BINGHATTI SKYBLADE. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 5,179,199; selling price AED 4,700,000."
   },
   {
+   "ref": "937kzL",
+   "url": "https://distressonly.deals/u/937kzL",
+   "posted": "2026-11-10",
+   "listing": {
+    "projectName": "Sage",
+    "developer": "DAMAC",
+    "developerOther": null,
+    "community": "Dubai Investment Park",
+    "communityOther": null,
+    "unitType": "townhouse",
+    "sizeSqft": 3407,
+    "floor": "G+2",
+    "view": "Park",
+    "originalPrice": 4552000,
+    "amountPaid": 2503600,
+    "askingPrice": 1651600,
+    "handoverDate": "2027-12-31",
+    "nextInstalmentDate": "2026-12-02",
+    "nextInstalmentAmount": 45520,
+    "paymentPlan": [
+     {
+      "label": "02-DEC-2026",
+      "dueDate": "2026-12-02",
+      "amount": 45520
+     },
+     {
+      "label": "02-JAN-2027",
+      "dueDate": "2027-01-02",
+      "amount": 45520
+     },
+     {
+      "label": "02-FEB-2027",
+      "dueDate": "2027-02-02",
+      "amount": 45520
+     },
+     {
+      "label": "02-MAR-2027",
+      "dueDate": "2027-03-02",
+      "amount": 227600
+     },
+     {
+      "label": "02-APR-2027",
+      "dueDate": "2027-04-02",
+      "amount": 45520
+     },
+     {
+      "label": "02-MAY-2027",
+      "dueDate": "2027-05-02",
+      "amount": 45520
+     },
+     {
+      "label": "02-JUN-2027",
+      "dueDate": "2027-06-02",
+      "amount": 45520
+     },
+     {
+      "label": "02-JUL-2027",
+      "dueDate": "2027-07-02",
+      "amount": 45520
+     },
+     {
+      "label": "02-AUG-2027",
+      "dueDate": "2027-08-02",
+      "amount": 45520
+     },
+     {
+      "label": "02-SEP-2027",
+      "dueDate": "2027-09-02",
+      "amount": 227600
+     },
+     {
+      "label": "02-OCT-2027",
+      "dueDate": "2027-10-02",
+      "amount": 45520
+     },
+     {
+      "label": "02-NOV-2027",
+      "dueDate": "2027-11-02",
+      "amount": 45520
+     },
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 1138000
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony, Parking. Plot: 2,669 sq.ft. Built-up area: 3,407 sq.ft."
+   },
+   "photos": [
+    {
+     "filename": "937kzL-5c5209ec.webp",
+     "url": "https://distressonly.deals/media/units/433/7ab7cac76b14.webp"
+    },
+    {
+     "filename": "937kzL-3e64c23e.webp",
+     "url": "https://distressonly.deals/media/units/433/ccc5cee5c0a0.webp"
+    },
+    {
+     "filename": "937kzL-01c2ac07.webp",
+     "url": "https://distressonly.deals/media/units/433/58a0fe8c6ea8.webp"
+    },
+    {
+     "filename": "937kzL-131fe48a.webp",
+     "url": "https://distressonly.deals/media/units/433/88aa23e41839.webp"
+    },
+    {
+     "filename": "937kzL-k0.webp",
+     "url": "https://distressonly.deals/media/units/433/861d6f91610a.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 10, 2026: DISTRESS DEAL: 5-BR+MAID'S IN SAGE. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: 1% a month (45,520) with 5% (227,600) in March and September 2027, then 25% on handover: shares of an original price of 4,552,000 (the DLD fee line gives 4,552,050, the page's 'Original Price + DLD 4%' of 4,734,120 = 4,552,000 x 1.04 + 40). All checks pass. Source: original price + DLD 4% = AED 4,734,120; selling price AED 3,700,000."
+  },
+  {
    "ref": "9MTsaW",
    "url": "https://distressonly.deals/u/9MTsaW",
    "posted": "2026-10-12",
@@ -1096,8 +1255,8 @@
     "sizeSqft": 805,
     "floor": "HIGH",
     "view": "Pool",
-    "originalPrice": 1796900,
-    "amountPaid": 1257835,
+    "originalPrice": 1796888,
+    "amountPaid": 1257823,
     "askingPrice": 996935,
     "handoverDate": "2028-07-31",
     "nextInstalmentDate": null,
@@ -1160,8 +1319,8 @@
     "sizeSqft": 935,
     "floor": "22-30",
     "view": "Sea",
-    "originalPrice": 2453375,
-    "amountPaid": 1472021,
+    "originalPrice": 2453386,
+    "amountPaid": 1472032,
     "askingPrice": 1184646,
     "handoverDate": "2027-03-31",
     "nextInstalmentDate": null,
@@ -1318,8 +1477,8 @@
     "sizeSqft": 7672,
     "floor": "LOW",
     "view": "Burj Al Arab",
-    "originalPrice": 30800050,
-    "amountPaid": 18480050,
+    "originalPrice": 30800000,
+    "amountPaid": 18480000,
     "askingPrice": 19680000,
     "handoverDate": "2026-12-31",
     "nextInstalmentDate": null,
@@ -1631,8 +1790,8 @@
     "sizeSqft": 724,
     "floor": "7-12",
     "view": "Road, Partial Canal",
-    "originalPrice": 1907975,
-    "amountPaid": 953993,
+    "originalPrice": 1907965,
+    "amountPaid": 953983,
     "askingPrice": 766018,
     "handoverDate": "2027-09-30",
     "nextInstalmentDate": "2026-11-15",
@@ -2235,8 +2394,8 @@
     "sizeSqft": 5581,
     "floor": "G+2",
     "view": null,
-    "originalPrice": 7269900,
-    "amountPaid": 2907968,
+    "originalPrice": 7269888,
+    "amountPaid": 2907956,
     "askingPrice": 2338068,
     "handoverDate": "2028-12-31",
     "nextInstalmentDate": null,
@@ -2296,6 +2455,250 @@
    "notes": "Posted on DistressStock June 26, 2026: DISTRESS DEAL: 4-BR IN FARM GROVE 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 6,750,000 (payment to seller 2,388,068 → 2,338,068; commission 141,750 → 140,700); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 7,560,684; selling price AED 6,700,000."
   },
   {
+   "ref": "QIUbNB",
+   "url": "https://distressonly.deals/u/QIUbNB",
+   "posted": "2026-11-10",
+   "listing": {
+    "projectName": "Tahiti",
+    "developer": "DAMAC",
+    "developerOther": null,
+    "community": "Other",
+    "communityOther": "DAMAC Islands 2",
+    "unitType": "townhouse",
+    "sizeSqft": 2210,
+    "floor": "G+1",
+    "view": null,
+    "originalPrice": 2825000,
+    "amountPaid": 875750,
+    "askingPrice": 830750,
+    "handoverDate": "2030-12-31",
+    "nextInstalmentDate": "2026-12-15",
+    "nextInstalmentAmount": 28250,
+    "paymentPlan": [
+     {
+      "label": "15-DEC-2026",
+      "dueDate": "2026-12-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-JAN-2027",
+      "dueDate": "2027-01-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-FEB-2027",
+      "dueDate": "2027-02-15",
+      "amount": 84750
+     },
+     {
+      "label": "15-MAR-2027",
+      "dueDate": "2027-03-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-APR-2027",
+      "dueDate": "2027-04-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-MAY-2027",
+      "dueDate": "2027-05-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-JUN-2027",
+      "dueDate": "2027-06-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-JUL-2027",
+      "dueDate": "2027-07-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-AUG-2027",
+      "dueDate": "2027-08-15",
+      "amount": 84750
+     },
+     {
+      "label": "15-SEP-2027",
+      "dueDate": "2027-09-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-OCT-2027",
+      "dueDate": "2027-10-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-NOV-2027",
+      "dueDate": "2027-11-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-DEC-2027",
+      "dueDate": "2027-12-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-JAN-2028",
+      "dueDate": "2028-01-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-FEB-2028",
+      "dueDate": "2028-02-15",
+      "amount": 84750
+     },
+     {
+      "label": "15-MAR-2028",
+      "dueDate": "2028-03-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-APR-2028",
+      "dueDate": "2028-04-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-MAY-2028",
+      "dueDate": "2028-05-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-JUN-2028",
+      "dueDate": "2028-06-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-JUL-2028",
+      "dueDate": "2028-07-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-AUG-2028",
+      "dueDate": "2028-08-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-SEP-2028",
+      "dueDate": "2028-09-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-OCT-2028",
+      "dueDate": "2028-10-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-NOV-2028",
+      "dueDate": "2028-11-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-DEC-2028",
+      "dueDate": "2028-12-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-JAN-2029",
+      "dueDate": "2029-01-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-FEB-2029",
+      "dueDate": "2029-02-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-MAR-2029",
+      "dueDate": "2029-03-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-APR-2029",
+      "dueDate": "2029-04-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-MAY-2029",
+      "dueDate": "2029-05-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-JUN-2029",
+      "dueDate": "2029-06-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-JUL-2029",
+      "dueDate": "2029-07-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-AUG-2029",
+      "dueDate": "2029-08-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-SEP-2029",
+      "dueDate": "2029-09-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-OCT-2029",
+      "dueDate": "2029-10-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-NOV-2029",
+      "dueDate": "2029-11-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-DEC-2029",
+      "dueDate": "2029-12-15",
+      "amount": 28250
+     },
+     {
+      "label": "15-JAN-2030",
+      "dueDate": "2030-01-15",
+      "amount": 28250
+     },
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 706250
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony, Parking. Plot: 1,551 sq.ft. Built-up area: 2,210 sq.ft."
+   },
+   "photos": [
+    {
+     "filename": "QIUbNB-5949a1e8.webp",
+     "url": "https://distressonly.deals/media/units/432/201f3a70481d.webp"
+    },
+    {
+     "filename": "QIUbNB-86b3fd97.webp",
+     "url": "https://distressonly.deals/media/units/432/f8b3a204923d.webp"
+    },
+    {
+     "filename": "QIUbNB-faf424ae.webp",
+     "url": "https://distressonly.deals/media/units/432/5d3f0ccbf1ff.webp"
+    },
+    {
+     "filename": "QIUbNB-798f22c5.webp",
+     "url": "https://distressonly.deals/media/units/432/7e20cdd1815d.webp"
+    },
+    {
+     "filename": "QIUbNB-k0.webp",
+     "url": "https://distressonly.deals/media/units/432/e3750e16d197.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 10, 2026: DISTRESS DEAL: 4-BR IN TAHITI. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Plan over two images: 1% a month (28,250) from 15-DEC-2026 to 15-JAN-2030 with 3% (84,750) in Feb 2027, Aug 2027 and Feb 2028, then 25% on handover; the DLD fee implies an original price of 2,825,000, as the page's 'Original Price + DLD 4%' does. All checks pass. Source: original price + DLD 4% = AED 2,938,000; selling price AED 2,780,000."
+  },
+  {
    "ref": "QgAGrA",
    "url": "https://distressonly.deals/u/QgAGrA",
    "posted": "2026-07-24",
@@ -2309,8 +2712,8 @@
     "sizeSqft": 1619,
     "floor": null,
     "view": "Community",
-    "originalPrice": 3733900,
-    "amountPaid": 2240345,
+    "originalPrice": 3733888,
+    "amountPaid": 2240333,
     "askingPrice": 1991445,
     "handoverDate": "2028-07-31",
     "nextInstalmentDate": null,
@@ -2675,8 +3078,8 @@
     "sizeSqft": 2242,
     "floor": "GROUND",
     "view": null,
-    "originalPrice": 8325425,
-    "amountPaid": 4995251,
+    "originalPrice": 8325435,
+    "amountPaid": 4995261,
     "askingPrice": 4995261,
     "handoverDate": "2026-12-31",
     "nextInstalmentDate": "2026-07-31",
@@ -2729,8 +3132,8 @@
     "sizeSqft": 910,
     "floor": "2-5",
     "view": "Community",
-    "originalPrice": 2215175,
-    "amountPaid": 1107581,
+    "originalPrice": 2215187,
+    "amountPaid": 1107593,
     "askingPrice": 672406,
     "handoverDate": "2026-12-31",
     "nextInstalmentDate": null,
@@ -2783,8 +3186,8 @@
     "sizeSqft": 1255,
     "floor": "12-17",
     "view": "Marina",
-    "originalPrice": 3680900,
-    "amountPaid": 1840457,
+    "originalPrice": 3680888,
+    "amountPaid": 1840445,
     "askingPrice": 1559557,
     "handoverDate": "2028-12-31",
     "nextInstalmentDate": "2026-11-15",
@@ -2937,8 +3340,8 @@
     "sizeSqft": 1139,
     "floor": "7-12",
     "view": "Full Park",
-    "originalPrice": 2958900,
-    "amountPaid": 1183568,
+    "originalPrice": 2958888,
+    "amountPaid": 1183556,
     "askingPrice": 884668,
     "handoverDate": "2029-01-31",
     "nextInstalmentDate": null,
@@ -3338,8 +3741,8 @@
     "sizeSqft": 901,
     "floor": "7-12",
     "view": "Community, Pool",
-    "originalPrice": 1271900,
-    "amountPaid": 801301,
+    "originalPrice": 1271888,
+    "amountPaid": 801289,
     "askingPrice": 674101,
     "handoverDate": "2028-06-30",
     "nextInstalmentDate": "2026-12-01",
@@ -3830,6 +4233,62 @@
     }
    ],
    "notes": "Posted on DistressStock August 20, 2026: HOT LOT: 5-BR IN PARKWAYS: CUSTOM-MADE VILLA. Figures are as posted — check the current statement of account with the listing broker before approval. Ready property (handover done)."
+  },
+  {
+   "ref": "duaFIx",
+   "url": "https://distressonly.deals/u/duaFIx",
+   "posted": "2026-10-06",
+   "listing": {
+    "projectName": "Bayview - Tower 1",
+    "developer": "Emaar",
+    "developerOther": null,
+    "community": "Emaar Beachfront",
+    "communityOther": null,
+    "unitType": "bulk",
+    "sizeSqft": 10041,
+    "lotUnits": 9,
+    "floor": "FULL FLOOR (30-40)",
+    "view": "Full Palm, Sea, Community",
+    "originalPrice": 56170000,
+    "amountPaid": 44936006,
+    "askingPrice": 35766006,
+    "handoverDate": "2028-07-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "80% Construction",
+      "dueDate": null,
+      "amount": 5617001
+     },
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 5616993
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Bulk deal: 9 units sold together (1-BR (4), 2-BR (4), 3-BR (1)), 10,041 sq.ft in total. The price, size and payment plan are for the whole lot. Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "duaFIx-aae860ad.webp",
+     "url": "https://distressonly.deals/media/units/396/c0e7e68a4194.webp"
+    },
+    {
+     "filename": "duaFIx-9333348e.webp",
+     "url": "https://distressonly.deals/media/units/396/0f14e708d7d2.webp"
+    },
+    {
+     "filename": "duaFIx-606c1c7c.webp",
+     "url": "https://distressonly.deals/media/units/396/a3251efeacda.webp"
+    },
+    {
+     "filename": "duaFIx-b71d0617.webp",
+     "url": "https://distressonly.deals/media/units/396/7e020756c5e5.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock October 06, 2026: DISTRESS DEAL: BULK DEAL - 9 APARTMENTS IN BAYVIEW - TOWER 1. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 58,416,792; selling price AED 47,000,000. Handover: the page says Q2 2027; the listing shows 2028-07-31 (DLD registers Bayview Tower 1 for completion on 31 Jul 2028, 63% built in Nov 2026; another listing in this tower (PF6lLt, a 4-BR) says 2028)."
   },
   {
    "ref": "dwK9fK",
@@ -4330,8 +4789,8 @@
     "sizeSqft": 752,
     "floor": "10-15",
     "view": "Mall",
-    "originalPrice": 1821900,
-    "amountPaid": 1093146,
+    "originalPrice": 1821888,
+    "amountPaid": 1093134,
     "askingPrice": 1006246,
     "handoverDate": "2028-04-30",
     "nextInstalmentDate": "2027-01-04",
@@ -4394,8 +4853,8 @@
     "sizeSqft": 736,
     "floor": "30-40",
     "view": "Full Сanal",
-    "originalPrice": 2176625,
-    "amountPaid": 1414821,
+    "originalPrice": 2176580,
+    "amountPaid": 1414776,
     "askingPrice": 1288196,
     "handoverDate": "2027-06-30",
     "nextInstalmentDate": "2026-12-06",
@@ -4532,8 +4991,8 @@
     "sizeSqft": 5581,
     "floor": "G+2",
     "view": "Park",
-    "originalPrice": 6882900,
-    "amountPaid": 3441457,
+    "originalPrice": 6882888,
+    "amountPaid": 3441445,
     "askingPrice": 3086557,
     "handoverDate": "2028-09-30",
     "nextInstalmentDate": "2027-03-24",
@@ -5113,8 +5572,8 @@
     "sizeSqft": 1535,
     "floor": "3-5",
     "view": "Water",
-    "originalPrice": 3520875,
-    "amountPaid": 2464616,
+    "originalPrice": 3520863,
+    "amountPaid": 2464604,
     "askingPrice": 1943741,
     "handoverDate": "2026-12-31",
     "nextInstalmentDate": null,
@@ -5435,8 +5894,8 @@
     "sizeSqft": 2026,
     "floor": null,
     "view": null,
-    "originalPrice": 5576025,
-    "amountPaid": 3345619,
+    "originalPrice": 5576014,
+    "amountPaid": 3345608,
     "askingPrice": 2969594,
     "handoverDate": "2027-05-31",
     "nextInstalmentDate": "2027-04-30",
@@ -5489,8 +5948,8 @@
     "sizeSqft": 2042,
     "floor": "10-20",
     "view": "Park, Road",
-    "originalPrice": 4486675,
-    "amountPaid": 3365005,
+    "originalPrice": 4486680,
+    "amountPaid": 3365010,
     "askingPrice": 2730517,
     "handoverDate": "2027-06-30",
     "nextInstalmentDate": null,
@@ -5543,8 +6002,8 @@
     "sizeSqft": 1700,
     "floor": "10-15",
     "view": "Full Sea",
-    "originalPrice": 6601900,
-    "amountPaid": 2640770,
+    "originalPrice": 6601888,
+    "amountPaid": 2640758,
     "askingPrice": 1638870,
     "handoverDate": "2029-12-31",
     "nextInstalmentDate": "2027-05-20",
@@ -5821,8 +6280,8 @@
     "sizeSqft": 834,
     "floor": "15-17",
     "view": "Partial Сanal",
-    "originalPrice": 2087050,
-    "amountPaid": 1419210,
+    "originalPrice": 2087000,
+    "amountPaid": 1419160,
     "askingPrice": 1042160,
     "handoverDate": "2027-12-31",
     "nextInstalmentDate": "2026-12-20",

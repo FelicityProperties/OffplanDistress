@@ -18,8 +18,8 @@ const saleValue = sql<number>`(${listings.askingPrice}::bigint + ${listings.orig
 /**
  * Cash at transfer: the same definition as analyzeDeal's cashToClose in src/lib/deal-math.ts (see the comment there),
  * so the /deals transfer-day filters and the "cash" sort always agree with the cards and the deal page:
- *   asking + (commission + VAT on it, when the buyer pays our fee) + DLD transfer fee + FIXED_FEES_ESTIMATE
- *   + overdue instalments + late fees.
+ *   asking + (commission + VAT on it, when the buyer pays our fee) + DLD transfer fee + FIXED_FEES_ESTIMATE per unit
+ *   (a bulk deal's lot_units, else one) + overdue instalments + late fees.
  * Percentages are whole basis points rounded half up on numerics (applyBp), matching Math.round on the JS side.
  */
 const transferSaleValue = sql`(${listings.askingPrice}::bigint + greatest(${listings.originalPrice} - ${listings.amountPaid}, 0))`;
@@ -27,7 +27,7 @@ const bpOf = (amount: SQL, rateBp: number) => sql`round((${amount})::numeric * $
 const commissionSql = bpOf(transferSaleValue, FEE_BP.commission);
 const cashToClose = sql<number>`(${listings.askingPrice}::numeric${
   FEES.payer === "buyer" ? sql` + ${commissionSql} + ${bpOf(commissionSql, FEE_BP.vat)}` : sql``
-} + ${bpOf(transferSaleValue, FEE_BP.dld)} + ${sql.raw(String(FIXED_FEES_ESTIMATE))} + greatest(coalesce(${
+} + ${bpOf(transferSaleValue, FEE_BP.dld)} + ${sql.raw(String(FIXED_FEES_ESTIMATE))} * greatest(coalesce(${listings.lotUnits}, 1), 1) + greatest(coalesce(${
   listings.overdueAmount
 }, 0), 0) + greatest(coalesce(${listings.overduePenalty}, 0), 0))::bigint`;
 const discount = sql<number | null>`case when ${listings.launchPrice} > 0 then 1 - (${saleValue})::float / ${listings.launchPrice} end`;
@@ -64,6 +64,7 @@ export const cardColumns = {
   communityOther: listings.communityOther,
   unitType: listings.unitType,
   sizeSqft: listings.sizeSqft,
+  lotUnits: listings.lotUnits,
   view: listings.view,
   originalPrice: listings.originalPrice,
   amountPaid: listings.amountPaid,
@@ -95,6 +96,8 @@ export type ListingCard = {
   communityOther: string | null;
   unitType: UnitTypeKey;
   sizeSqft: number;
+  /** A bulk deal's number of units (null for a single unit): the cash at transfer counts a transfer per unit. */
+  lotUnits: number | null;
   view: string | null;
   originalPrice: number;
   amountPaid: number;
@@ -285,7 +288,8 @@ export async function dealsInProjects(names: string[]) {
   const rows = await db
     .select(cardColumns)
     .from(listings)
-    .where(and(advertisedSql(), eq(listings.isSample, false), inArray(listings.projectName, names)))
+    // Single units only, as the project pages count them (src/lib/projects.ts): a bulk deal is not on them.
+    .where(and(advertisedSql(), eq(listings.isSample, false), inArray(listings.projectName, names), ne(listings.unitType, "bulk")))
     .orderBy(sql`(${listings.status} = 'live') desc`, ...dealOrder("discount"), desc(listings.createdAt));
   return rows as ListingCard[];
 }
@@ -354,10 +358,11 @@ export async function featuredDeals(limit = 6) {
 
 /**
  * Home-page figures, defined like the Distress Index (/market): real listings only (samples are illustrations,
- * not market data), "on the market" = every advert a buyer can see, and staff accounts don't count as buyers.
+ * not market data), single units only (a bulk deal is one listing for a lot of units: src/lib/market.ts), "on the
+ * market" = every advert a buyer can see, and staff accounts don't count as buyers.
  */
 export async function marketStats() {
-  const onMarket = advertisedSql();
+  const onMarket = and(advertisedSql(), ne(listings.unitType, "bulk"))!;
   const [row] = await db
     .select({
       live: sql<number>`count(*) filter (where ${onMarket})::int`,
@@ -371,7 +376,7 @@ export async function marketStats() {
       transferred: sql<number>`count(*) filter (where ${listings.status} = 'transferred')::int`,
     })
     .from(listings)
-    .where(eq(listings.isSample, false));
+    .where(and(eq(listings.isSample, false), ne(listings.unitType, "bulk")));
   const [{ buyers }] = await db
     .select({ buyers: sql<number>`count(distinct ${watchlist.userId})::int` })
     .from(watchlist)
