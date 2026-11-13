@@ -81,9 +81,11 @@ several images continues in `<ref>-2.png`, `<ref>-3.png`; `moreImages` lists the
   then **skipped** — left out if new, the previous entry kept if listed — say so in the report so the user can ask the
   broker for the figures.
 - Original (SPA) price, paid and asking are derived by the build: SPA price = (dldFee − 40) / 4% (the DLD line is 4% of
-  the original price + 40), else the page's "Original Price + DLD 4%" ÷ 1.04 (or (that − 40) ÷ 1.04, whichever gives a
-  whole price); where the page's line gives a whole price within AED 50 of the DLD line's, the page's is used (some
-  sheets print the DLD line AED 2 higher); paid = SPA price − remaining; asking = payment to seller.
+  the original price + 40), else the page's "Original Price + DLD 4%" ÷ 1.04. Both lines are rounded to the dirham
+  (÷ 0.04 turns that into up to AED 50), so the build also tries the prices the page's line can stand for (OP × 1.04,
+  or OP × 1.04 + 40) within AED 50 and keeps the one most instalment rows are whole half-percents of (developers bill
+  10%, 1%… of the SPA price: 3,508,888 → 350,889); paid = SPA price − remaining; asking = payment to seller. So write
+  every row to the dirham exactly as printed: the rows decide the price.
 - Handover: the build takes the page's. Check a new unit's against DLD's register (DXBinteract `get_project_profile`:
   `completion_date` and `progress`); when the page's is **earlier** than the registered completion date, add
   `"handoverDate": "YYYY-MM-DD"` (the registered date) and `"handoverNote": "why, with the evidence"` to its plan entry:

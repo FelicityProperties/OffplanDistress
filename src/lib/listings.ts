@@ -358,10 +358,11 @@ export async function featuredDeals(limit = 6) {
 
 /**
  * Home-page figures, defined like the Distress Index (/market): real listings only (samples are illustrations,
- * not market data), "on the market" = every advert a buyer can see, and staff accounts don't count as buyers.
+ * not market data), single units only (a bulk deal is one listing for a lot of units: src/lib/market.ts), "on the
+ * market" = every advert a buyer can see, and staff accounts don't count as buyers.
  */
 export async function marketStats() {
-  const onMarket = advertisedSql();
+  const onMarket = and(advertisedSql(), ne(listings.unitType, "bulk"))!;
   const [row] = await db
     .select({
       live: sql<number>`count(*) filter (where ${onMarket})::int`,
@@ -375,7 +376,7 @@ export async function marketStats() {
       transferred: sql<number>`count(*) filter (where ${listings.status} = 'transferred')::int`,
     })
     .from(listings)
-    .where(eq(listings.isSample, false));
+    .where(and(eq(listings.isSample, false), ne(listings.unitType, "bulk")));
   const [{ buyers }] = await db
     .select({ buyers: sql<number>`count(distinct ${watchlist.userId})::int` })
     .from(watchlist)

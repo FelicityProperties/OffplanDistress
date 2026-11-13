@@ -543,14 +543,27 @@ function money(s) {
 }
 
 /**
- * The original (SPA) price a posted "Original Price + DLD 4%" stands for, as {op, whole}. The site writes it as OP × 1.04
- * or as OP × 1.04 + AED 40 (DLD's admin fee added in): whole = one of the two gives a whole price (both can't, as 40 is no
- * multiple of 26), else OP × 1.04 rounded. Integer arithmetic: x ÷ 1.04 = x × 25 ÷ 26.
+ * The prices a posted "Original Price + DLD 4%" can stand for. The site writes it two ways: OP × 1.04 rounded to the
+ * dirham, or that + AED 40 (DLD's admin fee). Each reading, where one exists, is the only whole price that gives the line
+ * (1.04 × an integer is never a half), so there are at most two.
  */
-export function postedOriginal(line) {
-  if (!line) return null;
-  for (const x of [line, line - 40]) if ((x * 25) % 26 === 0) return { op: (x * 25) / 26, whole: true };
-  return { op: pyRound(line / 1.04), whole: false };
+export function postedPrices(line) {
+  const out = [];
+  if (!line) return out;
+  for (const add of [0, 40]) {
+    const c = Math.round((line - add) / 1.04);
+    for (const x of [c - 1, c, c + 1]) if (Math.round(x * 1.04) + add === line && !out.includes(x)) out.push(x);
+  }
+  return out;
+}
+
+/** How many plan rows are a whole half-percent of `price` to the dirham (1%, 10%, 12.5%…): how developers bill instalments. */
+export function planShares(price, rows) {
+  return (rows ?? []).filter((r) => {
+    if (!(r?.amount > 0) || !(price > 0)) return false;
+    const k = Math.round((r.amount * 200) / price);
+    return k >= 1 && k <= 200 && Math.abs((price * k) / 200 - r.amount) < 1;
+  }).length;
 }
 
 function canon(value, list, mapping, names) {
@@ -677,20 +690,27 @@ export function buildEntry(u, plan, today, rules) {
   // later: once the page posts a later one (or a ready unit's), the page's stands.
   const handoverDate = p.handoverDate && postedHandover && !handedOver && p.handoverDate > postedHandover ? p.handoverDate : postedHandover;
   const ready = p.totalRemaining === 0;
-  const posted = postedOriginal(origDld);
   let op = null;
   if (ready) {
     // Fully paid: the DLD line is 4% of the sale price, so the original price comes only from the posted
     // "Original Price + DLD 4%" (else it's taken as the selling price).
-    op = posted ? posted.op : p.unitPrice;
+    op = origDld ? pyRound(origDld / 1.04) : p.unitPrice;
   } else if (p.dldFee) op = pyRound((p.dldFee - 40) / 0.04);
-  if (!ready && posted) {
-    // Some plans charge the DLD line on the selling price ("4% + 40 AED"): it then gives the unit price back, not the
-    // original one. Where the page posts an "Original Price + DLD 4%" that disagrees with it, that is the original price.
-    if (op == null || (op === p.unitPrice && Math.abs(op * 1.04 - origDld) > 0.01 * origDld)) op = posted.op;
-    // The plan's DLD line is rounded to the dirham, and ÷ 0.04 makes that up to AED 50 on the price (4,552,050 for an SPA
-    // price of 4,552,000): a posted line that stands for a whole price within that is the SPA figure itself.
-    else if (posted.whole && Math.abs(posted.op - op) <= 25 * ROUNDING_AED) op = posted.op;
+  // Some plans charge the DLD line on the selling price ("4% + 40 AED"): it then gives the unit price back, not the
+  // original one. Where the page posts an "Original Price + DLD 4%" that disagrees with it, that is the original price.
+  const posted = origDld ? pyRound(origDld / 1.04) : null;
+  if (!ready && posted != null && (op == null || (op === p.unitPrice && Math.abs(op * 1.04 - origDld) > 0.01 * origDld))) op = posted;
+  // Both lines are rounded to the dirham, and ÷ 0.04 makes the DLD line's rounding up to AED 50 on the price: between its
+  // price and the posted line's readings within that (postedPrices), the instalments decide, as developers bill them in
+  // whole half-percents of the SPA price (3,508,888: 10% = 350,889; 4,552,000: 5% = 227,600). The price most rows are a
+  // share of wins; with none better, the DLD line's stands.
+  if (!ready && op != null) {
+    let best = planShares(op, p.instalments);
+    for (const c of postedPrices(origDld)) {
+      if (Math.abs(c - op) > 25 * ROUNDING_AED) continue;
+      const n = planShares(c, p.instalments);
+      if (n > best) [op, best] = [c, n];
+    }
   }
   if (!op) return { skip: "original price unknown" };
   if (op < p.totalRemaining) return { skip: `original price ${op} below the remaining plan ${p.totalRemaining}` };

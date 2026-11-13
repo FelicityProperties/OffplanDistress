@@ -224,7 +224,8 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
     getLocale(),
     // The project's page (src/app/(site)/projects/[slug]): a real advert's project has one while one of its units is
     // available (and its name has a Latin letter or digit to make an address of).
-    advertised && !l.isSample ? getProject(projectSlug(l.projectName)) : Promise.resolve(null),
+    // A bulk deal is not on its project's page (src/lib/projects.ts), so it links to none and its trail skips it.
+    advertised && !l.isSample && l.unitType !== "bulk" ? getProject(projectSlug(l.projectName)) : Promise.resolve(null),
     // The signed-in buyer holds the accepted offer: the deal is theirs (no backup offer from them, makeOffer agrees).
     user && !isOwner
       ? db

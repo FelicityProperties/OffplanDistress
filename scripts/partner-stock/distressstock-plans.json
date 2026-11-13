@@ -645,7 +645,7 @@
    "totalOnTransfer": 1916672,
    "totalRemaining": 2048400,
    "totalCosts": 3965072,
-   "notes": "1% a month (45,520) with 5% (227,600) in March and September 2027, then 25% on handover; the DLD fee implies an original price of 4,552,050 (the page's 'Original Price + DLD 4%' of 4,734,120 gives 4,552,038). All checks pass."
+   "notes": "1% a month (45,520) with 5% (227,600) in March and September 2027, then 25% on handover: shares of an original price of 4,552,000 (the DLD fee line gives 4,552,050, the page's 'Original Price + DLD 4%' of 4,734,120 = 4,552,000 x 1.04 + 40). All checks pass."
   },
   "9MTsaW": {
    "image": "https://distressonly.deals/media/units/404/b632e0ac47ab.webp",
