@@ -285,6 +285,73 @@ export async function rejectListing(listingId: string, reason: string) {
   return { ok: true };
 }
 
+/**
+ * The listing page's quick visibility buttons (VisibilityButtons), each the same change the listing editor's status
+ * makes, without the form:
+ * - hide: a unit live or in review comes off the site as our team's Pause does (paused by our team; its offers stay
+ *   open and nobody is told; "Publish all" no longer takes it).
+ * - show: a unit our team hid goes live again, as Approve publishes it (permit and owner's confirmation checked).
+ * - archive: off the market for good, as Withdrawn in the editor: open offers closed and those buyers told.
+ * - restore: an archived unit comes back hidden (paused by our team), to be shown when ready; never a sold one.
+ * `savedAt` is the listing's updated_at when the page was loaded: a change since refuses, as the editor does.
+ */
+export async function adminSetVisibility(listingId: string, action: "hide" | "show" | "archive" | "restore", savedAt: string) {
+  const me = await currentAdmin();
+  if (!me) return refused();
+  const te = await getT("errors");
+  const [before] = await db
+    .select({ ...listingNoticeColumns, pausedByAdmin: listings.pausedByAdmin, updatedAt: listings.updatedAt })
+    .from(listings)
+    .where(eq(listings.id, listingId))
+    .limit(1);
+  if (!before) return { error: te("listing.notFound") };
+  if (savedAt !== before.updatedAt.toISOString()) return reviewedMeanwhile("listing.reviewChanged");
+  const from: Record<typeof action, ListingStatusKey[]> = {
+    hide: ["live", "pending_review"],
+    show: ["paused"],
+    archive: ["live", "paused", "pending_review", "rejected"],
+    restore: ["withdrawn"],
+  };
+  // A unit the seller paused is theirs to resume.
+  if (!from[action].includes(before.status) || (action === "show" && !before.pausedByAdmin)) return reviewedMeanwhile();
+  if (action === "restore" && (await transferCompleted(before))) return { error: (await getT("admin"))("edit.transferredFinal") };
+  if (action === "show") {
+    if (awaitsSellerConfirmation(before)) return { error: await unconfirmedMessage(before.sellerId, before.dldPermit) };
+    // RERA: no advert without a current DLD (Trakheesi) permit and Form A, as Approve checks.
+    const blocker = publishBlocker(before);
+    if (blocker) return { error: te(blocker) };
+  }
+  const now = new Date();
+  const status: ListingStatusKey = action === "show" ? "live" : action === "archive" ? "withdrawn" : "paused";
+  const values = {
+    status,
+    pausedByAdmin: status === "paused",
+    ...(action === "show" ? { publicPrice: before.askingPrice, publishedAt: before.publishedAt ?? now, rejectionReason: null } : {}),
+    updatedAt: now,
+  };
+  const [saved] = await db
+    .update(listings)
+    .set(values)
+    .where(and(eq(listings.id, listingId), eq(listings.status, before.status), unchangedSince(before.updatedAt)))
+    .returning({ id: listings.id });
+  if (!saved) return reviewedMeanwhile("listing.reviewChanged");
+  const { updatedAt: _u, ...diff } = values;
+  await audit({ actorId: me.id, action: `listing.${action}`, entityType: "listing", entityId: listingId, diff: changes(before, diff) });
+  if (action === "show") {
+    if (!before.publishedAt) await notifySeller(before, "listing.approved", { project: before.projectName, ref: refCode(before.refNo) });
+    await reopenUnit(before, before.status);
+    // A price cut made while it was hidden reaches the watchers now that it is public again, as from Approve.
+    if (!before.isSample && before.publicPrice != null) await notifyPriceDrop(before, before.publicPrice, before.askingPrice);
+  }
+  if (action === "archive") {
+    // Off the market: buyers with an open offer are told it is no longer available (as Withdrawn in the editor).
+    await closeOpenOffers(before, "unavailable");
+    await cancelAcceptedOffers(before, "withdrawn", "withdrawn_by_team");
+  }
+  refresh();
+  return { ok: true };
+}
+
 const statuses = Object.keys(LISTING_STATUS) as [ListingStatusKey, ...ListingStatusKey[]];
 
 /** The largest whole number a Postgres integer column holds. */
