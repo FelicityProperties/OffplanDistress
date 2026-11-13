@@ -673,8 +673,9 @@ export function buildEntry(u, plan, today, rules) {
   const postedHandover = handover(handoverText) ?? (handedOver ? postedDay(u.posted) : null);
   if (!postedHandover && /\d{4}/.test(handoverText) && !handedOver) return { skip: `the posted handover can't be read (${handoverText})` };
   // The plan file's handoverDate replaces a posted handover that DLD's register shows to be too early (the project's
-  // registered completion date is later); its handoverNote says why, for the admin notes.
-  const handoverDate = p.handoverDate ?? postedHandover;
+  // registered completion date is later); its handoverNote says why, for the admin notes. It only ever moves the date
+  // later: once the page posts a later one (or a ready unit's), the page's stands.
+  const handoverDate = p.handoverDate && postedHandover && !handedOver && p.handoverDate > postedHandover ? p.handoverDate : postedHandover;
   const ready = p.totalRemaining === 0;
   const posted = postedOriginal(origDld);
   let op = null;
@@ -738,7 +739,7 @@ export function buildEntry(u, plan, today, rules) {
   const past = dated.filter((i) => i.dueDate < today);
   if (past.length) notes.push(`${past.length} instalment(s) in the posted plan fall before today (${past.map((i) => i.label).join(", ")}): confirm whether they were paid.`);
   if ((f.Handover ?? "").toUpperCase().startsWith("READY")) notes.push("Ready property (handover done).");
-  if (p.handoverDate && p.handoverDate !== postedHandover) {
+  if (handoverDate !== postedHandover) {
     notes.push(`Handover: the page says ${handoverText || "nothing"}; the listing shows ${p.handoverDate}${p.handoverNote ? ` (${p.handoverNote})` : ""}.`);
   }
   if (ut === "bulk" && !listing.lotUnits) notes.push("Bulk deal: the number of units can't be read from the page; the cost estimates count one transfer until it is known.");

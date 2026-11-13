@@ -87,7 +87,9 @@ several images continues in `<ref>-2.png`, `<ref>-3.png`; `moreImages` lists the
 - Handover: the build takes the page's. Check a new unit's against DLD's register (DXBinteract `get_project_profile`:
   `completion_date` and `progress`); when the page's is **earlier** than the registered completion date, add
   `"handoverDate": "YYYY-MM-DD"` (the registered date) and `"handoverNote": "why, with the evidence"` to its plan entry:
-  the listing then shows that date and the admin notes say why. A later date on the page is left as it is.
+  the listing then shows that date and the admin notes say why. A later date on the page is left as it is, and once
+  the page posts a date after yours (or "READY"), the page's is used again. Keep both fields when you re-transcribe
+  that unit's plan.
 
 ## 3. Curate the photos of every `needsPhotos` unit
 
