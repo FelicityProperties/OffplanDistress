@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-12T01:45:08Z",
+ "generatedAt": "2026-11-13T01:42:02Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -430,6 +430,60 @@
    "notes": "Posted on DistressStock October 13, 2026: DISTRESS DEAL: 2-BR IN VOLTA. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,364,400; selling price AED 2,700,000."
   },
   {
+   "ref": "2nmxH8",
+   "url": "https://distressonly.deals/u/2nmxH8",
+   "posted": "2026-11-12",
+   "listing": {
+    "projectName": "Sofitel Residences",
+    "developer": "Other",
+    "developerOther": "Azha",
+    "community": "Downtown Dubai",
+    "communityOther": null,
+    "unitType": "1br",
+    "sizeSqft": 2056,
+    "floor": null,
+    "view": "Burj Khalifa, Garden",
+    "originalPrice": 3298077,
+    "amountPaid": 1399296,
+    "askingPrice": 1531219,
+    "handoverDate": "2027-09-30",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 1898781
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony, Private garden, Fully furnished."
+   },
+   "photos": [
+    {
+     "filename": "2nmxH8-a172d4a6.webp",
+     "url": "https://distressonly.deals/media/units/440/aadf31e83469.webp"
+    },
+    {
+     "filename": "2nmxH8-c687de81.webp",
+     "url": "https://distressonly.deals/media/units/440/264277c54b2b.webp"
+    },
+    {
+     "filename": "2nmxH8-afa09c13.webp",
+     "url": "https://distressonly.deals/media/units/440/953c2be9a95f.webp"
+    },
+    {
+     "filename": "2nmxH8-6e0e2db8.webp",
+     "url": "https://distressonly.deals/media/units/440/1f458093ef8d.webp"
+    },
+    {
+     "filename": "2nmxH8-k0.webp",
+     "url": "https://distressonly.deals/media/units/440/3971249668e4.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 12, 2026: PRICE CLOSE TO OP: 1-BR IN SOFITEL RESIDENCES. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: DLD line labelled '4% + 40 AED', charged on the selling price (137,240 = 4% of 3,430,000 + 40), not on the original price: the page's 'Original Price + DLD 4%' (AED 3,430,000) gives an original price of about 3,298,077, so the unit is offered about 4% above its original price (the title says 'price close to OP'). All checks pass. Source: original price + DLD 4% = AED 3,430,000; selling price AED 3,430,000."
+  },
+  {
    "ref": "3DKL3B",
    "url": "https://distressonly.deals/u/3DKL3B",
    "posted": "2026-10-01",
@@ -445,7 +499,7 @@
     "view": null,
     "originalPrice": 3508900,
     "amountPaid": 2105356,
-    "askingPrice": 1746456,
+    "askingPrice": 1706456,
     "handoverDate": "2028-06-30",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -491,7 +545,7 @@
      "url": "https://distressonly.deals/media/units/390/ada663dfbcb2.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 01, 2026: DISTRESS DEAL: 4-BR+MAID'S IN GREENRIDGE. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 3,250,000 (payment to seller 1,846,456 → 1,746,456; commission 68,250 → 66,150); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 3,649,244; selling price AED 3,150,000."
+   "notes": "Posted on DistressStock October 01, 2026: DISTRESS DEAL: 4-BR+MAID'S IN GREENRIDGE. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 3,150,000 (payment to seller 1,746,456 -> 1,706,456; commission 66,150 -> 65,310); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 3,649,244; selling price AED 3,110,000."
   },
   {
    "ref": "3NraCZ",
@@ -2000,7 +2054,7 @@
     "view": "Backside",
     "originalPrice": 2868350,
     "amountPaid": 1434175,
-    "askingPrice": 1065825,
+    "askingPrice": 1035825,
     "handoverDate": "2028-12-31",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -2051,7 +2105,7 @@
      "url": "https://distressonly.deals/media/units/414/990268df9701.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 21, 2026: DISTRESS DEAL: 2-BR IN PIER POINT 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 2,983,084; selling price AED 2,500,000."
+   "notes": "Posted on DistressStock October 21, 2026: DISTRESS DEAL: 2-BR IN PIER POINT 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 2,500,000 (payment to seller 1,065,825 -> 1,035,825; commission 52,500 -> 51,870); DLD fee and plan unchanged (undated construction-percentage milestones; DLD fee implies original price 2,868,350). All checks pass. Source: original price + DLD 4% = AED 2,983,084; selling price AED 2,470,000."
   },
   {
    "ref": "Nf34Mu",
