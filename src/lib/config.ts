@@ -194,6 +194,7 @@ export const UNIT_TYPES = {
   townhouse: "Townhouse",
   villa: "Villa",
   penthouse: "Penthouse",
+  bulk: "Bulk deal",
 } as const;
 
 export type UnitTypeKey = keyof typeof UNIT_TYPES;

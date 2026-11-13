@@ -106,6 +106,13 @@
       "when": 1793960408894,
       "tag": "0014_whatsapp_clicks",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1794554319560,
+      "tag": "0015_unit_type_bulk",
+      "breakpoints": true
     }
   ]
 }

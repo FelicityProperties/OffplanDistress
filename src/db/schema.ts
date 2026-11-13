@@ -59,6 +59,9 @@ export const unitType = pgEnum("unit_type", [
   "townhouse",
   "villa",
   "penthouse",
+  // Several units sold together in one listing (a partner's bulk deal): its size is their total, its description
+  // gives the count and the mix.
+  "bulk",
 ]);
 
 export const motivation = pgEnum("motivation", ["urgent", "motivated", "flexible"]);

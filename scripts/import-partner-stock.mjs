@@ -1178,7 +1178,7 @@ function checkListing(v) {
     return s;
   };
   if (!v || typeof v !== "object") throw new Error("no listing");
-  const unitTypes = ["studio", "1br", "2br", "3br", "4br", "5br", "townhouse", "villa", "penthouse"];
+  const unitTypes = ["studio", "1br", "2br", "3br", "4br", "5br", "townhouse", "villa", "penthouse", "bulk"];
   if (!unitTypes.includes(v.unitType)) throw new Error("bad unit type");
   if (!["urgent", "motivated", "flexible"].includes(v.motivation)) throw new Error("bad motivation");
   const originalPrice = money(v.originalPrice, { positive: true });
@@ -1324,13 +1324,30 @@ const toJpeg = (sharp, input, width = PHOTO_WIDTH) =>
     .jpeg({ quality: 80, mozjpeg: true })
     .toBuffer();
 
-/** The photo, resized for the gallery as JPEG when sharp is available; null when it is not an image or too big. */
+const PHOTO_TYPES = ["image/webp", "image/jpeg", "image/png"];
+
+/** The image type the bytes themselves say (WebP, JPEG or PNG signature), else null. */
+export function sniffImageType(b) {
+  if (b.length >= 12 && b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP") return "image/webp";
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b.length >= 8 && b.toString("latin1", 0, 8) === "\x89PNG\r\n\x1a\n") return "image/png";
+  return null;
+}
+
+/**
+ * The photo, resized for the gallery as JPEG when sharp is available; null when it is not an image or too big. The
+ * bytes decide what it is: DistressStock's server labels its .webp files "text/plain" (seen 13 Nov 2026), and a page
+ * or an error message served as image/* must not get in either.
+ */
 async function fetchPhoto(url, sharp) {
   const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS), headers: { "user-agent": "OffplanDistress import" } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const type = (res.headers.get("content-type") ?? "").split(";")[0].trim();
-  if (!["image/webp", "image/jpeg", "image/png"].includes(type)) throw new Error(`not an image (${type || "no type"})`);
+  const label = (res.headers.get("content-type") ?? "").split(";")[0].trim();
+  // Read only what a photo can be: the body is read to look at its first bytes, so a huge download is refused first.
+  if (Number(res.headers.get("content-length") ?? 0) > 25 * 1024 * 1024) throw new Error("too big to be a photo");
   const raw = Buffer.from(await res.arrayBuffer());
+  const type = sniffImageType(raw);
+  if (!type || !PHOTO_TYPES.includes(type)) throw new Error(`not an image (${label || "no type"})`);
   if (sharp) {
     try {
       return { bytes: await toJpeg(sharp, raw), type: "image/jpeg" };

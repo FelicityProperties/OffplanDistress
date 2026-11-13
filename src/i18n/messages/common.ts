@@ -13,6 +13,8 @@ export default defineMessages({
     "unit.townhouse": "Townhouse",
     "unit.villa": "Villa",
     "unit.penthouse": "Penthouse",
+    // Several units sold together in one listing: the size is their total and the description gives the mix.
+    "unit.bulk": "Bulk deal",
 
     "motivation.urgent": "Urgent",
     "motivation.motivated": "Motivated",
@@ -251,6 +253,7 @@ export default defineMessages({
     "unit.townhouse": "تاون هاوس",
     "unit.villa": "فيلا",
     "unit.penthouse": "بنتهاوس",
+    "unit.bulk": "صفقة جملة",
 
     "motivation.urgent": "عاجل",
     "motivation.motivated": "جادّ في البيع",
@@ -481,6 +484,7 @@ export default defineMessages({
     "unit.townhouse": "联排别墅",
     "unit.villa": "别墅",
     "unit.penthouse": "顶层公寓",
+    "unit.bulk": "整批出售",
 
     "motivation.urgent": "急售",
     "motivation.motivated": "有意出售",

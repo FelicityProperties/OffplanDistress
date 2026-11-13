@@ -66,7 +66,7 @@ const MASS_REMOVAL_MIN = 3;
 /** The source spreadsheet rounds VAT per line, so its printed totals can be a dirham or two off the rows. */
 const ROUNDING_AED = 2;
 const INT_MAX = 2_147_483_647;
-const UNIT_TYPES = ["studio", "1br", "2br", "3br", "4br", "5br", "townhouse", "villa", "penthouse"];
+const UNIT_TYPES = ["studio", "1br", "2br", "3br", "4br", "5br", "townhouse", "villa", "penthouse", "bulk"];
 /**
  * Areas outside the emirate of Dubai: never listed, no DLD permit applies there. A name counts as a whole word or phrase
  * anywhere in the posted area ("Al Marjan Island" names Marjan), not inside another word nor as a road's name ("Al Ain
@@ -189,6 +189,8 @@ const COM_MAP = {
   "damac hills": "DAMAC Hills",
   "damac hills ii": "DAMAC Hills 2",
   "dubai island": "Dubai Islands",
+  // DLD: Damac Riverside's buildings are registered in Dubai Investment Park Second.
+  "damac riverside": "Dubai Investment Park",
 };
 const COM_NAMES = {
   "sobha hartland ii": "Sobha Hartland II",
@@ -196,9 +198,13 @@ const COM_NAMES = {
   jbr: "JBR",
   "damac sun city": "DAMAC Sun City",
   "damac islands": "DAMAC Islands",
+  // DLD: a master project of its own in Al Yelayiss 1, next to DAMAC Islands.
+  "damac islands 2": "DAMAC Islands 2",
   "port de la mer": "Port de La Mer",
   "rashid yachts & marina": "Rashid Yachts & Marina",
 };
+/** Project names misspelt on the site (lower case) → the developer's spelling, so the units share one project page. */
+const PROJECT_NAMES = { "canal flont residences": "Canal Front Residences" };
 const FEATURE_KEYS = [
   "Balcony",
   "Parking",
@@ -467,13 +473,13 @@ export function validateEntry(e, rules) {
 // From a parsed page + its transcribed plan to a manifest entry.
 
 /**
- * Why the unit never goes in the manifest: a bulk deal, a shop, or not a Dubai (DLD / Trakheesi) unit — a NON_DUBAI
- * name in its area, unless the area is one we know to be in Dubai (with the repo's `rules`, knownDubaiArea).
+ * Why the unit never goes in the manifest: a shop, or not a Dubai (DLD / Trakheesi) unit — a NON_DUBAI name in its
+ * area, unless the area is one we know to be in Dubai (with the repo's `rules`, knownDubaiArea). A bulk deal is listed:
+ * one listing for the lot, unit type "bulk" (isBulk).
  */
 export function exclusion(u, rules) {
   const type = pyStrip(u.fields.Type);
   const area = pyStrip(u.fields.Area);
-  if (/^\d+\s+apartments?$/i.test(type) || /BULK DEAL/i.test(u.title)) return "bulk deal (one listing is one unit)";
   if (/retail/i.test(type)) return "retail unit (the marketplace lists homes only)";
   const outside = NON_DUBAI_RE.some((re) => re.test(area)) && !(rules && knownDubaiArea(area, rules));
   if (outside) return `outside Dubai (${area}; not a DLD / Trakheesi unit)`;
@@ -538,6 +544,25 @@ function canon(value, list, mapping, names) {
   return ["Other", names[low] ?? v];
 }
 
+/** Several units sold together: "24 Apartments" as the type, or "BULK DEAL" in the title. */
+export const isBulk = (u) => /^\d+\s+apartments?$/i.test(pyStrip(u.fields.Type)) || /BULK DEAL/i.test(u.title);
+
+/** How many units a bulk deal holds, from its title, project or type ("BULK DEAL - 9 APARTMENTS IN …"), else null. */
+function bulkCount(u) {
+  for (const s of [u.title, u.fields.Project, u.fields.Type]) {
+    const m = /(\d+)\s+(?:apartments?|units?|villas?|townhouses?)\b/i.exec(s ?? "");
+    if (m) return Number(m[1]);
+  }
+  return null;
+}
+
+/** The project's name: a bulk deal's "Bulk Deal - 24 Apartments In <project>" loses its prefix; known misspellings fixed. */
+function projectNameOf(u) {
+  let name = pyStrip(u.fields.Project ?? "");
+  if (isBulk(u)) name = name.replace(/^bulk deal\s*[-–:]?\s*\d+\s+(?:apartments?|units?|villas?|townhouses?)\s+in\s+/i, "");
+  return PROJECT_NAMES[name.toLowerCase()] ?? name;
+}
+
 function unitType(fields) {
   const t = (fields.Type ?? "").toLowerCase();
   const beds = (fields.Bedrooms ?? "").toUpperCase();
@@ -576,6 +601,15 @@ function description(u) {
   const f = u.fields;
   const feats = FEATURE_KEYS.filter((k) => ["✔", "✓"].includes(pyStrip(f[k])));
   const parts = [];
+  if (isBulk(u)) {
+    // The lot as a whole: how many units, the mix as posted ("1-BR (4), 2-BR (4), 3-BR (1)"), the total size.
+    const n = bulkCount(u);
+    const mix = (u.extras ?? []).map(pyStrip).find((x) => /\(\d+\)/.test(x));
+    const total = pyStrip(f.Size ?? f.BUA);
+    parts.push(
+      `Bulk deal: ${n ? `${n} units` : "several units"} sold together${mix ? ` (${mix})` : ""}${total ? `, ${total} in total` : ""}. The price, size and payment plan are for the whole lot.`,
+    );
+  }
   if (feats.length) parts.push(`Features: ${feats.join(", ")}.`);
   if (f.Plot) parts.push(`Plot: ${f.Plot}.${f.BUA ? ` Built-up area: ${f.BUA}.` : ""}`);
   if (f["Rented for"]) parts.push(`Currently rented for ${f["Rented for"]} a year.`);
@@ -600,7 +634,7 @@ export function buildEntry(u, plan, today, rules) {
   const f = u.fields;
   const ref = u.ref;
   const p = { ...plan, totalRemaining: remainingOf(plan) };
-  const ut = unitType(f);
+  const ut = isBulk(u) ? "bulk" : unitType(f);
   if (!ut) return { skip: `unit type not recognised (${f.Type ?? "—"}, ${f.Bedrooms ?? "—"})` };
   const sz = size(f);
   if (!sz) return { skip: "no size" };
@@ -644,12 +678,14 @@ export function buildEntry(u, plan, today, rules) {
   const [com, comOther] = canon(f.Area, rules.COM, COM_MAP, COM_NAMES);
   if (com == null) return { skip: "no area" };
   // "NONE" (a townhouse, or a floor not given) means no floor, like the view's "None": the deal page would print "Floor NONE".
-  const floorText = pyStrip(f.Floor).replace(/^[() ]+|[() ]+$/g, "");
+  let floorText = pyStrip(f.Floor).replace(/^[() ]+|[() ]+$/g, "");
+  // "(2-6)" loses its brackets, but "FULL FLOOR (30-40)" keeps its closing one.
+  if ((floorText.match(/\(/g) ?? []).length > (floorText.match(/\)/g) ?? []).length) floorText += ")";
   const floor = /^(none|n\/?a|-+|—)$/i.test(floorText) ? null : cut(floorText, 40) || null;
   const viewText = pyStrip(f.View);
   const view = ["", "none", "-"].includes(viewText.toLowerCase()) ? null : cut(viewText, 80);
   const listing = {
-    projectName: cut(f.Project ?? "", 120),
+    projectName: cut(projectNameOf(u), 120),
     developer: dev,
     developerOther: devOther,
     community: com,
@@ -740,7 +776,7 @@ function entryChanges(before, after) {
 
 /**
  * What today's page means for the manifest, given the plan transcribed for it and the previous entry:
- *   excluded — never listed (bulk, retail, outside Dubai);
+ *   excluded — never listed (retail, outside Dubai);
  *   flag     — the agent has to (re)read the plan image: none transcribed yet (new / not transcribed), the image on
  *              the page is another one (image changed), or the figures don't add up (inconsistent);
  *   skip     — can't be listed as posted (no plan image, plan marked illegible, no size, …);
@@ -1130,7 +1166,7 @@ async function cmdBuild(opts) {
     const a = assess(u, was, plans, rules, today);
     if (a.kind === "excluded") {
       s.excluded.push({ ref: u.ref, title: u.title, reason: a.reason, wasListed: !!was });
-      // Listed before and excluded now (re-posted as a bulk deal, say — or the page's wording drifted): kept as it was,
+      // Listed before and excluded now (re-posted as a shop, say — or the page's wording drifted): kept as it was,
       // so a rule never withdraws it and it is still marked removed the day it really leaves the site; the summary says.
       if (was) out.push(normalizeEntry(curate(was, u, was.photos)));
       continue;

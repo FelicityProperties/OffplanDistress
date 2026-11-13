@@ -118,14 +118,20 @@ prints the summary (listed, new, updated with the fields, removed, back, dropped
 counts are also in `$RAW/build.json`, with the photo line (`photos: N units curated, M listed without curation …`;
 M should be 0 after step 3). Exit codes: **0** done; **2** a unit still needs its plan (the
 file is written; go back to step 2, then build again — repeat until 0); **3** the safety valve (below; nothing
-written); **1** a problem with the inputs (message says). Units are excluded for good when they are bulk deals, shops or outside Dubai.
+written); **1** a problem with the inputs (message says). The owner's standing rule (13 Nov 2026): **don't leave anything
+out**. A bulk deal (several units sold together) is listed as one listing of unit type `bulk`: its size is the lot's
+total, its description gives the count and the mix as posted. Units are excluded for good only when they are shops or
+outside Dubai (a unit outside Dubai can't carry a Trakheesi permit); name them in the report.
 A unit is *skipped* (previous entry kept, a new one left out) when its page can't be read as before — size not in sq ft,
 a price line or the handover the parser can't read: the site's wording changed, so the parser needs updating; never
 "fix" it by editing the manifest or the plans file. A unit is also skipped while its area is not one the script knows
 to be in Dubai (`area not known to be in Dubai (…)`; our communities list, `COM_MAP` / `COM_NAMES` and `DUBAI_AREAS`
-are the known ones, `NON_DUBAI` the known outside ones): never add the area yourself — name the unit and its area in
-the report, so the user can check where it is (a unit outside Dubai can't carry a Trakheesi permit); adding it to
-either list is a change to the script, made on their word. A ready unit ("READY…" as its handover) gets the day it was
+are the known ones, `NON_DUBAI` the known outside ones). Under the owner's rule that unit must not be left out: check
+where the area is (DXBinteract's `search_locations` gives the DLD-registered location and its district; the developer's
+own project page), and when it is in Dubai map it in the same sync — onto our communities list in `COM_MAP` when it
+lies in one of them (Damac Riverside → Dubai Investment Park), else its spelling in `COM_NAMES` (listed as "Other") —
+then run `fetch` again so its plan is saved, and say in the report what you mapped and on what evidence. Only an area
+you confirm is outside Dubai goes to `NON_DUBAI` (the unit is then excluded, as above). A ready unit ("READY…" as its handover) gets the day it was
 posted as its handover date, so the site shows it as ready.
 
 ## 5. Review
@@ -185,7 +191,7 @@ Publishing stays with the owner's "Publish all N on Felicity's permits" click.
 - **Fetch stops** (gate stays / 0 units / page failed twice): the site is down, changed, or the password changed. Report
   it; don't retry in a loop, don't guess passwords.
 - **A plan that won't add up** after two careful readings: `legible: false` with a note, and say so in the report.
-- **A unit in the previous manifest but now excluded** (e.g. re-posted as a bulk deal): the build keeps its previous
+- **A unit in the previous manifest but now excluded** (e.g. re-posted as a shop): the build keeps its previous
   entry (a rule never withdraws a listed unit; it is marked removed the day it really leaves the site) and says so
   every day it lasts; mention it in the report so the user can decide about the listing.
 - Never edit `distressstock.json` by hand; the build regenerates it. Never commit anything from `$RAW`.
