@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, Download, Search } from "lucide-react";
+import { VisibilityButtons } from "@/components/admin/AdminControls";
 import { AdminChips } from "@/components/admin/AdminTabs";
 import { PHONE_BUTTON, PHONE_LINK } from "@/components/admin/phone";
 import { PageTitle } from "@/components/Kpi";
@@ -55,23 +56,39 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
     />
   );
 
+  // The card opens the listing; under it, outside the link, its Hide / Show on site / Archive / Restore buttons.
   const card = (l: Row) => (
-    <Link key={l.id} href={`/admin/listings/${l.id}`} className="block rounded-lg border bg-card p-3 text-sm shadow-card hover:border-gold">
-      <p dir="auto" className="line-clamp-1 font-medium">{l.projectName}</p>
-      <p className="text-xs text-muted-foreground tabular">
-        <bdi>{refCode(l.refNo)}</bdi> · {formatAEDCompact(l.askingPrice, locale)} · {tc(`unit.${l.unitType}`)}
-      </p>
-      <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-        {t("pipeline.counts", { offers: l.offers, watchers: l.watchers })}
-        {l.isSample && <SampleBadge />}
-      </p>
-      {/* Imported, still under its network's placeholder owner: nobody to review it with yet. */}
-      {l.awaitingOwner && (
-        <p className="mt-1">
-          <StatusPill tone="warning">{ti("owner.badge")}</StatusPill>
+    <div key={l.id} className="rounded-lg border bg-card text-sm shadow-card hover:border-gold">
+      <Link
+        href={`/admin/listings/${l.id}`}
+        className="block rounded-lg p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <p dir="auto" className="line-clamp-1 font-medium">{l.projectName}</p>
+        <p className="text-xs text-muted-foreground tabular">
+          <bdi>{refCode(l.refNo)}</bdi> · {formatAEDCompact(l.askingPrice, locale)} · {tc(`unit.${l.unitType}`)}
         </p>
+        <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+          {t("pipeline.counts", { offers: l.offers, watchers: l.watchers })}
+          {l.isSample && <SampleBadge />}
+        </p>
+        {/* Imported, still under its network's placeholder owner: nobody to review it with yet. */}
+        {l.awaitingOwner && (
+          <p className="mt-1">
+            <StatusPill tone="warning">{ti("owner.badge")}</StatusPill>
+          </p>
+        )}
+      </Link>
+      {!l.isSample && (
+        <VisibilityButtons
+          listingId={l.id}
+          savedAt={l.updatedAt.toISOString()}
+          status={l.status}
+          pausedByAdmin={l.pausedByAdmin}
+          refCode={refCode(l.refNo)}
+          className="justify-start border-t px-3 py-2"
+        />
       )}
-    </Link>
+    </div>
   );
 
   const search = (

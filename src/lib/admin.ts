@@ -87,6 +87,8 @@ export async function adminListings(status?: (typeof listings.$inferSelect)["sta
       amountPaid: listings.amountPaid,
       createdAt: listings.createdAt,
       updatedAt: listings.updatedAt,
+      // Hidden by our team (the Hide button) rather than by its seller: only then can our team show it again.
+      pausedByAdmin: listings.pausedByAdmin,
       sellerName: users.fullName,
       sellerEmail: users.email,
       sellerPhone: users.phone,
