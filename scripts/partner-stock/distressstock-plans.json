@@ -2681,7 +2681,7 @@
    "totalRemaining": 3441443,
    "totalCosts": 6945694,
    "handoverDate": "2028-12-31",
-   "handoverNote": "DLD registers The Valley - Farm Grove, the first phase, for completion on 31 Dec 2028, 10% built in Nov 2026 (Farm Grove 2: 31 Oct 2028)",
+   "handoverNote": "DLD registers The Valley - Farm Grove, the first phase, for completion on 31 Dec 2028, 10% built in Nov 2026 (Farm Grove 2: 31 Oct 2028); the unit's own payment plan prints On Handover (31-DEC-2028)",
    "notes": "All checks pass: 3086557+3441443 = 6528000. The instalments add up to 3441443 (3x688289 + 1376576). Transfer rows add up to 3504251. 3504251+3441443 = 6945694. The handover row prints an expected date, 31-DEC-2028, which I used as its dueDate. The third row prints a single-digit day: '7-FEB-2028'."
   },
   "kBQp6r": {
