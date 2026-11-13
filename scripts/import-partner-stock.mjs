@@ -4,8 +4,8 @@
 // under the network's placeholder owner (src/lib/import.ts), so nothing here is public until our team sets the owner,
 // ownership is confirmed and the Trakheesi permit is in (src/app/actions/import.ts has the same rules). Runs again on
 // every build: a unit already imported follows the file (syncListing: the network's changes applied unless our team
-// edited the field, a unit marked "removed" withdrawn, one back on the site restored), photos still missing are fetched
-// again, and the admins get one notice of what changed. The buyers and watchers the sync tells (an offer closed, a price
+// edited the field, a unit marked "removed" withdrawn, one back on the site restored, one the file holds paused
+// (applyHold)), photos still missing are fetched again, and the admins get one notice of what changed. The buyers and watchers the sync tells (an offer closed, a price
 // cut) also get the email the app would send them (sendMail). One build imports at a time (takeLock).
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -25,6 +25,8 @@ const KEY_RE = /^[a-z0-9][a-z0-9-]{0,39}$/;
 const REF_RE = /^[A-Za-z0-9_.-]{1,64}$/;
 const MAX_PHOTOS = 6;
 const MAX_NOTES = 4000;
+/** A held unit's reason (applyHold), as the audit trail keeps it. */
+const MAX_HOLD = 300;
 /** The advisory lock a build holds while it imports (takeLock), and how long another build waits for it. */
 const LOCK_NAME = "offplandistress:import-partner-stock";
 const LOCK_WAIT_MS = 15 * 60_000;
@@ -137,6 +139,7 @@ function unitProblem(unit, refs) {
   if (unit.url != null && unit.url !== "" && !webAddress(unit.url)) return "url not a web address";
   if (unit.posted != null && !isoDay(unit.posted)) return "bad posted date";
   if (unit.notes != null && (typeof unit.notes !== "string" || unit.notes.trim().length > MAX_NOTES)) return `notes not text of at most ${MAX_NOTES} characters`;
+  if (unit.hold != null && (typeof unit.hold !== "string" || !unit.hold.trim() || unit.hold.trim().length > MAX_HOLD)) return `hold not a reason of 1–${MAX_HOLD} characters`;
   const photos = unit.photos ?? [];
   if (!Array.isArray(photos)) return "photos not a list";
   if (photos.length > MAX_PHOTOS) return `more than ${MAX_PHOTOS} photos`;
@@ -162,7 +165,7 @@ async function importSource(pool, doc, sharp) {
   }
   let created = 0;
   let photos = 0;
-  const report = { updated: [], withdrawn: [], restored: [], conflicts: [], deals: [], valve: 0, failed: [] };
+  const report = { updated: [], withdrawn: [], restored: [], held: [], released: [], conflicts: [], deals: [], valve: 0, failed: [] };
   const removed = [];
   const refs = new Set();
   for (const unit of units) {
@@ -183,6 +186,8 @@ async function importSource(pool, doc, sharp) {
         // A new unit's gallery snapshot is the gallery as just imported (syncListing compares against it from the next build on).
         await pool.query("update listings set source = jsonb_set(source, '{synced,images}', to_jsonb(images)) where id = $1", [id]);
       } else photos += await syncListing(pool, unit, id, actor, actor ?? ownerId, report, sharp);
+      // Off the site while the file holds it, back when it no longer does.
+      await applyHold(pool, unit, id, actor, report);
     } catch (err) {
       report.failed.push(ref);
       console.error(`[import] ${source.name} ${ref}: failed`, err?.message ?? err);
@@ -192,12 +197,23 @@ async function importSource(pool, doc, sharp) {
   console.log(`[import] ${source.name}: ${created} listings created, ${photos} photos added, ${report.failed.length} failed (${units.length} in the file).`);
   console.log(
     `[sync] ${source.name}: ${report.updated.length} updated, ${report.withdrawn.length} withdrawn, ${report.restored.length} restored, ` +
+      `${report.held.length} held, ${report.released.length} released from a hold, ` +
       `${report.conflicts.length} edited by our team (left), ${report.deals.length} deals in progress (left)` +
       `${report.valve ? `, VALVE TRIPPED: ${report.valve} removals, nothing withdrawn` : ""}.`,
   );
   if (created) await tellAdmins(pool, source, created);
   // Failed units too: the build log is the only other place that says why a unit never appears.
-  if (report.updated.length || report.withdrawn.length || report.restored.length || report.conflicts.length || report.deals.length || report.valve || report.failed.length) {
+  if (
+    report.updated.length ||
+    report.withdrawn.length ||
+    report.restored.length ||
+    report.held.length ||
+    report.released.length ||
+    report.conflicts.length ||
+    report.deals.length ||
+    report.valve ||
+    report.failed.length
+  ) {
     await tellAdminsSynced(pool, source, { created, ...report });
   }
   await applyPermits(pool, source, actor);
@@ -535,6 +551,90 @@ async function mayChange(pool, id) {
 }
 
 /**
+ * A unit the file holds ("hold": why — the owner keeps it private for now, say) is taken off the site the way our team's
+ * Pause in the listing editor does it (src/app/actions/admin.ts): status paused, paused by our team, its offers left
+ * open and nobody told; its fields keep following the file. Once: listings.source.sync.heldAt marks it, so a unit our
+ * team puts back on the market while the file still holds it stays as they put it. Only a unit in review or live (one
+ * with a deal in progress is reported and left). When the file no longer holds it, a unit the hold still pauses goes
+ * back as a removed unit does when it returns (syncListing): live where Approve would publish it, else into review;
+ * the mark goes either way.
+ */
+async function applyHold(pool, unit, id, actor, report) {
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const { rows } = await client.query(
+      `select id, ref_no, status, is_sample, seller_id, project_name, asking_price, public_price, paused_by_admin, dld_permit,
+              dld_permit_expires_at, form_a_expires_at, permit_attested_at, created_by_staff, ownership_confirmed_at, source
+       from listings where id = $1 for update`,
+      [id],
+    );
+    const row = rows[0];
+    const src = row?.source ?? {};
+    const sync = { ...(src.sync ?? {}) };
+    const reason = typeof unit.hold === "string" ? unit.hold.trim() : null;
+    // Nothing to do: no hold and none to lift, or a hold already applied (our team's decisions since stand).
+    if (!row || row.is_sample || (reason ? sync.heldAt != null : sync.heldAt == null)) {
+      await client.query("rollback");
+      return;
+    }
+    const code = refCode(row.ref_no);
+    const now = new Date();
+    const mail = [];
+    if (reason) {
+      if (DEAL_STATUSES.includes(row.status) || (["live", "pending_review"].includes(row.status) && (await dealInProgress(client, id)))) {
+        report.deals.push({ code, status: row.status, held: true });
+        await client.query("rollback");
+        return;
+      }
+      // Paused already (by our team or its seller), withdrawn, rejected or sold: not on the site, left as it is.
+      if (!["live", "pending_review"].includes(row.status)) {
+        await client.query("rollback");
+        return;
+      }
+      const next = { ...src, sync: { ...sync, heldAt: now.toISOString(), heldFrom: row.status, holdReason: reason } };
+      await client.query("update listings set status = 'paused', paused_by_admin = true, updated_at = $2, source = $3 where id = $1", [id, now, JSON.stringify(next)]);
+      await auditRow(client, actor, "listing.sync_held", id, { status: [row.status, "paused"], pausedByAdmin: [row.paused_by_admin, true], reason });
+      report.held.push({ code, reason });
+    } else {
+      // The hold is lifted. A unit it still pauses goes back; one our team has moved since stays where they put it.
+      let status = row.status;
+      if (row.status === "paused" && row.paused_by_admin) {
+        const today = dubaiToday();
+        const awaitsOwner = row.created_by_staff && row.ownership_confirmed_at == null;
+        const live = sync.heldFrom === "live" && !awaitsOwner && !publishBlocker(row, today);
+        status = live ? "live" : "pending_review";
+        await client.query(
+          `update listings set status = $2, paused_by_admin = false, public_price = case when $3 then asking_price else public_price end,
+                  published_at = case when $3 then coalesce(published_at, $4) else published_at end, updated_at = $4
+           where id = $1`,
+          [id, status, live, now],
+        );
+        const diff = { status: ["paused", status], pausedByAdmin: [true, false] };
+        if (live) diff.publicPrice = [row.public_price, row.asking_price];
+        await auditRow(client, actor, "listing.sync_released", id, diff);
+        // A price cut made while it was held reaches the watchers now that it is public again, as from Approve.
+        if (live && row.public_price != null) await tellWatchers(client, row, row.public_price, row.asking_price, mail);
+        report.released.push({ code, status });
+      }
+      delete sync.heldAt;
+      delete sync.heldFrom;
+      delete sync.holdReason;
+      const next = { ...src, sync };
+      if (!Object.keys(sync).length) delete next.sync;
+      await client.query("update listings set source = $2 where id = $1", [id, JSON.stringify(next)]);
+    }
+    await client.query("commit");
+    outbox.push(...mail);
+  } catch (err) {
+    await client.query("rollback").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Units the file marks "removed" (gone from the network since that day) are withdrawn as the seller's own withdrawal
  * is (src/app/actions/listings.ts setMyListingStatus): status withdrawn, the buyers with an open offer told it is no
  * longer available, audited with the reason; listings.source.sync keeps the day and the status it had, so a later
@@ -821,6 +921,9 @@ const SYNC_COPY = {
     deals: () => "Deals in progress, left alone: ",
     removed: "removed from the source",
     back: "back on the source",
+    held: () => "Taken off the site, as the stock file holds them (paused by our team; their offers stay open): ",
+    released: () => "No longer held by the stock file, back: ",
+    heldDeal: "held by the stock file",
     valve: (n) => `Sync valve tripped: ${n} removals, nothing withdrawn — check the manifest.`,
     failed: (n, refs) => `${counted("en", n, NOUNS.units.en)} failed (${refs}) — see the build log.`,
     title: (name, r) => `${name} sync: ${r.updated.length} updated, ${r.withdrawn.length} withdrawn, ${r.restored.length} restored${r.failed.length ? `, ${r.failed.length} failed` : ""}`,
@@ -839,6 +942,9 @@ const SYNC_COPY = {
     deals: () => "صفقات جارية تُركت كما هي: ",
     removed: "أُزيلت من المصدر",
     back: "عادت إلى المصدر",
+    held: () => "أُوقف عرضها على الموقع لأن ملف المخزون يحجبها (متوقفة من قِبل فريقنا، وعروضها تبقى مفتوحة): ",
+    released: () => "لم يعد ملف المخزون يحجبها، فعادت: ",
+    heldDeal: "محجوبة في ملف المخزون",
     valve: (n) => `توقّف صمام أمان المزامنة: ${counted("ar", n, NOUNS.removals.ar)}، لم يُسحب شيء — راجع ملف المخزون.`,
     failed: (n, refs) => `فشل استيراد ${counted("ar", n, NOUNS.units.ar)} (${refs}) — راجع سجل البناء.`,
     title: (name, r) => `مزامنة ${name}: ${r.updated.length} حُدّث، ${r.withdrawn.length} سُحب، ${r.restored.length} أُعيد${r.failed.length ? `، ${r.failed.length} فشل` : ""}`,
@@ -857,6 +963,9 @@ const SYNC_COPY = {
     deals: () => "交易进行中，未作改动：",
     removed: "已从来源移除",
     back: "重新出现在来源上",
+    held: () => "按房源文件的保留要求已从网站下架（由我方团队暂停，报价保持开放）：",
+    released: () => "房源文件已解除保留，已恢复：",
+    heldDeal: "房源文件要求保留",
     valve: (n) => `同步安全阀已触发：${n} 项移除，未撤回任何房源——请检查房源清单文件。`,
     failed: (n, refs) => `${n} 个单元导入失败（${refs}）——请查看构建日志。`,
     title: (name, r) => `${name} 同步：更新 ${r.updated.length}，撤回 ${r.withdrawn.length}，恢复 ${r.restored.length}${r.failed.length ? `，失败 ${r.failed.length}` : ""}`,
@@ -872,11 +981,13 @@ function syncNotice(source, r, lang) {
   };
   const fields = (fs) => fs.map((f) => FIELD_LABELS[lang][f] ?? f).join(t.sep);
   const status = (s) => STATUS_LABELS[lang][s] ?? s;
-  const change = (d) => (d.removed ? t.removed : d.back ? t.back : fields(d.fields));
+  const change = (d) => (d.removed ? t.removed : d.held ? t.heldDeal : d.back ? t.back : fields(d.fields));
   const lines = [t.counts(r)];
   if (r.updated.length) lines.push(`${t.updated()}${list(r.updated.map((u) => t.item(u.code, fields(u.fields))))}${t.end}`);
   if (r.withdrawn.length) lines.push(`${t.withdrawn(source.name)}${list(r.withdrawn.map((w) => w.code))}${t.end}`);
   if (r.restored.length) lines.push(`${t.restored(source.name)}${list(r.restored.map((x) => t.item(x.code, status(x.status))))}${t.end}`);
+  if (r.held.length) lines.push(`${t.held()}${list(r.held.map((h) => t.item(h.code, h.reason)))}${t.end}`);
+  if (r.released.length) lines.push(`${t.released()}${list(r.released.map((x) => t.item(x.code, status(x.status))))}${t.end}`);
   if (r.conflicts.length) lines.push(`${t.conflicts()}${list(r.conflicts.map((c) => t.item(c.code, fields(c.fields))))}${t.end}`);
   if (r.deals.length) lines.push(`${t.deals()}${list(r.deals.map((d) => t.item(d.code, status(d.status), change(d))))}${t.end}`);
   if (r.valve) lines.push(t.valve(r.valve));

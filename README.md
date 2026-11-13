@@ -198,7 +198,10 @@ photos as public URLs — developer renders, and a photo of our own hosted in th
 `scripts/partner-stock/direct-photos/` through its raw.githubusercontent.com address — and the owner's documents never
 committed (they carry personal data; they go into the deal file on the listing's admin page). The import files them
 under "Owner to be added (Direct sellers)" like a partner network's; the account owner publishes them from the Imported
-tab and enters the real owner on each.
+tab and enters the real owner on each. A unit the owner wants kept private for now gets `"hold": "<why>"` in its entry: the next
+deploy pauses it as our team's Pause does (off the site, its offers left open, nobody told; once, so our team can still
+put it back by hand), and deleting the line puts it back where it was (live where Approve would publish it, else in
+review).
 
 ### Cash at transfer
 
