@@ -22,6 +22,8 @@ export type PostDeal = {
   communityOther: string | null;
   unitType: string;
   sizeSqft: number;
+  /** A bulk deal's number of units (null for a single unit). */
+  lotUnits: number | null;
   originalPrice: number;
   amountPaid: number;
   askingPrice: number;

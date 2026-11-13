@@ -199,6 +199,15 @@ export const UNIT_TYPES = {
 
 export type UnitTypeKey = keyof typeof UNIT_TYPES;
 
+/**
+ * The unit types a seller or our team can enter in a form: all but "bulk". A bulk deal (several units sold as one lot)
+ * needs its number of units (listings.lot_units), which only the partner import carries.
+ */
+export const FORM_UNIT_TYPES = (Object.keys(UNIT_TYPES) as UnitTypeKey[]).filter((k) => k !== "bulk") as [
+  Exclude<UnitTypeKey, "bulk">,
+  ...Exclude<UnitTypeKey, "bulk">[],
+];
+
 export const MOTIVATION = {
   urgent: { label: "Urgent", hint: "Must exit within weeks" },
   motivated: { label: "Motivated", hint: "Open to serious offers" },

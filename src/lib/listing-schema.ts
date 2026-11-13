@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { TFn } from "@/i18n/translator";
-import { COMMUNITIES, DEVELOPERS, UNIT_TYPES } from "./config";
+import { COMMUNITIES, DEVELOPERS, FORM_UNIT_TYPES } from "./config";
 import { formatNumber } from "./format";
 import { scrubTypedName } from "./typed-names";
 
@@ -80,7 +80,8 @@ export const listingSchema = (t: T) =>
       // see it instead of "Other".
       developerOther: z.string().trim().max(80).optional(),
       communityOther: z.string().trim().max(80).optional(),
-      unitType: z.enum(Object.keys(UNIT_TYPES) as [keyof typeof UNIT_TYPES, ...(keyof typeof UNIT_TYPES)[]], t("field.unitType")),
+      // Not "bulk": a bulk deal comes only through the partner import, with its number of units (FORM_UNIT_TYPES).
+      unitType: z.enum(FORM_UNIT_TYPES, t("field.unitType")),
       sizeSqft: z.coerce.number(t("field.size")).int(t("field.size")).positive(t("field.size")).max(INT4_MAX, t("field.size")),
       floor: z.string().trim().max(40).optional(),
       view: z.string().trim().max(80).optional(),

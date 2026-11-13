@@ -17,7 +17,7 @@ import { richText } from "@/content/legal/rich-text";
 import { useDir, useLocale, useT } from "@/i18n/client";
 import { listSeparator } from "@/i18n/config";
 import { readAttribution } from "@/lib/attribution";
-import { COMMUNITIES, DEVELOPERS, FEES, FILE_KINDS, MAX_UPLOAD_BYTES, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
+import { COMMUNITIES, DEVELOPERS, FEES, FILE_KINDS, FORM_UNIT_TYPES, MAX_UPLOAD_BYTES, MOTIVATION, UNIT_TYPES, type UnitTypeKey } from "@/lib/config";
 import { analyzeDeal } from "@/lib/deal-math";
 import { formatAED, formatPct, formatQuarter, timeAgo } from "@/lib/format";
 import { communityName, developerName, searchKey } from "@/lib/place-names";
@@ -34,7 +34,8 @@ const DOC_ACCEPT = [...DOC_TYPES, ".pdf", ".jpg", ".jpeg", ".png", ".webp", ".he
 const MAX_LEN = { floor: 40, view: 80, description: 3000, milestone: 80 };
 /** Dates the date inputs take: a year typed with a digit too many or too few is caught at the field. */
 const DATE_RANGE = { min: "2000-01-01", max: "9999-12-31" };
-const UNIT_KEYS = Object.keys(UNIT_TYPES) as UnitTypeKey[];
+// A bulk deal is not offered: it needs its number of units, which only the partner import carries.
+const UNIT_KEYS: readonly UnitTypeKey[] = FORM_UNIT_TYPES;
 const MOTIVATION_KEYS = Object.keys(MOTIVATION) as (keyof typeof MOTIVATION)[];
 /** Which step each server-side field error belongs to, so a rejected submit opens the right step. */
 const FIELD_STEP: Record<string, number> = {
@@ -141,7 +142,7 @@ function stateFromDraft(saved: Record<string, string>, handoverQuarters: string[
   const out: Partial<State> = { ...saved };
   if (out.developer && !DEVELOPERS.includes(out.developer)) out.developer = "";
   if (out.community && !COMMUNITIES.includes(out.community)) out.community = "";
-  if (out.unitType && !(out.unitType in UNIT_TYPES)) out.unitType = "";
+  if (out.unitType && !UNIT_KEYS.includes(out.unitType as UnitTypeKey)) out.unitType = "";
   if (out.handoverDate && !handoverQuarters.includes(out.handoverDate)) out.handoverDate = "";
   if (out.arrears && !["none", "one", "more"].includes(out.arrears)) out.arrears = "none";
   if (out.motivation && !(out.motivation in MOTIVATION)) out.motivation = "motivated";
@@ -462,6 +463,7 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
     amountPaid: num(s.amountPaid),
     askingPrice: num(s.askingPrice),
     launchPrice: null,
+    lotUnits: null,
   });
 
   // The description as sent: the seller's text, then our note on missed instalments. The server's 3,000 characters

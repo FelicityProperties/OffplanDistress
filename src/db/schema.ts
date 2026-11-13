@@ -191,6 +191,11 @@ export const listings = pgTable(
     communityOther: text("community_other"),
     unitType: unitType("unit_type").notNull(),
     sizeSqft: integer("size_sqft").notNull(),
+    /**
+     * A bulk deal's number of units (unit type "bulk", 2 or more), when known: each unit is its own DLD transfer and NOC,
+     * so the cost estimates count those fees per unit (analyzeDeal / cashToCloseSql). Null for any other listing.
+     */
+    lotUnits: integer("lot_units"),
     floor: text("floor"),
     view: text("view"),
     // all money in whole AED

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, inArray, isNotNull, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, ne, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { listings, offers, savedSearches, users, watchlist } from "@/db/schema";
 import { discountSql, paidPctSql, saleValueSql } from "./listings";
@@ -7,7 +7,8 @@ import { advertisedSql } from "./permits";
 
 // The Dubai Distress Index (/market): live statistics computed only from real listings and real activity.
 // Sample listings (is_sample = true) are excluded from every figure, including the demand figures, and demand
-// counts only ordinary accounts (role 'user'): our own team's admin accounts are not buyers.
+// counts only ordinary accounts (role 'user'): our own team's admin accounts are not buyers. Every figure is per unit,
+// so a bulk deal (unit type "bulk": several units sold as one lot, one listing) is left out of all of them (singleUnit).
 
 /** A median, average or share is published only when it rests on at least this many listings. */
 export const MIN_SAMPLE = 3;
@@ -25,7 +26,10 @@ const paidPct = paidPctSql;
  * Real listings a buyer can see on the marketplace right now: adverts only, so not one whose DLD permit or Form A has
  * run out (built per call, as "today" moves on).
  */
-const onMarketSql = () => and(advertisedSql(), eq(listings.isSample, false))!;
+const onMarketSql = () => and(advertisedSql(), eq(listings.isSample, false), singleUnit)!;
+
+/** A single unit, not a bulk deal (one listing for a lot of units): what every figure counts. */
+const singleUnit = ne(listings.unitType, "bulk");
 
 /** Demand comes from ordinary accounts only; admin (staff) accounts are left out. Use with a join on `users`. */
 const buyerAccount = eq(users.role, "user");
@@ -145,6 +149,7 @@ export async function getDistressIndex() {
         .where(
           and(
             eq(listings.isSample, false),
+            singleUnit,
             isNotNull(listings.publishedAt),
             sql`${listings.publishedAt} >= (date_trunc('month', now() at time zone 'Asia/Dubai') - interval '${sql.raw(String(MONTHS - 1))} months') at time zone 'Asia/Dubai'`,
           ),
@@ -169,7 +174,7 @@ export async function getDistressIndex() {
         .from(offers)
         .innerJoin(listings, eq(offers.listingId, listings.id))
         .innerJoin(users, eq(offers.buyerId, users.id))
-        .where(and(eq(listings.isSample, false), buyerAccount, sql`${offers.createdAt} >= now() - interval '30 days'`)),
+        .where(and(eq(listings.isSample, false), singleUnit, buyerAccount, sql`${offers.createdAt} >= now() - interval '30 days'`)),
       db
         .select({ buyers: sql<number>`count(distinct ${watchlist.userId})::int` })
         .from(watchlist)
@@ -190,7 +195,7 @@ export async function getDistressIndex() {
           medianDays: median(sql`extract(epoch from (${listings.updatedAt} - ${listings.publishedAt})) / 86400`),
         })
         .from(listings)
-        .where(and(eq(listings.status, "transferred"), eq(listings.isSample, false))),
+        .where(and(eq(listings.status, "transferred"), eq(listings.isSample, false), singleUnit)),
     ]);
 
   const live = supply.live;

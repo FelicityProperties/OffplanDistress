@@ -39,6 +39,8 @@ export type IssueDeal = {
   communityOther: string | null;
   unitType: UnitTypeKey;
   sizeSqft: number;
+  /** A bulk deal's number of units (null for a single unit). */
+  lotUnits: number | null;
   originalPrice: number;
   amountPaid: number;
   askingPrice: number;
@@ -85,6 +87,7 @@ const dealColumns = {
   communityOther: listings.communityOther,
   unitType: listings.unitType,
   sizeSqft: listings.sizeSqft,
+  lotUnits: listings.lotUnits,
   originalPrice: listings.originalPrice,
   amountPaid: listings.amountPaid,
   askingPrice: listings.askingPrice,
@@ -105,6 +108,7 @@ type DealRow = {
   communityOther: string | null;
   unitType: UnitTypeKey;
   sizeSqft: number;
+  lotUnits: number | null;
   originalPrice: number;
   amountPaid: number;
   askingPrice: number;
@@ -135,6 +139,7 @@ function toDeal(r: DealRow): IssueDeal {
     communityOther: r.communityOther,
     unitType: r.unitType,
     sizeSqft: r.sizeSqft,
+    lotUnits: r.lotUnits,
     originalPrice: r.originalPrice,
     amountPaid: r.amountPaid,
     askingPrice: r.askingPrice,

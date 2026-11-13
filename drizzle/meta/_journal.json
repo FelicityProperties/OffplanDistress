@@ -113,6 +113,13 @@
       "when": 1794554319560,
       "tag": "0015_unit_type_bulk",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1794559182241,
+      "tag": "0016_listing_lot_units",
+      "breakpoints": true
     }
   ]
 }

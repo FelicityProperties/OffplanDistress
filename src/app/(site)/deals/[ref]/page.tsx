@@ -428,8 +428,9 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
         ] as [string, number][])
       : []),
     [t("cost.dld", { rate: formatPct(FEES.dldRate) }), a.dld],
-    [t("cost.dldAdmin"), a.dldAdmin],
-    [t("cost.noc"), a.noc],
+    // A bulk deal's units are a transfer each: the fixed fees count once per unit (analyzeDeal).
+    [a.transfers > 1 ? t("cost.dldAdminLot", { count: a.transfers }) : t("cost.dldAdmin"), a.dldAdmin],
+    [a.transfers > 1 ? t("cost.nocLot", { count: a.transfers }) : t("cost.noc"), a.noc],
   ];
 
   // The fourth item marks an amount (kept on one line on phones).

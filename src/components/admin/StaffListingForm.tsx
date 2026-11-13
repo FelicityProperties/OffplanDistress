@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useLocale, useT } from "@/i18n/client";
 import { LOCALES, type Locale } from "@/i18n/config";
-import { COMMUNITIES, DEVELOPERS, MOTIVATION, UNIT_TYPES } from "@/lib/config";
+import { COMMUNITIES, DEVELOPERS, FORM_UNIT_TYPES, MOTIVATION } from "@/lib/config";
 import { formatQuarter } from "@/lib/format";
 import { communityName, developerName } from "@/lib/place-names";
 
@@ -176,7 +176,7 @@ export function StaffListingForm({
           <Field label={t("create.unitType")} htmlFor="unitType" error={fe.unitType}>
             <select id="unitType" name="unitType" defaultValue="" className={selectClass} aria-invalid={invalid("unitType")}>
               <option value="">{t("create.choose")}</option>
-              {(Object.keys(UNIT_TYPES) as (keyof typeof UNIT_TYPES)[]).map((k) => (
+              {FORM_UNIT_TYPES.map((k) => (
                 <option key={k} value={k}>
                   {tc(`unit.${k}`)}
                 </option>

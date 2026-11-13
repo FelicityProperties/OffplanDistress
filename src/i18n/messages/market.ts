@@ -133,7 +133,7 @@ export default defineMessages({
       "Every figure is computed directly from the marketplace's listing data at the moment this page loads, without modelling. Two inputs involve judgement: launch prices are recorded by our team for an equivalent new unit, and days to transfer is approximate.",
     "method.scope.title": "What counts",
     "method.scope.body":
-      "Real listings that buyers can see on the marketplace right now: available, with an accepted offer, or with the NOC in progress. Listings under review, rejected, paused, withdrawn or already transferred are not part of supply.",
+      "Real listings that buyers can see on the marketplace right now: available, with an accepted offer, or with the NOC in progress. Listings under review, rejected, paused, withdrawn or already transferred are not part of supply. Every figure is per unit, so bulk deals (several units sold together as one lot) are left out.",
     "method.samples.title": "Sample listings excluded",
     "method.samples.body":
       "Sample listings, added to show how the marketplace works, are excluded from every figure on this page, demand included.",
@@ -291,7 +291,7 @@ export default defineMessages({
     "method.sub": "تُحتسب كل الأرقام مباشرة من بيانات الإعلانات على المنصة لحظة تحميل هذه الصفحة، دون أي نمذجة. ويدخل التقدير في عنصرين: سعر الإطلاق يسجّله فريقنا لوحدة جديدة مماثلة، وعدد الأيام حتى نقل الملكية تقريبي.",
     "method.scope.title": "ما الذي يُحتسب",
     "method.scope.body":
-      "الإعلانات الحقيقية التي يراها المشترون في السوق الآن: المتاحة، أو التي عليها عرض مقبول، أو التي يجري استخراج شهادة عدم الممانعة لها. أما الإعلانات قيد المراجعة أو المرفوضة أو الموقوفة مؤقتاً أو المسحوبة أو التي نُقلت ملكيتها فلا تدخل في العرض.",
+      "الإعلانات الحقيقية التي يراها المشترون في السوق الآن: المتاحة، أو التي عليها عرض مقبول، أو التي يجري استخراج شهادة عدم الممانعة لها. أما الإعلانات قيد المراجعة أو المرفوضة أو الموقوفة مؤقتاً أو المسحوبة أو التي نُقلت ملكيتها فلا تدخل في العرض. وكل رقم هنا محسوب للوحدة الواحدة، لذا تُستبعد صفقات الجملة (عدة وحدات تُباع معاً في صفقة واحدة).",
     "method.samples.title": "استبعاد الإعلانات التوضيحية",
     "method.samples.body":
       "تُستبعد الإعلانات التوضيحية، التي أُضيفت لبيان طريقة عمل المنصة، من جميع الأرقام في هذه الصفحة، بما فيها أرقام الطلب.",
@@ -451,7 +451,7 @@ export default defineMessages({
       "所有数字均在本页面加载时直接根据平台的房源数据计算，不作任何建模。其中两项输入涉及人工判断：开发商当前售价由我们的团队按同等新单元记录，过户所需天数为近似值。",
     "method.scope.title": "哪些房源计入",
     "method.scope.body":
-      "买家目前在平台上可以看到的真实房源：可售、已接受报价，或正在办理开发商无异议函（NOC）的房源。审核中、已拒绝、已暂停、已撤回或已过户的房源不计入供应。",
+      "买家目前在平台上可以看到的真实房源：可售、已接受报价，或正在办理开发商无异议函（NOC）的房源。审核中、已拒绝、已暂停、已撤回或已过户的房源不计入供应。本页所有数据均按单套计算，因此不含整批出售（多套房源作为一笔交易一起出售）。",
     "method.samples.title": "不含示例房源",
     "method.samples.body":
       "为展示平台运作方式而添加的示例房源，不计入本页面的任何数字，需求数据也不例外。",

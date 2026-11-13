@@ -81,8 +81,13 @@ several images continues in `<ref>-2.png`, `<ref>-3.png`; `moreImages` lists the
   then **skipped** — left out if new, the previous entry kept if listed — say so in the report so the user can ask the
   broker for the figures.
 - Original (SPA) price, paid and asking are derived by the build: SPA price = (dldFee − 40) / 4% (the DLD line is 4% of
-  the original price + 40), else the page's "Original Price + DLD 4%" ÷ 1.04; paid = SPA price − remaining; asking = payment
-  to seller.
+  the original price + 40), else the page's "Original Price + DLD 4%" ÷ 1.04 (or (that − 40) ÷ 1.04, whichever gives a
+  whole price); where the page's line gives a whole price within AED 50 of the DLD line's, the page's is used (some
+  sheets print the DLD line AED 2 higher); paid = SPA price − remaining; asking = payment to seller.
+- Handover: the build takes the page's. Check a new unit's against DLD's register (DXBinteract `get_project_profile`:
+  `completion_date` and `progress`); when the page's is **earlier** than the registered completion date, add
+  `"handoverDate": "YYYY-MM-DD"` (the registered date) and `"handoverNote": "why, with the evidence"` to its plan entry:
+  the listing then shows that date and the admin notes say why. A later date on the page is left as it is.
 
 ## 3. Curate the photos of every `needsPhotos` unit
 
@@ -90,7 +95,7 @@ The site's first gallery image is usually a location map, so the owner wants the
 photo order is chosen by hand, once. `delta.json`'s `needsPhotos` lists the listed units (new ones too) with no entry
 yet in `scripts/partner-stock/distressstock-photos.json` (format `offplandistress-photos/1`:
 `{ "format": "offplandistress-photos/1", "source": "distressstock", "photos": { "<ref>": ["<absolute image url>", …] } }`,
-hero first, at most 4 urls per ref; never the keyplan — the build appends it last). For each of them:
+hero first, at most 4 urls per ref; never the keyplan — the build appends it last, except to a bulk deal). For each of them:
 
 ```
 node scripts/partner-stock/sync-distressstock.mjs sheet --raw $RAW              # every needsPhotos unit
@@ -120,7 +125,9 @@ M should be 0 after step 3). Exit codes: **0** done; **2** a unit still needs it
 file is written; go back to step 2, then build again — repeat until 0); **3** the safety valve (below; nothing
 written); **1** a problem with the inputs (message says). The owner's standing rule (13 Nov 2026): **don't leave anything
 out**. A bulk deal (several units sold together) is listed as one listing of unit type `bulk`: its size is the lot's
-total, its description gives the count and the mix as posted. Units are excluded for good only when they are shops or
+total, `lotUnits` its number of units (from the title or type; the cost estimates count a DLD transfer and an NOC per
+unit), its description gives the count and the mix as posted, and its gallery has no keyplan (that shows one of its
+units). Bulk deals stay off the project pages and the Distress Index, which count single units. Units are excluded for good only when they are shops or
 outside Dubai (a unit outside Dubai can't carry a Trakheesi permit); name them in the report.
 A unit is *skipped* (previous entry kept, a new one left out) when its page can't be read as before — size not in sq ft,
 a price line or the handover the parser can't read: the site's wording changed, so the parser needs updating; never

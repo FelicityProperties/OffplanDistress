@@ -227,6 +227,7 @@ const LISTING_KEYS = [
   "communityOther",
   "unitType",
   "sizeSqft",
+  "lotUnits",
   "floor",
   "view",
   "originalPrice",
@@ -446,6 +447,9 @@ export function validateEntry(e, rules) {
   }
   if (!UNIT_TYPES.includes(l.unitType)) p.push(`unitType "${l.unitType}"`);
   int(l.sizeSqft, "sizeSqft", { min: 1 });
+  // A bulk deal's number of units (src/db/schema.ts lotUnits); no other unit type has one.
+  int(l.lotUnits, "lotUnits", { min: 2, max: 10_000, optional: true });
+  if (l.lotUnits != null && l.unitType !== "bulk") p.push("lotUnits on a unit that is not a bulk deal");
   str(l.floor, 40, "floor");
   str(l.view, 80, "view");
   int(l.originalPrice, "originalPrice", { min: 1 });
@@ -524,6 +528,9 @@ export function planProblems(p, unit = null) {
   }
   const selling = unit ? money(unit.fields["Selling price"]) : null;
   if (selling && selling !== p.unitPrice) probs.push(`the page's selling price ${selling} ≠ the plan's unit price ${p.unitPrice} (price changed?)`);
+  // A handover our team set from DLD's register in place of the posted one, with the reason.
+  if (p.handoverDate != null && !isCalendarDay(p.handoverDate)) probs.push("handoverDate not a calendar day (YYYY-MM-DD)");
+  if (p.handoverDate != null && (typeof p.handoverNote !== "string" || !pyStrip(p.handoverNote))) probs.push("handoverDate without a handoverNote saying why");
   return probs;
 }
 
@@ -533,6 +540,17 @@ function money(s) {
   if (!m) return null;
   const n = Number(m[1].replace(/[^\d]/g, ""));
   return n >= 10_000 ? n : null;
+}
+
+/**
+ * The original (SPA) price a posted "Original Price + DLD 4%" stands for, as {op, whole}. The site writes it as OP × 1.04
+ * or as OP × 1.04 + AED 40 (DLD's admin fee added in): whole = one of the two gives a whole price (both can't, as 40 is no
+ * multiple of 26), else OP × 1.04 rounded. Integer arithmetic: x ÷ 1.04 = x × 25 ÷ 26.
+ */
+export function postedOriginal(line) {
+  if (!line) return null;
+  for (const x of [line, line - 40]) if ((x * 25) % 26 === 0) return { op: (x * 25) / 26, whole: true };
+  return { op: pyRound(line / 1.04), whole: false };
 }
 
 function canon(value, list, mapping, names) {
@@ -652,19 +670,27 @@ export function buildEntry(u, plan, today, rules) {
   // A ready unit ("READY", "READY AND VACANT", "READY, RENTED (…)") was handed over before it was posted: its handover
   // date is the day it was posted — in the past, and the same from one day to the next — so the site shows it as ready
   // (not "Handover TBC") and the "Handover by" filter finds it.
-  const handoverDate = handover(handoverText) ?? (handedOver ? postedDay(u.posted) : null);
-  if (!handoverDate && /\d{4}/.test(handoverText) && !handedOver) return { skip: `the posted handover can't be read (${handoverText})` };
+  const postedHandover = handover(handoverText) ?? (handedOver ? postedDay(u.posted) : null);
+  if (!postedHandover && /\d{4}/.test(handoverText) && !handedOver) return { skip: `the posted handover can't be read (${handoverText})` };
+  // The plan file's handoverDate replaces a posted handover that DLD's register shows to be too early (the project's
+  // registered completion date is later); its handoverNote says why, for the admin notes.
+  const handoverDate = p.handoverDate ?? postedHandover;
   const ready = p.totalRemaining === 0;
+  const posted = postedOriginal(origDld);
   let op = null;
   if (ready) {
     // Fully paid: the DLD line is 4% of the sale price, so the original price comes only from the posted
     // "Original Price + DLD 4%" (else it's taken as the selling price).
-    op = origDld ? pyRound(origDld / 1.04) : p.unitPrice;
+    op = posted ? posted.op : p.unitPrice;
   } else if (p.dldFee) op = pyRound((p.dldFee - 40) / 0.04);
-  // Some plans charge the DLD line on the selling price ("4% + 40 AED"): it then gives the unit price back, not the
-  // original one. Where the page posts an "Original Price + DLD 4%" that disagrees with it, that is the original price.
-  const posted = origDld ? pyRound(origDld / 1.04) : null;
-  if (!ready && posted != null && (op == null || (op === p.unitPrice && Math.abs(op * 1.04 - origDld) > 0.01 * origDld))) op = posted;
+  if (!ready && posted) {
+    // Some plans charge the DLD line on the selling price ("4% + 40 AED"): it then gives the unit price back, not the
+    // original one. Where the page posts an "Original Price + DLD 4%" that disagrees with it, that is the original price.
+    if (op == null || (op === p.unitPrice && Math.abs(op * 1.04 - origDld) > 0.01 * origDld)) op = posted.op;
+    // The plan's DLD line is rounded to the dirham, and ÷ 0.04 makes that up to AED 50 on the price (4,552,050 for an SPA
+    // price of 4,552,000): a posted line that stands for a whole price within that is the SPA figure itself.
+    else if (posted.whole && Math.abs(posted.op - op) <= 25 * ROUNDING_AED) op = posted.op;
+  }
   if (!op) return { skip: "original price unknown" };
   if (op < p.totalRemaining) return { skip: `original price ${op} below the remaining plan ${p.totalRemaining}` };
   const paid = op - p.totalRemaining;
@@ -692,6 +718,8 @@ export function buildEntry(u, plan, today, rules) {
     communityOther: comOther,
     unitType: ut,
     sizeSqft: sz,
+    // A bulk deal's number of units, when its title or type gives it: the cost estimates count a transfer per unit.
+    ...(ut === "bulk" && bulkCount(u) >= 2 ? { lotUnits: bulkCount(u) } : {}),
     floor,
     view,
     originalPrice: op,
@@ -710,8 +738,13 @@ export function buildEntry(u, plan, today, rules) {
   const past = dated.filter((i) => i.dueDate < today);
   if (past.length) notes.push(`${past.length} instalment(s) in the posted plan fall before today (${past.map((i) => i.label).join(", ")}): confirm whether they were paid.`);
   if ((f.Handover ?? "").toUpperCase().startsWith("READY")) notes.push("Ready property (handover done).");
+  if (p.handoverDate && p.handoverDate !== postedHandover) {
+    notes.push(`Handover: the page says ${handoverText || "nothing"}; the listing shows ${p.handoverDate}${p.handoverNote ? ` (${p.handoverNote})` : ""}.`);
+  }
+  if (ut === "bulk" && !listing.lotUnits) notes.push("Bulk deal: the number of units can't be read from the page; the cost estimates count one transfer until it is known.");
   const over = u.sections.filter((s) => s.heading.toUpperCase().includes("OVERVIE")).flatMap((s) => s.images);
-  const keys = u.sections.filter((s) => s.heading.toUpperCase().includes("KEYPLAN")).flatMap((s) => s.images);
+  // A bulk deal's keyplan is the plan of one of its units (its own size and floors): not a picture of the lot.
+  const keys = ut === "bulk" ? [] : u.sections.filter((s) => s.heading.toUpperCase().includes("KEYPLAN")).flatMap((s) => s.images);
   const photos = [
     ...over.slice(0, 4).map((src, i) => ({ filename: `${ref}-o${i}.webp`, url: absoluteUrl(src) })),
     ...keys.slice(0, 1).map((src, i) => ({ filename: `${ref}-k${i}.webp`, url: absoluteUrl(src) })),
@@ -735,7 +768,8 @@ export function curatedPhotos(u, urls, previous, maxPhotos) {
   const before = Array.isArray(previous) ? previous : [];
   const named = new Map(before.map((p) => [p.url, p.filename]));
   const taken = new Set(before.map((p) => p.filename));
-  const keyplan = sectionImages(u, "KEYPLAN")[0] ?? null;
+  // A bulk deal's keyplan shows one of its units (another size, other floors), so its gallery has none.
+  const keyplan = isBulk(u) ? null : (sectionImages(u, "KEYPLAN")[0] ?? null);
   const onPage = new Set(u.sections.flatMap((s) => s.images).map(absoluteUrl));
   const photos = [];
   const notOnPage = [];
