@@ -215,6 +215,7 @@ const SYNCED_FIELDS = [
   "paymentPlan",
   "handoverDate",
   "sizeSqft",
+  "lotUnits",
   "floor",
   "view",
   "description",
@@ -237,6 +238,7 @@ const COLUMNS = {
   paymentPlan: "payment_plan",
   handoverDate: "handover_date",
   sizeSqft: "size_sqft",
+  lotUnits: "lot_units",
   floor: "floor",
   view: "view",
   description: "description",
@@ -271,6 +273,7 @@ function valuesOf(l) {
     paymentPlan: plan(l.paymentPlan ?? l.payment_plan),
     handoverDate: dateOf(l.handoverDate ?? l.handover_date),
     sizeSqft: l.sizeSqft ?? l.size_sqft ?? null,
+    lotUnits: l.lotUnits ?? l.lot_units ?? null,
     floor: text(l.floor),
     view: text(l.view),
     description: text(l.description),
@@ -343,7 +346,7 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
     await client.query("begin");
     const { rows } = await client.query(
       `select id, ref_no, status, is_sample, seller_id, project_name, asking_price, public_price, original_price, amount_paid,
-              next_instalment_date, next_instalment_amount, payment_plan, handover_date, size_sqft, floor, view, description, images,
+              next_instalment_date, next_instalment_amount, payment_plan, handover_date, size_sqft, lot_units, floor, view, description, images,
               overdue_amount, overdue_penalty, arrears_checked_at,
               dld_permit, dld_permit_expires_at, form_a_expires_at, permit_attested_at, created_by_staff, ownership_confirmed_at, source
        from listings where id = $1 for update`,
@@ -741,6 +744,7 @@ const FIELD_LABELS = {
     paymentPlan: "payment plan",
     handoverDate: "handover",
     sizeSqft: "size",
+    lotUnits: "units in the lot",
     floor: "floor",
     view: "view",
     description: "description",
@@ -758,6 +762,7 @@ const FIELD_LABELS = {
     paymentPlan: "خطة الدفع",
     handoverDate: "التسليم",
     sizeSqft: "المساحة",
+    lotUnits: "عدد الوحدات في الصفقة",
     floor: "الطابق",
     view: "الإطلالة",
     description: "الوصف",
@@ -775,6 +780,7 @@ const FIELD_LABELS = {
     paymentPlan: "付款计划",
     handoverDate: "交房",
     sizeSqft: "面积",
+    lotUnits: "整批套数",
     floor: "楼层",
     view: "景观",
     description: "描述",
@@ -1102,8 +1108,8 @@ async function ensureListing(pool, source, unit, ownerId, actor) {
        seller_id, status, project_name, developer, community, developer_other, community_other, unit_type, size_sqft,
        floor, view, original_price, amount_paid, asking_price, handover_date, next_instalment_date,
        next_instalment_amount, motivation, description, payment_plan, source, created_by_staff, ownership_confirmed_at,
-       overdue_amount, overdue_penalty, arrears_checked_at
-     ) values ($1, 'pending_review', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, true, null, $21, $22, $23)
+       overdue_amount, overdue_penalty, arrears_checked_at, lot_units
+     ) values ($1, 'pending_review', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, true, null, $21, $22, $23, $24)
      on conflict ((source->>'import'), (source->>'ref')) where source->>'import' is not null do nothing
      returning id`,
     [
@@ -1131,6 +1137,8 @@ async function ensureListing(pool, source, unit, ownerId, actor) {
       l.overdueAmount,
       l.overduePenalty,
       l.arrearsCheckedAt,
+      // A bulk deal's number of units (null for any other listing).
+      l.lotUnits,
     ],
   );
   const row = inserted.rows[0];
@@ -1178,13 +1186,16 @@ function checkListing(v) {
     return s;
   };
   if (!v || typeof v !== "object") throw new Error("no listing");
-  const unitTypes = ["studio", "1br", "2br", "3br", "4br", "5br", "townhouse", "villa", "penthouse"];
+  const unitTypes = ["studio", "1br", "2br", "3br", "4br", "5br", "townhouse", "villa", "penthouse", "bulk"];
   if (!unitTypes.includes(v.unitType)) throw new Error("bad unit type");
   if (!["urgent", "motivated", "flexible"].includes(v.motivation)) throw new Error("bad motivation");
   const originalPrice = money(v.originalPrice, { positive: true });
   const amountPaid = money(v.amountPaid);
   if (amountPaid > originalPrice) throw new Error("paid above the SPA price");
   if (!Number.isInteger(v.sizeSqft) || v.sizeSqft <= 0 || v.sizeSqft > INT_MAX) throw new Error("bad size");
+  // A bulk deal's number of units, when the file gives it (src/db/schema.ts lotUnits); no other unit type has one.
+  const lotUnits = v.lotUnits ?? null;
+  if (lotUnits != null && (v.unitType !== "bulk" || !Number.isInteger(lotUnits) || lotUnits < 2 || lotUnits > 10_000)) throw new Error("bad lot size");
   // PLAN_MAX_ROWS in src/lib/listing-schema.ts: ten years of monthly instalments.
   if (!Array.isArray(v.paymentPlan) || v.paymentPlan.length > 120) throw new Error("bad plan");
   const paymentPlan = v.paymentPlan.map((i) => ({
@@ -1210,6 +1221,7 @@ function checkListing(v) {
     communityOther: str(v.communityOther, 80),
     unitType: v.unitType,
     sizeSqft: v.sizeSqft,
+    lotUnits,
     floor: str(v.floor, 40),
     view: str(v.view, 80),
     originalPrice,
@@ -1324,13 +1336,30 @@ const toJpeg = (sharp, input, width = PHOTO_WIDTH) =>
     .jpeg({ quality: 80, mozjpeg: true })
     .toBuffer();
 
-/** The photo, resized for the gallery as JPEG when sharp is available; null when it is not an image or too big. */
+const PHOTO_TYPES = ["image/webp", "image/jpeg", "image/png"];
+
+/** The image type the bytes themselves say (WebP, JPEG or PNG signature), else null. */
+export function sniffImageType(b) {
+  if (b.length >= 12 && b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP") return "image/webp";
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b.length >= 8 && b.toString("latin1", 0, 8) === "\x89PNG\r\n\x1a\n") return "image/png";
+  return null;
+}
+
+/**
+ * The photo, resized for the gallery as JPEG when sharp is available; null when it is not an image or too big. The
+ * bytes decide what it is: DistressStock's server labels its .webp files "text/plain" (seen 13 Nov 2026), and a page
+ * or an error message served as image/* must not get in either.
+ */
 async function fetchPhoto(url, sharp) {
   const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS), headers: { "user-agent": "OffplanDistress import" } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const type = (res.headers.get("content-type") ?? "").split(";")[0].trim();
-  if (!["image/webp", "image/jpeg", "image/png"].includes(type)) throw new Error(`not an image (${type || "no type"})`);
+  const label = (res.headers.get("content-type") ?? "").split(";")[0].trim();
+  // Read only what a photo can be: the body is read to look at its first bytes, so a huge download is refused first.
+  if (Number(res.headers.get("content-length") ?? 0) > 25 * 1024 * 1024) throw new Error("too big to be a photo");
   const raw = Buffer.from(await res.arrayBuffer());
+  const type = sniffImageType(raw);
+  if (!type || !PHOTO_TYPES.includes(type)) throw new Error(`not an image (${label || "no type"})`);
   if (sharp) {
     try {
       return { bytes: await toJpeg(sharp, raw), type: "image/jpeg" };

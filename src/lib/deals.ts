@@ -628,6 +628,7 @@ export async function dealsForExport() {
       overdueAmount: listings.overdueAmount,
       overduePenalty: listings.overduePenalty,
       arrearsCheckedAt: listings.arrearsCheckedAt,
+      lotUnits: listings.lotUnits,
       sellerName: sellerUsers.fullName,
       sellerEmail: sellerUsers.email,
       sellerPhone: sellerUsers.phone,

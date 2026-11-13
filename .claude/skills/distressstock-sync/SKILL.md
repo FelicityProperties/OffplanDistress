@@ -81,8 +81,17 @@ several images continues in `<ref>-2.png`, `<ref>-3.png`; `moreImages` lists the
   then **skipped** — left out if new, the previous entry kept if listed — say so in the report so the user can ask the
   broker for the figures.
 - Original (SPA) price, paid and asking are derived by the build: SPA price = (dldFee − 40) / 4% (the DLD line is 4% of
-  the original price + 40), else the page's "Original Price + DLD 4%" ÷ 1.04; paid = SPA price − remaining; asking = payment
-  to seller.
+  the original price + 40), else the page's "Original Price + DLD 4%" ÷ 1.04. Both lines are rounded to the dirham
+  (÷ 0.04 turns that into up to AED 50), so the build also tries the prices the page's line can stand for (OP × 1.04,
+  or OP × 1.04 + 40) within AED 50 and keeps the one most instalment rows are whole half-percents of (developers bill
+  10%, 1%… of the SPA price: 3,508,888 → 350,889); paid = SPA price − remaining; asking = payment to seller. So write
+  every row to the dirham exactly as printed: the rows decide the price.
+- Handover: the build takes the page's. Check a new unit's against DLD's register (DXBinteract `get_project_profile`:
+  `completion_date` and `progress`); when the page's is **earlier** than the registered completion date, add
+  `"handoverDate": "YYYY-MM-DD"` (the registered date) and `"handoverNote": "why, with the evidence"` to its plan entry:
+  the listing then shows that date and the admin notes say why. A later date on the page is left as it is, and once
+  the page posts a date after yours (or "READY"), the page's is used again. Keep both fields when you re-transcribe
+  that unit's plan.
 
 ## 3. Curate the photos of every `needsPhotos` unit
 
@@ -90,7 +99,7 @@ The site's first gallery image is usually a location map, so the owner wants the
 photo order is chosen by hand, once. `delta.json`'s `needsPhotos` lists the listed units (new ones too) with no entry
 yet in `scripts/partner-stock/distressstock-photos.json` (format `offplandistress-photos/1`:
 `{ "format": "offplandistress-photos/1", "source": "distressstock", "photos": { "<ref>": ["<absolute image url>", …] } }`,
-hero first, at most 4 urls per ref; never the keyplan — the build appends it last). For each of them:
+hero first, at most 4 urls per ref; never the keyplan — the build appends it last, except to a bulk deal). For each of them:
 
 ```
 node scripts/partner-stock/sync-distressstock.mjs sheet --raw $RAW              # every needsPhotos unit
@@ -118,14 +127,22 @@ prints the summary (listed, new, updated with the fields, removed, back, dropped
 counts are also in `$RAW/build.json`, with the photo line (`photos: N units curated, M listed without curation …`;
 M should be 0 after step 3). Exit codes: **0** done; **2** a unit still needs its plan (the
 file is written; go back to step 2, then build again — repeat until 0); **3** the safety valve (below; nothing
-written); **1** a problem with the inputs (message says). Units are excluded for good when they are bulk deals, shops or outside Dubai.
+written); **1** a problem with the inputs (message says). The owner's standing rule (13 Nov 2026): **don't leave anything
+out**. A bulk deal (several units sold together) is listed as one listing of unit type `bulk`: its size is the lot's
+total, `lotUnits` its number of units (from the title or type; the cost estimates count a DLD transfer and an NOC per
+unit), its description gives the count and the mix as posted, and its gallery has no keyplan (that shows one of its
+units). Bulk deals stay off the project pages and the Distress Index, which count single units. Units are excluded for good only when they are shops or
+outside Dubai (a unit outside Dubai can't carry a Trakheesi permit); name them in the report.
 A unit is *skipped* (previous entry kept, a new one left out) when its page can't be read as before — size not in sq ft,
 a price line or the handover the parser can't read: the site's wording changed, so the parser needs updating; never
 "fix" it by editing the manifest or the plans file. A unit is also skipped while its area is not one the script knows
 to be in Dubai (`area not known to be in Dubai (…)`; our communities list, `COM_MAP` / `COM_NAMES` and `DUBAI_AREAS`
-are the known ones, `NON_DUBAI` the known outside ones): never add the area yourself — name the unit and its area in
-the report, so the user can check where it is (a unit outside Dubai can't carry a Trakheesi permit); adding it to
-either list is a change to the script, made on their word. A ready unit ("READY…" as its handover) gets the day it was
+are the known ones, `NON_DUBAI` the known outside ones). Under the owner's rule that unit must not be left out: check
+where the area is (DXBinteract's `search_locations` gives the DLD-registered location and its district; the developer's
+own project page), and when it is in Dubai map it in the same sync — onto our communities list in `COM_MAP` when it
+lies in one of them (Damac Riverside → Dubai Investment Park), else its spelling in `COM_NAMES` (listed as "Other") —
+then run `fetch` again so its plan is saved, and say in the report what you mapped and on what evidence. Only an area
+you confirm is outside Dubai goes to `NON_DUBAI` (the unit is then excluded, as above). A ready unit ("READY…" as its handover) gets the day it was
 posted as its handover date, so the site shows it as ready.
 
 ## 5. Review
@@ -185,7 +202,7 @@ Publishing stays with the owner's "Publish all N on Felicity's permits" click.
 - **Fetch stops** (gate stays / 0 units / page failed twice): the site is down, changed, or the password changed. Report
   it; don't retry in a loop, don't guess passwords.
 - **A plan that won't add up** after two careful readings: `legible: false` with a note, and say so in the report.
-- **A unit in the previous manifest but now excluded** (e.g. re-posted as a bulk deal): the build keeps its previous
+- **A unit in the previous manifest but now excluded** (e.g. re-posted as a shop): the build keeps its previous
   entry (a rule never withdraws a listed unit; it is marked removed the day it really leaves the site) and says so
   every day it lasts; mention it in the report so the user can decide about the listing.
 - Never edit `distressstock.json` by hand; the build regenerates it. Never commit anything from `$RAW`.

@@ -24,6 +24,8 @@ type Listing = {
   /** Arrears with the developer (src/lib/deal-math.ts): part of the buyer's cash on transfer day at the agreed price. */
   overdueAmount: number | null;
   overduePenalty: number | null;
+  /** A bulk deal's number of units: the DLD and NOC fees count once per unit. */
+  lotUnits: number | null;
   /** Where an imported unit came from: names its placeholder owner ("Owner to be added (…)") in the page's language. */
   source: { import?: string; sourceName?: string } | null;
 };
@@ -238,6 +240,7 @@ export async function DealFileCard({ listing }: { listing: Listing }) {
             amountPaid: listing.amountPaid,
             overdueAmount: listing.overdueAmount,
             overduePenalty: listing.overduePenalty,
+            lotUnits: listing.lotUnits,
           }}
           needsBuyer={!deal.buyerId}
           today={dubaiToday()}

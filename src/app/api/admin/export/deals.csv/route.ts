@@ -83,6 +83,7 @@ export async function GET() {
               overdueAmount: r.overdueAmount,
               overduePenalty: r.overduePenalty,
               nocFee: r.deal.nocFee,
+              lotUnits: r.lotUnits,
             }).cashToClose,
     ],
     [t("dealFile.field.depositAmount"), (r) => r.deal.depositAmount],

@@ -391,6 +391,27 @@
    "totalCosts": 3091978,
    "notes": "All checks pass (2270552+629448=2900000; on-transfer rows sum to 2462530; 2462530+629448=3091978). Single undated 'On Completion' instalment. DLD fee 125828 implies OP of 3144700 rather than the 2900000 unit price (4% of OP + 40), consistent with the row's label."
   },
+  "4Yzwgt": {
+   "image": "https://distressonly.deals/media/units/422/d08e0313278d.webp",
+   "transcribedAt": "2026-11-13",
+   "legible": true,
+   "unitPrice": 73225000,
+   "paymentToSeller": 73225000,
+   "dldFee": 2929040,
+   "trusteeFee": 4200,
+   "commission": 1537725,
+   "otherOnTransfer": [
+    {
+     "label": "5. Title Deed Fee",
+     "amount": 580
+    }
+   ],
+   "instalments": [],
+   "totalOnTransfer": 77696545,
+   "totalRemaining": 0,
+   "totalCosts": 77696545,
+   "notes": "Bulk deal of 24 ready and vacant apartments, fully paid: no payment plan and no 'Total Remaining' row printed (0). DLD line labelled '4% + 40 AED', on the selling price (2,929,040 = 4% of 73,225,000 + 40); the page posts no original price. Trustee fee 4,200 and a title deed fee of 580. All checks pass."
+  },
   "5fTg83": {
    "image": "https://distressonly.deals/media/units/431/7040c0eaed7a.webp",
    "transcribedAt": "2026-11-10",
@@ -543,6 +564,88 @@
    "totalRemaining": 2513827,
    "totalCosts": 5003190,
    "notes": "All checks pass: seller + remaining = unit price; instalments sum to 2513827; transfer rows sum to 2489363; total costs = 2489363 + 2513827. Commission label: Buyer's Agency Commission (2%+VAT)."
+  },
+  "937kzL": {
+   "image": "https://distressonly.deals/media/units/433/8325fc902d73.webp",
+   "transcribedAt": "2026-11-13",
+   "legible": true,
+   "unitPrice": 3700000,
+   "paymentToSeller": 1651600,
+   "dldFee": 182122,
+   "trusteeFee": 5250,
+   "commission": 77700,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "02-DEC-2026",
+     "dueDate": "2026-12-02",
+     "amount": 45520
+    },
+    {
+     "label": "02-JAN-2027",
+     "dueDate": "2027-01-02",
+     "amount": 45520
+    },
+    {
+     "label": "02-FEB-2027",
+     "dueDate": "2027-02-02",
+     "amount": 45520
+    },
+    {
+     "label": "02-MAR-2027",
+     "dueDate": "2027-03-02",
+     "amount": 227600
+    },
+    {
+     "label": "02-APR-2027",
+     "dueDate": "2027-04-02",
+     "amount": 45520
+    },
+    {
+     "label": "02-MAY-2027",
+     "dueDate": "2027-05-02",
+     "amount": 45520
+    },
+    {
+     "label": "02-JUN-2027",
+     "dueDate": "2027-06-02",
+     "amount": 45520
+    },
+    {
+     "label": "02-JUL-2027",
+     "dueDate": "2027-07-02",
+     "amount": 45520
+    },
+    {
+     "label": "02-AUG-2027",
+     "dueDate": "2027-08-02",
+     "amount": 45520
+    },
+    {
+     "label": "02-SEP-2027",
+     "dueDate": "2027-09-02",
+     "amount": 227600
+    },
+    {
+     "label": "02-OCT-2027",
+     "dueDate": "2027-10-02",
+     "amount": 45520
+    },
+    {
+     "label": "02-NOV-2027",
+     "dueDate": "2027-11-02",
+     "amount": 45520
+    },
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 1138000
+    }
+   ],
+   "totalOnTransfer": 1916672,
+   "totalRemaining": 2048400,
+   "totalCosts": 3965072,
+   "notes": "1% a month (45,520) with 5% (227,600) in March and September 2027, then 25% on handover: shares of an original price of 4,552,000 (the DLD fee line gives 4,552,050, the page's 'Original Price + DLD 4%' of 4,734,120 = 4,552,000 x 1.04 + 40). All checks pass."
   },
   "9MTsaW": {
    "image": "https://distressonly.deals/media/units/404/b632e0ac47ab.webp",
@@ -1154,6 +1257,218 @@
    "totalRemaining": 4361932,
    "totalCosts": 7136786,
    "notes": "Re-posted image: price cut from 6,750,000 (payment to seller 2,388,068 → 2,338,068; commission 141,750 → 140,700); DLD fee and plan unchanged. All checks pass."
+  },
+  "QIUbNB": {
+   "image": "https://distressonly.deals/media/units/432/1c3e95e1da43.webp",
+   "transcribedAt": "2026-11-13",
+   "legible": true,
+   "unitPrice": 2780000,
+   "paymentToSeller": 830750,
+   "dldFee": 113040,
+   "trusteeFee": 5250,
+   "commission": 58380,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "15-DEC-2026",
+     "dueDate": "2026-12-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-JAN-2027",
+     "dueDate": "2027-01-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-FEB-2027",
+     "dueDate": "2027-02-15",
+     "amount": 84750
+    },
+    {
+     "label": "15-MAR-2027",
+     "dueDate": "2027-03-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-APR-2027",
+     "dueDate": "2027-04-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-MAY-2027",
+     "dueDate": "2027-05-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-JUN-2027",
+     "dueDate": "2027-06-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-JUL-2027",
+     "dueDate": "2027-07-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-AUG-2027",
+     "dueDate": "2027-08-15",
+     "amount": 84750
+    },
+    {
+     "label": "15-SEP-2027",
+     "dueDate": "2027-09-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-OCT-2027",
+     "dueDate": "2027-10-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-NOV-2027",
+     "dueDate": "2027-11-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-DEC-2027",
+     "dueDate": "2027-12-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-JAN-2028",
+     "dueDate": "2028-01-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-FEB-2028",
+     "dueDate": "2028-02-15",
+     "amount": 84750
+    },
+    {
+     "label": "15-MAR-2028",
+     "dueDate": "2028-03-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-APR-2028",
+     "dueDate": "2028-04-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-MAY-2028",
+     "dueDate": "2028-05-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-JUN-2028",
+     "dueDate": "2028-06-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-JUL-2028",
+     "dueDate": "2028-07-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-AUG-2028",
+     "dueDate": "2028-08-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-SEP-2028",
+     "dueDate": "2028-09-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-OCT-2028",
+     "dueDate": "2028-10-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-NOV-2028",
+     "dueDate": "2028-11-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-DEC-2028",
+     "dueDate": "2028-12-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-JAN-2029",
+     "dueDate": "2029-01-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-FEB-2029",
+     "dueDate": "2029-02-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-MAR-2029",
+     "dueDate": "2029-03-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-APR-2029",
+     "dueDate": "2029-04-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-MAY-2029",
+     "dueDate": "2029-05-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-JUN-2029",
+     "dueDate": "2029-06-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-JUL-2029",
+     "dueDate": "2029-07-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-AUG-2029",
+     "dueDate": "2029-08-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-SEP-2029",
+     "dueDate": "2029-09-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-OCT-2029",
+     "dueDate": "2029-10-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-NOV-2029",
+     "dueDate": "2029-11-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-DEC-2029",
+     "dueDate": "2029-12-15",
+     "amount": 28250
+    },
+    {
+     "label": "15-JAN-2030",
+     "dueDate": "2030-01-15",
+     "amount": 28250
+    },
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 706250
+    }
+   ],
+   "totalOnTransfer": 1007420,
+   "totalRemaining": 1949250,
+   "totalCosts": 2956670,
+   "notes": "Plan over two images: 1% a month (28,250) from 15-DEC-2026 to 15-JAN-2030 with 3% (84,750) in Feb 2027, Aug 2027 and Feb 2028, then 25% on handover; the DLD fee implies an original price of 2,825,000, as the page's 'Original Price + DLD 4%' does. All checks pass."
   },
   "QgAGrA": {
    "image": "https://distressonly.deals/media/units/312/a4ab0e77d06d.webp",
@@ -1994,6 +2309,8 @@
    "totalOnTransfer": 39005096,
    "totalRemaining": 11233994,
    "totalCosts": 50239090,
+   "handoverDate": "2028-07-31",
+   "handoverNote": "DLD registers Bayview Tower 1 for completion on 31 Jul 2028, 63% built in Nov 2026; another listing in this tower (PF6lLt, a 4-BR) says 2028",
    "notes": "All checks pass: 35766006 + 11233994 = 47000000; 5617001 + 5616993 = 11233994; totals add up. The DLD fee implies an OP of 56,170,000. The first instalment is a construction milestone ('80% Construction') with no date."
   },
   "dwK9fK": {
