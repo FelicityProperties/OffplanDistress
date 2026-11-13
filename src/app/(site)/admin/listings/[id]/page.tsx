@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, ArrowLeft, ExternalLink, FileText, ImageIcon, UserCheck } from "lucide-react";
-import { AdminListingForm, ReviewButtons } from "@/components/admin/AdminControls";
+import { AdminListingForm, ReviewButtons, VisibilityButtons } from "@/components/admin/AdminControls";
 import { ClaimLinkButtons } from "@/components/admin/ClaimLinkButtons";
 import { FormAConfirm, OwnerForm } from "@/components/admin/OwnerCard";
 import { PublishAttestedListingButton } from "@/components/admin/PublishAttested";
@@ -139,6 +139,15 @@ export default async function AdminListingPage({ params, searchParams }: PagePro
             </Button>
             {l.status === "pending_review" && (
               <ReviewButtons listingId={l.id} savedAt={l.updatedAt.toISOString()} refCode={refCode(l.refNo)} project={l.projectName} />
+            )}
+            {!l.isSample && (
+              <VisibilityButtons
+                listingId={l.id}
+                savedAt={l.updatedAt.toISOString()}
+                status={l.status}
+                pausedByAdmin={l.pausedByAdmin}
+                refCode={refCode(l.refNo)}
+              />
             )}
             {/* An imported unit still under its placeholder owner can't be approved; it goes live on the account owner's
                 statement instead, as the whole import can from the Imported tab (src/lib/attestation.ts). */}
