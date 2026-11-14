@@ -21,10 +21,11 @@ import { alternatesFor, openGraphBase } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 /**
- * Every filter combination is the same page to a search engine: canonical /deals (/ar/deals in Arabic). Searches,
- * sort orders, the list view and price/percentage ranges are also kept out of the index (their links are followed).
+ * Every filter combination is the same page to a search engine: canonical /deals (/ar/deals in Arabic). Filtered views
+ * (community, developer, unit type, seller, verified, handover year and price/percentage ranges), searches, sort orders
+ * and the list view are also kept out of the index (their links are followed).
  */
-const NOINDEX_PARAMS = /^(?:q|sort|view|handoverBy|(?:min|max)[A-Z]\w*)$/;
+const NOINDEX_PARAMS = /^(?:q|sort|view|handoverBy|community|developer|type|motivation|verified|(?:min|max)[A-Z]\w*)$/;
 
 export async function generateMetadata({ searchParams }: PageProps<"/deals">): Promise<Metadata> {
   const [t, locale, raw] = await Promise.all([getT("deals"), getLocale(), searchParams]);
