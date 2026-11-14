@@ -1,4 +1,5 @@
 import Link from "@/components/LocaleLink";
+import { unstable_rethrow } from "next/navigation";
 import { Mail, MapPin, MessageCircle, Phone, UsersRound } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { NewsletterForm } from "@/components/NewsletterForm";
@@ -13,6 +14,20 @@ import { cn } from "@/lib/utils";
 /** The company's site for Dubai Hills Estate; its Arabic and Chinese pages sit under /ar and /zh, as this site's do. */
 const DUBAI_HILLS_SITE = "https://www.dubaihillsoffplan.com";
 
+/**
+ * The signed-in user (for the newsletter field's email), or null. As in the header, a database blip leaves the field
+ * empty rather than putting the error page in place of the whole page.
+ */
+async function loadUser() {
+  try {
+    return await getCurrentUser();
+  } catch (err) {
+    unstable_rethrow(err); // Next.js signals dynamic rendering by throwing from cookies(); let that through
+    console.error("Loading the signed-in user for the footer failed", err);
+    return null;
+  }
+}
+
 export async function SiteFooter() {
   const [t, tn, tw, tp, locale, user] = await Promise.all([
     getT("common"),
@@ -20,7 +35,7 @@ export async function SiteFooter() {
     getT("community"),
     getT("projects"),
     getLocale(),
-    getCurrentUser(),
+    loadUser(),
   ]);
   // The floating buttons in the end corner (WhatsAppButton, AssistantWidget).
   const floating = Boolean(BRAND.whatsapp) || assistantEnabled();
