@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import Link from "@/components/LocaleLink";
-import { ArrowRight, MailCheck, MailWarning } from "lucide-react";
+import { ArrowRight, MailCheck, MailOpen, MailWarning } from "lucide-react";
+import { confirmSubscriptionAction } from "@/app/actions/newsletter";
 import { NewsletterCard } from "@/components/NewsletterCard";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { Button } from "@/components/ui/button";
 import { getT } from "@/i18n/server";
-import { confirm, maskEmail } from "@/lib/newsletter";
+import { maskEmail, subscriberByToken } from "@/lib/newsletter";
 
-// The confirmation link of the double opt-in email: opening it confirms the address (src/lib/newsletter.ts confirm).
+// The confirmation link of the double opt-in email. Opening it changes nothing: the page shows the (masked) address and
+// a "Confirm my subscription" button, and only that button's POST confirms it (confirmSubscriptionAction), coming back
+// here with "you're in". A mail gateway that opens every link of an email on delivery can't subscribe anyone that way.
 // A link that no longer works (replaced, or unsubscribed since) offers the form again.
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -20,17 +23,49 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // Typed by hand (not PageProps<"/newsletter/confirm">) so it compiles before Next regenerates its route types.
 export default async function ConfirmPage({ searchParams }: { searchParams: SearchParams }) {
-  const [t, { t: token }] = await Promise.all([getT("newsletter"), searchParams]);
-  const result = typeof token === "string" ? await confirm(token.trim()) : { status: "invalid" as const, email: null };
+  const [t, { t: raw, done }] = await Promise.all([getT("newsletter"), searchParams]);
+  const token = typeof raw === "string" ? raw.trim() : "";
+  const row = token ? await subscriberByToken(token) : null;
 
-  if (result.status === "invalid") {
+  if (!row || row.status === "unsubscribed") {
     return (
       <NewsletterCard icon={MailWarning} tone="warning" title={t("confirm.invalidTitle")} body={t("confirm.invalidBody")}>
         <NewsletterForm variant="page" source="newsletter" className="text-start" />
       </NewsletterCard>
     );
   }
-  const already = result.status === "already";
+  const masked = (
+    <bdi dir="ltr" className="font-medium text-foreground">
+      {maskEmail(row.email)}
+    </bdi>
+  );
+  if (row.status === "pending") {
+    const [before, after = ""] = t("confirm.pendingBody").split("{email}");
+    return (
+      <NewsletterCard
+        icon={MailOpen}
+        tone="muted"
+        title={t("confirm.pendingTitle")}
+        body={
+          <>
+            {before}
+            {masked}
+            {after}
+          </>
+        }
+      >
+        {/* A form posting to a server action: the button works from any mail client's browser, with or without JavaScript. */}
+        <form action={confirmSubscriptionAction} className="flex flex-wrap justify-center gap-3" data-testid="confirm-form">
+          <input type="hidden" name="t" value={token} />
+          <Button type="submit" size="lg">
+            {t("confirm.submit")}
+          </Button>
+        </form>
+      </NewsletterCard>
+    );
+  }
+  // Confirmed: just now by the button above ("done"), or before.
+  const already = done !== "1";
   const [before, after = ""] = t(already ? "confirm.alreadyBody" : "confirm.doneBody").split("{email}");
   return (
     <NewsletterCard
@@ -39,9 +74,7 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Sear
       body={
         <>
           {before}
-          <bdi dir="ltr" className="font-medium text-foreground">
-            {maskEmail(result.email ?? "")}
-          </bdi>
+          {masked}
           {after}
         </>
       }

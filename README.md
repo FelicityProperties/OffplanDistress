@@ -373,9 +373,10 @@ reaches only the Resend account owner); until then only the owner logins get the
 
 Anyone can leave an email address for the daily deals newsletter, no account needed: the band under the featured
 deals on the home page, the bar under the results on `/deals`, the footer of every page and `/newsletter` (with a
-sample issue). Double opt-in: the address is `pending` until the link in the confirmation email is opened
-(`/newsletter/confirm?t=…`, in the language it was left in); only confirmed addresses get issues. The
-`saved-search-alerts` job sends the issue at 09:00 Dubai, only on days the inventory changed
+sample issue). Double opt-in: the address is `pending` until "Confirm my subscription" is pressed on the page the
+confirmation email links to (`/newsletter/confirm?t=…`, in the language it was left in, with the masked address; opening
+the link alone changes nothing, so a mail gateway scanning links can't subscribe anyone); only confirmed addresses get
+issues. The `saved-search-alerts` job sends the issue at 09:00 Dubai, only on days the inventory changed
 (`src/lib/newsletter-issue.ts`): the adverts that went live, price drops with the old and new price, how many units are
 no longer available, the RERA details every advert carries, and a one-click unsubscribe link: `List-Unsubscribe` /
 `List-Unsubscribe-Post` headers (RFC 8058) naming `POST /api/newsletter/unsubscribe?t=…`, while the footer link opens
