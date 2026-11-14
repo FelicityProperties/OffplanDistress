@@ -70,7 +70,8 @@ const viewsIn = (p: Period) => sql`select * from page_views where created_at >= 
 const leadsIn = (p: Period) => sql`
   select * from (
     select 'seller' as kind, sl.id::text as id, sl.created_at, sl.source, sl.name as label, sl.ref_no as ref_no, null::text as link_id
-      from seller_leads sl
+      from seller_leads sl left join users u on u.id = sl.user_id
+      where u.role is distinct from 'admin'
     union all
     select 'inquiry', i.id::text, i.created_at, i.source, i.name, l.ref_no, i.listing_id::text
       from inquiries i left join users u on u.id = i.user_id left join listings l on l.id = i.listing_id
@@ -94,7 +95,8 @@ const leadsIn = (p: Period) => sql`
     -- A newsletter sign-up counts once its address is confirmed (src/lib/newsletter.ts); no visit is recorded with it,
     -- so it has no attribution, and the list shows the address masked.
     select 'newsletter', n.id::text, n.confirmed_at, null::jsonb, left(n.email, 1) || '***' || substring(n.email from '@.*$'), null, n.id::text
-      from newsletter_subscribers n where n.confirmed_at is not null
+      from newsletter_subscribers n left join users u on u.id = n.user_id
+      where n.confirmed_at is not null and u.role is distinct from 'admin'
   ) x where created_at >= ${at(p.from)} and created_at < ${at(p.to)}`;
 
 export const LEAD_KINDS = ["seller", "inquiry", "signup", "listing", "offer", "newsletter"] as const;
