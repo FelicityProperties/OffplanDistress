@@ -381,8 +381,9 @@ no longer available, the RERA details every advert carries, and a one-click unsu
 `List-Unsubscribe-Post` headers (RFC 8058) naming `POST /api/newsletter/unsubscribe?t=…`, while the footer link opens
 `/newsletter/unsubscribe?t=…`, which shows the masked address and asks first (a GET never unsubscribes). A day with
 no new advert and no price drop sends nothing and doesn't close the window: the next issue that goes out also counts
-the units that left the market on those days. A price drop is measured from the price advertised when the window
-opened, so a unit raised and then cut by less isn't one. Consent is
+the units that left the market on those days. A price drop is measured from the price advertised, and the balance still
+owed to the developer, when the window opened, so a unit raised and then cut by less isn't one, nor one whose cut a
+corrected amount paid (saved apart from it) outweighs. Consent is
 recorded with the row: when, from which IP and where on the site; a signed-in subscriber is linked to their account
 (the Privacy Policy's newsletter bullets — data, consent, retention, emails — describe exactly that record).
 The forms say "check your inbox" whatever the address's state (only a non-address is refused), a filled honeypot is
