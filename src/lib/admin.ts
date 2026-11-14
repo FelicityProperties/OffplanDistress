@@ -1,6 +1,6 @@
 import "server-only";
 import { alias } from "drizzle-orm/pg-core";
-import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, notInArray, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { auditEvents, files, inquiries, listings, offers, users } from "@/db/schema";
 import { awaitingOwnerSql } from "./import";
@@ -254,8 +254,40 @@ const registeredSql = sql`(${users.passwordHash} is not null or ${dealBuyerSql}
  * through their claim link yet, also once our team confirmed their listing (they are then on both tabs: their KYC is
  * checked on the first); the sample seller, which has no password either, owns only samples; an import's placeholder
  * owner, src/lib/import.ts, is nobody's account.
+ * One page of the tab, newest first, with how many accounts match (`total`): `q` searches every account of the tab
+ * (userMatchSql), `userId` picks one (a link from elsewhere in the console).
  */
-export async function adminUsers(tab: "registered" | "pending" = "registered") {
+export async function adminUsers(
+  tab: "registered" | "pending" = "registered",
+  { q = "", page = 1, userId }: { q?: string; page?: number; userId?: string } = {},
+) {
+  const where = and(tab === "pending" ? pendingClaimSql : registeredSql, q ? userMatchSql(q) : undefined, userId ? eq(users.id, userId) : undefined);
+  const [rows, [{ total }]] = await Promise.all([
+    adminUserRows(where, page),
+    db.select({ total: sql<number>`count(*)::int` }).from(users).where(where),
+  ]);
+  return { rows, total };
+}
+
+/** Accounts on a page of /admin/users. */
+export const USERS_PAGE_SIZE = 100;
+
+/**
+ * A name, an email or a phone number (in any format: "050 111 2222" finds +971 50 111 2222, from 3 digits), matched in
+ * the database, so every account can be found, not only those on the page. A typed % or _ is looked for as typed. Our
+ * own placeholder addresses (a phone-only seller's, isPlaceholderEmail) aren't searched as emails.
+ */
+function userMatchSql(q: string) {
+  const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const digits = q.replace(/\D/g, "").replace(/^0+/, "");
+  return or(
+    ilike(users.fullName, like),
+    and(ilike(users.email, like), sql`lower(trim(${users.email})) not like '%.invalid'`),
+    digits.length >= 3 ? sql`regexp_replace(coalesce(${users.phone}, ''), '[^0-9]', '', 'g') like ${`%${digits}%`}` : undefined,
+  );
+}
+
+function adminUserRows(where: SQL | undefined, page: number) {
   return db
     .select({
       id: users.id,
@@ -278,9 +310,16 @@ export async function adminUsers(tab: "registered" | "pending" = "registered") {
       pendingListingRef: sql<number | null>`(select l.ref_no from ${listings} l where l.seller_id = ${USER_ID} and l.created_by_staff and not l.is_sample order by l.ownership_confirmed_at is null desc, l.created_at desc limit 1)`,
     })
     .from(users)
-    .where(tab === "pending" ? pendingClaimSql : registeredSql)
-    .orderBy(desc(users.createdAt))
-    .limit(1000);
+    .where(where)
+    .orderBy(desc(users.createdAt), desc(users.id))
+    .limit(USERS_PAGE_SIZE)
+    .offset((Math.max(1, page) - 1) * USERS_PAGE_SIZE);
+}
+
+/** How many accounts the "registered" tab of /admin/users lists. */
+export async function registeredCount() {
+  const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(users).where(registeredSql);
+  return row?.n ?? 0;
 }
 
 /**

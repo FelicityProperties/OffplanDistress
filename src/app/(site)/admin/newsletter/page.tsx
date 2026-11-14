@@ -167,7 +167,7 @@ export default async function NewsletterAdminPage({ searchParams }: { searchPara
                       <p className="text-xs text-muted-foreground">
                         {tabs.has(r.userId) ? (
                           <Link
-                            href={`/admin/users${tabs.get(r.userId) === "pending" ? "?tab=pending" : ""}#user-${r.userId}`}
+                            href={`/admin/users?${tabs.get(r.userId) === "pending" ? "tab=pending&" : ""}user=${r.userId}#user-${r.userId}`}
                             className={cn("font-medium text-foreground underline-offset-4 hover:underline", PHONE_LINK)}
                           >
                             {t("admin.account")}: {r.accountName ?? "—"}

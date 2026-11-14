@@ -103,7 +103,7 @@ export default async function LeadsPage() {
                       {l.userId &&
                         (tabs.has(l.userId) ? (
                           <Link
-                            href={`/admin/users${tabs.get(l.userId) === "pending" ? "?tab=pending" : ""}#user-${l.userId}`}
+                            href={`/admin/users?${tabs.get(l.userId) === "pending" ? "tab=pending&" : ""}user=${l.userId}#user-${l.userId}`}
                             className={cn("font-medium underline-offset-4 hover:underline", PHONE_LINK)}
                           >
                             {t("leads.account")}: {userName ?? "—"}

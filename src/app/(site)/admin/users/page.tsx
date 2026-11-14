@@ -2,17 +2,17 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { KycSelect, ResetPasswordButton, RoleSelect } from "@/components/admin/AdminControls";
 import { AdminTabs } from "@/components/admin/AdminTabs";
-import { PHONE_LINK } from "@/components/admin/phone";
+import { PHONE_BUTTON, PHONE_LINK } from "@/components/admin/phone";
 import { EmptyState, PageTitle } from "@/components/Kpi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getLocale, getT } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
-import { adminUsers, pendingClaimCount } from "@/lib/admin";
+import { adminUsers, pendingClaimCount, registeredCount, userTabs, USERS_PAGE_SIZE } from "@/lib/admin";
 import { isPlaceholderEmail } from "@/lib/claim";
 import { formatDate, refCode } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { cn, isUuid } from "@/lib/utils";
 
 // Phones (below md): each row is a card, its header row hidden, so a person's name stays with their KYC, role and Reset
 // (the table put those off-screen); from md, the table. One set of rows either way: a row keeps its id (#user-…, the
@@ -26,28 +26,50 @@ const CARD_LABEL = "mb-1 text-xs font-medium text-muted-foreground md:hidden";
 export default async function UsersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireAdmin();
   const sp = await searchParams;
-  const tab = sp.tab === "pending" ? "pending" : "registered";
-  const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 100) : "";
-  const [all, pending, t, tc, locale] = await Promise.all([
-    adminUsers(tab),
+  // One account (`user`, from a link elsewhere in the console: leads, newsletter, follow-ups, analytics), shown on its
+  // tab whatever page it would be on; an account on neither tab leaves the list as it is.
+  const userTab = isUuid(sp.user) ? (await userTabs([sp.user])).get(sp.user) : undefined;
+  const userId = userTab ? (sp.user as string) : undefined;
+  const tab = userTab ?? (sp.tab === "pending" ? "pending" : "registered");
+  // A name, an email or a phone number (in any format: "050 111 2222" finds +971 50 111 2222), searched across every
+  // account of the tab (adminUsers), a page at a time.
+  const q = userId ? "" : typeof sp.q === "string" ? sp.q.trim().slice(0, 100) : "";
+  const page = userId ? 1 : Math.max(1, Number.parseInt(typeof sp.page === "string" ? sp.page : "1", 10) || 1);
+  const [{ rows: users, total }, pending, registered, t, tc, locale] = await Promise.all([
+    adminUsers(tab, { q, page, userId }),
     pendingClaimCount(),
+    tab === "registered" ? registeredCount() : 0,
     getT("admin"),
     getT("common"),
     getLocale(),
   ]);
-  // A name, an email or a phone number (in any format: "050 111 2222" finds +971 50 111 2222). Every account of the
-  // tab is loaded anyway (at most 1000), so they are filtered here.
-  const needle = q.toLocaleLowerCase(locale);
-  const digits = q.replace(/\D/g, "").replace(/^0+/, "");
-  const users = q
-    ? all.filter(
-        (u) =>
-          u.fullName.toLocaleLowerCase(locale).includes(needle) ||
-          (!isPlaceholderEmail(u.email) && u.email.toLowerCase().includes(needle)) ||
-          (digits.length >= 3 && (u.phone ?? "").replace(/\D/g, "").includes(digits)),
-      )
-    : all;
+  // The tab's own count (the title's), whatever the search finds.
+  const all = tab === "pending" ? pending : registered;
+  const pages = Math.max(1, Math.ceil(total / USERS_PAGE_SIZE));
   const base = tab === "pending" ? "/admin/users?tab=pending" : "/admin/users";
+  const pageHref = (n: number) => {
+    const p = new URLSearchParams();
+    if (tab === "pending") p.set("tab", "pending");
+    if (q) p.set("q", q);
+    if (n > 1) p.set("page", String(n));
+    const qs = p.toString();
+    return qs ? `/admin/users?${qs}` : "/admin/users";
+  };
+  const pager = pages > 1 && (
+    <nav aria-label={t("pipeline.page", { page, pages })} className="flex flex-wrap items-center gap-3 text-sm">
+      {page > 1 && (
+        <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
+          <Link href={pageHref(page - 1)}>{t("pipeline.prev")}</Link>
+        </Button>
+      )}
+      <span className="text-muted-foreground tabular">{t("pipeline.page", { page, pages })}</span>
+      {page < pages && (
+        <Button asChild size="sm" variant="outline" className={PHONE_BUTTON}>
+          <Link href={pageHref(page + 1)}>{t("pipeline.next")}</Link>
+        </Button>
+      )}
+    </nav>
+  );
   const tabs = (
     <AdminTabs
       label={t("users.tabs")}
@@ -78,9 +100,9 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           <Search aria-hidden /> {t("pipeline.searchSubmit")}
         </Button>
       </form>
-      {q && (
+      {(q || userId) && (
         <p className="flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground">
-          <span className="wrap-anywhere">{t("users.results", { q, count: users.length })}</span>
+          {q && <span className="wrap-anywhere">{t("users.results", { q, count: total })}</span>}
           <Link href={base} className={cn("font-medium text-foreground underline underline-offset-4 hover:no-underline", PHONE_LINK)}>
             {t("users.clearSearch")}
           </Link>
@@ -93,11 +115,11 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   if (tab === "pending") {
     return (
       <div className="space-y-6">
-        <PageTitle title={t("users.title")} sub={t("users.pendingSub", { count: all.length })}>
+        <PageTitle title={t("users.title")} sub={t("users.pendingSub", { count: all })}>
           {tabs}
         </PageTitle>
-        {all.length > 0 && search}
-        {all.length === 0 ? (
+        {all > 0 && search}
+        {all === 0 ? (
           <EmptyState title={t("users.pendingEmpty")} />
         ) : users.length === 0 ? (
           noMatch
@@ -157,13 +179,14 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             </Table>
           </div>
         )}
+        {pager}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <PageTitle title={t("users.title")} sub={t("users.sub", { count: all.length })}>
+      <PageTitle title={t("users.title")} sub={t("users.sub", { count: all })}>
         {tabs}
       </PageTitle>
       {search}
@@ -236,6 +259,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           </Table>
         </div>
       )}
+      {pager}
     </div>
   );
 }

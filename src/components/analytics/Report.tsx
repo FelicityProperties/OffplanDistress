@@ -507,7 +507,7 @@ function leadHref(l: LeadJourney) {
     case "inquiry":
       return "/admin/inquiries";
     case "signup":
-      return `/admin/users#user-${l.linkId}`;
+      return `/admin/users?user=${l.linkId}#user-${l.linkId}`;
     case "listing":
       return `/admin/listings/${l.linkId}`;
     case "offer":
