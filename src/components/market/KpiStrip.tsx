@@ -2,7 +2,7 @@ import { Building2, Coins, Percent, TrendingDown } from "lucide-react";
 import { getLocale, getT } from "@/i18n/server";
 import { formatAEDCompact, formatNumber, formatPct } from "@/lib/format";
 import { MIN_SAMPLE, type DistressIndex } from "@/lib/market";
-import { signedPct } from "./shared";
+import { isoPct, signedPct } from "./shared";
 
 /** The four headline numbers, overlapping the bottom of the hero. */
 export async function KpiStrip({ index }: { index: DistressIndex }) {
@@ -14,6 +14,8 @@ export async function KpiStrip({ index }: { index: DistressIndex }) {
   const premium = s.medianDiscount != null && s.medianDiscount < 0;
   const discountValue =
     s.medianDiscount == null ? null : premium ? `\u2066+${formatPct(-s.medianDiscount, 1)}\u2069` : formatPct(s.medianDiscount, 1);
+  // The average in the tile's own convention: under the premium label "+2.0%" is above launch and "\u22121.0%" below it.
+  const average = (d: number) => (!premium ? signedPct(d, 1) : d < 0 ? isoPct(`+${formatPct(-d, 1)}`) : signedPct(-d, 1));
 
   const tiles = [
     {
@@ -35,7 +37,7 @@ export async function KpiStrip({ index }: { index: DistressIndex }) {
       hint:
         s.avgDiscount == null
           ? insufficient
-          : t("kpi.discountHint", { avg: signedPct(s.avgDiscount, 1), n: formatNumber(s.withLaunch) }),
+          : t("kpi.discountHint", { avg: average(s.avgDiscount), n: formatNumber(s.withLaunch) }),
       accent: true,
     },
     {
