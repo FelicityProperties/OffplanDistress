@@ -1047,10 +1047,13 @@ const isDldUrl = (s) => {
  * ({format: "offplandistress-permits/1", source: "<key>", permits: [{ref, permit, expires, formAExpires?, url?}]}),
  * applied the way the admin editor + Approve do: the permit fields, ownership confirmed on our team's record of the
  * owner's written authority (the account owner's statement — the real owner is still entered afterwards from the
- * Owner card), then the listing goes live at its asking price. Only a unit still in review goes live; a permit entered
- * differently later only updates the permit fields. Nothing goes live without a permit that is current (RERA). A unit
- * published on the account owner's attestation without a number (listings.permit_attested_at, src/lib/attestation.ts)
- * gets its number here too, and the attestation is cleared with it, as the editor does: the number is then the record.
+ * Owner card), then the listing goes live at its asking price — the first time only: a unit in review never published,
+ * in the build that records its permit. One back in review since (its seller's new price or text, our team's re-check,
+ * the sync putting it back) or whose permit an earlier build recorded (held then, say) waits for our team's Approve,
+ * which sees what changed; a permit entered differently later only updates the permit fields. Nothing goes live
+ * without a permit that is current (RERA). A unit published on the account owner's attestation without a number
+ * (listings.permit_attested_at, src/lib/attestation.ts) gets its number here too, and the attestation is cleared with
+ * it, as the editor does: the number is then the record.
  */
 async function applyPermits(pool, source, actor) {
   let doc;
@@ -1088,11 +1091,12 @@ async function applyPermits(pool, source, actor) {
       continue;
     }
     const client = await pool.connect();
+    const mail = [];
     try {
       await client.query("begin");
       const { rows } = await client.query(
-        `select id, status, is_sample, asking_price, published_at, ownership_confirmed_at, dld_permit, dld_permit_expires_at,
-                form_a_expires_at, dld_permit_url, permit_attested_at
+        `select id, ref_no, status, is_sample, seller_id, project_name, asking_price, public_price, published_at, ownership_confirmed_at,
+                dld_permit, dld_permit_expires_at, form_a_expires_at, dld_permit_url, permit_attested_at
          from listings where source->>'import' = $1 and source->>'ref' = $2 for update`,
         [source.key, ref],
       );
@@ -1115,7 +1119,9 @@ async function applyPermits(pool, source, actor) {
       };
       const diff = {};
       for (const k of Object.keys(wanted)) if ((have[k] ?? null) !== (wanted[k] ?? null)) diff[k] = [have[k] ?? null, wanted[k] ?? null];
-      if (Object.keys(diff).length) {
+      // This build records the permit (a new one, or one entered differently).
+      const recorded = Object.keys(diff).length > 0;
+      if (recorded) {
         await client.query(
           `update listings set dld_permit = $2, dld_permit_expires_at = $3, form_a_expires_at = $4, dld_permit_url = $5,
                   permit_attested_at = null, permit_attested_by = null, updated_at = $6 where id = $1`,
@@ -1135,7 +1141,8 @@ async function applyPermits(pool, source, actor) {
           [actor, l.id, JSON.stringify({ via: "broker_statement", ownershipConfirmedAt: [null, now.toISOString()] })],
         );
       }
-      if (l.status === "pending_review") {
+      // Published the first time only, with the permit this build records (above).
+      if (l.status === "pending_review" && l.published_at == null && recorded) {
         await client.query(
           `update listings set status = 'live', public_price = asking_price, published_at = coalesce(published_at, $2), rejection_reason = null, updated_at = $2
            where id = $1`,
@@ -1144,11 +1151,14 @@ async function applyPermits(pool, source, actor) {
         await client.query("insert into audit_events (actor_id, action, entity_type, entity_id, diff) values ($1, 'listing.approve', 'listing', $2, $3)", [
           actor,
           l.id,
-          JSON.stringify({ status: ["pending_review", "live"], publicPrice: [null, l.asking_price] }),
+          JSON.stringify({ status: ["pending_review", "live"], publicPrice: [l.public_price, l.asking_price] }),
         ]);
+        // As from Approve: a lower price than one advertised before reaches the watchers (with the permit just recorded).
+        if (l.public_price != null) await tellWatchers(client, { ...l, dld_permit: permit, permit_attested_at: null }, l.public_price, l.asking_price, mail);
         live++;
       }
       await client.query("commit");
+      outbox.push(...mail);
     } catch (err) {
       await client.query("rollback").catch(() => {});
       skipped++;

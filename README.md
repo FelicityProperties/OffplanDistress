@@ -150,7 +150,9 @@ same way:
 `scripts/partner-stock/<key>-permits.json` (`offplandistress-permits/1`: ref, permit number, expiry, optional Form A
 expiry and verification link) records each permit as the editor would, confirms ownership on our record of the owner's
 written authority (the account owner's statement; the real owner is still entered afterwards from the Owner card) and
-publishes the unit at its asking price — never without a current permit. **Nothing goes public:** each listing is in
+publishes the unit at its asking price — never without a current permit, and only a unit in review never published
+before, in the build that records its permit: one back in review (its owner's new price or text, our team's re-check, a
+unit the sync put back) or whose permit an earlier build recorded waits for our team's Approve. **Nothing goes public:** each listing is in
 review, filed under one placeholder owner per source ("Owner to be added (…)", shown in the admin's language and
 never with its internal address — on the listing, `/admin/offers` and the deal file; no password, never emailed or
 nudged; sign-ups refuse `.invalid` addresses, so nobody can register it first), under "Imported — owner to add" on
