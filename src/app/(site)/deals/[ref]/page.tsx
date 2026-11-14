@@ -145,14 +145,21 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
   // A unit already handed over says so rather than "handover TBC", and one with nothing left to pay the developer isn't
   // offered as a payment plan to take over.
   const ready = isReady({ ...l, planRows: (l.paymentPlan ?? []).length }, dubaiToday());
+  // Arrears as large as the whole balance owed: cleared on transfer day, they leave no plan to take over (as the price
+  // panel, with no "then … per plan" line).
+  const plan = a.remainingAfterTransfer > 0;
   const base = t(
     a.remaining > 0
       ? ready
         ? a.overdue > 0
-          ? "meta.descriptionReadyArrears"
+          ? plan
+            ? "meta.descriptionReadyArrears"
+            : "meta.descriptionReadyArrearsCleared"
           : "meta.descriptionReady"
         : a.overdue > 0
-          ? "meta.descriptionArrears"
+          ? plan
+            ? "meta.descriptionArrears"
+            : "meta.descriptionArrearsCleared"
           : "meta.description"
       : ready
         ? "meta.descriptionReadyPaid"
