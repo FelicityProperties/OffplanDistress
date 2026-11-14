@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { and, eq, inArray, ne, or, sql } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { inquiries, listings, offers, savedSearches, users, watchlist } from "@/db/schema";
@@ -582,8 +582,8 @@ export async function updateProfile(_prev: FormState, formData: FormData): Promi
   const [saved] = await db
     .update(users)
     .set(values)
-    // …and the same if our team verified the account since it was read.
-    .where(and(eq(users.id, user.id), or(ne(users.kycStatus, "verified"), eq(users.fullName, user.fullName))))
+    // …and the same if our team verified the account since it was read: a new name is saved only while it isn't.
+    .where(and(eq(users.id, user.id), sameName(user.fullName) ? undefined : ne(users.kycStatus, "verified")))
     .returning({ id: users.id });
   if (!saved) return nameLocked();
   // The person's own change of name or phone, in the History of their listings and deals (src/lib/audit.ts).
