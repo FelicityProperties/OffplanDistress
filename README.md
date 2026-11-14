@@ -143,7 +143,7 @@ with the advert's permit line and our ORN / BRN); new photos are added only to a
 with a deal in progress is never touched, only reported, and one sold, rejected or withdrawn by our team is left
 alone; a build that would
 withdraw more than 3 and more than a quarter of a source's listed units withdraws none (the valve, unless the file's
-`sync.allowMassRemoval` is true); one `listing.synced` notice per build gives the admins the counts, the conflicts,
+`sync.allowMassRemoval` is true; the build log and the admins' notice name the units it kept); one `listing.synced` notice per build gives the admins the counts, the conflicts,
 what was left alone and the refs of units that failed, in their language. Their DLD advertising permits can come the
 same way:
 `scripts/partner-stock/<key>-permits.json` (`offplandistress-permits/1`: ref, permit number, expiry, optional Form A
@@ -180,7 +180,9 @@ ready unit ("READY…") takes the day it was posted as its handover date, so the
 whose plan is missing, illegible or inconsistent keeps its previous entry and is flagged (exit 2), as does one whose
 page's size, prices or handover can no longer be read as before (the site's wording changed: fix the parser, never the
 figures); a run that would mark more than a quarter of the listed units removed writes nothing (exit 3;
-`--allow-mass-removal`, on the user's word, also sets the file's `sync.allowMassRemoval` for the import's own valve).
+`--allow-mass-removal`, on the user's word, also sets the file's `sync.allowMassRemoval` for the import's own valve
+whenever the file marks any unit removed — so a rebuild with it also lets through removals only the import's valve held
+back, as it counts the units still listed in the database; the next build without it drops the key).
 The site's first gallery image is usually a location map, so `scripts/partner-stock/distressstock-photos.json`
 (`offplandistress-photos/1`: `photos: { "<ref>": [url, …] }`, the building first, at most 4) holds the photo order the
 agent picks from `sheet --raw <dir>`'s contact sheets; the build lists those urls + the page's keyplan under stable file

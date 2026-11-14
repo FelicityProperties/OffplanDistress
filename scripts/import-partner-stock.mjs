@@ -165,7 +165,7 @@ async function importSource(pool, doc, sharp) {
   }
   let created = 0;
   let photos = 0;
-  const report = { updated: [], withdrawn: [], restored: [], held: [], released: [], conflicts: [], deals: [], valve: 0, failed: [] };
+  const report = { updated: [], withdrawn: [], restored: [], held: [], released: [], conflicts: [], deals: [], valve: 0, valveCodes: [], failed: [] };
   const removed = [];
   const refs = new Set();
   for (const unit of units) {
@@ -666,8 +666,12 @@ async function withdrawRemoved(pool, source, removed, allowMass, actor, report) 
   }
   if (!allowMass && due.length > VALVE_MIN && due.length > listed / 4) {
     report.valve = due.length;
+    // Named, so our team can check them on the network: they stay listed until a file lets them through or they are
+    // withdrawn by hand.
+    report.valveCodes = due.map((d) => d.code);
     console.error(
-      `[sync] ${source.name}: VALVE TRIPPED — ${due.length} of ${listed} listed units would be withdrawn in one build; nothing withdrawn. ` +
+      `[sync] ${source.name}: VALVE TRIPPED — ${due.length} of ${listed} listed units would be withdrawn in one build ` +
+        `(${due.map((d) => `${d.code} ${d.unit.ref}`).join(", ")}); nothing withdrawn. ` +
         "Check the manifest (sync.allowMassRemoval in the file lets a real mass removal through).",
     );
     return;
@@ -924,7 +928,7 @@ const SYNC_COPY = {
     held: () => "Taken off the site, as the stock file holds them (paused by our team; their offers stay open): ",
     released: () => "No longer held by the stock file, back: ",
     heldDeal: "held by the stock file",
-    valve: (n) => `Sync valve tripped: ${n} removals, nothing withdrawn — check the manifest.`,
+    valve: (n, codes) => `Sync valve tripped: ${n} removals (${codes}), nothing withdrawn — check the manifest.`,
     failed: (n, refs) => `${counted("en", n, NOUNS.units.en)} failed (${refs}) — see the build log.`,
     title: (name, r) => `${name} sync: ${r.updated.length} updated, ${r.withdrawn.length} withdrawn, ${r.restored.length} restored${r.failed.length ? `, ${r.failed.length} failed` : ""}`,
     valveTitle: (name) => `${name} sync: valve tripped, nothing withdrawn`,
@@ -945,7 +949,7 @@ const SYNC_COPY = {
     held: () => "أُوقف عرضها على الموقع لأن ملف المخزون يحجبها (متوقفة من قِبل فريقنا، وعروضها تبقى مفتوحة): ",
     released: () => "لم يعد ملف المخزون يحجبها، فعادت: ",
     heldDeal: "محجوبة في ملف المخزون",
-    valve: (n) => `توقّف صمام أمان المزامنة: ${counted("ar", n, NOUNS.removals.ar)}، لم يُسحب شيء — راجع ملف المخزون.`,
+    valve: (n, codes) => `توقّف صمام أمان المزامنة: ${counted("ar", n, NOUNS.removals.ar)} (${codes})، لم يُسحب شيء — راجع ملف المخزون.`,
     failed: (n, refs) => `فشل استيراد ${counted("ar", n, NOUNS.units.ar)} (${refs}) — راجع سجل البناء.`,
     title: (name, r) => `مزامنة ${name}: ${r.updated.length} حُدّث، ${r.withdrawn.length} سُحب، ${r.restored.length} أُعيد${r.failed.length ? `، ${r.failed.length} فشل` : ""}`,
     valveTitle: (name) => `مزامنة ${name}: توقّف صمام الأمان، لم يُسحب شيء`,
@@ -966,7 +970,7 @@ const SYNC_COPY = {
     held: () => "按房源文件的保留要求已从网站下架（由我方团队暂停，报价保持开放）：",
     released: () => "房源文件已解除保留，已恢复：",
     heldDeal: "房源文件要求保留",
-    valve: (n) => `同步安全阀已触发：${n} 项移除，未撤回任何房源——请检查房源清单文件。`,
+    valve: (n, codes) => `同步安全阀已触发：${n} 项移除（${codes}），未撤回任何房源——请检查房源清单文件。`,
     failed: (n, refs) => `${n} 个单元导入失败（${refs}）——请查看构建日志。`,
     title: (name, r) => `${name} 同步：更新 ${r.updated.length}，撤回 ${r.withdrawn.length}，恢复 ${r.restored.length}${r.failed.length ? `，失败 ${r.failed.length}` : ""}`,
     valveTitle: (name) => `${name} 同步：安全阀已触发，未撤回任何房源`,
@@ -990,7 +994,7 @@ function syncNotice(source, r, lang) {
   if (r.released.length) lines.push(`${t.released()}${list(r.released.map((x) => t.item(x.code, status(x.status))))}${t.end}`);
   if (r.conflicts.length) lines.push(`${t.conflicts()}${list(r.conflicts.map((c) => t.item(c.code, fields(c.fields))))}${t.end}`);
   if (r.deals.length) lines.push(`${t.deals()}${list(r.deals.map((d) => t.item(d.code, status(d.status), change(d))))}${t.end}`);
-  if (r.valve) lines.push(t.valve(r.valve));
+  if (r.valve) lines.push(t.valve(r.valve, list(r.valveCodes)));
   // The units of the file that failed, by the network's ref (the build log says why).
   if (r.failed.length) lines.push(t.failed(r.failed.length, list(r.failed)));
   return { title: r.valve ? t.valveTitle(source.name) : t.title(source.name, r), body: lines.join("\n") };
