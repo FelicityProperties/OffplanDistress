@@ -65,7 +65,7 @@ export type EndedDeals = { offers: number; deals: number; buyersTold: number };
  * buyer told (offer.deal_cancelled). Call it whenever a listing goes live from another status, so a live unit never
  * carries an accepted offer (acceptOffer in src/app/actions/market.ts refuses a second one while one exists), and
  * when a unit under a deal leaves the market (withdrawn or rejected). A deal our team set by hand has no accepted offer:
- * the buyer linked to its file is told instead (deal.cancelled), once their account can sign in.
+ * the buyer linked to its file is told instead (deal.cancelled), if their account can sign in (never later).
  */
 export async function cancelAcceptedOffers(
   unit: Unit,
@@ -116,7 +116,9 @@ async function tellHandSetBuyers(unit: Unit, buyerIds: string[]) {
  */
 export async function reopenUnit(unit: Unit, was: string) {
   const ended = await cancelAcceptedOffers(unit);
-  if (ended.offers > 0 || (DEAL_STATUSES as readonly string[]).includes(was)) await reopenBackups(unit);
+  // A deal file closed now counts too: a deal our team set by hand has no accepted offer, and a unit our team paused
+  // while under it comes back from "paused".
+  if (ended.offers > 0 || ended.deals > 0 || (DEAL_STATUSES as readonly string[]).includes(was)) await reopenBackups(unit);
 }
 
 function openOn(listingId: string, exceptOfferId?: string) {

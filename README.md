@@ -273,7 +273,10 @@ file kept) and shown as transferred again, never put back on the market or into 
 it is opened, a gate is checked or the CSV is exported. A deal set to under offer by hand (a buyer found off the
 platform) links the buyer by their account email; without an account, enter their full name (and mobile) there and one
 is created without a password (they set it with "Forgot password"; verify their KYC on Admin → Users). When such a deal
-ends (the unit withdrawn, rejected or back on the market), the buyer linked to it is told, once they can sign in. Correct "Paid
+ends (the unit withdrawn, rejected or back on the market), the buyer linked to it is told if their account can sign in
+at that moment (one our team added without a password is not, then or later: our team tells them; when the seller
+withdraws, the admins' notice says no buyer could be told); back on the market, its backup bidders are told too, as after
+any deal. Correct "Paid
 to the developer to date" in "Manage listing" from the statement of account and the deal's sale value follows. The
 admin KPIs count our share of the fees (after any co-broker's) on the agreed sale value. Every admin action, a seller's claim, a
 party's change of name or phone on their profile and every
