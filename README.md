@@ -96,7 +96,9 @@ link in their language ("Email claim link" when they have an email and email is 
 chat opens with, the one on the seller's account. A mobile typed for a seller found by their email that differs from
 the number on that account (an old one, or a stranger's who registered the seller's email first: neither is verified)
 is refused until staff check with the seller which is theirs. The link works once, for 7
-days, and a new one cancels the old. The seller opens it without logging in, ticks the same ownership / authority /
+days, and a new one cancels the old; while a listing still waiting for its seller is rejected or withdrawn (by our team
+or the build's sync), its link doesn't work and no new one can be sent (back in review, it works again). The seller
+opens it without logging in, ticks the same ownership / authority /
 Terms confirmation as the sell form and chooses an email and password. Until then a staff-created listing can't be
 approved (the Trakheesi permit is still required too); `/admin/users` → "Pending claim" lists those sellers. A listing
 whose ownership our team confirmed without the seller (their signed Form A, or our record of their authority on an
@@ -277,11 +279,17 @@ the DLD transfer date and the agreed price. A transferred unit stays sold: it ca
 file kept) and shown as transferred again, never put back on the market or into an earlier stage. Deals that were already under offer get their deal file the first time
 it is opened, a gate is checked or the CSV is exported. A deal set to under offer by hand (a buyer found off the
 platform) links the buyer by their account email; without an account, enter their full name (and mobile) there and one
-is created without a password (they set it with "Forgot password"; verify their KYC on Admin → Users). Correct "Paid
+is created without a password (they set it with "Forgot password"; verify their KYC on Admin → Users). When such a deal
+ends (the unit withdrawn, rejected or back on the market), the buyer linked to it is told if their account can sign in
+at that moment (one our team added without a password is not, then or later: our team tells them; when the seller
+withdraws, the admins' notice says no buyer could be told); back on the market, its backup bidders are told too, as after
+any deal. Correct "Paid
 to the developer to date" in "Manage listing" from the statement of account and the deal's sale value follows. The
-admin KPIs count our share of the fees (after any co-broker's) on the agreed sale value. Every admin action, a seller's claim and every
+admin KPIs count our share of the fees (after any co-broker's) on the agreed sale value. Every admin action, a seller's claim, a
+party's change of name or phone on their profile and every
 document (not photos) opened by someone other than its uploader is logged (actor, before → after, IP; never passwords or tokens)
-in the listing's History panel. The pipeline shows each stage's newest 50 cards (withdrawn included), "Show all" for
+in the listing's History panel. Once a party's KYC is verified, their name can't be changed on their profile (our team
+checks the documents again, setting the KYC status back, first). The pipeline shows each stage's newest 50 cards (withdrawn included), "Show all" for
 the rest and a search by OD-ref or project. Pipeline → "Export all deals (CSV)" opens in Excel, Arabic included. Consent is
 versioned: sign-ups, listings and offers store the Terms version (`LEGAL_UPDATED`) they accepted.
 
@@ -291,7 +299,9 @@ One accepted offer per unit, enforced in a single database statement, so a doubl
 two. The other bidders keep their offers as backups and are told; if the deal falls through and the unit goes
 live again, the accepted offer is declined and backups are told the unit is available. A unit that is withdrawn,
 rejected or transferred closes its open offers; a seller who withdraws a unit under offer ends the deal (the buyer
-and admins are told; My listings warns as the listing's page does, and offers no Resume on a unit our team paused).
+and admins are told, also on a deal our team set by hand, and the admins' notice says when no buyer could be: none
+linked to it, or one who can't sign in yet; My listings warns as the listing's page does, and offers no Resume on a unit
+our team paused).
 `OFFERS.keepBackups` in `src/lib/config.ts` switches backups off. Every answer is about the offer on the page: if the
 buyer revised it after the page loaded (its amount, or only its financing or message), or the seller's counter changed,
 Accept, Counter or Decline decides nothing and the page shows the offer as it now is. A counter has to be above the
@@ -373,16 +383,18 @@ reaches only the Resend account owner); until then only the owner logins get the
 
 Anyone can leave an email address for the daily deals newsletter, no account needed: the band under the featured
 deals on the home page, the bar under the results on `/deals`, the footer of every page and `/newsletter` (with a
-sample issue). Double opt-in: the address is `pending` until the link in the confirmation email is opened
-(`/newsletter/confirm?t=…`, in the language it was left in); only confirmed addresses get issues. The
-`saved-search-alerts` job sends the issue at 09:00 Dubai, only on days the inventory changed
+sample issue). Double opt-in: the address is `pending` until "Confirm my subscription" is pressed on the page the
+confirmation email links to (`/newsletter/confirm?t=…`, in the language it was left in, with the masked address; opening
+the link alone changes nothing, so a mail gateway scanning links can't subscribe anyone); only confirmed addresses get
+issues. The `saved-search-alerts` job sends the issue at 09:00 Dubai, only on days the inventory changed
 (`src/lib/newsletter-issue.ts`): the adverts that went live, price drops with the old and new price, how many units are
 no longer available, the RERA details every advert carries, and a one-click unsubscribe link: `List-Unsubscribe` /
 `List-Unsubscribe-Post` headers (RFC 8058) naming `POST /api/newsletter/unsubscribe?t=…`, while the footer link opens
 `/newsletter/unsubscribe?t=…`, which shows the masked address and asks first (a GET never unsubscribes). A day with
 no new advert and no price drop sends nothing and doesn't close the window: the next issue that goes out also counts
-the units that left the market on those days. A price drop is measured from the price advertised when the window
-opened, so a unit raised and then cut by less isn't one. Consent is
+the units that left the market on those days. A price drop is measured from the price advertised, and the balance still
+owed to the developer, when the window opened, so a unit raised and then cut by less isn't one, nor one whose cut a
+corrected amount paid (saved apart from it) outweighs. Consent is
 recorded with the row: when, from which IP and where on the site; a signed-in subscriber is linked to their account
 (the Privacy Policy's newsletter bullets — data, consent, retention, emails — describe exactly that record).
 The forms say "check your inbox" whatever the address's state (only a non-address is refused), a filled honeypot is
@@ -495,7 +507,7 @@ and deploy; browsers drop the worker on their next visit.
    - Optional: `ANTHROPIC_API_KEY` turns on the AI assistant, a chat button above the WhatsApp one on every public page
      (`src/lib/assistant.ts`, `src/app/api/assistant/route.ts`). It answers buyers and sellers in English, Arabic or
      Chinese and searches the advertised units with two tools (the /deals search and a deal's details); it never sees
-     sellers' contact details or unadvertised units. `ASSISTANT_MODEL` picks the model (default `claude-opus-5-5`;
+     sellers' contact details or unadvertised units, and says when a unit is under offer (a backup offer only). `ASSISTANT_MODEL` picks the model (default `claude-opus-5-5`;
      `claude-haiku-5-5` costs far less per chat) and `ASSISTANT_DAILY_LIMIT` caps the chat messages a day across all
      visitors (default 300); each visitor also gets 15 messages per 10 minutes and 80 a day. Every answer logs one
      `{"assistant": …}` line with its token use in the Vercel logs.

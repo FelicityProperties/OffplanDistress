@@ -12,7 +12,7 @@ import type { TFn } from "@/i18n/translator";
 import { ATTESTATION_VERSION, BULK_ATTESTATION, LISTING_ATTESTATION, PERMIT_ATTESTATION } from "@/lib/attestation";
 import { audit, changes } from "@/lib/audit";
 import { findUserByEmail, getCurrentUser, hashPassword, isOwnerEmail } from "@/lib/auth";
-import { claimPath, isPlaceholderEmail, issueClaimToken, placeholderEmail } from "@/lib/claim";
+import { claimClosed, claimPath, isPlaceholderEmail, issueClaimToken, placeholderEmail } from "@/lib/claim";
 import { addNote, openDeal, saveDealFile, stageGate, syncSaleValue, type DealFileState, type GateNeed } from "@/lib/deals";
 import { COMMUNITIES, DEVELOPERS, LISTING_STATUS, PUBLIC_STATUSES, type ListingStatusKey } from "@/lib/config";
 import { emailEnabled, sendEmail } from "@/lib/email";
@@ -1185,6 +1185,7 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
       sellerId: listings.sellerId,
       refNo: listings.refNo,
       projectName: listings.projectName,
+      status: listings.status,
       isSample: listings.isSample,
       createdByStaff: listings.createdByStaff,
       ownershipConfirmedAt: listings.ownershipConfirmedAt,
@@ -1201,6 +1202,9 @@ export async function claimLink(listingId: string, via: "email" | "copy") {
     .limit(1);
   if (!l) return { error: t("listing.notFound") };
   if (!awaitsSellerConfirmation(l) && !awaitsSellerAccount(l)) return { error: t("admin.claim.notNeeded") };
+  // Rejected or withdrawn before its seller confirmed it: the link would ask them to confirm a unit we took off the
+  // market (findClaim refuses it too).
+  if (claimClosed(l)) return { error: t("admin.claim.offMarket") };
   if (l.role === "admin" || isOwnerEmail(l.email)) return { error: t("admin.sellerIsStaff") };
   // Imported and still filed under the network's placeholder owner: nobody to send it to yet.
   if (isImportOwner(l)) return { error: (await getT("intake"))("claim.setOwnerFirst") };

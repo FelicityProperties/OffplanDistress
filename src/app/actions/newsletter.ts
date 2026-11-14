@@ -1,9 +1,11 @@
 "use server";
 
+import { redirect } from "next/navigation";
+import { localePath } from "@/i18n/paths";
 import { getLocale, getT } from "@/i18n/server";
 import { getCurrentUser } from "@/lib/auth";
 import { canEmail } from "@/lib/email";
-import { isNewsletterSource, normalizeEmail, subscribe } from "@/lib/newsletter";
+import { confirm, isNewsletterSource, normalizeEmail, subscribe } from "@/lib/newsletter";
 import { clientIp } from "@/lib/throttle";
 
 export type NewsletterFormState = { ok?: boolean; error?: string; email?: string };
@@ -24,4 +26,20 @@ export async function subscribeAction(_prev: NewsletterFormState, formData: Form
   const [locale, user, ip] = await Promise.all([getLocale(), getCurrentUser(), clientIp()]);
   await subscribe({ email, locale, source: isNewsletterSource(source) ? source : "footer", userId: user?.id, ip });
   return { ok: true, email };
+}
+
+/**
+ * "Confirm my subscription" on the page the confirmation email links to (src/app/(site)/newsletter/confirm/page.tsx):
+ * only this button confirms an address, never opening the link, which a mail gateway scanning the links of an email
+ * on delivery would do for an address nobody confirmed. Back on that page, in its language: "you're in", or the form
+ * again for a link that no longer works.
+ */
+export async function confirmSubscriptionAction(formData: FormData) {
+  const token = String(formData.get("t") ?? "").trim();
+  const [result, locale] = await Promise.all([confirm(token), getLocale()]);
+  const page =
+    result.status === "invalid"
+      ? "/newsletter/confirm"
+      : `/newsletter/confirm?t=${token}${result.status === "confirmed" ? "&done=1" : ""}`;
+  redirect(localePath(page, locale));
 }

@@ -258,10 +258,48 @@ export const TEMPLATES = {
       cta: "查看我的报价",
     },
   },
+  // The buyer our team linked to a deal it set by hand (no offer on record), when that deal is off: the unit was
+  // withdrawn, rejected or put back on the market (cancelAcceptedOffers in src/lib/offers.ts).
+  "deal.cancelled": {
+    en: {
+      title: "The deal on {project} did not go ahead",
+      body: "The deal agreed with you on this unit did not go ahead. If the unit is offered again, you can make an offer on it.",
+      cta: "Browse deals",
+    },
+    ar: {
+      title: "لم تكتمل الصفقة على {project}",
+      body: "لم تكتمل الصفقة المتفق عليها معك على هذه الوحدة. وإذا عُرضت الوحدة للبيع مجدداً، يمكنك تقديم عرض عليها.",
+      cta: "تصفّح الصفقات",
+    },
+    zh: {
+      title: "{project} 的交易未能完成",
+      body: "与您就该单元达成的交易未能完成。如果该单元再次挂牌出售，您可以对其报价。",
+      cta: "浏览房源",
+    },
+  },
   "deal.withdrawn.admin": {
     en: { title: "Seller withdrew {project} after a deal was agreed", body: "{seller} withdrew {ref} while it was under offer. The buyer has been told the deal did not go ahead.", cta: "Open listing" },
     ar: { title: "سحب البائع {project} بعد الاتفاق على صفقة", body: "سحب {seller} الإعلان {ref} وهو قيد عرض مقبول، وأُبلغ المشتري بأن الصفقة لم تتم.", cta: "فتح الإعلان" },
     zh: { title: "卖家在交易达成后撤回了 {project}", body: "{seller} 在 {ref} 处于“已接受报价”状态时将其撤回。已通知买家该交易未能完成。", cta: "打开房源" },
+  },
+  // The same when no buyer could be told on the site: a deal set by hand with no buyer linked to its file, or one whose
+  // account can't sign in yet.
+  "deal.withdrawn.admin_untold": {
+    en: {
+      title: "Seller withdrew {project} after a deal was agreed",
+      body: "{seller} withdrew {ref} while it was under offer. No buyer who can sign in is linked to the deal, so nobody was told: let the buyer know the deal did not go ahead.",
+      cta: "Open listing",
+    },
+    ar: {
+      title: "سحب البائع {project} بعد الاتفاق على صفقة",
+      body: "سحب {seller} الإعلان {ref} وهو قيد عرض مقبول. لا يرتبط بالصفقة مشترٍ يمكنه تسجيل الدخول، لذا لم يُبلَّغ أحد: أبلِغ المشتري بأن الصفقة لم تتم.",
+      cta: "فتح الإعلان",
+    },
+    zh: {
+      title: "卖家在交易达成后撤回了 {project}",
+      body: "{seller} 在 {ref} 处于“已接受报价”状态时将其撤回。该交易未关联可登录的买家，因此系统未通知任何人：请告知买家该交易未能完成。",
+      cta: "打开房源",
+    },
   },
   "deal.agreed.admin": {
     en: { title: "Deal agreed on {project} at {amount}", body: "Seller {seller}, buyer {buyer}. Start the developer NOC and move the listing to “NOC in progress”.", cta: "Open listing" },

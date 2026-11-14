@@ -9,6 +9,16 @@
 const TLDS =
   "com|net|org|ae|io|co|me|info|biz|app|dev|xyz|online|site|website|store|shop|link|page|tech|ly|gl|ee|to|tv|ai|in|sa|qa|kw|bh|om|eg|jo|lb|pk|uk|eu|us|ru|cn|de|fr|realestate";
 const WORD = String.raw`[\p{L}\p{N}](?:[\p{L}\p{N}_-]*[\p{L}\p{N}])?`;
+/**
+ * What people type between a phone number's digits: spaces, dots, dashes, slashes, brackets or other punctuation
+ * ("050·123·4567", "050_123_4567", "050’123’4567"), every kind of dash or hyphen and the dots that look like "·" ("050‑123‑4567"
+ * with non-breaking hyphens, "050−123−4567", "050・123・4567"), the Arabic decimal point "٫", and a comma, semicolon or
+ * colon ("050,123,4567", Arabic "٬") only when a digit follows it, since lists, times and dates use those too
+ * ("Floors 12, 14", "10:30"). "+ = # &" stay out: an unformatted "900000+50000" is a sum, not an 11-digit phone.
+ */
+const SEP_CHARS = String.raw`\s().\-–—/·•_'’*|~\p{Pd}−‧∙⋅・⸱٫`;
+const LIST_SEP_CHARS = "،؛、,;:٬";
+const DIGIT_SEP = String.raw`(?:[${SEP_CHARS}]|[${LIST_SEP_CHARS}](?=\p{Nd}))`;
 const CONTACT = new RegExp(
   [
     // Links: with a scheme or www., or a bare domain ("acme.ae", "wa.me/971…", "bit.ly/x").
@@ -16,11 +26,21 @@ const CONTACT = new RegExp(
     String.raw`${WORD}(?:\.${WORD})*\.(?:${TLDS})(?![\p{L}\p{N}])(?:[/?#:]\S*)?`,
     // Emails and @handles: any word with an @ in it.
     String.raw`\S*@\S*`,
-    // Phone numbers: 7 or more digits, with spaces, dots, dashes, slashes or brackets between them.
-    String.raw`(?:\+|00)?\p{Nd}(?:[\s().\-–/]{0,2}\p{Nd}){6,}`,
+    // Phone numbers: 7 or more digits, with spaces, dots, dashes, slashes, brackets or the like between them.
+    String.raw`(?:\+|00)?\p{Nd}(?:${DIGIT_SEP}{0,2}\p{Nd}){6,}`,
   ].join("|"),
   "giu",
 );
+
+/**
+ * The text as it reads: full-width and other compatibility forms as their usual characters ("＠" "．" "０５０" → "@" "."
+ * "050") and invisible characters (zero-width spaces, joiners, soft hyphens…) dropped, so neither can hide contact
+ * details from the checks below.
+ */
+function fold(text: string) {
+  return text.normalize("NFKC").replace(/\p{Default_Ignorable_Code_Point}/gu, "");
+}
+
 /** Where something was taken out (a character no one types). */
 const CUT = "\u0000";
 /**
@@ -32,9 +52,12 @@ const CUE = new RegExp(
   "giu",
 );
 
-/** The typed name with links, emails / handles and phone numbers taken out; `removed` says whether any were. */
+/**
+ * The typed name with links, emails / handles and phone numbers taken out; `removed` says whether any were (the name
+ * is then the folded text it was read from).
+ */
 export function scrubTypedName(raw: string) {
-  const marked = raw.replace(CONTACT, CUT);
+  const marked = fold(raw).replace(CONTACT, CUT);
   if (!marked.includes(CUT)) return { name: raw, removed: false };
   const name = marked
     // "call 050… or 055…" → one cut, then the cue word in front of it.
@@ -94,8 +117,11 @@ const LINK = new RegExp(
   [String.raw`(?:https?:\/\/|www\.)\S+`, String.raw`${WORD}(?:\.${WORD})*\.(?:${TLDS})(?![\p{L}\p{N}])(?:[/?#:]\S*)?`].join("|"),
   "giu",
 );
-/** 7+ digits with up to three spaces, dots, dashes, slashes or brackets between them ("050 - 123 - 4567"). */
-const DIGIT_RUN = /(?:\+|00)?\p{Nd}(?:[\s().\-–/]{0,3}\p{Nd}){6,}/gu;
+/** 7+ digits with up to three separators (DIGIT_SEP) between them ("050 - 123 - 4567", "050,123,4567"). */
+const DIGIT_RUN = new RegExp(String.raw`(?:\+|00)?\p{Nd}(?:${DIGIT_SEP}{0,3}\p{Nd}){6,}`, "gu");
+/** A run's digit groups, and whether any of them are joined by a comma, semicolon or colon. */
+const DIGIT_GROUP_SPLIT = new RegExp(`[${SEP_CHARS}${LIST_SEP_CHARS}]+`, "u");
+const LIST_SEP = new RegExp(`[${LIST_SEP_CHARS}]`, "u");
 /** Zero of each digit block people type in: ASCII, Arabic-Indic, Extended Arabic-Indic (Persian/Urdu), Devanagari. */
 const ZEROS = [0x30, 0x660, 0x6f0, 0x966];
 
@@ -133,14 +159,19 @@ function looksLikePhone(run: string) {
  * so a price's "000" groups never start one.
  */
 function hasPhone(run: string, { afterLabel = false } = {}) {
-  const groups = run.split(/[\s().\-–/]+/u).filter(Boolean);
+  const groups = run.split(DIGIT_GROUP_SPLIT).filter(Boolean);
   // Typed straight after "permit", "plot", "unit"… (REFERENCE_LABEL) the first number is that reference, unless it is
   // written the way only phone numbers are (+…, 00…, 0…, 971…).
   const skipFirst = afterLabel && !run.startsWith("+") && !/^(?:0|971)/.test(asciiDigits(groups[0] ?? ""));
-  if (!skipFirst && looksLikePhone(run)) return true;
+  // Joined by a comma, semicolon or colon (a list, a time, a date: "2026,2027,2028"), only a stretch that begins the
+  // way a phone number does counts, not the run's length alone.
+  if (!skipFirst && !LIST_SEP.test(run) && looksLikePhone(run)) return true;
   for (let i = skipFirst ? 1 : 0; i < groups.length; i++) {
     const start = asciiDigits(groups[i]);
     if (!groups[i].startsWith("+") && !/^(?:00[1-9]|0[1-9]|971|5)/.test(start)) continue;
+    // In such a list three digits starting with 5 are an item ("Units 501,502,503", "我想买501、502、503"), not a mobile
+    // number without its 0, which is grouped 50,123,4567 (still caught). "501,234,567" is let through with them.
+    if (LIST_SEP.test(run) && !groups[i].startsWith("+") && /^5/.test(start) && start.length === 3) continue;
     for (let j = i + 1; j <= groups.length; j++) {
       const stretch = groups.slice(i, j).join("");
       if (asciiDigits(stretch).length > 15) break;
@@ -157,7 +188,7 @@ function hasPhone(run: string, { afterLabel = false } = {}) {
 export function contactKinds(text: string | null | undefined): ContactKind[] {
   if (!text) return [];
   const found = new Set<ContactKind>();
-  let rest = text;
+  let rest = fold(text);
   // Each kind is taken out once found, so an email's domain or a wa.me number isn't counted again as a link or phone.
   rest = rest.replace(LONG_EMAIL, () => (found.add("email"), " "));
   rest = rest.replace(HANDLE, (m) => (isPriceAt(m) ? m : (found.add("handle"), " ")));
