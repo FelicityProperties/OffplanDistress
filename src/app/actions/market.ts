@@ -152,6 +152,34 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
   // locks it: a revision waits on its offer row, which an acceptance locks before the listing, so the two would deadlock.
   const advertisedNow = (lock: boolean) =>
     sql`exists (select 1 from ${listings} where ${listings.id} = ${v.listingId} and ${advertisedSql()}${lock ? sql` for share` : sql``})`;
+  // The same offer sent again (a double click, a second tab) changes nothing the seller hasn't heard: no new notices,
+  // and the offer stays as the seller's open page shows it (its updated_at, which their Accept, Counter and Decline are
+  // checked against, and the reminder clock), so only the Terms agreement is renewed — while the offer is still exactly
+  // that pending one. A revision of a countered offer does change it: the seller's counter is set aside.
+  const resent =
+    open?.status === "pending" &&
+    open.amount === v.amount &&
+    open.financing === v.financing &&
+    (open.message ?? null) === (v.message ?? null)
+      ? await db
+          .update(offers)
+          .set({ termsAcceptedAt: new Date(), termsVersion: LEGAL_UPDATED })
+          .where(
+            and(
+              eq(offers.id, open.id),
+              eq(offers.status, "pending"),
+              eq(offers.amount, v.amount),
+              eq(offers.financing, v.financing),
+              sql`${offers.message} is not distinct from ${v.message ?? null}`,
+              advertisedNow(false),
+            ),
+          )
+          .returning({ id: offers.id })
+      : [];
+  if (resent.length) {
+    refresh();
+    return { ok: true };
+  }
   // Only while it is still open: if the seller accepted (or anyone closed) it since the read above, the revision is a
   // new offer rather than putting an accepted offer back to pending under a unit that is already under offer.
   const revised = open
@@ -180,18 +208,6 @@ export async function makeOffer(_prev: FormState, formData: FormData): Promise<F
       returning id`);
     // As when the check above refuses: the form says so (a refresh would replace the page with a 404 first).
     if (!rows.length) return { error: t("offer.closed") };
-  }
-  // The same offer sent again (a double click, a second tab) changes nothing the seller hasn't heard: no new notices.
-  // A revision of a countered offer does: the seller's counter is set aside.
-  const unchanged =
-    revised.length > 0 &&
-    open?.status === "pending" &&
-    open.amount === v.amount &&
-    open.financing === v.financing &&
-    (open.message ?? null) === (v.message ?? null);
-  if (unchanged) {
-    refresh();
-    return { ok: true };
   }
 
   const params: TemplateParams = {
