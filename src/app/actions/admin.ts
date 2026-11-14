@@ -451,7 +451,9 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
       nocEligible: formData.get("nocEligible") === "on",
       permitAttested: formData.get("permitAttested") === "on",
       launchPrice: formData.get("launchPrice") || undefined,
-      askingPrice: formData.get("askingPrice"),
+      // Required: a field cleared, or a figure the browser couldn't read (it posts ""), asks for the price rather than
+      // putting a live advert at AED 0 and telling its watchers of a price drop.
+      askingPrice: String(formData.get("askingPrice") ?? "").trim() || undefined,
       amountPaid: formData.get("amountPaid") || undefined,
       overdueAmount: formData.get("overdueAmount") || undefined,
       overduePenalty: formData.get("overduePenalty") || undefined,
