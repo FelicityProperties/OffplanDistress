@@ -315,8 +315,11 @@ async function dealInProgress(client, id) {
 
 /**
  * Whether the listing's status has changed since the sync's own `action` on it (listing.sync_withdrawn, listing.sync_held):
- * an audit row after that one recording a status, as every status change by our team or a seller does (src/lib/audit.ts).
- * Such a unit is theirs, even when it is back where the sync left it (put back on the market, then withdrawn again).
+ * an audit row after that one recording a status. Every way out of withdrawn or out of a pause by our team writes one
+ * (the editor, Approve/Reject, Hide/Show/Archive/Restore, the seller's Withdraw: src/lib/audit.ts); a seller's edit that
+ * sends a live or seller-paused listing back to review and the daily permit job's pause write none, so this only answers
+ * for those two states. Such a unit is theirs, even when it is back where the sync left it (put back on the market, then
+ * withdrawn again).
  */
 async function statusChangedSince(db, id, action) {
   const { rows } = await db.query(
@@ -358,9 +361,9 @@ function permitLapsed(r, today) {
  * does. A unit the sync withdrew earlier that is back on the network is restored first: live again when it was live
  * and could be approved today (ownership confirmed, a current permit or the attestation, Form A — Approve's rules),
  * else into review — only while that withdrawal is still the last change of its status (statusChangedSince): one our
- * team or its seller has put back on the market and taken off again since stays as they left it. A unit with a deal in
- * progress (under offer, NOC in progress, an accepted offer or an open deal file) is never changed, only reported when
- * the file would have changed it; a sold, rejected or withdrawn one is left.
+ * team has put back on the market since, even if they or its seller took it off again, stays as they left it. A unit
+ * with a deal in progress (under offer, NOC in progress, an accepted offer or an open deal file) is never changed, only
+ * reported when the file would have changed it; a sold, rejected or withdrawn one is left.
  * The gallery follows the file's photo order the same way (galleryOrder): applied while the array is still the import's
  * own or as the last sync left it (source.synced.images), else our team's arrangement stands, a conflict like a field's.
  * Photos the file has and the listing lacks are added only where the sync may change the unit: fetched before the

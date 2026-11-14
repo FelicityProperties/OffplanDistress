@@ -138,7 +138,7 @@ still owed to the developer) tells the watchers and counts as a price drop in th
 changes, the watchers' saved prices move with it, so a corrected paid amount never shows as a drop; a unit marked `"removed": "YYYY-MM-DD"` (gone from the
 network) is withdrawn as a seller's withdrawal is (open offers closed and their buyers told, `listing.sync_withdrawn` in
 History) and put back when it is listed again (live if it was live and can still be published, else into review),
-unless its status changed since (our team or its seller put it back on the market, even if they took it off again: it
+unless its status changed since (our team put it back on the market, even if they or its seller took it off again: it
 stays as they left it); the buyers and watchers get these notices in the app and by email, as the app's own (in their language; the price drop
 with the advert's permit line and our ORN / BRN); new photos are added only to a unit the sync may change: a unit
 with a deal in progress is never touched, only reported, and one sold, rejected or withdrawn by our team is left
