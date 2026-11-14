@@ -167,6 +167,9 @@ function hasPhone(run: string, { afterLabel = false } = {}) {
   for (let i = skipFirst ? 1 : 0; i < groups.length; i++) {
     const start = asciiDigits(groups[i]);
     if (!groups[i].startsWith("+") && !/^(?:00[1-9]|0[1-9]|971|5)/.test(start)) continue;
+    // In such a list three digits starting with 5 are an item ("Units 501,502,503", "我想买501、502、503"), not a mobile
+    // number without its 0, which is grouped 50,123,4567 (still caught). "501,234,567" is let through with them.
+    if (LIST_SEP.test(run) && !groups[i].startsWith("+") && /^5/.test(start) && start.length === 3) continue;
     for (let j = i + 1; j <= groups.length; j++) {
       const stretch = groups.slice(i, j).join("");
       if (asciiDigits(stretch).length > 15) break;
