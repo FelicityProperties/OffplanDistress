@@ -495,7 +495,7 @@ and deploy; browsers drop the worker on their next visit.
    - Optional: `ANTHROPIC_API_KEY` turns on the AI assistant, a chat button above the WhatsApp one on every public page
      (`src/lib/assistant.ts`, `src/app/api/assistant/route.ts`). It answers buyers and sellers in English, Arabic or
      Chinese and searches the advertised units with two tools (the /deals search and a deal's details); it never sees
-     sellers' contact details or unadvertised units. `ASSISTANT_MODEL` picks the model (default `claude-opus-5-5`;
+     sellers' contact details or unadvertised units, and says when a unit is under offer (a backup offer only). `ASSISTANT_MODEL` picks the model (default `claude-opus-5-5`;
      `claude-haiku-5-5` costs far less per chat) and `ASSISTANT_DAILY_LIMIT` caps the chat messages a day across all
      visitors (default 300); each visitor also gets 15 messages per 10 minutes and 80 a day. Every answer logs one
      `{"assistant": …}` line with its token use in the Vercel logs.
