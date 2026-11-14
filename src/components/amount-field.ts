@@ -26,8 +26,10 @@ export function amountText({ digits, fils }: AmountState) {
 export function editAmount(prev: AmountState, value: string, caret: number | null, key: string | null, max: number) {
   const raw = latin(value);
   const at = Math.min(caret ?? raw.length, raw.length);
-  // The decimal point: the one already there, else a point with at most two digits after it, at the end.
-  const point = prev.fils !== null ? raw.indexOf(".") : raw.search(/\.\d{0,2}$/);
+  // The decimal point: the one already there, else a point with at most two digits after it, at the end. A third digit
+  // typed after it makes it a thousands separator after all ("1.723" typed key by key, as when pasted).
+  let point = prev.fils !== null ? raw.indexOf(".") : raw.search(/\.\d{0,2}$/);
+  if (point >= 0 && raw.slice(point + 1).replace(/\D/g, "").length > 2) point = -1;
   let digits = (point < 0 ? raw : raw.slice(0, point)).replace(/\D/g, "");
   const fils = point < 0 ? null : raw.slice(point + 1).replace(/\D/g, "").slice(0, 2);
   let before = 0;

@@ -1,15 +1,16 @@
 "use client";
 
-import { Fragment, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useId, useMemo, useState } from "react";
 import Link from "@/components/LocaleLink";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { ArrowDown, ArrowRight, CirclePause, Handshake, Info, MessageCircle, Scale, TriangleAlert, Wallet } from "lucide-react";
+import { useAmountField } from "@/components/amount-field";
 import { StatusPill } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDir, useLocale, useT } from "@/i18n/client";
 import { BRAND, FEES } from "@/lib/config";
-import { formatAED, formatAEDCompact, formatNumber, formatPct } from "@/lib/format";
+import { formatAED, formatAEDCompact, formatPct } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Aed, AedRange } from "./Aed";
 import { quarterInMonths } from "@/lib/estimate";
@@ -57,20 +58,10 @@ function NumberInput({
   /** Unit before the number ("AED 1,000"); otherwise after it ("1,000 درهم", "18 months"). */
   unitFirst: boolean;
 }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const digitsBeforeCaret = useRef<number | null>(null);
-  const lastKey = useRef<string | null>(null);
-  const text = value == null ? "" : formatNumber(value);
-
-  useLayoutEffect(() => {
-    const el = ref.current;
-    const want = digitsBeforeCaret.current;
-    if (!el || want == null || document.activeElement !== el) return;
-    let pos = 0;
-    for (let seen = 0; pos < text.length && seen < want; pos++) if (/\d/.test(text[pos])) seen++;
-    el.setSelectionRange(pos, pos);
-    digitsBeforeCaret.current = null;
-  }, [text]);
+  // Whole numbers, typed as the offer field types them (src/components/amount-field.ts): a statement's "540,000.00" (or
+  // "٥٤٠٬٠٠٠٫٠٠"), typed key by key or pasted, keeps 540,000 — the point and the fils after it are kept apart while the
+  // field has focus and never count — and "540.000" or "1.723.000" is read with the point as a thousands separator.
+  const field = useAmountField(value == null ? "" : String(value), (digits) => onValue(digits ? Number(digits) : null), MAX_DIGITS);
 
   const unitEl = (
     <span aria-hidden className="shrink-0 text-sm font-medium text-muted-foreground">
@@ -81,38 +72,18 @@ function NumberInput({
     <div className="mt-2 flex h-11 items-center gap-2 rounded-xl border border-input bg-background px-3 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">
       {unitFirst && unitEl}
       <input
-        ref={ref}
+        ref={field.ref}
         id={id}
         type="text"
         inputMode="numeric"
         autoComplete="off"
         dir="ltr"
-        value={text}
+        value={field.text}
         placeholder={placeholder}
         aria-describedby={describedBy}
-        onKeyDown={(e) => {
-          lastKey.current = e.key;
-        }}
-        onChange={(e) => {
-          // Whole dirhams: a statement's "540,000.00" (or "٥٤٠٬٠٠٠٫٠٠") keeps 540,000, not 54,000,000.
-          // A dot followed by three digits is read as a thousands separator ("540.000").
-          const raw = latinDigits(e.target.value).replace(/[.٫]\d{0,2}$/, "");
-          const caret = Math.min(e.target.selectionStart ?? raw.length, raw.length);
-          let before = raw.slice(0, caret).replace(/\D/g, "").length;
-          let digits = raw.replace(/\D/g, "");
-          // Backspace / Delete on a thousands comma removes the digit next to it, as people expect.
-          if (digits === text.replace(/\D/g, "") && raw.length < text.length) {
-            if (lastKey.current === "Backspace" && before > 0) {
-              digits = digits.slice(0, before - 1) + digits.slice(before);
-              before -= 1;
-            } else if (lastKey.current === "Delete") {
-              digits = digits.slice(0, before) + digits.slice(before + 1);
-            }
-          }
-          digitsBeforeCaret.current = before;
-          digits = digits.replace(/^0+(?=\d)/, "").slice(0, MAX_DIGITS);
-          onValue(digits ? Number(digits) : null);
-        }}
+        onKeyDown={field.onKeyDown}
+        onChange={field.onChange}
+        onBlur={field.onBlur}
         className="h-full min-w-0 flex-1 bg-transparent text-base font-semibold tabular outline-none placeholder:font-normal placeholder:text-muted-foreground/70 rtl:text-end"
       />
       {!unitFirst && unitEl}
