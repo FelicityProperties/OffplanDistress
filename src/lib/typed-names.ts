@@ -11,11 +11,13 @@ const TLDS =
 const WORD = String.raw`[\p{L}\p{N}](?:[\p{L}\p{N}_-]*[\p{L}\p{N}])?`;
 /**
  * What people type between a phone number's digits: spaces, dots, dashes, slashes, brackets or other punctuation
- * ("050·123·4567", "050_123_4567", "050’123’4567"), and a comma, semicolon or colon ("050,123,4567") only when a digit
- * follows it, since lists, times and dates use those too ("Floors 12, 14", "10:30").
+ * ("050·123·4567", "050_123_4567", "050’123’4567"), every kind of dash or hyphen and the dots that look like "·" ("050‑123‑4567"
+ * with non-breaking hyphens, "050−123−4567", "050・123・4567"), the Arabic decimal point "٫", and a comma, semicolon or
+ * colon ("050,123,4567", Arabic "٬") only when a digit follows it, since lists, times and dates use those too
+ * ("Floors 12, 14", "10:30"). "+ = # &" stay out: an unformatted "900000+50000" is a sum, not an 11-digit phone.
  */
-const SEP_CHARS = String.raw`\s().\-–—/·•_'’*|~`;
-const LIST_SEP_CHARS = "،؛、,;:";
+const SEP_CHARS = String.raw`\s().\-–—/·•_'’*|~\p{Pd}−‧∙⋅・⸱٫`;
+const LIST_SEP_CHARS = "،؛、,;:٬";
 const DIGIT_SEP = String.raw`(?:[${SEP_CHARS}]|[${LIST_SEP_CHARS}](?=\p{Nd}))`;
 const CONTACT = new RegExp(
   [
