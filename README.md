@@ -50,10 +50,12 @@ listings carry no permit and say so, invite no viewings or calls, and are `noind
 team") any real listing that was already live without a permit; enter its permit in the admin editor and set it
 live again. A seller who changes the asking price or description of a live listing sends it back to review, so
 the advert never shows a price or text the permit and our team haven't seen; with an accepted offer those two
-fields are fixed. Nor can an admin page opened before a change publish it unseen: Approve, or a save in "Manage
-listing", from a page loaded before the listing last changed (the seller's new price or photo, a build's new photos,
-another admin's save) is refused; Approve then shows the listing as it is now, and the editor keeps what was typed for
-a reloaded page. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each real deal page adds a
+fields are fixed. Nor can an admin page opened before a change publish it unseen: Approve, "Publish on Felicity's
+permits" or a save in "Manage listing", from a page loaded before the listing last changed (the seller's new price or
+photo, a build's new photos or synced figures, another admin's save) is refused; Approve and Publish then show the
+listing as it is now, and the editor keeps what was typed for a reloaded page. "Publish all N" publishes only the N
+units the Imported tab showed, each as it showed it: one changed or added to the import since stays in review, and the
+result says how many. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each real deal page adds a
 `RealEstateListing` with its price. The emails that list units carry the same details: each deal in the newsletter,
 in a saved-search alert and in a price-drop notice to watchers has its permit line (the deal page's wording),
 followed by our ORN and the broker's BRN.

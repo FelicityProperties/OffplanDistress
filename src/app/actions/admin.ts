@@ -1401,8 +1401,31 @@ export async function adminConfirmFormA(_prev: FormState, formData: FormData): P
   return { ok: true };
 }
 
-/** Why a unit of an import was left in review by adminPublishAttested. */
-export type PublishSkipped = { hasPermit: number; formAExpired: number; changed: number };
+/**
+ * Why a unit of an import was left in review by adminPublishAttested: `changed` since the page showed it, `added` to the
+ * import (or back in review) after the page was loaded, so the statement never covered it.
+ */
+export type PublishSkipped = { hasPermit: number; formAExpired: number; changed: number; added: number };
+
+/** A unit as the page showed it: its id and its updated_at then (as for Approve's `savedAt`). */
+export type PublishShown = { id: string; savedAt: string };
+
+/**
+ * The units the page showed, by id, or null when the list isn't one (a forged or garbled request). A page loaded before
+ * the list was sent (an earlier build) sends none: then no unit counts as seen, and none is published.
+ */
+function shownUnits(units: unknown): Map<string, string> | null {
+  const shown = new Map<string, string>();
+  if (units === undefined) return shown;
+  if (!Array.isArray(units) || units.length > 5000) return null;
+  for (const u of units) {
+    if (!u || typeof u !== "object") return null;
+    const { id, savedAt } = u as Partial<PublishShown>;
+    if (!isUuid(id) || typeof savedAt !== "string" || savedAt.length > 40) return null;
+    shown.set(id, savedAt);
+  }
+  return shown;
+}
 
 /**
  * "Publish all N on Felicity's permits" on the Imported tab (src/components/admin/PublishAttested.tsx): on the account
@@ -1413,13 +1436,17 @@ export type PublishSkipped = { hasPermit: number; formAExpired: number; changed:
  * afterwards from the Owner card; the placeholder is told nothing). One statement per listing, guarded by its status,
  * so two admins publishing at once can't publish or audit one twice. A unit with a permit number entered keeps the
  * number as its record (with the expiry rules) and is approved from its own page, like one whose Form A has run out.
+ * `units` are the ones the tab counted, as it showed them: the statement covers those only, so a unit changed since
+ * (a build's sync, another admin's save) or added to the import since is left in review, as Approve refuses a stale page.
  */
-export async function adminPublishAttested(sourceKey: string) {
+export async function adminPublishAttested(sourceKey: string, units: PublishShown[]) {
   const me = await currentAdmin();
   if (!me) return refused();
   const t = await getT("errors");
   if (typeof sourceKey !== "string" || !IMPORT_KEY_RE.test(sourceKey)) return { error: t("listing.notFound") };
-  const result = await publishAttested(me.id, sql`(${listings.source}->>'import') = ${sourceKey}`, BULK_ATTESTATION);
+  const shown = shownUnits(units);
+  if (!shown) return { error: t("listing.notFound") };
+  const result = await publishAttested(me.id, sql`(${listings.source}->>'import') = ${sourceKey}`, BULK_ATTESTATION, shown);
   refresh();
   return { ok: true as const, ...result };
 }
@@ -1427,20 +1454,27 @@ export async function adminPublishAttested(sourceKey: string) {
 /**
  * "Publish on Felicity's permits" on one imported unit's own admin page (src/components/admin/PublishAttested.tsx
  * with `listing`): the same statement, for that unit only (LISTING_ATTESTATION). Approve can't take it while it is
- * under the placeholder owner, so this is how a single unit goes live without its permit number.
+ * under the placeholder owner, so this is how a single unit goes live without its permit number. `savedAt` is the
+ * listing's updated_at as the page showed it: a unit changed since isn't published unseen (the page then shows it as it
+ * is now), as with Approve.
  */
-export async function adminPublishAttestedListing(listingId: string) {
+export async function adminPublishAttestedListing(listingId: string, savedAt: string) {
   const me = await currentAdmin();
   if (!me) return refused();
   const t = await getT("errors");
   if (!isUuid(listingId)) return { error: t("listing.notFound") };
-  const result = await publishAttested(me.id, eq(listings.id, listingId), LISTING_ATTESTATION);
+  const shown = shownUnits(savedAt === undefined ? undefined : [{ id: listingId, savedAt }]);
+  if (!shown) return { error: t("listing.notFound") };
+  const result = await publishAttested(me.id, eq(listings.id, listingId), LISTING_ATTESTATION, shown);
   refresh();
   return { ok: true as const, ...result };
 }
 
-/** The publish itself, for the units `where` names that the statement covers; `statement` goes in each audit row. */
-async function publishAttested(actorId: string, where: SQL, statement: string) {
+/**
+ * The publish itself, for the units `where` names that the statement covers; `statement` goes in each audit row.
+ * `shown`: the units the page showed (id → updated_at then); only those, still as shown, are published.
+ */
+async function publishAttested(actorId: string, where: SQL, statement: string, shown: Map<string, string>) {
   const today = dubaiToday();
   // What the statement covers: units in review, real, entered by our team and still under the placeholder. Checked
   // again on each write below, so a unit re-filed under its real owner (adminSetListingOwner) in the meantime isn't
@@ -1464,15 +1498,27 @@ async function publishAttested(actorId: string, where: SQL, statement: string) {
       dldPermit: listings.dldPermit,
       dldPermitExpiresAt: listings.dldPermitExpiresAt,
       formAExpiresAt: listings.formAExpiresAt,
+      updatedAt: listings.updatedAt,
     })
     .from(listings)
     .where(inScope)
     .orderBy(listings.refNo);
   let published = 0;
-  const skipped: PublishSkipped = { hasPermit: 0, formAExpired: 0, changed: 0 };
+  const skipped: PublishSkipped = { hasPermit: 0, formAExpired: 0, changed: 0, added: 0 };
   for (const l of units) {
     if (l.dldPermit) {
       skipped.hasPermit++;
+      continue;
+    }
+    // The statement covers what the page showed: not a unit it didn't list, nor one changed since (its price, text or
+    // photos from a build's sync, another admin's save).
+    const savedAt = shown.get(l.id);
+    if (savedAt === undefined) {
+      skipped.added++;
+      continue;
+    }
+    if (savedAt !== l.updatedAt.toISOString()) {
+      skipped.changed++;
       continue;
     }
     const now = new Date();
@@ -1492,9 +1538,9 @@ async function publishAttested(actorId: string, where: SQL, statement: string) {
         rejectionReason: null,
         updatedAt: now,
       })
-      // Published, rejected, withdrawn or re-filed under its owner by someone else since the read above: left as they
-      // made it.
-      .where(and(eq(listings.id, l.id), inScope))
+      // Published, rejected, withdrawn, re-filed under its owner or otherwise changed by someone else since the read
+      // above: left as they made it.
+      .where(and(eq(listings.id, l.id), inScope, unchangedSince(l.updatedAt)))
       .returning({ id: listings.id });
     if (!done) {
       skipped.changed++;

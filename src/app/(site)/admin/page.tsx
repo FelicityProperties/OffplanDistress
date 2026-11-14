@@ -98,14 +98,15 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
   const queue = tab === "imported" ? imported : inReview.filter((q) => !q.awaitingOwner);
   // Each import's waiting units can be published together on the account owner's attestation (adminPublishAttested);
   // once published they leave this tab but stay under the placeholder until the owner is entered, so they are listed.
-  const sources = new Map<string, { name: string; count: number }>();
+  // The button sends the units it counted, as shown here: one changed or added since is left in review.
+  const sources = new Map<string, { name: string; units: { id: string; savedAt: string }[] }>();
   for (const q of imported) {
     const key = q.source?.import;
     // (A sample is never an advert, so the action leaves it out too, as it does a unit with its permit number entered:
     // the number is its record, so it is approved from its own page once its owner is in.)
     if (!key || q.isSample || q.dldPermit) continue;
-    const entry = sources.get(key) ?? { name: q.source?.sourceName ?? key, count: 0 };
-    entry.count++;
+    const entry = sources.get(key) ?? { name: q.source?.sourceName ?? key, units: [] };
+    entry.units.push({ id: q.id, savedAt: q.updatedAt.toISOString() });
     sources.set(key, entry);
   }
   const publishedNoOwner = tab === "imported" ? await publishedAwaitingOwner() : [];
@@ -227,7 +228,7 @@ export default async function AdminQueue({ searchParams }: { searchParams: Promi
             {sources.size > 0 && (
               <div className="flex flex-wrap gap-2 max-sm:w-full max-sm:flex-col">
                 {[...sources].map(([key, src]) => (
-                  <PublishAttestedButton key={key} sourceKey={key} sourceName={src.name} count={src.count} named={sources.size > 1} />
+                  <PublishAttestedButton key={key} sourceKey={key} sourceName={src.name} units={src.units} named={sources.size > 1} />
                 ))}
               </div>
             )}

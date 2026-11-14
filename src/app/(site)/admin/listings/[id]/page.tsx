@@ -152,7 +152,7 @@ export default async function AdminListingPage({ params, searchParams }: PagePro
             {/* An imported unit still under its placeholder owner can't be approved; it goes live on the account owner's
                 statement instead, as the whole import can from the Imported tab (src/lib/attestation.ts). */}
             {l.status === "pending_review" && placeholderOwner && l.createdByStaff && !l.isSample && !l.dldPermit && (
-              <PublishAttestedListingButton listingId={l.id} refCode={refCode(l.refNo)} />
+              <PublishAttestedListingButton listingId={l.id} savedAt={l.updatedAt.toISOString()} refCode={refCode(l.refNo)} />
             )}
           </div>
         </div>
