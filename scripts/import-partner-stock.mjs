@@ -165,7 +165,7 @@ async function importSource(pool, doc, sharp) {
   }
   let created = 0;
   let photos = 0;
-  const report = { updated: [], withdrawn: [], restored: [], held: [], released: [], conflicts: [], deals: [], valve: 0, failed: [] };
+  const report = { updated: [], withdrawn: [], restored: [], held: [], released: [], conflicts: [], deals: [], valve: 0, valveCodes: [], failed: [] };
   const removed = [];
   const refs = new Set();
   for (const unit of units) {
@@ -313,6 +313,25 @@ async function dealInProgress(client, id) {
   return rows[0].deal;
 }
 
+/**
+ * Whether the listing's status has changed since the sync's own `action` on it (listing.sync_withdrawn, listing.sync_held):
+ * an audit row after that one recording a status. Every way out of withdrawn or out of a pause by our team writes one
+ * (the editor, Approve/Reject, Hide/Show/Archive/Restore, the seller's Withdraw: src/lib/audit.ts); a seller's edit that
+ * sends a live or seller-paused listing back to review and the daily permit job's pause write none, so this only answers
+ * for those two states. Such a unit is theirs, even when it is back where the sync left it (put back on the market, then
+ * withdrawn again).
+ */
+async function statusChangedSince(db, id, action) {
+  const { rows } = await db.query(
+    `select exists (
+       select 1 from audit_events where entity_type = 'listing' and entity_id = $1 and diff ? 'status'
+         and id > (select max(id) from audit_events where entity_type = 'listing' and entity_id = $1 and action = $2)
+     ) as changed`,
+    [id, action],
+  );
+  return rows[0].changed;
+}
+
 /** src/lib/permits.ts publishBlocker: why the listing can't be made public today, or null. */
 function publishBlocker(r, today) {
   if (r.is_sample) return null;
@@ -341,8 +360,10 @@ function permitLapsed(r, today) {
  * On a public advert the advertised price follows the asking price, with the price-drop notices, as the listing editor
  * does. A unit the sync withdrew earlier that is back on the network is restored first: live again when it was live
  * and could be approved today (ownership confirmed, a current permit or the attestation, Form A — Approve's rules),
- * else into review. A unit with a deal in progress (under offer, NOC in progress, an accepted offer or an open deal
- * file) is never changed, only reported when the file would have changed it; a sold, rejected or withdrawn one is left.
+ * else into review — only while that withdrawal is still the last change of its status (statusChangedSince): one our
+ * team has put back on the market since, even if they or its seller took it off again, stays as they left it. A unit
+ * with a deal in progress (under offer, NOC in progress, an accepted offer or an open deal file) is never changed, only
+ * reported when the file would have changed it; a sold, rejected or withdrawn one is left.
  * The gallery follows the file's photo order the same way (galleryOrder): applied while the array is still the import's
  * own or as the last sync left it (source.synced.images), else our team's arrangement stands, a conflict like a field's.
  * Photos the file has and the listing lacks are added only where the sync may change the unit: fetched before the
@@ -384,8 +405,21 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
     const now = new Date();
     const today = dubaiToday();
     let status = row.status;
-    const restoring = status === "withdrawn" && state.removedAt != null;
+    const ours = status === "withdrawn" && state.removedAt != null;
+    const restoring = ours && !(await statusChangedSince(client, id, "listing.sync_withdrawn"));
     if (!restoring && !LISTED.includes(status)) {
+      if (ours) {
+        // Withdrawn by an earlier build, then put back and taken off again by our team or its seller: left as they
+        // left it, and the sync's mark goes (as for a listed unit below), so a later removal is withdrawn as any other.
+        delete state.removedAt;
+        delete state.withdrawnFrom;
+        const next = { ...src };
+        if (Object.keys(state).length) next.sync = state;
+        else delete next.sync;
+        await client.query("update listings set source = $2 where id = $1", [id, JSON.stringify(next)]);
+        await client.query("commit");
+        return 0;
+      }
       if (DEAL_STATUSES.includes(status) && changed.length) report.deals.push({ code, status, fields: changed });
       await client.query("rollback");
       return 0;
@@ -542,11 +576,12 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
   }
 }
 
-/** Whether syncListing may change the unit (as its checks under the lock will find): in review, live or paused, or withdrawn by an earlier build, and no deal in progress. */
+/** Whether syncListing may change the unit (as its checks under the lock will find): in review, live or paused, or withdrawn by an earlier build (its status untouched since), and no deal in progress. */
 async function mayChange(pool, id) {
   const { rows } = await pool.query("select status, is_sample, source->'sync'->>'removedAt' as removed_at from listings where id = $1", [id]);
   const r = rows[0];
   if (!r || r.is_sample || !(LISTED.includes(r.status) || (r.status === "withdrawn" && r.removed_at != null))) return false;
+  if (r.status === "withdrawn" && (await statusChangedSince(pool, id, "listing.sync_withdrawn"))) return false;
   return !(await dealInProgress(pool, id));
 }
 
@@ -555,9 +590,9 @@ async function mayChange(pool, id) {
  * Pause in the listing editor does it (src/app/actions/admin.ts): status paused, paused by our team, its offers left
  * open and nobody told; its fields keep following the file. Once: listings.source.sync.heldAt marks it, so a unit our
  * team puts back on the market while the file still holds it stays as they put it. Only a unit in review or live (one
- * with a deal in progress is reported and left). When the file no longer holds it, a unit the hold still pauses goes
- * back as a removed unit does when it returns (syncListing): live where Approve would publish it, else into review;
- * the mark goes either way.
+ * with a deal in progress is reported and left). When the file no longer holds it, a unit the hold still pauses (its
+ * status untouched since the hold, statusChangedSince) goes back as a removed unit does when it returns (syncListing):
+ * live where Approve would publish it, else into review; the mark goes either way.
  */
 async function applyHold(pool, unit, id, actor, report) {
   const client = await pool.connect();
@@ -597,9 +632,10 @@ async function applyHold(pool, unit, id, actor, report) {
       await auditRow(client, actor, "listing.sync_held", id, { status: [row.status, "paused"], pausedByAdmin: [row.paused_by_admin, true], reason });
       report.held.push({ code, reason });
     } else {
-      // The hold is lifted. A unit it still pauses goes back; one our team has moved since stays where they put it.
+      // The hold is lifted. A unit it still pauses goes back; one our team has moved since (even back to paused) stays
+      // where they put it.
       let status = row.status;
-      if (row.status === "paused" && row.paused_by_admin) {
+      if (row.status === "paused" && row.paused_by_admin && !(await statusChangedSince(client, id, "listing.sync_held"))) {
         const today = dubaiToday();
         const awaitsOwner = row.created_by_staff && row.ownership_confirmed_at == null;
         const live = sync.heldFrom === "live" && !awaitsOwner && !publishBlocker(row, today);
@@ -666,8 +702,12 @@ async function withdrawRemoved(pool, source, removed, allowMass, actor, report) 
   }
   if (!allowMass && due.length > VALVE_MIN && due.length > listed / 4) {
     report.valve = due.length;
+    // Named, so our team can check them on the network: they stay listed until a file lets them through or they are
+    // withdrawn by hand.
+    report.valveCodes = due.map((d) => d.code);
     console.error(
-      `[sync] ${source.name}: VALVE TRIPPED — ${due.length} of ${listed} listed units would be withdrawn in one build; nothing withdrawn. ` +
+      `[sync] ${source.name}: VALVE TRIPPED — ${due.length} of ${listed} listed units would be withdrawn in one build ` +
+        `(${due.map((d) => `${d.code} ${d.unit.ref}`).join(", ")}); nothing withdrawn. ` +
         "Check the manifest (sync.allowMassRemoval in the file lets a real mass removal through).",
     );
     return;
@@ -924,7 +964,7 @@ const SYNC_COPY = {
     held: () => "Taken off the site, as the stock file holds them (paused by our team; their offers stay open): ",
     released: () => "No longer held by the stock file, back: ",
     heldDeal: "held by the stock file",
-    valve: (n) => `Sync valve tripped: ${n} removals, nothing withdrawn — check the manifest.`,
+    valve: (n, codes) => `Sync valve tripped: ${n} removals (${codes}), nothing withdrawn — check the manifest.`,
     failed: (n, refs) => `${counted("en", n, NOUNS.units.en)} failed (${refs}) — see the build log.`,
     title: (name, r) => `${name} sync: ${r.updated.length} updated, ${r.withdrawn.length} withdrawn, ${r.restored.length} restored${r.failed.length ? `, ${r.failed.length} failed` : ""}`,
     valveTitle: (name) => `${name} sync: valve tripped, nothing withdrawn`,
@@ -945,7 +985,7 @@ const SYNC_COPY = {
     held: () => "أُوقف عرضها على الموقع لأن ملف المخزون يحجبها (متوقفة من قِبل فريقنا، وعروضها تبقى مفتوحة): ",
     released: () => "لم يعد ملف المخزون يحجبها، فعادت: ",
     heldDeal: "محجوبة في ملف المخزون",
-    valve: (n) => `توقّف صمام أمان المزامنة: ${counted("ar", n, NOUNS.removals.ar)}، لم يُسحب شيء — راجع ملف المخزون.`,
+    valve: (n, codes) => `توقّف صمام أمان المزامنة: ${counted("ar", n, NOUNS.removals.ar)} (${codes})، لم يُسحب شيء — راجع ملف المخزون.`,
     failed: (n, refs) => `فشل استيراد ${counted("ar", n, NOUNS.units.ar)} (${refs}) — راجع سجل البناء.`,
     title: (name, r) => `مزامنة ${name}: ${r.updated.length} حُدّث، ${r.withdrawn.length} سُحب، ${r.restored.length} أُعيد${r.failed.length ? `، ${r.failed.length} فشل` : ""}`,
     valveTitle: (name) => `مزامنة ${name}: توقّف صمام الأمان، لم يُسحب شيء`,
@@ -966,7 +1006,7 @@ const SYNC_COPY = {
     held: () => "按房源文件的保留要求已从网站下架（由我方团队暂停，报价保持开放）：",
     released: () => "房源文件已解除保留，已恢复：",
     heldDeal: "房源文件要求保留",
-    valve: (n) => `同步安全阀已触发：${n} 项移除，未撤回任何房源——请检查房源清单文件。`,
+    valve: (n, codes) => `同步安全阀已触发：${n} 项移除（${codes}），未撤回任何房源——请检查房源清单文件。`,
     failed: (n, refs) => `${n} 个单元导入失败（${refs}）——请查看构建日志。`,
     title: (name, r) => `${name} 同步：更新 ${r.updated.length}，撤回 ${r.withdrawn.length}，恢复 ${r.restored.length}${r.failed.length ? `，失败 ${r.failed.length}` : ""}`,
     valveTitle: (name) => `${name} 同步：安全阀已触发，未撤回任何房源`,
@@ -990,7 +1030,7 @@ function syncNotice(source, r, lang) {
   if (r.released.length) lines.push(`${t.released()}${list(r.released.map((x) => t.item(x.code, status(x.status))))}${t.end}`);
   if (r.conflicts.length) lines.push(`${t.conflicts()}${list(r.conflicts.map((c) => t.item(c.code, fields(c.fields))))}${t.end}`);
   if (r.deals.length) lines.push(`${t.deals()}${list(r.deals.map((d) => t.item(d.code, status(d.status), change(d))))}${t.end}`);
-  if (r.valve) lines.push(t.valve(r.valve));
+  if (r.valve) lines.push(t.valve(r.valve, list(r.valveCodes)));
   // The units of the file that failed, by the network's ref (the build log says why).
   if (r.failed.length) lines.push(t.failed(r.failed.length, list(r.failed)));
   return { title: r.valve ? t.valveTitle(source.name) : t.title(source.name, r), body: lines.join("\n") };
@@ -1023,10 +1063,13 @@ const isDldUrl = (s) => {
  * ({format: "offplandistress-permits/1", source: "<key>", permits: [{ref, permit, expires, formAExpires?, url?}]}),
  * applied the way the admin editor + Approve do: the permit fields, ownership confirmed on our team's record of the
  * owner's written authority (the account owner's statement — the real owner is still entered afterwards from the
- * Owner card), then the listing goes live at its asking price. Only a unit still in review goes live; a permit entered
- * differently later only updates the permit fields. Nothing goes live without a permit that is current (RERA). A unit
- * published on the account owner's attestation without a number (listings.permit_attested_at, src/lib/attestation.ts)
- * gets its number here too, and the attestation is cleared with it, as the editor does: the number is then the record.
+ * Owner card), then the listing goes live at its asking price — the first time only: a unit in review never published,
+ * in the build that records its permit. One back in review since (its seller's new price or text, our team's re-check,
+ * the sync putting it back) or whose permit an earlier build recorded (held then, say) waits for our team's Approve,
+ * which sees what changed; a permit entered differently later only updates the permit fields. Nothing goes live
+ * without a permit that is current (RERA). A unit published on the account owner's attestation without a number
+ * (listings.permit_attested_at, src/lib/attestation.ts) gets its number here too, and the attestation is cleared with
+ * it, as the editor does: the number is then the record.
  */
 async function applyPermits(pool, source, actor) {
   let doc;
@@ -1064,11 +1107,12 @@ async function applyPermits(pool, source, actor) {
       continue;
     }
     const client = await pool.connect();
+    const mail = [];
     try {
       await client.query("begin");
       const { rows } = await client.query(
-        `select id, status, is_sample, asking_price, published_at, ownership_confirmed_at, dld_permit, dld_permit_expires_at,
-                form_a_expires_at, dld_permit_url, permit_attested_at
+        `select id, ref_no, status, is_sample, seller_id, project_name, asking_price, public_price, published_at, ownership_confirmed_at,
+                dld_permit, dld_permit_expires_at, form_a_expires_at, dld_permit_url, permit_attested_at
          from listings where source->>'import' = $1 and source->>'ref' = $2 for update`,
         [source.key, ref],
       );
@@ -1091,7 +1135,9 @@ async function applyPermits(pool, source, actor) {
       };
       const diff = {};
       for (const k of Object.keys(wanted)) if ((have[k] ?? null) !== (wanted[k] ?? null)) diff[k] = [have[k] ?? null, wanted[k] ?? null];
-      if (Object.keys(diff).length) {
+      // This build records the permit (a new one, or one entered differently).
+      const recorded = Object.keys(diff).length > 0;
+      if (recorded) {
         await client.query(
           `update listings set dld_permit = $2, dld_permit_expires_at = $3, form_a_expires_at = $4, dld_permit_url = $5,
                   permit_attested_at = null, permit_attested_by = null, updated_at = $6 where id = $1`,
@@ -1111,7 +1157,8 @@ async function applyPermits(pool, source, actor) {
           [actor, l.id, JSON.stringify({ via: "broker_statement", ownershipConfirmedAt: [null, now.toISOString()] })],
         );
       }
-      if (l.status === "pending_review") {
+      // Published the first time only, with the permit this build records (above).
+      if (l.status === "pending_review" && l.published_at == null && recorded) {
         await client.query(
           `update listings set status = 'live', public_price = asking_price, published_at = coalesce(published_at, $2), rejection_reason = null, updated_at = $2
            where id = $1`,
@@ -1120,11 +1167,14 @@ async function applyPermits(pool, source, actor) {
         await client.query("insert into audit_events (actor_id, action, entity_type, entity_id, diff) values ($1, 'listing.approve', 'listing', $2, $3)", [
           actor,
           l.id,
-          JSON.stringify({ status: ["pending_review", "live"], publicPrice: [null, l.asking_price] }),
+          JSON.stringify({ status: ["pending_review", "live"], publicPrice: [l.public_price, l.asking_price] }),
         ]);
+        // As from Approve: a lower price than one advertised before reaches the watchers (with the permit just recorded).
+        if (l.public_price != null) await tellWatchers(client, { ...l, dld_permit: permit, permit_attested_at: null }, l.public_price, l.asking_price, mail);
         live++;
       }
       await client.query("commit");
+      outbox.push(...mail);
     } catch (err) {
       await client.query("rollback").catch(() => {});
       skipped++;

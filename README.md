@@ -139,19 +139,22 @@ advert updates the advertised price, and only a cut that makes the deal cheaper 
 still owed to the developer) tells the watchers and counts as a price drop in the newsletter; when the balance owed
 changes, the watchers' saved prices move with it, so a corrected paid amount never shows as a drop; a unit marked `"removed": "YYYY-MM-DD"` (gone from the
 network) is withdrawn as a seller's withdrawal is (open offers closed and their buyers told, `listing.sync_withdrawn` in
-History) and put back when it is listed again (live if it was live and can still be published, else into review); the
-buyers and watchers get these notices in the app and by email, as the app's own (in their language; the price drop
+History) and put back when it is listed again (live if it was live and can still be published, else into review),
+unless its status changed since (our team put it back on the market, even if they or its seller took it off again: it
+stays as they left it); the buyers and watchers get these notices in the app and by email, as the app's own (in their language; the price drop
 with the advert's permit line and our ORN / BRN); new photos are added only to a unit the sync may change: a unit
 with a deal in progress is never touched, only reported, and one sold, rejected or withdrawn by our team is left
 alone; a build that would
 withdraw more than 3 and more than a quarter of a source's listed units withdraws none (the valve, unless the file's
-`sync.allowMassRemoval` is true); one `listing.synced` notice per build gives the admins the counts, the conflicts,
+`sync.allowMassRemoval` is true; the build log and the admins' notice name the units it kept); one `listing.synced` notice per build gives the admins the counts, the conflicts,
 what was left alone and the refs of units that failed, in their language. Their DLD advertising permits can come the
 same way:
 `scripts/partner-stock/<key>-permits.json` (`offplandistress-permits/1`: ref, permit number, expiry, optional Form A
 expiry and verification link) records each permit as the editor would, confirms ownership on our record of the owner's
 written authority (the account owner's statement; the real owner is still entered afterwards from the Owner card) and
-publishes the unit at its asking price — never without a current permit. **Nothing goes public:** each listing is in
+publishes the unit at its asking price — never without a current permit, and only a unit in review never published
+before, in the build that records its permit: one back in review (its owner's new price or text, our team's re-check, a
+unit the sync put back) or whose permit an earlier build recorded waits for our team's Approve. **Nothing goes public:** each listing is in
 review, filed under one placeholder owner per source ("Owner to be added (…)", shown in the admin's language and
 never with its internal address — on the listing, `/admin/offers` and the deal file; no password, never emailed or
 nudged; sign-ups refuse `.invalid` addresses, so nobody can register it first), under "Imported — owner to add" on
@@ -182,7 +185,9 @@ ready unit ("READY…") takes the day it was posted as its handover date, so the
 whose plan is missing, illegible or inconsistent keeps its previous entry and is flagged (exit 2), as does one whose
 page's size, prices or handover can no longer be read as before (the site's wording changed: fix the parser, never the
 figures); a run that would mark more than a quarter of the listed units removed writes nothing (exit 3;
-`--allow-mass-removal`, on the user's word, also sets the file's `sync.allowMassRemoval` for the import's own valve).
+`--allow-mass-removal`, on the user's word, also sets the file's `sync.allowMassRemoval` for the import's own valve
+whenever the file marks any unit removed — so a rebuild with it also lets through removals only the import's valve held
+back, as it counts the units still listed in the database; the next build without it drops the key).
 The site's first gallery image is usually a location map, so `scripts/partner-stock/distressstock-photos.json`
 (`offplandistress-photos/1`: `photos: { "<ref>": [url, …] }`, the building first, at most 4) holds the photo order the
 agent picks from `sheet --raw <dir>`'s contact sheets; the build lists those urls + the page's keyplan under stable file
@@ -203,7 +208,7 @@ under "Owner to be added (Direct sellers)" like a partner network's; the account
 tab and enters the real owner on each. A unit the owner wants kept private for now gets `"hold": "<why>"` in its entry: the next
 deploy pauses it as our team's Pause does (off the site, its offers left open, nobody told; once, so our team can still
 put it back by hand), and deleting the line puts it back where it was (live where Approve would publish it, else in
-review).
+review), unless our team or its seller has changed its status since (then it stays as they left it).
 
 ### Cash at transfer
 

@@ -1291,8 +1291,10 @@ async function cmdBuild(opts) {
   const refused = out.flatMap((e) => validateEntry(e, rules).map((why) => `${e.ref}: ${why}`));
   if (refused.length) die(`the manifest would be refused by the import — nothing written:\n  ${refused.join("\n  ")}`);
   // The production import has the same valve; a mass removal let through here is let through there by the file itself
-  // (sync.allowMassRemoval), for this build only: the next day's build, run without the switch, drops the key.
-  const sync = opts.allowMassRemoval && s.removed.length ? { allowMassRemoval: true } : null;
+  // (sync.allowMassRemoval), for this build only: the next day's build, run without the switch, drops the key. Set while
+  // the file marks any unit removed, not only today's: the import counts the units still listed in the database, so it can
+  // trip on removals this valve passed (or on two days' arriving at once), and this rebuild is how they get through.
+  const sync = opts.allowMassRemoval && out.some((e) => e.removed) ? { allowMassRemoval: true } : null;
   const unchanged = JSON.stringify(out) === JSON.stringify(manifest.units.map(normalizeEntry).sort(byRef)) && JSON.stringify(sync) === JSON.stringify(manifest.sync ?? null);
   const doc = { format: IMPORT_FORMAT, source: SOURCE, generatedAt: unchanged && manifest.generatedAt ? manifest.generatedAt : nowIso(), ...(sync ? { sync } : {}), units: out };
   await writeJson(MANIFEST_PATH, doc);
