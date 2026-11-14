@@ -279,7 +279,7 @@ export async function adminSubscribers({ q, status, page = 1 }: SubscriberFilter
       .where(where)
       .orderBy(desc(newsletterSubscribers.createdAt), desc(newsletterSubscribers.id))
       .limit(PAGE_SIZE)
-      .offset((Math.max(1, page) - 1) * PAGE_SIZE),
+      .offset((Math.min(1_000_000, Math.max(1, page)) - 1) * PAGE_SIZE), // capped: a page number typed far past the last (20 digits, say) would overflow OFFSET
     db.select({ total: count() }).from(newsletterSubscribers).where(where),
   ]);
   return { rows, total: Number(total) };

@@ -313,7 +313,7 @@ function adminUserRows(where: SQL | undefined, page: number) {
     .where(where)
     .orderBy(desc(users.createdAt), desc(users.id))
     .limit(USERS_PAGE_SIZE)
-    .offset((Math.max(1, page) - 1) * USERS_PAGE_SIZE);
+    .offset((Math.min(1_000_000, Math.max(1, page)) - 1) * USERS_PAGE_SIZE); // capped: a page number typed far past the last (20 digits, say) would overflow OFFSET
 }
 
 /** How many accounts the "registered" tab of /admin/users lists. */

@@ -63,7 +63,8 @@ export default async function NewsletterAdminPage({ searchParams }: { searchPara
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 100) : "";
   const status = STATUSES.find((s) => s === sp.status);
-  const page = Math.max(1, Number.parseInt(typeof sp.page === "string" ? sp.page : "1", 10) || 1);
+  // At most a million pages, as on the users list: a page number typed far past the last stays a plain empty page.
+  const page = Math.min(1_000_000, Math.max(1, Number.parseInt(typeof sp.page === "string" ? sp.page : "1", 10) || 1));
   const [stats, { rows, total }, issues, t, locale] = await Promise.all([
     subscriberStats(),
     adminSubscribers({ q, status, page }),

@@ -34,7 +34,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   // A name, an email or a phone number (in any format: "050 111 2222" finds +971 50 111 2222), searched across every
   // account of the tab (adminUsers), a page at a time.
   const q = userId ? "" : typeof sp.q === "string" ? sp.q.trim().slice(0, 100) : "";
-  // At most a million pages (100 million accounts): a page number typed past that would overflow the query's OFFSET.
+  // At most a million pages (100 million accounts): a page number typed far past that (20 digits, say) would overflow the query's OFFSET.
   const page = userId ? 1 : Math.min(1_000_000, Math.max(1, Number.parseInt(typeof sp.page === "string" ? sp.page : "1", 10) || 1));
   const [{ rows: users, total }, pending, registered, t, tc, locale] = await Promise.all([
     adminUsers(tab, { q, page, userId }),
