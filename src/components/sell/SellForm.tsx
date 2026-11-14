@@ -968,6 +968,8 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
                       type="tel"
                       dir="ltr"
                       autoComplete="tel"
+                      // The account's phone: the profile and sign-up take 30 characters at most (createListing checks).
+                      maxLength={30}
                       className="rtl:text-end"
                       value={s.phone}
                       onChange={(e) => set("phone")(e.target.value)}

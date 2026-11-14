@@ -65,6 +65,9 @@ function readListingForm(formData: FormData) {
 
 export type CreateListingState = FormState & { listingId?: string; refNo?: number };
 
+/** An account's phone, at most (as sign-up, the profile and the viewing request check it). */
+const PHONE_MAX = 30;
+
 export async function createListing(_prev: CreateListingState, formData: FormData): Promise<CreateListingState> {
   const t = await getT("errors");
   const user = await getCurrentUser();
@@ -77,20 +80,24 @@ export async function createListing(_prev: CreateListingState, formData: FormDat
   if (pending >= 10) return { error: t("listing.tooManyPending") };
 
   const parsed = listingSchema(t).safeParse(readListingForm(formData), { error: fallbackErrors(t) });
+  // The phone the form asks for when the account has none: saved to the account, so within the length sign-up, the
+  // profile and the viewing request allow (a longer one would make those forms refuse the number they are filled with).
+  const phone = cleanText(String(formData.get("phone") ?? "")).trim();
+  const phoneTooLong = Boolean(phone && !user.phone && phone.length > PHONE_MAX);
   // Final step of the sell form: "I own this unit or am authorised to sell it, the documents are genuine,
   // and I agree to the Terms of Use". Enforced here too, not only in the browser.
   const ownershipConfirmed = formData.get("confirmOwnership") === "on";
-  if (!parsed.success || !ownershipConfirmed) {
+  if (!parsed.success || !ownershipConfirmed || phoneTooLong) {
     const ts = await getT("sell");
     const fieldErrors: Record<string, string[] | undefined> = parsed.success
       ? {}
       : { ...z.flattenError(parsed.error).fieldErrors };
+    if (phoneTooLong) fieldErrors.phone = [t("field.tooLong", { max: PHONE_MAX })];
     if (!ownershipConfirmed) fieldErrors.confirmOwnership = [ts("error.confirmOwnership")];
-    return { error: parsed.success ? ts("error.confirmOwnership") : t("form.fixDetails"), fieldErrors };
+    return { error: parsed.success && !phoneTooLong ? ts("error.confirmOwnership") : t("form.fixDetails"), fieldErrors };
   }
   const v = parsed.data;
 
-  const phone = cleanText(String(formData.get("phone") ?? "")).trim();
   if (phone && !user.phone) {
     await db.update(users).set({ phone }).where(eq(users.id, user.id));
   }
