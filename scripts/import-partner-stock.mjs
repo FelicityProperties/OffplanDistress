@@ -313,6 +313,22 @@ async function dealInProgress(client, id) {
   return rows[0].deal;
 }
 
+/**
+ * Whether the listing's status has changed since the sync's own `action` on it (listing.sync_withdrawn, listing.sync_held):
+ * an audit row after that one recording a status, as every status change by our team or a seller does (src/lib/audit.ts).
+ * Such a unit is theirs, even when it is back where the sync left it (put back on the market, then withdrawn again).
+ */
+async function statusChangedSince(db, id, action) {
+  const { rows } = await db.query(
+    `select exists (
+       select 1 from audit_events where entity_type = 'listing' and entity_id = $1 and diff ? 'status'
+         and id > (select max(id) from audit_events where entity_type = 'listing' and entity_id = $1 and action = $2)
+     ) as changed`,
+    [id, action],
+  );
+  return rows[0].changed;
+}
+
 /** src/lib/permits.ts publishBlocker: why the listing can't be made public today, or null. */
 function publishBlocker(r, today) {
   if (r.is_sample) return null;
@@ -341,8 +357,10 @@ function permitLapsed(r, today) {
  * On a public advert the advertised price follows the asking price, with the price-drop notices, as the listing editor
  * does. A unit the sync withdrew earlier that is back on the network is restored first: live again when it was live
  * and could be approved today (ownership confirmed, a current permit or the attestation, Form A — Approve's rules),
- * else into review. A unit with a deal in progress (under offer, NOC in progress, an accepted offer or an open deal
- * file) is never changed, only reported when the file would have changed it; a sold, rejected or withdrawn one is left.
+ * else into review — only while that withdrawal is still the last change of its status (statusChangedSince): one our
+ * team or its seller has put back on the market and taken off again since stays as they left it. A unit with a deal in
+ * progress (under offer, NOC in progress, an accepted offer or an open deal file) is never changed, only reported when
+ * the file would have changed it; a sold, rejected or withdrawn one is left.
  * The gallery follows the file's photo order the same way (galleryOrder): applied while the array is still the import's
  * own or as the last sync left it (source.synced.images), else our team's arrangement stands, a conflict like a field's.
  * Photos the file has and the listing lacks are added only where the sync may change the unit: fetched before the
@@ -384,7 +402,7 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
     const now = new Date();
     const today = dubaiToday();
     let status = row.status;
-    const restoring = status === "withdrawn" && state.removedAt != null;
+    const restoring = status === "withdrawn" && state.removedAt != null && !(await statusChangedSince(client, id, "listing.sync_withdrawn"));
     if (!restoring && !LISTED.includes(status)) {
       if (DEAL_STATUSES.includes(status) && changed.length) report.deals.push({ code, status, fields: changed });
       await client.query("rollback");
@@ -542,11 +560,12 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
   }
 }
 
-/** Whether syncListing may change the unit (as its checks under the lock will find): in review, live or paused, or withdrawn by an earlier build, and no deal in progress. */
+/** Whether syncListing may change the unit (as its checks under the lock will find): in review, live or paused, or withdrawn by an earlier build (its status untouched since), and no deal in progress. */
 async function mayChange(pool, id) {
   const { rows } = await pool.query("select status, is_sample, source->'sync'->>'removedAt' as removed_at from listings where id = $1", [id]);
   const r = rows[0];
   if (!r || r.is_sample || !(LISTED.includes(r.status) || (r.status === "withdrawn" && r.removed_at != null))) return false;
+  if (r.status === "withdrawn" && (await statusChangedSince(pool, id, "listing.sync_withdrawn"))) return false;
   return !(await dealInProgress(pool, id));
 }
 
@@ -555,9 +574,9 @@ async function mayChange(pool, id) {
  * Pause in the listing editor does it (src/app/actions/admin.ts): status paused, paused by our team, its offers left
  * open and nobody told; its fields keep following the file. Once: listings.source.sync.heldAt marks it, so a unit our
  * team puts back on the market while the file still holds it stays as they put it. Only a unit in review or live (one
- * with a deal in progress is reported and left). When the file no longer holds it, a unit the hold still pauses goes
- * back as a removed unit does when it returns (syncListing): live where Approve would publish it, else into review;
- * the mark goes either way.
+ * with a deal in progress is reported and left). When the file no longer holds it, a unit the hold still pauses (its
+ * status untouched since the hold, statusChangedSince) goes back as a removed unit does when it returns (syncListing):
+ * live where Approve would publish it, else into review; the mark goes either way.
  */
 async function applyHold(pool, unit, id, actor, report) {
   const client = await pool.connect();
@@ -597,9 +616,10 @@ async function applyHold(pool, unit, id, actor, report) {
       await auditRow(client, actor, "listing.sync_held", id, { status: [row.status, "paused"], pausedByAdmin: [row.paused_by_admin, true], reason });
       report.held.push({ code, reason });
     } else {
-      // The hold is lifted. A unit it still pauses goes back; one our team has moved since stays where they put it.
+      // The hold is lifted. A unit it still pauses goes back; one our team has moved since (even back to paused) stays
+      // where they put it.
       let status = row.status;
-      if (row.status === "paused" && row.paused_by_admin) {
+      if (row.status === "paused" && row.paused_by_admin && !(await statusChangedSince(client, id, "listing.sync_held"))) {
         const today = dubaiToday();
         const awaitsOwner = row.created_by_staff && row.ownership_confirmed_at == null;
         const live = sync.heldFrom === "live" && !awaitsOwner && !publishBlocker(row, today);
