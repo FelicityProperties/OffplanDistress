@@ -17,8 +17,10 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT("newsletter");
-  // The token is in the URL: keep the page out of search results and never send it on as a referrer.
-  return { title: t("meta.confirm.title"), robots: { index: false }, referrer: "no-referrer" };
+  // The token is in the URL: keep the page out of search results and never send it to another site as a referrer
+  // ("strict-origin": the site's address only). Not "no-referrer": under it a browser posts the button's form without
+  // JavaScript (or before the page hydrates) with `Origin: null`, which Next refuses for a server action.
+  return { title: t("meta.confirm.title"), robots: { index: false }, referrer: "strict-origin" };
 }
 
 // Typed by hand (not PageProps<"/newsletter/confirm">) so it compiles before Next regenerates its route types.
