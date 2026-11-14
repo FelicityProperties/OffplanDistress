@@ -365,15 +365,18 @@ export function SellForm({ needsPhone, initial, userId }: { needsPhone: boolean;
   }
 
   const set = (k: keyof State) => (v: string) => setS((prev) => ({ ...prev, [k]: v }));
-  // Arabic-Indic / Persian digits (an Arabic phone keyboard types them) count as digits, "٫" as the decimal point;
-  // otherwise "٩٠٬٠٠٠" would be read, checked and sent as 0.
-  const num = (v: string) =>
-    Number(
-      v
-        .replace(/[٠-٩۰-۹]/g, (d) => String((d.charCodeAt(0) & 0xf) % 10))
-        .replace(/٫/g, ".")
-        .replace(/[^\d.]/g, ""),
-    ) || 0;
+  // Arabic-Indic / Persian digits (an Arabic phone keyboard types them) count as digits; otherwise "٩٠٬٠٠٠" would be
+  // read, checked and sent as 0. A point ("." or "٫") is the decimal point only with at most two digits after it, at the
+  // end, and those are dropped (whole dirhams: "540,000.00" is 540,000); any other point is a thousands separator, as a
+  // comma is ("540.000" is 540,000, "1.250.000" 1,250,000), as the offer field reads it (src/components/amount-field.ts).
+  const num = (v: string) => {
+    const s = v
+      .replace(/[٠-٩۰-۹]/g, (d) => String((d.charCodeAt(0) & 0xf) % 10))
+      .replace(/٫/g, ".")
+      .replace(/[^\d.]/g, "");
+    const point = s.search(/\.\d{0,2}$/);
+    return Number((point < 0 ? s : s.slice(0, point)).replace(/\D/g, "")) || 0;
+  };
   const aed = (v: number | null | undefined) => formatAED(v, locale);
   const unitLabel = (u: string) => (u in UNIT_TYPES ? tc(`unit.${u as UnitTypeKey}`) : "—");
 
