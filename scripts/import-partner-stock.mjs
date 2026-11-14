@@ -405,8 +405,21 @@ async function syncListing(pool, unit, id, actor, uploader, report, sharp) {
     const now = new Date();
     const today = dubaiToday();
     let status = row.status;
-    const restoring = status === "withdrawn" && state.removedAt != null && !(await statusChangedSince(client, id, "listing.sync_withdrawn"));
+    const ours = status === "withdrawn" && state.removedAt != null;
+    const restoring = ours && !(await statusChangedSince(client, id, "listing.sync_withdrawn"));
     if (!restoring && !LISTED.includes(status)) {
+      if (ours) {
+        // Withdrawn by an earlier build, then put back and taken off again by our team or its seller: left as they
+        // left it, and the sync's mark goes (as for a listed unit below), so a later removal is withdrawn as any other.
+        delete state.removedAt;
+        delete state.withdrawnFrom;
+        const next = { ...src };
+        if (Object.keys(state).length) next.sync = state;
+        else delete next.sync;
+        await client.query("update listings set source = $2 where id = $1", [id, JSON.stringify(next)]);
+        await client.query("commit");
+        return 0;
+      }
       if (DEAL_STATUSES.includes(status) && changed.length) report.deals.push({ code, status, fields: changed });
       await client.query("rollback");
       return 0;
