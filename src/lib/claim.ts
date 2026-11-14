@@ -1,10 +1,11 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, eq, gt, isNotNull, isNull, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { listings, passwordResets, users } from "@/db/schema";
 import type { Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
+import type { ListingStatusKey } from "@/lib/config";
 
 // Staff-assisted intake: our team enters a listing from the documents a seller sent (often on WhatsApp), then sends the
 // seller a claim link. Opening it (no login needed) the seller confirms they own the unit or may sell it, the documents
@@ -29,6 +30,17 @@ export function placeholderEmail(phoneDigits: string) {
 
 export function isPlaceholderEmail(email: string) {
   return email.trim().toLowerCase().endsWith(".invalid");
+}
+
+/**
+ * Our team rejected or withdrew the listing (or the build's sync withdrew it) before its seller confirmed it: there is
+ * nothing for them to confirm, so no claim link works or is sent for it; back in review, one does again. A listing our
+ * team confirmed without its owner keeps its link at any status: it is how that owner gets into their account.
+ */
+const CLAIM_CLOSED: ListingStatusKey[] = ["rejected", "withdrawn"];
+
+export function claimClosed(l: { status: ListingStatusKey; ownershipConfirmedAt: Date | null }) {
+  return l.ownershipConfirmedAt == null && CLAIM_CLOSED.includes(l.status);
 }
 
 /**
@@ -106,8 +118,10 @@ export async function findClaim(token: string) {
         eq(passwordResets.purpose, "claim"),
         isNull(passwordResets.usedAt),
         gt(passwordResets.expiresAt, new Date()),
-        // The listing must still be this account's.
+        // The listing must still be this account's…
         eq(listings.sellerId, passwordResets.userId),
+        // …and still there to confirm (claimClosed).
+        or(isNotNull(listings.ownershipConfirmedAt), notInArray(listings.status, CLAIM_CLOSED)),
       ),
     )
     .limit(1);

@@ -94,7 +94,9 @@ link in their language ("Email claim link" when they have an email and email is 
 chat opens with, the one on the seller's account. A mobile typed for a seller found by their email that differs from
 the number on that account (an old one, or a stranger's who registered the seller's email first: neither is verified)
 is refused until staff check with the seller which is theirs. The link works once, for 7
-days, and a new one cancels the old. The seller opens it without logging in, ticks the same ownership / authority /
+days, and a new one cancels the old; while a listing still waiting for its seller is rejected or withdrawn (by our team
+or the build's sync), its link doesn't work and no new one can be sent (back in review, it works again). The seller
+opens it without logging in, ticks the same ownership / authority /
 Terms confirmation as the sell form and chooses an email and password. Until then a staff-created listing can't be
 approved (the Trakheesi permit is still required too); `/admin/users` → "Pending claim" lists those sellers. A listing
 whose ownership our team confirmed without the seller (their signed Form A, or our record of their authority on an

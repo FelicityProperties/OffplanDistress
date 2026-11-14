@@ -9,7 +9,7 @@ import { DealFileCard } from "@/components/admin/DealFileCard";
 import { HistoryPanel } from "@/components/admin/HistoryPanel";
 import { PHONE_BUTTON, PHONE_LINK } from "@/components/admin/phone";
 import { StatusPill } from "@/components/badges";
-import { isPlaceholderEmail } from "@/lib/claim";
+import { claimClosed, isPlaceholderEmail } from "@/lib/claim";
 import { isImportOwner } from "@/lib/import";
 import { emailEnabled } from "@/lib/email";
 import { contactKinds } from "@/lib/typed-names";
@@ -44,12 +44,13 @@ export default async function AdminListingPage({ params, searchParams }: PagePro
   const row = await adminListing(id);
   if (!row) notFound();
   const { listing: l, seller } = row;
-  const [docs, offers, t, tc, ti, locale, viaFormA, viaBroker] = await Promise.all([
+  const [docs, offers, t, tc, ti, te, locale, viaFormA, viaBroker] = await Promise.all([
     listingFiles(l.id),
     adminOffers(l.id),
     getT("admin"),
     getT("common"),
     getT("intake"),
+    getT("errors"),
     getLocale(),
     l.createdByStaff && l.ownershipConfirmedAt ? confirmedByFormA(l.id) : false,
     l.createdByStaff && l.ownershipConfirmedAt ? confirmedByBroker(l.id) : false,
@@ -78,6 +79,8 @@ export default async function AdminListingPage({ params, searchParams }: PagePro
     contactKinds(l[field]).map((kind) => ({ field, kind })),
   );
   const awaitingSeller = l.createdByStaff && !l.ownershipConfirmedAt && !l.isSample;
+  // Rejected or withdrawn before its seller confirmed it: no claim link works or is sent for it (src/lib/claim.ts).
+  const claimOffMarket = claimClosed(l);
   // Imported from a partner network's file (src/lib/import-format.ts): where from, for our team only.
   const imported = l.source?.import && l.source.ref ? l.source : null;
   const importSource = imported ? (imported.sourceName ?? imported.import ?? "") : "";
@@ -355,8 +358,10 @@ export default async function AdminListingPage({ params, searchParams }: PagePro
                 </p>
               ) : (
                 <>
-                  <p className="mt-1 text-sm text-muted-foreground">{t("claim.pending")}</p>
-                  {seller.passwordHash && <p className="mt-1 text-xs text-muted-foreground">{t("claim.existingAccount")}</p>}
+                  <p className="mt-1 text-sm text-muted-foreground">{claimOffMarket ? te("admin.claim.offMarket") : t("claim.pending")}</p>
+                  {seller.passwordHash && !claimOffMarket && (
+                    <p className="mt-1 text-xs text-muted-foreground">{t("claim.existingAccount")}</p>
+                  )}
                 </>
               )}
             </div>
@@ -365,7 +370,7 @@ export default async function AdminListingPage({ params, searchParams }: PagePro
                 <a href="#owner">{ti("imported.setOwner")}</a>
               </Button>
             ) : (
-              (!l.ownershipConfirmedAt || ownerCantSignIn) && (
+              (!l.ownershipConfirmedAt || ownerCantSignIn) && !claimOffMarket && (
                 <ClaimLinkButtons
                   listingId={l.id}
                   sellerName={seller.fullName}
