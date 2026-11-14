@@ -14,7 +14,7 @@ export async function KpiStrip({ index }: { index: DistressIndex }) {
   const premium = s.medianDiscount != null && s.medianDiscount < 0;
   const discountValue =
     s.medianDiscount == null ? null : premium ? `\u2066+${formatPct(-s.medianDiscount, 1)}\u2069` : formatPct(s.medianDiscount, 1);
-  // The average in the tile's own convention: under the premium label "+2.0%" is above launch and "\u22121.0%" below it.
+  // The average in the tile's own convention: under the premium label "+2.0%" is above launch and "−1.0%" below it.
   const average = (d: number) => (!premium ? signedPct(d, 1) : d < 0 ? isoPct(`+${formatPct(-d, 1)}`) : signedPct(-d, 1));
 
   const tiles = [
