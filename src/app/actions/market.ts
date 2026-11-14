@@ -598,7 +598,8 @@ export async function requestKyc() {
   if (!user) return { error: (await getT("errors"))("auth.signInAgain") };
   if (user.kycStatus === "not_started") {
     await db.update(users).set({ kycStatus: "pending" }).where(eq(users.id, user.id));
-    await notifyAdmins("kyc.requested.admin", { name: user.fullName, email: user.email }, "/admin/users", { except: [user.id] });
+    // The account itself, wherever it falls in the paged list (/admin/users shows 100 a page).
+    await notifyAdmins("kyc.requested.admin", { name: user.fullName, email: user.email }, `/admin/users?user=${user.id}#user-${user.id}`, { except: [user.id] });
   }
   refresh();
   return { ok: true };
