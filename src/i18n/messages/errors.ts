@@ -61,6 +61,9 @@ export default defineMessages({
     "offer.counterChanged": "The seller's counter-offer is now {amount}. Check it before you answer.",
     "search.defaultName": "My search",
     "search.tooMany": "You already have {max} saved searches. Delete one to save another.",
+    // The profile form: the name our team verified the person's identity (KYC) against.
+    "profile.nameVerified":
+      "Your identity is verified under this name, so it can't be changed here. Message our team: we'll check your documents again and update it.",
 
     "listing.notFound": "Listing not found.",
     "listing.permitRequired": "Add the DLD advertising permit number (Trakheesi) before publishing — RERA requires it on every property advert.",
@@ -222,6 +225,8 @@ export default defineMessages({
     "offer.counterChanged": "أصبح العرض المقابل من البائع ⁨{amount}⁩. راجِعه قبل أن تردّ عليه.",
     "search.defaultName": "بحثي",
     "search.tooMany": "بلغتَ الحد الأقصى لعمليات البحث المحفوظة (⁨{max}⁩). احذف إحداها لحفظ بحث جديد.",
+    "profile.nameVerified":
+      "تم التحقق من هويتك بهذا الاسم، لذا لا يمكن تغييره من هنا. راسل فريقنا وسنراجع مستنداتك مجدداً ونحدّثه.",
 
     "listing.notFound": "الإعلان غير موجود.",
     "listing.permitRequired": "أضف رقم تصريح الإعلان من دائرة الأراضي والأملاك (تراخيصي) قبل النشر، إذ تشترطه مؤسسة التنظيم العقاري على كل إعلان عقاري.",
@@ -372,6 +377,7 @@ export default defineMessages({
     "offer.counterChanged": "卖家的还价现为 {amount}。请先核对，再决定是否接受。",
     "search.defaultName": "我的搜索",
     "search.tooMany": "您已保存了 {max} 个搜索条件。请删除一个后再保存新的。",
+    "profile.nameVerified": "您的身份已按此姓名完成核验，因此无法在此更改。请联系我们的团队，我们会重新核对您的证件并为您更新。",
 
     "listing.notFound": "未找到该房源。",
     "listing.permitRequired": "发布前请填写迪拜土地局广告许可（Trakheesi）编号——RERA 规定每则房产广告都必须标注该编号。",

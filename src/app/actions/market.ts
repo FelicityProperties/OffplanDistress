@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { inquiries, listings, offers, savedSearches, users, watchlist } from "@/db/schema";
@@ -9,7 +9,7 @@ import { getLocale, getT } from "@/i18n/server";
 import type { TFn } from "@/i18n/translator";
 import { LEGAL_UPDATED } from "@/content/legal/brand";
 import { sourceFromForm } from "@/lib/attribution";
-import { audit } from "@/lib/audit";
+import { audit, changes } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
 import { cleanText, formText } from "@/lib/clean-text";
 import { startDeal } from "@/lib/deals";
@@ -569,10 +569,26 @@ export async function updateProfile(_prev: FormState, formData: FormData): Promi
     { error: fallbackErrors(t) },
   );
   if (!parsed.success) return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
-  await db
+  // Once our team has verified a person's identity (KYC), their name is the one it was checked against: the deal file,
+  // the NOC stage and the AML export rely on it, so it isn't changed here (our team checks the documents again, setting
+  // the KYC status back, and then it can be). Spacing alone isn't a change.
+  const sameName = (a: string) => a.trim().replace(/\s+/g, " ") === parsed.data.fullName.replace(/\s+/g, " ");
+  const nameLocked = () => {
+    const message = t("profile.nameVerified");
+    return { error: message, fieldErrors: { fullName: [message] } };
+  };
+  if (user.kycStatus === "verified" && !sameName(user.fullName)) return nameLocked();
+  const values = { fullName: parsed.data.fullName, phone: parsed.data.phone ?? null, intent: parsed.data.intent };
+  const [saved] = await db
     .update(users)
-    .set({ fullName: parsed.data.fullName, phone: parsed.data.phone ?? null, intent: parsed.data.intent })
-    .where(eq(users.id, user.id));
+    .set(values)
+    // …and the same if our team verified the account since it was read.
+    .where(and(eq(users.id, user.id), or(ne(users.kycStatus, "verified"), eq(users.fullName, user.fullName))))
+    .returning({ id: users.id });
+  if (!saved) return nameLocked();
+  // The person's own change of name or phone, in the History of their listings and deals (src/lib/audit.ts).
+  const diff = changes({ fullName: user.fullName, phone: user.phone }, { fullName: values.fullName, phone: values.phone });
+  if (Object.keys(diff).length) await audit({ actorId: user.id, action: "user.profile", entityType: "user", entityId: user.id, diff });
   refresh();
   return { ok: true };
 }

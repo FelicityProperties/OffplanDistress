@@ -275,9 +275,11 @@ platform) links the buyer by their account email; without an account, enter thei
 is created without a password (they set it with "Forgot password"; verify their KYC on Admin → Users). When such a deal
 ends (the unit withdrawn, rejected or back on the market), the buyer linked to it is told, once they can sign in. Correct "Paid
 to the developer to date" in "Manage listing" from the statement of account and the deal's sale value follows. The
-admin KPIs count our share of the fees (after any co-broker's) on the agreed sale value. Every admin action, a seller's claim and every
+admin KPIs count our share of the fees (after any co-broker's) on the agreed sale value. Every admin action, a seller's claim, a
+party's change of name or phone on their profile and every
 document (not photos) opened by someone other than its uploader is logged (actor, before → after, IP; never passwords or tokens)
-in the listing's History panel. The pipeline shows each stage's newest 50 cards (withdrawn included), "Show all" for
+in the listing's History panel. Once a party's KYC is verified, their name can't be changed on their profile (our team
+checks the documents again, setting the KYC status back, first). The pipeline shows each stage's newest 50 cards (withdrawn included), "Show all" for
 the rest and a search by OD-ref or project. Pipeline → "Export all deals (CSV)" opens in Excel, Arabic included. Consent is
 versioned: sign-ups, listings and offers store the Terms version (`LEGAL_UPDATED`) they accepted.
 
