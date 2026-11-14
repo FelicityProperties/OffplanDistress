@@ -705,11 +705,19 @@ export function buildEntry(u, plan, today, rules) {
   // whole half-percents of the SPA price (3,508,888: 10% = 350,889; 4,552,000: 5% = 227,600). The price most rows are a
   // share of wins; with none better, the DLD line's stands.
   if (!ready && op != null) {
+    const near = [op, ...postedPrices(origDld).filter((c) => Math.abs(c - op) <= 25 * ROUNDING_AED)];
     let best = planShares(op, p.instalments);
-    for (const c of postedPrices(origDld)) {
-      if (Math.abs(c - op) > 25 * ROUNDING_AED) continue;
+    for (const c of near.slice(1)) {
       const n = planShares(c, p.instalments);
       if (n > best) [op, best] = [c, n];
+    }
+    // Some sheets work from an "original price" with the purchase's DLD 4% already in it (SPA × 1.04: Volta's 3,466,325
+    // for an SPA price of 3,333,000), and the page's "Original Price + DLD 4%" adds the 4% again. The instalments, whole
+    // half-percents of the real SPA price, show it: a reading ÷ 1.04 that two rows or more are shares of, more than of
+    // any price above, is the SPA price.
+    for (const c of near.map((x) => Math.round(x / 1.04))) {
+      const n = planShares(c, p.instalments);
+      if (n >= 2 && n > best) [op, best] = [c, n];
     }
   }
   if (!op) return { skip: "original price unknown" };
