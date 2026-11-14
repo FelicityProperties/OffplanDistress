@@ -84,7 +84,10 @@ several images continues in `<ref>-2.png`, `<ref>-3.png`; `moreImages` lists the
   the original price + 40), else the page's "Original Price + DLD 4%" ÷ 1.04. Both lines are rounded to the dirham
   (÷ 0.04 turns that into up to AED 50), so the build also tries the prices the page's line can stand for (OP × 1.04,
   or OP × 1.04 + 40) within AED 50 and keeps the one most instalment rows are whole half-percents of (developers bill
-  10%, 1%… of the SPA price: 3,508,888 → 350,889); paid = SPA price − remaining; asking = payment to seller. So write
+  10%, 1%… of the SPA price: 3,508,888 → 350,889); paid = SPA price − remaining; asking = payment to seller. Some
+  sheets work from an "original price" that already holds the purchase's DLD 4% (SPA × 1.04, the page's line adding
+  4% again): when two rows or more are shares of that price ÷ 1.04, and more than of the price itself, the build uses
+  the price ÷ 1.04 (Morocco 1: rows 2%, 1%, 20% of 2,845,000; sheet 2,958,800); say so in the plan's notes. So write
   every row to the dirham exactly as printed: the rows decide the price.
 - Handover: the build takes the page's. Check a new unit's against DLD's register (DXBinteract `get_project_profile`:
   `completion_date` and `progress`); when the page's is **earlier** than the registered completion date, add
