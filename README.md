@@ -272,7 +272,8 @@ the DLD transfer date and the agreed price. A transferred unit stays sold: it ca
 file kept) and shown as transferred again, never put back on the market or into an earlier stage. Deals that were already under offer get their deal file the first time
 it is opened, a gate is checked or the CSV is exported. A deal set to under offer by hand (a buyer found off the
 platform) links the buyer by their account email; without an account, enter their full name (and mobile) there and one
-is created without a password (they set it with "Forgot password"; verify their KYC on Admin → Users). Correct "Paid
+is created without a password (they set it with "Forgot password"; verify their KYC on Admin → Users). When such a deal
+ends (the unit withdrawn, rejected or back on the market), the buyer linked to it is told, once they can sign in. Correct "Paid
 to the developer to date" in "Manage listing" from the statement of account and the deal's sale value follows. The
 admin KPIs count our share of the fees (after any co-broker's) on the agreed sale value. Every admin action, a seller's claim and every
 document (not photos) opened by someone other than its uploader is logged (actor, before → after, IP; never passwords or tokens)
@@ -286,7 +287,9 @@ One accepted offer per unit, enforced in a single database statement, so a doubl
 two. The other bidders keep their offers as backups and are told; if the deal falls through and the unit goes
 live again, the accepted offer is declined and backups are told the unit is available. A unit that is withdrawn,
 rejected or transferred closes its open offers; a seller who withdraws a unit under offer ends the deal (the buyer
-and admins are told; My listings warns as the listing's page does, and offers no Resume on a unit our team paused).
+and admins are told, also on a deal our team set by hand, and the admins' notice says when no buyer could be: none
+linked to it, or one who can't sign in yet; My listings warns as the listing's page does, and offers no Resume on a unit
+our team paused).
 `OFFERS.keepBackups` in `src/lib/config.ts` switches backups off. Every answer is about the offer on the page: if the
 buyer revised it after the page loaded (its amount, or only its financing or message), or the seller's counter changed,
 Accept, Counter or Decline decides nothing and the page shows the offer as it now is. A counter has to be above the

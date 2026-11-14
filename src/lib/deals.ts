@@ -111,7 +111,7 @@ export async function startDeal(listingId: string, offerId: string) {
 /**
  * The deal on the unit is off (it went back on the market, the seller withdrew or our team took it off the market):
  * its file is closed with the reason and kept. With `whileStatus`, only while the unit is still in that status, checked
- * in the same statement.
+ * in the same statement. Returns the files closed, with their accepted offer and buyer (none on a deal set by hand).
  */
 export async function cancelOpenDeals(listingId: string, reason: CancelReason, whileStatus?: string) {
   const now = new Date();
@@ -122,7 +122,7 @@ export async function cancelOpenDeals(listingId: string, reason: CancelReason, w
     .update(deals)
     .set({ cancelledAt: now, cancelReason: reason, updatedAt: now })
     .where(and(eq(deals.listingId, listingId), isNull(deals.cancelledAt), still))
-    .returning({ id: deals.id });
+    .returning({ id: deals.id, offerId: deals.offerId, buyerId: deals.buyerId });
 }
 
 // ——— Stage gates ——————————————————————————————————————————————————————————————————————————————————————————

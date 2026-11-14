@@ -324,13 +324,16 @@ export async function setMyListingStatus(listingId: string, action: "pause" | "r
   await audit({ actorId: user.id, action: "listing.seller_status", entityType: "listing", entityId: listingId, diff: { status: [l.status, next] } });
   // Off the market: buyers with an open offer on it are told it is no longer available. Withdrawing a unit with an
   // agreed deal (under offer, or paused by our team while under offer, which keeps its accepted offer) also ends the
-  // deal: its file is closed, that buyer is told it did not go ahead, and our team hears about it.
+  // deal: its file is closed, that buyer is told it did not go ahead, and our team hears about it. So does a deal our
+  // team set by hand (no accepted offer: the buyer linked to its file is told, if their account can sign in), even
+  // before its file was opened; the admins' notice says when no buyer could be told.
   if (next === "withdrawn") {
     const unit = { id: listingId, projectName: l.projectName };
     await closeOpenOffers(unit, "unavailable");
-    if ((await cancelAcceptedOffers(unit, "withdrawn")) > 0) {
+    const ended = await cancelAcceptedOffers(unit, "withdrawn");
+    if (ended.offers > 0 || ended.deals > 0 || l.status === "under_offer") {
       await notifyAdmins(
-        "deal.withdrawn.admin",
+        ended.buyersTold > 0 ? "deal.withdrawn.admin" : "deal.withdrawn.admin_untold",
         { project: l.projectName, seller: user.fullName, ref: refCode(l.refNo) },
         `/admin/listings/${listingId}`,
         { except: [user.id] },
