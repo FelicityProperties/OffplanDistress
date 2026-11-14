@@ -8,7 +8,7 @@ export const termsOfUse: LegalContent = {
   en: {
     title: "Terms of Use",
     updated: LEGAL_UPDATED,
-    summary: `${OP.site} is operated by ${OP.company}, a Dubai real-estate brokerage. We review listings, match buyers with owners of off-plan units, negotiate between them and handle the developer NOC and the DLD transfer, but we are never a party to the sale. ${
+    summary: `${OP.site} is operated by ${OP.company}, a Dubai real-estate brokerage. We review listings, match buyers with owners of off-plan and ready units, negotiate between them and handle the developer NOC and the DLD transfer, but we are never a party to the sale. ${
       BUYER_PAYS
         ? `Listing is free; the buyer pays our fee of ${RATES.commission} of the sale value plus ${RATES.vat} VAT when the transfer completes; subject to section 8, nothing is payable if it does not.`
         : `The seller pays our fee of ${RATES.commission} of the sale value plus ${RATES.vat} VAT when the transfer completes; subject to section 8, nothing is payable if it does not.`
@@ -28,11 +28,11 @@ export const termsOfUse: LegalContent = {
         heading: "Definitions",
         paragraphs: ["In these Terms:"],
         bullets: [
-          "“Unit” means an off-plan property in Dubai, sold by a Developer under an SPA, that has not yet been handed over.",
-          "“Developer” means the developer that sold the Unit and administers its payment plan; “SPA” means the sale and purchase agreement between the original purchaser and the Developer; and “Oqood” means the Unit’s interim registration with the DLD.",
+          "“Unit” means a property in Dubai sold by a Developer under an SPA, whether still off-plan or already handed over (shown on the Platform as “Ready”).",
+          "“Developer” means the developer that sold the Unit and administers its payment plan; “SPA” means the sale and purchase agreement between the original purchaser and the Developer; and “Oqood” means the Unit’s interim registration with the DLD or, for a Unit already handed over, its title deed.",
           "“Seller” means a User who lists a Unit, and “Buyer” means a User who makes an Offer.",
           "“Equity” means the instalments the Seller has paid to the Developer, and “Agreed Price” means the amount the Buyer agrees to pay the Seller for it.",
-          "“Remaining Instalments” means the unpaid balance of the payment plan, which the Buyer takes over, and “Sale Value” means the Agreed Price plus the Remaining Instalments.",
+          "“Remaining Instalments” means the unpaid balance of the payment plan, if any, which the Buyer takes over (nil for a fully paid Unit), and “Sale Value” means the Agreed Price plus the Remaining Instalments.",
           "“NOC” means the Developer’s no-objection certificate permitting resale or assignment.",
           "“DLD” means the Dubai Land Department, and “RERA” means its Real Estate Regulatory Agency.",
           "“Transfer” means registration of the Unit, or assignment of the SPA, in the Buyer’s name at a DLD trustee office.",
@@ -53,7 +53,7 @@ export const termsOfUse: LegalContent = {
         id: "service",
         heading: "Our service",
         paragraphs: [
-          "The Platform connects owners of off-plan Units who can no longer keep up with a Developer payment plan with Buyers who pay the Seller for the Equity and take over the Remaining Instalments.",
+          "The Platform connects owners of Units who want to sell, many of them because they can no longer keep up with a Developer payment plan, with Buyers who pay the Seller for the Equity and take over any Remaining Instalments.",
           "We act only as a broker and are never a party to the sale or assignment of a Unit. Any contract of sale is made directly between Buyer and Seller, who each remain responsible for performing it.",
           "Only the Developer decides whether to issue an NOC, and it may require a minimum percentage of the price to be paid or overdue instalments and fees to be settled; the DLD registers Transfers under its own rules. We review each Listing, and any documents provided for it, and check Developer eligibility before the Listing goes live (section 9 explains when a Listing is marked Verified), but we cannot guarantee that an NOC will be issued, when it will be issued, or that a Transfer will complete.",
           "The Platform also shows sample listings, which we add to illustrate how the marketplace works. Each is labelled “Sample”, and the unit, prices and payment plan it shows are illustrative and not for sale. A sample listing is not an offer to sell and cannot receive Offers.",
@@ -235,7 +235,7 @@ export const termsOfUse: LegalContent = {
   ar: {
     title: "شروط الاستخدام",
     updated: LEGAL_UPDATED,
-    summary: `تدير منصة ${iso(OP.site)} ${OP.companyAr}، وهي شركة وساطة عقارية في دبي. نراجع الإعلانات، ونربط المشترين بمالكي الوحدات على الخارطة، ونتولى التفاوض بين الطرفين ومتابعة شهادة عدم الممانعة من المطوّر ونقل الملكية لدى دائرة الأراضي والأملاك، دون أن نكون طرفاً في البيع بأي حال. ${
+    summary: `تدير منصة ${iso(OP.site)} ${OP.companyAr}، وهي شركة وساطة عقارية في دبي. نراجع الإعلانات، ونربط المشترين بمالكي الوحدات على الخارطة والوحدات الجاهزة، ونتولى التفاوض بين الطرفين ومتابعة شهادة عدم الممانعة من المطوّر ونقل الملكية لدى دائرة الأراضي والأملاك، دون أن نكون طرفاً في البيع بأي حال. ${
       BUYER_PAYS
         ? `الإدراج مجاني، ويدفع المشتري أتعابنا البالغة ${RATES.commission} من قيمة البيع مضافاً إليها ضريبة القيمة المضافة بنسبة ${RATES.vat} عند إتمام نقل الملكية، ومع مراعاة البند 8، لا تُستحق أي أتعاب إذا لم يكتمل.`
         : `يدفع البائع أتعابنا البالغة ${RATES.commission} من قيمة البيع مضافاً إليها ضريبة القيمة المضافة بنسبة ${RATES.vat} عند إتمام نقل الملكية، ومع مراعاة البند 8، لا تُستحق أي أتعاب إذا لم يكتمل.`
@@ -255,11 +255,11 @@ export const termsOfUse: LegalContent = {
         heading: "التعريفات",
         paragraphs: ["في هذه الشروط، يُقصد بالعبارات الآتية المعاني المبيّنة قرين كلٍّ منها:"],
         bullets: [
-          "«الوحدة»: عقار على الخارطة في دبي باعه المطوّر بموجب اتفاقية بيع وشراء ولم يُسلَّم بعد.",
-          "«المطوّر»: المطوّر الذي باع الوحدة ويدير خطة سدادها، و«اتفاقية البيع والشراء»: الاتفاقية المبرمة بين المشتري الأصلي والمطوّر، و«أوقود»: التسجيل المبدئي للوحدة لدى الدائرة.",
+          "«الوحدة»: عقار في دبي باعه المطوّر بموجب اتفاقية بيع وشراء، سواء أكان لا يزال على الخارطة أم سُلِّم (ويُعرض على المنصة بوصف «جاهز»).",
+          "«المطوّر»: المطوّر الذي باع الوحدة ويدير خطة سدادها، و«اتفاقية البيع والشراء»: الاتفاقية المبرمة بين المشتري الأصلي والمطوّر، و«أوقود»: التسجيل المبدئي للوحدة لدى الدائرة، أو سند ملكيتها إذا كانت الوحدة قد سُلِّمت.",
           "«البائع»: المستخدم الذي يُدرج وحدة، و«المشتري»: المستخدم الذي يقدّم عرضاً.",
           "«الحصة المدفوعة»: الأقساط التي سدّدها البائع للمطوّر، و«الثمن المتفق عليه»: المبلغ الذي يوافق المشتري على دفعه للبائع مقابلها.",
-          "«الأقساط المتبقية»: الرصيد غير المسدَّد من خطة الدفع الذي يتحمّله المشتري، و«قيمة البيع»: الثمن المتفق عليه مضافاً إليه الأقساط المتبقية.",
+          "«الأقساط المتبقية»: الرصيد غير المسدَّد من خطة الدفع، إن وُجد، الذي يتحمّله المشتري (ويكون صفراً إذا كانت الوحدة مدفوعة بالكامل)، و«قيمة البيع»: الثمن المتفق عليه مضافاً إليه الأقساط المتبقية.",
           "«شهادة عدم الممانعة»: الشهادة التي يصدرها المطوّر للسماح بإعادة بيع الوحدة أو التنازل عنها.",
           "«الدائرة»: دائرة الأراضي والأملاك في دبي، و«مؤسسة التنظيم العقاري»: مؤسسة التنظيم العقاري (ريرا) التابعة لها.",
           "«نقل الملكية»: تسجيل الوحدة، أو التنازل عن اتفاقية البيع والشراء، باسم المشتري لدى أحد مكاتب أمناء التسجيل المعتمدين من الدائرة.",
@@ -280,7 +280,7 @@ export const termsOfUse: LegalContent = {
         id: "service",
         heading: "خدماتنا",
         paragraphs: [
-          "تربط المنصة مالكي الوحدات على الخارطة الذين لم يعودوا قادرين على الاستمرار في خطة الدفع لدى المطوّر بمشترين يدفعون للبائع مقابل الحصة المدفوعة ويتحمّلون الأقساط المتبقية.",
+          "تربط المنصة مالكي الوحدات الراغبين في البيع، وكثير منهم لم يعودوا قادرين على الاستمرار في خطة الدفع لدى المطوّر، بمشترين يدفعون للبائع مقابل الحصة المدفوعة ويتحمّلون الأقساط المتبقية إن وُجدت.",
           "نعمل بصفتنا وسيطاً فحسب، ولا نكون بأي حال طرفاً في بيع الوحدة أو التنازل عنها. ويُبرم أي عقد بيع مباشرةً بين المشتري والبائع، ويظل كلٌّ منهما مسؤولاً عن تنفيذه.",
           "يعود قرار إصدار شهادة عدم الممانعة إلى المطوّر وحده، وقد يشترط سداد نسبة دنيا من الثمن أو سداد الأقساط المتأخرة وتسوية الرسوم، وتسجّل الدائرة نقل الملكية وفق أنظمتها. ومع أننا نراجع كل إعلان وما يُقدَّم بشأنه من مستندات، ونتحقق من أهلية الوحدة لدى المطوّر قبل نشر الإعلان (ويبيّن البند 9 متى يُمنح الإعلان علامة «موثّق»)، فلا يمكننا ضمان إصدار الشهادة أو موعد إصدارها أو إتمام نقل الملكية.",
           "وتعرض المنصة كذلك إعلانات توضيحية نضيفها لبيان طريقة عمل السوق، ويحمل كلٌّ منها علامة «توضيحي»، والوحدة والأسعار وخطة الدفع المبيّنة فيه توضيحية وغير معروضة للبيع. ولا يُعدّ الإعلان التوضيحي عرضاً للبيع، ولا يجوز تقديم عروض عليه.",
@@ -462,7 +462,7 @@ export const termsOfUse: LegalContent = {
   zh: {
     title: "使用条款",
     updated: LEGAL_UPDATED,
-    summary: `${OP.site} 由迪拜房地产经纪公司 ${OP.companyZh} 运营。我们审核房源、撮合买家与期房单元的业主、在双方之间进行协商，并办理开发商无异议函（NOC）及迪拜土地局（DLD）过户，但我们在任何情况下均不是买卖的一方。${
+    summary: `${OP.site} 由迪拜房地产经纪公司 ${OP.companyZh} 运营。我们审核房源、撮合买家与期房及现房单元的业主、在双方之间进行协商，并办理开发商无异议函（NOC）及迪拜土地局（DLD）过户，但我们在任何情况下均不是买卖的一方。${
       BUYER_PAYS
         ? `发布房源免费；买家在过户完成时支付我们的服务费，即交易总价的 ${RATES.commission} 另加 ${RATES.vat} 的增值税；除第 8 条另有规定外，过户未完成则无需支付任何费用。`
         : `卖家在过户完成时支付我们的服务费，即交易总价的 ${RATES.commission} 另加 ${RATES.vat} 的增值税；除第 8 条另有规定外，过户未完成则无需支付任何费用。`
@@ -482,11 +482,11 @@ export const termsOfUse: LegalContent = {
         heading: "定义",
         paragraphs: ["在本条款中："],
         bullets: [
-          "“单元”指位于迪拜、由开发商根据买卖协议（SPA）出售且尚未交房的期房物业。",
-          "“开发商”指出售该单元并管理其付款计划的开发商；“买卖协议”（SPA）指原始购买人与开发商之间签订的买卖协议；“Oqood”指该单元在迪拜土地局（DLD）的临时登记（期房登记）。",
+          "“单元”指位于迪拜、由开发商根据买卖协议（SPA）出售的物业，无论仍为期房还是已经交房（本平台上标为“现房”）。",
+          "“开发商”指出售该单元并管理其付款计划的开发商；“买卖协议”（SPA）指原始购买人与开发商之间签订的买卖协议；“Oqood”指该单元在迪拜土地局（DLD）的临时登记（期房登记），已交房的单元则指其产权证书。",
           "“卖家”指挂牌出售单元的用户；“买家”指提出报价的用户。",
           "“已付权益”指卖家已向开发商支付的分期款；“约定价格”指买家为受让该已付权益而同意向卖家支付的金额。",
-          "“剩余分期款”指付款计划中由买家承接的未付余额；“交易总价”指约定价格加上剩余分期款。",
+          "“剩余分期款”指付款计划中由买家承接的未付余额（如有；全款付清的单元则为零）；“交易总价”指约定价格加上剩余分期款。",
           "“无异议函”（NOC）指开发商出具的、允许转售或转让的无异议证明。",
           "“DLD”指迪拜土地局（Dubai Land Department）；“RERA”指其下属的迪拜房地产监管局（Real Estate Regulatory Agency）。",
           "“过户”指在迪拜土地局产权登记受托机构将该单元登记至买家名下，或将买卖协议转让至买家名下。",
@@ -507,7 +507,7 @@ export const termsOfUse: LegalContent = {
         id: "service",
         heading: "我们的服务",
         paragraphs: [
-          "本平台将无法继续履行开发商付款计划的期房单元业主与买家联系起来；买家向卖家支付已付权益的对价，并承接剩余分期款。",
+          "本平台将希望出售单元的业主（其中许多人已无法继续履行开发商付款计划）与买家联系起来；买家向卖家支付已付权益的对价，并承接剩余分期款（如有）。",
           "我们仅以经纪人身份行事，在任何情况下均不是单元买卖或转让的一方。任何买卖合同均直接在买家与卖家之间订立，双方各自对合同的履行负责。",
           "是否出具无异议函（NOC）完全由开发商决定，开发商可能要求已付款达到价格的最低比例，或要求先结清逾期分期款及费用；迪拜土地局（DLD）按其自身规则办理过户登记。我们会在房源上线前审核每个房源及为其提供的所有文件，并核查该单元是否符合开发商的转售条件（第 9 条说明房源在何种情况下标注为“已核实”），但我们无法保证无异议函一定会出具、何时出具，亦无法保证过户一定完成。",
           "本平台还展示示例房源，由我们添加以说明本交易平台的运作方式。每个示例房源均标注为“示例”，其显示的单元、价格和付款计划仅为示意，并非在售。示例房源不构成出售要约，亦不接受报价。",
