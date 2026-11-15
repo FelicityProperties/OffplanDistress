@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "@/components/LocaleLink";
 import { ArrowRight, Calculator, Check, Info, Loader2, MessageCircle, TriangleAlert, X } from "lucide-react";
 import { createSellerLead } from "@/app/actions/leads";
+import { useAmountField } from "@/components/amount-field";
 import { Aed, AedRange } from "@/components/exit/Aed";
 import { quickSalePct } from "@/components/exit/exit-math";
 import { ltr } from "@/components/exit/ltr";
@@ -19,7 +20,7 @@ import { useDir, useLocale, useT } from "@/i18n/client";
 import { readAttribution } from "@/lib/attribution";
 import { BRAND, DEVELOPERS, FEES } from "@/lib/config";
 import { nextQuarters, sellerEstimate, type EstimatePrefill } from "@/lib/estimate";
-import { formatAED, formatNumber, formatPct, formatQuarter } from "@/lib/format";
+import { formatAED, formatPct, formatQuarter } from "@/lib/format";
 import { developerName, searchKey } from "@/lib/place-names";
 import { cn } from "@/lib/utils";
 import { nextFieldOnEnter, revealFirstError, syncEnterKeyHints } from "./form-ux";
@@ -59,54 +60,25 @@ function MoneyInput({
   invalid?: boolean;
   describedBy?: string;
 }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const digitsBeforeCaret = useRef<number | null>(null);
-  const lastKey = useRef<string | null>(null);
-  const text = value == null ? "" : formatNumber(value);
-
-  useLayoutEffect(() => {
-    const el = ref.current;
-    const want = digitsBeforeCaret.current;
-    if (!el || want == null || document.activeElement !== el) return;
-    let pos = 0;
-    for (let seen = 0; pos < text.length && seen < want; pos++) if (/\d/.test(text[pos])) seen++;
-    el.setSelectionRange(pos, pos);
-    digitsBeforeCaret.current = null;
-  }, [text]);
+  // Typed as the offer field types amounts (src/components/amount-field.ts): a statement's "540,000.00" (or
+  // "٥٤٠٬٠٠٠٫٠٠"), typed key by key or pasted, keeps 540,000, not 54,000,000 — the point and fils are kept apart while the
+  // field has focus and never count — and "1.723.000" is 1,723,000.
+  const field = useAmountField(value == null ? "" : String(value), (digits) => onValue(digits ? Number(digits) : null), 10);
 
   return (
     <Input
-      ref={ref}
+      ref={field.ref}
       id={id}
       inputMode="numeric"
       autoComplete="off"
       dir="ltr"
-      value={text}
+      value={field.text}
       placeholder={placeholder}
       aria-invalid={invalid || undefined}
       aria-describedby={describedBy}
-      onKeyDown={(e) => {
-        lastKey.current = e.key;
-      }}
-      onChange={(e) => {
-        // A statement's "540,000.00" keeps 540,000, not 54,000,000.
-        const raw = latinDigits(e.target.value).replace(/[.٫]\d{0,2}$/, "");
-        const caret = Math.min(e.target.selectionStart ?? raw.length, raw.length);
-        let before = raw.slice(0, caret).replace(/\D/g, "").length;
-        let digits = raw.replace(/\D/g, "");
-        // Backspace / Delete on a thousands comma removes the digit next to it.
-        if (digits === text.replace(/\D/g, "") && raw.length < text.length) {
-          if (lastKey.current === "Backspace" && before > 0) {
-            digits = digits.slice(0, before - 1) + digits.slice(before);
-            before -= 1;
-          } else if (lastKey.current === "Delete") {
-            digits = digits.slice(0, before) + digits.slice(before + 1);
-          }
-        }
-        digitsBeforeCaret.current = before;
-        digits = digits.replace(/^0+(?=\d)/, "").slice(0, 10);
-        onValue(digits ? Number(digits) : null);
-      }}
+      onKeyDown={field.onKeyDown}
+      onChange={field.onChange}
+      onBlur={field.onBlur}
       className={cn("tabular rtl:text-end", invalid && "border-destructive/60")}
     />
   );

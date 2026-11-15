@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-14T01:42:25Z",
+ "generatedAt": "2026-11-15T01:39:53Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -1838,7 +1838,8 @@
      "url": "https://distressonly.deals/media/units/333/02c892501985.webp"
     }
    ],
-   "notes": "Posted on DistressStock August 17, 2026: DISTRESS DEAL: 1-BR IN WYNWOOD. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: The handover row prints an expected date in brackets, \"On Handover (30-SEP-2027)\". I set its dueDate to 2027-09-30, but the instalment is due at handover, not on a fixed date. Checks pass: 766018 + 953982 = 1720000, the instalments add up to 953982, the transfer rows add up to 883747, and 883747 + 953982 = 1837729. The DLD fee is 4% of the original price (OP), so it does not match 4% of the unit price. Source: original price + DLD 4% = AED 1,984,284; selling price AED 1,720,000."
+   "notes": "Posted on DistressStock August 17, 2026: DISTRESS DEAL: 1-BR IN WYNWOOD. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: The handover row prints an expected date in brackets, \"On Handover (30-SEP-2027)\". I set its dueDate to 2027-09-30, but the instalment is due at handover, not on a fixed date. Checks pass: 766018 + 953982 = 1720000, the instalments add up to 953982, the transfer rows add up to 883747, and 883747 + 953982 = 1837729. The DLD fee is 4% of the original price (OP), so it does not match 4% of the unit price. Source: original price + DLD 4% = AED 1,984,284; selling price AED 1,720,000.",
+   "removed": "2026-11-15"
   },
   {
    "ref": "JmGyzh",

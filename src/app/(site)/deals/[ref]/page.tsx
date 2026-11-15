@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "@/components/LocaleLink";
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
@@ -67,6 +67,23 @@ async function load(ref: string) {
   const refNo = parseRefCode(ref);
   if (!refNo) return null;
   return getListingByRef(refNo);
+}
+
+/**
+ * The request comes from this advert's own page on this site, in any language: the language switch reloading it in
+ * another one, not a new view. A same-site referrer is the full address (Referrer-Policy strict-origin-when-cross-origin
+ * in next.config.ts); a browser that sends none counts the reload. No cookie is needed (the Cookie Policy lists two).
+ */
+function fromThisAdvert(h: Awaited<ReturnType<typeof headers>>, ref: string) {
+  const from = h.get("referer");
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  if (!from || !host) return false;
+  try {
+    const u = new URL(from);
+    return u.host === host && stripLocale(u.pathname).toLowerCase() === `/deals/${ref}`.toLowerCase();
+  } catch {
+    return false;
+  }
 }
 
 /** "40%" in "40% paid": the whole percentage the "Min. % paid" filter compares (wholePct), so the two agree. */
@@ -145,14 +162,21 @@ export async function generateMetadata({ params }: PageProps<"/deals/[ref]">): P
   // A unit already handed over says so rather than "handover TBC", and one with nothing left to pay the developer isn't
   // offered as a payment plan to take over.
   const ready = isReady({ ...l, planRows: (l.paymentPlan ?? []).length }, dubaiToday());
+  // Arrears as large as the whole balance owed: cleared on transfer day, they leave no plan to take over (as the price
+  // panel, with no "then … per plan" line).
+  const plan = a.remainingAfterTransfer > 0;
   const base = t(
     a.remaining > 0
       ? ready
         ? a.overdue > 0
-          ? "meta.descriptionReadyArrears"
+          ? plan
+            ? "meta.descriptionReadyArrears"
+            : "meta.descriptionReadyArrearsCleared"
           : "meta.descriptionReady"
         : a.overdue > 0
-          ? "meta.descriptionArrears"
+          ? plan
+            ? "meta.descriptionArrears"
+            : "meta.descriptionArrearsCleared"
           : "meta.description"
       : ready
         ? "meta.descriptionReadyPaid"
@@ -207,8 +231,7 @@ export default async function DealDetail({ params }: PageProps<"/deals/[ref]">) 
   // statistics' isBotRequest). Sellers see the count, and the 21-day nudge quotes it.
   // Nor the same advert reloaded in another language by the language switch, which carries the page view over.
   const h = await headers();
-  const carried = (await cookies()).get("od_view_carry")?.value;
-  const languageSwitch = carried != null && decodeURIComponent(carried) === `/deals/${ref}`;
+  const languageSwitch = fromThisAdvert(h, ref);
   if (!isOwner && !isAdmin && !languageSwitch && (h.get(METHOD_HEADER) ?? "GET") === "GET" && !isBotRequest(h)) {
     after(() => db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, l.id)));
   }

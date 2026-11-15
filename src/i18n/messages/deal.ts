@@ -17,6 +17,11 @@ export default defineMessages({
       "{developer}, {community}. {paid} paid, handover {handover}. {upfront} to the seller plus {overdue} of overdue instalments to clear with the developer on transfer day, then take over the payment plan.",
     "meta.descriptionReadyArrears":
       "{developer}, {community}. Ready unit, {paid} paid. {upfront} to the seller plus {overdue} of overdue instalments to clear with the developer on transfer day, then take over the payment plan.",
+    // In arrears for the whole balance owed: clearing them on transfer day leaves no plan to take over.
+    "meta.descriptionArrearsCleared":
+      "{developer}, {community}. {paid} paid, handover {handover}. {upfront} to the seller plus {overdue} of overdue instalments to clear with the developer on transfer day, with nothing left to pay the developer after that.",
+    "meta.descriptionReadyArrearsCleared":
+      "{developer}, {community}. Ready unit, {paid} paid. {upfront} to the seller plus {overdue} of overdue instalments to clear with the developer on transfer day, with nothing left to pay the developer after that.",
     // Added after the description when the developer has charged late fees: they are outside the price and its discount.
     "meta.lateFees":
       "The developer's late fees ({amount} on its statement of {date}, and they can grow while unpaid) are not in the price; who pays them is agreed in the MOU.",
@@ -195,6 +200,10 @@ export default defineMessages({
       "{developer}، {community}. نسبة المدفوع {paid}، والتسليم {handover}. تدفع للبائع {upfront}، إضافةً إلى أقساط متأخرة قدرها {overdue} تُسدَّد للمطوّر يوم نقل الملكية، ثم تتولّى خطة الدفع.",
     "meta.descriptionReadyArrears":
       "{developer}، {community}. وحدة جاهزة، نسبة المدفوع {paid}. تدفع للبائع {upfront}، إضافةً إلى أقساط متأخرة قدرها {overdue} تُسدَّد للمطوّر يوم نقل الملكية، ثم تتولّى خطة الدفع.",
+    "meta.descriptionArrearsCleared":
+      "{developer}، {community}. نسبة المدفوع {paid}، والتسليم {handover}. تدفع للبائع {upfront}، إضافةً إلى أقساط متأخرة قدرها {overdue} تُسدَّد للمطوّر يوم نقل الملكية، ولا يتبقى بعدها أي مبلغ للمطوّر.",
+    "meta.descriptionReadyArrearsCleared":
+      "{developer}، {community}. وحدة جاهزة، نسبة المدفوع {paid}. تدفع للبائع {upfront}، إضافةً إلى أقساط متأخرة قدرها {overdue} تُسدَّد للمطوّر يوم نقل الملكية، ولا يتبقى بعدها أي مبلغ للمطوّر.",
     "meta.lateFees":
       "غرامات التأخير لدى المطوّر ({amount} في كشف حسابه بتاريخ {date}، وقد تزداد ما دامت غير مسدّدة) غير مشمولة في السعر، ويُتفق في مذكرة التفاهم على الطرف الذي يتحمّلها.",
     "meta.lateFeesUndated":
@@ -366,6 +375,10 @@ export default defineMessages({
       "{developer}，{community}。已付 {paid}，交房时间：{handover}。向卖家支付 {upfront}，并在过户当日向开发商结清逾期分期款 {overdue}，之后接手剩余付款计划。",
     "meta.descriptionReadyArrears":
       "{developer}，{community}。现房，已付 {paid}。向卖家支付 {upfront}，并在过户当日向开发商结清逾期分期款 {overdue}，之后接手剩余付款计划。",
+    "meta.descriptionArrearsCleared":
+      "{developer}，{community}。已付 {paid}，交房时间：{handover}。向卖家支付 {upfront}，并在过户当日向开发商结清逾期分期款 {overdue}，此后无需再向开发商付款。",
+    "meta.descriptionReadyArrearsCleared":
+      "{developer}，{community}。现房，已付 {paid}。向卖家支付 {upfront}，并在过户当日向开发商结清逾期分期款 {overdue}，此后无需再向开发商付款。",
     "meta.lateFees": "开发商收取的滞纳金（其 {date} 对账单所列为 {amount}，未付期间可能继续增加）不含在价格内，由哪一方承担在谅解备忘录（MOU）中约定。",
     "meta.lateFeesUndated": "开发商收取的滞纳金（最近一次核实为 {amount}，未付期间可能继续增加）不含在价格内，由哪一方承担在谅解备忘录（MOU）中约定。",
     "meta.descriptionPaid": "{developer}，{community}。已全额付清，交房时间：{handover}。向卖家支付 {upfront}，无需再向开发商付款。",

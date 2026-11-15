@@ -27,6 +27,24 @@ export async function hit(key: string, limit: number, windowMs: number): Promise
   return n <= limit;
 }
 
+/**
+ * Like hit(), but for an allowance (a day's ceiling on spend) rather than a defence: an attempt it refuses isn't
+ * counted, its row deleted again, so the allowance reopens as the attempts it let through age out of the window instead
+ * of staying closed while demand stays above it. Inserting before counting still keeps a parallel burst within the
+ * limit. Returns null when refused, else a function that gives the attempt back (a later check refused the request).
+ */
+export async function take(key: string, limit: number, windowMs: number): Promise<(() => Promise<void>) | null> {
+  const [row] = await db.insert(authAttempts).values({ key }).returning({ id: authAttempts.id });
+  const giveBack = async () => {
+    await db.delete(authAttempts).where(eq(authAttempts.id, row.id));
+  };
+  const n = await attempts(key, windowMs);
+  after(purgeOldAttempts);
+  if (n <= limit) return giveBack;
+  await giveBack();
+  return null;
+}
+
 /** The attempts recorded for `key` within `windowMs` (records nothing itself). */
 export async function attempts(key: string, windowMs: number): Promise<number> {
   const since = new Date(Date.now() - windowMs);

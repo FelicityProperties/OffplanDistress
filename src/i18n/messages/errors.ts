@@ -61,6 +61,9 @@ export default defineMessages({
     "offer.counterChanged": "The seller's counter-offer is now {amount}. Check it before you answer.",
     "search.defaultName": "My search",
     "search.tooMany": "You already have {max} saved searches. Delete one to save another.",
+    // The profile form: the name our team verified the person's identity (KYC) against.
+    "profile.nameVerified":
+      "Your identity is verified under this name, so it can't be changed here. Message our team: we'll check your documents again and update it.",
 
     "listing.notFound": "Listing not found.",
     "listing.permitRequired": "Add the DLD advertising permit number (Trakheesi) before publishing — RERA requires it on every property advert.",
@@ -96,6 +99,9 @@ export default defineMessages({
     "admin.leadNotFound": "That seller lead no longer exists.",
     "admin.leadHasListing": "This seller lead has already been turned into a listing ({ref}). Open that one rather than entering the unit again.",
     "admin.claim.notNeeded": "This listing doesn't need a claim link: ownership is confirmed and its seller can sign in.",
+    // A listing our team rejected or withdrew before its seller confirmed it (claimClosed in src/lib/claim.ts).
+    "admin.claim.offMarket":
+      "This listing was rejected or withdrawn before its seller confirmed it, so its claim link no longer works and no new one can be sent. To go ahead with it, set it back to “Under review” in Manage listing, then send the link.",
     "admin.claim.noEmail": "This seller has no email address yet. Copy the link and send it on WhatsApp.",
     "admin.claim.emailOff": "Email isn't set up yet. Copy the link and send it on WhatsApp.",
     "admin.claim.emailFailed": "The email couldn't be sent. Copy the link and send it on WhatsApp instead.",
@@ -219,6 +225,8 @@ export default defineMessages({
     "offer.counterChanged": "أصبح العرض المقابل من البائع ⁨{amount}⁩. راجِعه قبل أن تردّ عليه.",
     "search.defaultName": "بحثي",
     "search.tooMany": "بلغتَ الحد الأقصى لعمليات البحث المحفوظة (⁨{max}⁩). احذف إحداها لحفظ بحث جديد.",
+    "profile.nameVerified":
+      "تم التحقق من هويتك بهذا الاسم، لذا لا يمكن تغييره من هنا. راسل فريقنا وسنراجع مستنداتك مجدداً ونحدّثه.",
 
     "listing.notFound": "الإعلان غير موجود.",
     "listing.permitRequired": "أضف رقم تصريح الإعلان من دائرة الأراضي والأملاك (تراخيصي) قبل النشر، إذ تشترطه مؤسسة التنظيم العقاري على كل إعلان عقاري.",
@@ -251,6 +259,8 @@ export default defineMessages({
     "admin.leadNotFound": "طلب البائع هذا لم يعد موجوداً.",
     "admin.leadHasListing": "سبق تحويل طلب البائع هذا إلى إعلان (⁨{ref}⁩). افتح ذلك الإعلان بدلاً من إدخال الوحدة مرة أخرى.",
     "admin.claim.notNeeded": "لا يحتاج هذا الإعلان إلى رابط تأكيد، فالملكية مؤكَّدة ويستطيع البائع تسجيل الدخول.",
+    "admin.claim.offMarket":
+      "رُفض هذا الإعلان أو سُحب قبل أن يؤكده البائع، لذا لم يعد رابط التأكيد الخاص به يعمل ولا يمكن إرسال رابط جديد. للمضي فيه، أعِد حالته إلى «قيد المراجعة» في «إدارة الإعلان»، ثم أرسل الرابط.",
     "admin.claim.noEmail": "ليس لدى هذا البائع بريد إلكتروني بعد. انسخ الرابط وأرسله عبر واتساب.",
     "admin.claim.emailOff": "لم تُفعَّل خدمة البريد الإلكتروني بعد. انسخ الرابط وأرسله عبر واتساب.",
     "admin.claim.emailFailed": "تعذّر إرسال البريد الإلكتروني. انسخ الرابط وأرسله عبر واتساب بدلاً من ذلك.",
@@ -367,6 +377,7 @@ export default defineMessages({
     "offer.counterChanged": "卖家的还价现为 {amount}。请先核对，再决定是否接受。",
     "search.defaultName": "我的搜索",
     "search.tooMany": "您已保存了 {max} 个搜索条件。请删除一个后再保存新的。",
+    "profile.nameVerified": "您的身份已按此姓名完成核验，因此无法在此更改。请联系我们的团队，我们会重新核对您的证件并为您更新。",
 
     "listing.notFound": "未找到该房源。",
     "listing.permitRequired": "发布前请填写迪拜土地局广告许可（Trakheesi）编号——RERA 规定每则房产广告都必须标注该编号。",
@@ -397,6 +408,8 @@ export default defineMessages({
     "admin.leadNotFound": "该卖家线索已不存在。",
     "admin.leadHasListing": "该卖家线索已转为房源（{ref}）。请打开该房源，不要重复录入此单元。",
     "admin.claim.notNeeded": "此房源无需确认链接：产权已确认，且卖家可以登录。",
+    "admin.claim.offMarket":
+      "该房源在卖家确认前已被拒绝或撤回，因此其确认链接已失效，也无法发送新链接。如需继续处理，请先在“管理房源”中将状态改回“审核中”，再发送链接。",
     "admin.claim.noEmail": "该卖家尚无邮箱地址。请复制链接并通过 WhatsApp 发送。",
     "admin.claim.emailOff": "邮件功能尚未启用。请复制链接并通过 WhatsApp 发送。",
     "admin.claim.emailFailed": "邮件发送失败。请复制链接并改用 WhatsApp 发送。",

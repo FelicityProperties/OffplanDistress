@@ -1,7 +1,7 @@
 import "server-only";
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { listings, offers } from "@/db/schema";
+import { listings, offers, users } from "@/db/schema";
 import { OFFERS } from "./config";
 import { cancelOpenDeals, type CancelReason } from "./deals";
 import { notify } from "./notify";
@@ -57,17 +57,21 @@ export async function closeOpenOffers(unit: Unit, why: "sold" | "unavailable", e
   }
 }
 
+/** What cancelAcceptedOffers ended: accepted offers declined, deal files closed, and how many buyers it told. */
+export type EndedDeals = { offers: number; deals: number; buyersTold: number };
+
 /**
  * The unit is back on the market, so whatever deal was agreed on it is off: its accepted offer is declined and the
  * buyer told (offer.deal_cancelled). Call it whenever a listing goes live from another status, so a live unit never
  * carries an accepted offer (acceptOffer in src/app/actions/market.ts refuses a second one while one exists), and
- * when a unit under a deal leaves the market (withdrawn or rejected). Returns how many accepted offers it closed.
+ * when a unit under a deal leaves the market (withdrawn or rejected). A deal our team set by hand has no accepted offer:
+ * the buyer linked to its file is told instead (deal.cancelled), if their account can sign in (never later).
  */
 export async function cancelAcceptedOffers(
   unit: Unit,
   whileStatus: "live" | "withdrawn" | "rejected" = "live",
   reason: CancelReason = whileStatus === "live" ? "relisted" : "seller_withdrew",
-) {
+): Promise<EndedDeals> {
   try {
     // Only while the unit is still in that status: if the seller accepted a new offer in the moment since it went live,
     // that offer is the deal now and stays accepted. ("withdrawn": the seller pulled out of the agreed deal, or our team
@@ -75,18 +79,35 @@ export async function cancelAcceptedOffers(
     const stillLive = sql`exists (select 1 from ${listings} where ${listings.id} = ${unit.id} and ${listings.status} = ${whileStatus})`;
     // Its deal file first, kept with the reason (src/lib/deals.ts): until the accepted offer below is declined no new
     // offer can be accepted on the unit, so the file of a deal agreed in the meantime is never the one closed here.
-    await cancelOpenDeals(unit.id, reason, whileStatus);
+    const closed = await cancelOpenDeals(unit.id, reason, whileStatus);
     const cancelled = await db
       .update(offers)
       .set({ status: "declined", updatedAt: new Date() })
       .where(and(eq(offers.listingId, unit.id), eq(offers.status, "accepted"), stillLive))
       .returning({ buyerId: offers.buyerId, amount: offers.amount });
     await tell(unit, cancelled, "offer.deal_cancelled", BUYER_HREF);
-    return cancelled.length;
+    const handSet = closed.flatMap((d) => (d.offerId == null && d.buyerId ? [d.buyerId] : []));
+    const toldHandSet = await tellHandSetBuyers(unit, handSet);
+    return { offers: cancelled.length, deals: closed.length, buyersTold: cancelled.length + toldHandSet };
   } catch (err) {
     console.error(`[offers] closing the accepted offer on ${unit.id} failed`, err);
-    return 0;
+    return { offers: 0, deals: 0, buyersTold: 0 };
   }
+}
+
+/**
+ * The buyers our team linked to a deal set by hand, told it is off. Only an account that can sign in, as for the deal's
+ * other steps (notifyDealStep in src/app/actions/admin.ts): one our team added for the deal has no password yet, and
+ * its email, typed by our team, was never verified. Returns how many were told.
+ */
+async function tellHandSetBuyers(unit: Unit, buyerIds: string[]) {
+  if (!buyerIds.length) return 0;
+  const buyers = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(and(inArray(users.id, buyerIds), isNotNull(users.passwordHash)));
+  const stored = await Promise.all(buyers.map((b) => notify([b.id], "deal.cancelled", { project: unit.projectName }, "/deals")));
+  return stored.filter(Boolean).length;
 }
 
 /**
@@ -94,8 +115,10 @@ export async function cancelAcceptedOffers(
  * the unit is available again and their backup offers are active.
  */
 export async function reopenUnit(unit: Unit, was: string) {
-  const cancelled = await cancelAcceptedOffers(unit);
-  if (cancelled > 0 || (DEAL_STATUSES as readonly string[]).includes(was)) await reopenBackups(unit);
+  const ended = await cancelAcceptedOffers(unit);
+  // A deal file closed now counts too: a deal our team set by hand has no accepted offer, and a unit our team paused
+  // while under it comes back from "paused".
+  if (ended.offers > 0 || ended.deals > 0 || (DEAL_STATUSES as readonly string[]).includes(was)) await reopenBackups(unit);
 }
 
 function openOn(listingId: string, exceptOfferId?: string) {

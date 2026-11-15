@@ -13,11 +13,11 @@ import { sendEmail } from "./email";
 import { hit } from "./throttle";
 
 // The daily deals newsletter's subscriptions (the daily issue itself: src/lib/newsletter-issue.ts). Anyone can leave
-// an address on the site, no account needed; it only gets issues once the link in the confirmation email was opened
-// (double opt-in), and every issue carries a one-click unsubscribe link. One row per address: pending until confirmed,
-// confirmed, or unsubscribed. The row's token is the secret in both links; it is rotated whenever a confirmation is
-// sent again, so an older link stops working. The consent record (when, from which IP, where on the site) stays with
-// the row, as the Privacy Policy says.
+// an address on the site, no account needed; it only gets issues once confirmed on the page the confirmation email
+// links to (double opt-in: its button, not opening the link), and every issue carries a one-click unsubscribe link.
+// One row per address: pending until confirmed, confirmed, or unsubscribed. The row's token is the secret in both
+// links; it is rotated whenever a confirmation is sent again, so an older link stops working. The consent record (when,
+// from which IP, where on the site) stays with the row, as the Privacy Policy says.
 
 export const NEWSLETTER_SOURCES = ["home", "deals", "footer", "newsletter"] as const;
 export type NewsletterSource = (typeof NEWSLETTER_SOURCES)[number];
@@ -162,8 +162,9 @@ async function sendConfirmation(email: string, token: string, locale: Locale) {
 export type ConfirmResult = { status: "confirmed" | "already" | "invalid"; email: string | null };
 
 /**
- * Opening a confirmation link: pending → confirmed. Idempotent: an address already confirmed says so ("already"); an
- * unknown token, one replaced by a newer email, or one whose address has unsubscribed since is "invalid".
+ * The confirmation page's button (confirmSubscriptionAction in src/app/actions/newsletter.ts; opening the link only
+ * shows the page): pending → confirmed. Idempotent: an address already confirmed says so ("already"); an unknown
+ * token, one replaced by a newer email, or one whose address has unsubscribed since is "invalid".
  */
 export async function confirm(token: string): Promise<ConfirmResult> {
   if (!TOKEN_RE.test(token)) return { status: "invalid", email: null };
@@ -278,7 +279,7 @@ export async function adminSubscribers({ q, status, page = 1 }: SubscriberFilter
       .where(where)
       .orderBy(desc(newsletterSubscribers.createdAt), desc(newsletterSubscribers.id))
       .limit(PAGE_SIZE)
-      .offset((Math.max(1, page) - 1) * PAGE_SIZE),
+      .offset((Math.min(1_000_000, Math.max(1, page)) - 1) * PAGE_SIZE), // capped: a page number typed far past the last (20 digits, say) would overflow OFFSET
     db.select({ total: count() }).from(newsletterSubscribers).where(where),
   ]);
   return { rows, total: Number(total) };

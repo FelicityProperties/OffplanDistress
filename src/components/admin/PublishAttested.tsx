@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { Loader2, Megaphone } from "lucide-react";
 import { toast } from "sonner";
-import { adminPublishAttested, adminPublishAttestedListing, type PublishSkipped } from "@/app/actions/admin";
+import { adminPublishAttested, adminPublishAttestedListing, type PublishShown, type PublishSkipped } from "@/app/actions/admin";
 import { PHONE_BUTTON } from "@/components/admin/phone";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,17 +29,19 @@ function CancelButton() {
 /**
  * "Publish all N on Felicity's permits" on the Imported tab of /admin: the account owner's attestation (BULK_ATTESTATION
  * in src/lib/attestation.ts) for every unit of one import still in review under its placeholder owner, then
- * adminPublishAttested. `named`: units of several imports are waiting, so the button says which one it publishes.
+ * adminPublishAttested. `units`: the ones the tab counted, as it shows them (only those are published, and only if
+ * unchanged since). `named`: units of several imports are waiting, so the button says which one it publishes.
  */
-export function PublishAttestedButton({ sourceKey, sourceName, count, named }: { sourceKey: string; sourceName: string; count: number; named: boolean }) {
+export function PublishAttestedButton({ sourceKey, sourceName, units, named }: { sourceKey: string; sourceName: string; units: PublishShown[]; named: boolean }) {
   const ti = useT("intake");
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
   const [pending, start] = useTransition();
   const trigger = useRef<HTMLButtonElement>(null);
+  const count = units.length;
   if (count < 1) return null;
   const skippedLines = (s: PublishSkipped) =>
-    (["hasPermit", "formAExpired", "changed"] as const).filter((k) => s[k] > 0).map((k) => ti(`publish.skipped.${k}`, { n: s[k] }));
+    (["hasPermit", "formAExpired", "changed", "added"] as const).filter((k) => s[k] > 0).map((k) => ti(`publish.skipped.${k}`, { n: s[k] }));
   return (
     <>
       {/* Phones: as wide as the screen, its label wrapping ("Publish all 79 from DistressStock on Felicity's permits"
@@ -81,7 +83,7 @@ export function PublishAttestedButton({ sourceKey, sourceName, count, named }: {
               className="max-lg:h-11"
               onClick={() =>
                 start(async () => {
-                  const res = await adminPublishAttested(sourceKey).catch(() => ({ error: ti("publish.failed") }));
+                  const res = await adminPublishAttested(sourceKey, units).catch(() => ({ error: ti("publish.failed") }));
                   if ("error" in res) {
                     toast.error(res.error);
                     return;
@@ -105,9 +107,10 @@ export function PublishAttestedButton({ sourceKey, sourceName, count, named }: {
 
 /**
  * The same statement for one imported unit, on its own admin page (next to Approve, which can't take a unit still under
- * the placeholder owner): adminPublishAttestedListing. `refCode` names the unit in the dialog.
+ * the placeholder owner): adminPublishAttestedListing. `savedAt` is the listing's updated_at as this page shows it: a
+ * listing changed since isn't published, and the page then shows it as it is now. `refCode` names the unit in the dialog.
  */
-export function PublishAttestedListingButton({ listingId, refCode }: { listingId: string; refCode: string }) {
+export function PublishAttestedListingButton({ listingId, savedAt, refCode }: { listingId: string; savedAt: string; refCode: string }) {
   const ti = useT("intake");
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -150,7 +153,7 @@ export function PublishAttestedListingButton({ listingId, refCode }: { listingId
               className="max-lg:h-11"
               onClick={() =>
                 start(async () => {
-                  const res = await adminPublishAttestedListing(listingId).catch(() => ({ error: ti("publish.failed") }));
+                  const res = await adminPublishAttestedListing(listingId, savedAt).catch(() => ({ error: ti("publish.failed") }));
                   if ("error" in res) {
                     toast.error(res.error);
                     return;
@@ -158,6 +161,7 @@ export function PublishAttestedListingButton({ listingId, refCode }: { listingId
                   setOpen(false);
                   if (res.published > 0) toast.success(ti("publish.one.done"));
                   else if (res.skipped.hasPermit > 0) toast.error(ti("publish.one.hasPermit"));
+                  else if (res.skipped.changed > 0 || res.skipped.added > 0) toast.error(ti("publish.one.stale"));
                   else if (res.skipped.formAExpired > 0) toast.error(ti("publish.one.formAExpired"));
                   else toast.error(ti("publish.one.changed"));
                 })

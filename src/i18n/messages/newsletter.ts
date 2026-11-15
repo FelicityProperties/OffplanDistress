@@ -65,6 +65,10 @@ export default defineMessages({
 
     // /newsletter/confirm
     "meta.confirm.title": "Confirm your subscription",
+    // The page the confirmation email links to: opening it asks first, the button confirms (a scanner's visit doesn't).
+    "confirm.pendingTitle": "Confirm your subscription",
+    "confirm.pendingBody": "Send the daily deals to {email}? Press the button to confirm. If you didn't ask for them, close this page and nothing will be sent.",
+    "confirm.submit": "Confirm my subscription",
     "confirm.doneTitle": "You're in",
     "confirm.doneBody": "{email} will get the daily deals from the next issue on, only on days the inventory changes.",
     "confirm.alreadyTitle": "You're already subscribed",
@@ -273,6 +277,9 @@ export default defineMessages({
     "page.advertiser": "تُرسل الأعداد من {company}، رقم تسجيل المكتب لدى ريرا ⁨{orn}⁩، رقم الوسيط ⁨{brn}⁩.",
 
     "meta.confirm.title": "تأكيد الاشتراك",
+    "confirm.pendingTitle": "تأكيد الاشتراك",
+    "confirm.pendingBody": "هل تريد أن تصل الصفقات اليومية إلى ⁨{email}⁩؟ اضغط الزر للتأكيد. وإن لم تطلبها، فأغلق هذه الصفحة ولن يُرسل إليك شيء.",
+    "confirm.submit": "تأكيد اشتراكي",
     "confirm.doneTitle": "تم تأكيد اشتراكك",
     "confirm.doneBody": "سيصل العدد القادم من الصفقات اليومية إلى ⁨{email}⁩، فقط في الأيام التي يتغيّر فيها المخزون.",
     "confirm.alreadyTitle": "أنت مشترك بالفعل",
@@ -473,6 +480,9 @@ export default defineMessages({
     "page.advertiser": "每期资讯由 {company} 发送，RERA 经纪公司注册号（ORN）{orn}，经纪人注册号（BRN）{brn}。",
 
     "meta.confirm.title": "确认订阅",
+    "confirm.pendingTitle": "确认订阅",
+    "confirm.pendingBody": "是否向 {email} 发送每日资讯？请点击下方按钮确认。如果这不是您本人的申请，请关闭此页面，我们不会发送任何内容。",
+    "confirm.submit": "确认我的订阅",
     "confirm.doneTitle": "订阅成功",
     "confirm.doneBody": "{email} 将从下一期起接收每日资讯，仅在房源有变动的日子发送。",
     "confirm.alreadyTitle": "您已订阅",

@@ -179,7 +179,7 @@ async function signupRule(now: Date): Promise<FollowUpItem[]> {
       since: u.createdAt,
       title: u.name,
       ref: null,
-      href: `/admin/users#user-${u.id}`,
+      href: `/admin/users?user=${u.id}#user-${u.id}`,
       contact: { name: u.name, phone: u.phone, email: realEmail(u.email) },
       nudge: stage
         ? {

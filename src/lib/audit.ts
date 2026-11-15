@@ -95,7 +95,8 @@ export const HISTORY_LIMIT = 200;
 
 /**
  * The History panel of the admin listing page, newest first: events on the listing itself, its deal files, its offers
- * and its documents, and KYC changes of its seller and of its deals' buyers. Admins only (the page checks).
+ * and its documents, and KYC and profile (name, phone) changes of its seller and of its deals' buyers. Admins only (the
+ * page checks).
  */
 const subjects = alias(users, "audit_subject");
 
@@ -113,7 +114,7 @@ export async function listingHistory(listingId: string) {
       actorId: auditEvents.actorId,
       actorName: users.fullName,
       actorRole: users.role,
-      // The person a "user" event is about (whose KYC changed).
+      // The person a "user" event is about (whose KYC or profile changed).
       subjectName: subjects.fullName,
     })
     .from(auditEvents)
@@ -124,7 +125,7 @@ export async function listingHistory(listingId: string) {
         or (${auditEvents.entityType} = 'deal' and ${auditEvents.entityId} in (select d.id::text from deals d where d.listing_id = ${id}))
         or (${auditEvents.entityType} = 'offer' and ${auditEvents.entityId} in (select o.id::text from offers o where o.listing_id = ${id}))
         or (${auditEvents.entityType} = 'file' and ${auditEvents.entityId} in (select f.id::text from files f where f.listing_id = ${id}))
-        or (${auditEvents.entityType} = 'user' and ${auditEvents.action} = 'user.kyc' and ${auditEvents.entityId} in (
+        or (${auditEvents.entityType} = 'user' and ${auditEvents.action} in ('user.kyc', 'user.profile') and ${auditEvents.entityId} in (
               select l.seller_id::text from listings l where l.id = ${id}
               union select d.buyer_id::text from deals d where d.listing_id = ${id} and d.buyer_id is not null))`,
     )

@@ -201,7 +201,12 @@ Publishing stays with the owner's "Publish all N on Felicity's permits" click.
   when they confirm the units are really gone, run `build … --allow-mass-removal`; the file then carries
   `sync.allowMassRemoval` so the production import's own valve lets that build through (the next day's build drops it).
 - **Production valve** (`VALVE TRIPPED` in the deploy log, or the admins' notice): same thing on the server side — the
-  withdrawals were not applied; tell the user, and rebuild with `--allow-mass-removal` only on their word.
+  withdrawals were not applied. The log names each held-back unit (OD code and DistressStock ref; the notice gives the
+  OD codes): check them on the site and tell the user which they are. Only on their word, rebuild with
+  `--allow-mass-removal`: the file then carries `sync.allowMassRemoval` even on a day with nothing newly removed (the
+  build prints `written … 0 removed` and the diff is only that key and `generatedAt`), so ship it like a daily sync,
+  titled `DistressStock sync YYYY-MM-DD: let N held-back removals through`; the next day's build drops the key. Our
+  team can also withdraw the named units by hand.
 - **Fetch stops** (gate stays / 0 units / page failed twice): the site is down, changed, or the password changed. Report
   it; don't retry in a loop, don't guess passwords.
 - **A plan that won't add up** after two careful readings: `legible: false` with a note, and say so in the report.

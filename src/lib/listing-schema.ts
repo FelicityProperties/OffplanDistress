@@ -26,7 +26,19 @@ export function fallbackErrors(t: T): z.core.$ZodErrorMap {
 /** The largest whole number the listing's columns (Postgres integer) hold: more is a typing mistake, not a refused save. */
 const INT4_MAX = 2_147_483_647;
 
-export const money = (t: T) => z.coerce.number().int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX);
+/**
+ * A figure as a form posts it: "" (a field left blank, or one the browser couldn't read as a number, such as
+ * "AED 1,200,000" pasted into a number field), whitespace or null is no figure, where z.coerce.number() would read AED 0.
+ * A required amount then asks for it, an optional one is left out; "0" typed stays 0.
+ */
+const figure = <S extends z.ZodType>(schema: S) =>
+  z.preprocess((v) => (v == null || (typeof v === "string" && v.trim() === "") ? undefined : v), schema);
+
+/** Whole dirhams, as the columns hold them; `missing` is what no figure at all says (else "Enter a number"). */
+const dirhams = (t: T, missing?: string) => z.coerce.number(missing).int(t("field.wholeDirhams")).nonnegative().max(INT4_MAX);
+
+/** A required amount: left blank, it is an error, never AED 0 (an asking price cleared by mistake went live as AED 0). */
+export const money = (t: T) => figure(dirhams(t));
 
 /**
  * The most instalments a listing's payment plan holds: ten years of monthly payments. Developers' post-handover plans
@@ -85,15 +97,17 @@ export const listingSchema = (t: T) =>
       sizeSqft: z.coerce.number(t("field.size")).int(t("field.size")).positive(t("field.size")).max(INT4_MAX, t("field.size")),
       floor: z.string().trim().max(40).optional(),
       view: z.string().trim().max(80).optional(),
-      originalPrice: money(t).positive(t("field.spaPrice")),
-      amountPaid: money(t),
+      originalPrice: figure(dirhams(t, t("field.spaPrice")).positive(t("field.spaPrice"))),
+      // Optional on the sell form and the staff intake: left blank, nothing is paid yet (0), said here rather than left
+      // to coercion. A file's unit without the figure is still refused as missing (src/lib/import-format.ts).
+      amountPaid: z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? 0 : v), money(t)),
       askingPrice: money(t),
       handoverDate: optionalDate(t),
       nextInstalmentDate: optionalDate(t),
       nextInstalmentAmount: z.coerce.number().int().nonnegative().max(INT4_MAX).optional(),
       // The seller's own figure for instalments past due and unpaid (sell form, when they report missed ones). Our team
       // checks it against the statement of account; until then buyers see it as "being checked".
-      overdueAmount: money(t).optional(),
+      overdueAmount: figure(dirhams(t).optional()),
       motivation: z.enum(["urgent", "motivated", "flexible"]),
       description: z.string().trim().max(3000).optional(),
       paymentPlan: z.array(instalment(t)).max(PLAN_MAX_ROWS),

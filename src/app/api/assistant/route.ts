@@ -4,7 +4,7 @@ import { LOCALES } from "@/i18n/config";
 import { ipFrom, isBotRequest } from "@/lib/analytics";
 import { assistantDailyLimit, assistantEnabled, assistantModel, contextNote, runTool, systemPrompt, TOOLS } from "@/lib/assistant";
 import { dubaiToday } from "@/lib/permits";
-import { DAY, hit, MINUTE } from "@/lib/throttle";
+import { DAY, hit, MINUTE, take } from "@/lib/throttle";
 
 // The AI assistant's chat endpoint (src/components/AssistantWidget.tsx). The visitor's conversation comes in as plain
 // text turns; the answer streams back as newline-separated JSON events (AssistantEvent) while the model searches the
@@ -91,14 +91,18 @@ export async function POST(req: Request) {
   const latest = turns.at(-1);
   if (!latest || latest.role !== "user" || body.messages.at(-1)!.content.length > MAX_USER_CHARS) return fail("bad_request", 400);
 
-  // Per visitor: a burst and a day; and a ceiling for everyone together, which caps the day's spend.
+  // Per visitor: a burst and a day; and a ceiling for everyone together, which caps the day's spend. The day's
+  // allowances count only the messages they let through (take): refused ones, counted in the rolling day, would keep
+  // them closed for good while demand stayed above them. The visitor's own limits come first, so a visitor refused by
+  // them uses none of everyone's, and one refused by the ceiling gets their own day's message back.
   const ip = ipFrom(req.headers);
-  if (
-    !(await hit(`assistant:${ip}`, 15, 10 * MINUTE)) ||
-    !(await hit(`assistant-day:${ip}`, 80, DAY)) ||
-    !(await hit("assistant:all", assistantDailyLimit(), DAY))
-  )
+  if (!(await hit(`assistant:${ip}`, 15, 10 * MINUTE))) return fail("busy", 429);
+  const visitorDay = await take(`assistant-day:${ip}`, 80, DAY);
+  if (!visitorDay) return fail("busy", 429);
+  if (!(await take("assistant:all", assistantDailyLimit(), DAY))) {
+    await visitorDay();
     return fail("busy", 429);
+  }
 
   const locale = body.locale;
   // The page goes into the instructions, so only a plain site path (no query, no free text) is taken.

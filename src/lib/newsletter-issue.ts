@@ -215,10 +215,6 @@ export async function composeIssue(now = new Date(), opts: { since?: Date } = {}
     .selectDistinctOn([auditEvents.entityId], {
       listingId: auditEvents.entityId,
       from: sql<number>`round((${priceDiff}->>0)::numeric)::int`,
-      // What was still owed to the developer then, where the same event changed it: a re-split (the asking price down
-      // because more is owed than the seller said, the total unchanged) is no drop.
-      originalFrom: sql<number | null>`round((${auditEvents.diff}->'originalPrice'->>0)::numeric)::int`,
-      paidFrom: sql<number | null>`round((${auditEvents.diff}->'amountPaid'->>0)::numeric)::int`,
     })
     .from(auditEvents)
     .where(
@@ -231,22 +227,26 @@ export async function composeIssue(now = new Date(), opts: { since?: Date } = {}
     )
     .orderBy(auditEvents.entityId, asc(auditEvents.createdAt), asc(auditEvents.id))
     .limit(LIMIT * 5);
-  const firstFrom = new Map<string, { from: number; originalFrom: number | null; paidFrom: number | null }>();
-  for (const e of events) if (!newIds.has(e.listingId) && !firstFrom.has(e.listingId)) firstFrom.set(e.listingId, e);
+  const firstFrom = new Map<string, number>();
+  for (const e of events) if (!newIds.has(e.listingId) && !firstFrom.has(e.listingId)) firstFrom.set(e.listingId, e.from);
   let priceDrops: PriceDrop[] = [];
   if (firstFrom.size) {
-    const rows = (await db
-      .select(dealColumns)
-      .from(listings)
-      .where(and(advert, inArray(listings.id, [...firstFrom.keys()])))) as DealRow[];
-    priceDrops = rows
+    const ids = [...firstFrom.keys()];
+    const [rows, originalThen, paidThen] = await Promise.all([
+      db.select(dealColumns).from(listings).where(and(advert, inArray(listings.id, ids))),
+      fieldAtStart("originalPrice", ids, since, until),
+      fieldAtStart("amountPaid", ids, since, until),
+    ]);
+    priceDrops = (rows as DealRow[])
       .flatMap((r) => {
-        const e = firstFrom.get(r.id)!;
-        const from = e.from;
+        const from = firstFrom.get(r.id)!;
         const to = r.publicPrice ?? r.askingPrice;
-        // Cheaper in all: the asking price plus what is still owed to the developer, then and now.
+        // Cheaper in all: the asking price plus what is still owed to the developer, then and now. What was owed then
+        // comes from the SPA price and the amount paid as they were when the window opened (fieldAtStart), whichever
+        // event changed them: a re-split (the asking price down because more is owed than the seller said, the total
+        // unchanged) or a corrected amount paid, saved apart from the price, is no drop.
         const owedNow = Math.max(r.originalPrice - r.amountPaid, 0);
-        const owedThen = Math.max((e.originalFrom ?? r.originalPrice) - (e.paidFrom ?? r.amountPaid), 0);
+        const owedThen = Math.max((originalThen.get(r.id) ?? r.originalPrice) - (paidThen.get(r.id) ?? r.amountPaid), 0);
         return to + owedNow < from + owedThen ? [{ deal: toDeal(r), from, to }] : [];
       })
       // Biggest cut first, as a share of the old price.
@@ -271,6 +271,31 @@ export async function composeIssue(now = new Date(), opts: { since?: Date } = {}
     );
 
   return { since, until, newListings: newRows.map(toDeal), priceDrops, gone };
+}
+
+/**
+ * The value `field` had when the window opened, per listing among `ids`: the "from" side of its earliest change in the
+ * window, by any action (listing.update, listing.approve, listing.sync_update, listing.sync_restored…). A listing whose
+ * field didn't change in the window isn't in the map: its current value is the one it had then.
+ */
+async function fieldAtStart(field: "originalPrice" | "amountPaid", ids: string[], since: Date, until: Date) {
+  const diff = sql`${auditEvents.diff}->${sql.raw(`'${field}'`)}`;
+  const rows = await db
+    .selectDistinctOn([auditEvents.entityId], {
+      listingId: auditEvents.entityId,
+      from: sql<number>`round((${diff}->>0)::numeric)::int`,
+    })
+    .from(auditEvents)
+    .where(
+      and(
+        eq(auditEvents.entityType, "listing"),
+        inArray(auditEvents.entityId, ids),
+        within(auditEvents.createdAt, since, until),
+        sql`jsonb_typeof(${diff}->0) = 'number'`,
+      ),
+    )
+    .orderBy(auditEvents.entityId, asc(auditEvents.createdAt), asc(auditEvents.id));
+  return new Map(rows.map((r) => [r.listingId, r.from]));
 }
 
 /** The counts an issue's row and the admins' digest carry. */

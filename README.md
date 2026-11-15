@@ -50,10 +50,12 @@ listings carry no permit and say so, invite no viewings or calls, and are `noind
 team") any real listing that was already live without a permit; enter its permit in the admin editor and set it
 live again. A seller who changes the asking price or description of a live listing sends it back to review, so
 the advert never shows a price or text the permit and our team haven't seen; with an accepted offer those two
-fields are fixed. Nor can an admin page opened before a change publish it unseen: Approve, or a save in "Manage
-listing", from a page loaded before the listing last changed (the seller's new price or photo, a build's new photos,
-another admin's save) is refused; Approve then shows the listing as it is now, and the editor keeps what was typed for
-a reloaded page. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each real deal page adds a
+fields are fixed. Nor can an admin page opened before a change publish it unseen: Approve, "Publish on Felicity's
+permits" or a save in "Manage listing", from a page loaded before the listing last changed (the seller's new price or
+photo, a build's new photos or synced figures, another admin's save) is refused; Approve and Publish then show the
+listing as it is now, and the editor keeps what was typed for a reloaded page. "Publish all N" publishes only the N
+units the Imported tab showed, each as it showed it: one changed or added to the import since stays in review, and the
+result says how many. The site-wide `RealEstateAgent` JSON-LD carries the ORN, trade licence and BRN, and each real deal page adds a
 `RealEstateListing` with its price. The emails that list units carry the same details: each deal in the newsletter,
 in a saved-search alert and in a price-drop notice to watchers has its permit line (the deal page's wording),
 followed by our ORN and the broker's BRN.
@@ -94,7 +96,9 @@ link in their language ("Email claim link" when they have an email and email is 
 chat opens with, the one on the seller's account. A mobile typed for a seller found by their email that differs from
 the number on that account (an old one, or a stranger's who registered the seller's email first: neither is verified)
 is refused until staff check with the seller which is theirs. The link works once, for 7
-days, and a new one cancels the old. The seller opens it without logging in, ticks the same ownership / authority /
+days, and a new one cancels the old; while a listing still waiting for its seller is rejected or withdrawn (by our team
+or the build's sync), its link doesn't work and no new one can be sent (back in review, it works again). The seller
+opens it without logging in, ticks the same ownership / authority /
 Terms confirmation as the sell form and chooses an email and password. Until then a staff-created listing can't be
 approved (the Trakheesi permit is still required too); `/admin/users` → "Pending claim" lists those sellers. A listing
 whose ownership our team confirmed without the seller (their signed Form A, or our record of their authority on an
@@ -137,19 +141,22 @@ advert updates the advertised price, and only a cut that makes the deal cheaper 
 still owed to the developer) tells the watchers and counts as a price drop in the newsletter; when the balance owed
 changes, the watchers' saved prices move with it, so a corrected paid amount never shows as a drop; a unit marked `"removed": "YYYY-MM-DD"` (gone from the
 network) is withdrawn as a seller's withdrawal is (open offers closed and their buyers told, `listing.sync_withdrawn` in
-History) and put back when it is listed again (live if it was live and can still be published, else into review); the
-buyers and watchers get these notices in the app and by email, as the app's own (in their language; the price drop
+History) and put back when it is listed again (live if it was live and can still be published, else into review),
+unless its status changed since (our team put it back on the market, even if they or its seller took it off again: it
+stays as they left it); the buyers and watchers get these notices in the app and by email, as the app's own (in their language; the price drop
 with the advert's permit line and our ORN / BRN); new photos are added only to a unit the sync may change: a unit
 with a deal in progress is never touched, only reported, and one sold, rejected or withdrawn by our team is left
 alone; a build that would
 withdraw more than 3 and more than a quarter of a source's listed units withdraws none (the valve, unless the file's
-`sync.allowMassRemoval` is true); one `listing.synced` notice per build gives the admins the counts, the conflicts,
+`sync.allowMassRemoval` is true; the build log and the admins' notice name the units it kept); one `listing.synced` notice per build gives the admins the counts, the conflicts,
 what was left alone and the refs of units that failed, in their language. Their DLD advertising permits can come the
 same way:
 `scripts/partner-stock/<key>-permits.json` (`offplandistress-permits/1`: ref, permit number, expiry, optional Form A
 expiry and verification link) records each permit as the editor would, confirms ownership on our record of the owner's
 written authority (the account owner's statement; the real owner is still entered afterwards from the Owner card) and
-publishes the unit at its asking price — never without a current permit. **Nothing goes public:** each listing is in
+publishes the unit at its asking price — never without a current permit, and only a unit in review never published
+before, in the build that records its permit: one back in review (its owner's new price or text, our team's re-check, a
+unit the sync put back) or whose permit an earlier build recorded waits for our team's Approve. **Nothing goes public:** each listing is in
 review, filed under one placeholder owner per source ("Owner to be added (…)", shown in the admin's language and
 never with its internal address — on the listing, `/admin/offers` and the deal file; no password, never emailed or
 nudged; sign-ups refuse `.invalid` addresses, so nobody can register it first), under "Imported — owner to add" on
@@ -180,7 +187,9 @@ ready unit ("READY…") takes the day it was posted as its handover date, so the
 whose plan is missing, illegible or inconsistent keeps its previous entry and is flagged (exit 2), as does one whose
 page's size, prices or handover can no longer be read as before (the site's wording changed: fix the parser, never the
 figures); a run that would mark more than a quarter of the listed units removed writes nothing (exit 3;
-`--allow-mass-removal`, on the user's word, also sets the file's `sync.allowMassRemoval` for the import's own valve).
+`--allow-mass-removal`, on the user's word, also sets the file's `sync.allowMassRemoval` for the import's own valve
+whenever the file marks any unit removed — so a rebuild with it also lets through removals only the import's valve held
+back, as it counts the units still listed in the database; the next build without it drops the key).
 The site's first gallery image is usually a location map, so `scripts/partner-stock/distressstock-photos.json`
 (`offplandistress-photos/1`: `photos: { "<ref>": [url, …] }`, the building first, at most 4) holds the photo order the
 agent picks from `sheet --raw <dir>`'s contact sheets; the build lists those urls + the page's keyplan under stable file
@@ -201,7 +210,7 @@ under "Owner to be added (Direct sellers)" like a partner network's; the account
 tab and enters the real owner on each. A unit the owner wants kept private for now gets `"hold": "<why>"` in its entry: the next
 deploy pauses it as our team's Pause does (off the site, its offers left open, nobody told; once, so our team can still
 put it back by hand), and deleting the line puts it back where it was (live where Approve would publish it, else in
-review).
+review), unless our team or its seller has changed its status since (then it stays as they left it).
 
 ### Cash at transfer
 
@@ -270,11 +279,17 @@ the DLD transfer date and the agreed price. A transferred unit stays sold: it ca
 file kept) and shown as transferred again, never put back on the market or into an earlier stage. Deals that were already under offer get their deal file the first time
 it is opened, a gate is checked or the CSV is exported. A deal set to under offer by hand (a buyer found off the
 platform) links the buyer by their account email; without an account, enter their full name (and mobile) there and one
-is created without a password (they set it with "Forgot password"; verify their KYC on Admin → Users). Correct "Paid
+is created without a password (they set it with "Forgot password"; verify their KYC on Admin → Users). When such a deal
+ends (the unit withdrawn, rejected or back on the market), the buyer linked to it is told if their account can sign in
+at that moment (one our team added without a password is not, then or later: our team tells them; when the seller
+withdraws, the admins' notice says no buyer could be told); back on the market, its backup bidders are told too, as after
+any deal. Correct "Paid
 to the developer to date" in "Manage listing" from the statement of account and the deal's sale value follows. The
-admin KPIs count our share of the fees (after any co-broker's) on the agreed sale value. Every admin action, a seller's claim and every
+admin KPIs count our share of the fees (after any co-broker's) on the agreed sale value. Every admin action, a seller's claim, a
+party's change of name or phone on their profile and every
 document (not photos) opened by someone other than its uploader is logged (actor, before → after, IP; never passwords or tokens)
-in the listing's History panel. The pipeline shows each stage's newest 50 cards (withdrawn included), "Show all" for
+in the listing's History panel. Once a party's KYC is verified, their name can't be changed on their profile (our team
+checks the documents again, setting the KYC status back, first). The pipeline shows each stage's newest 50 cards (withdrawn included), "Show all" for
 the rest and a search by OD-ref or project. Pipeline → "Export all deals (CSV)" opens in Excel, Arabic included. Consent is
 versioned: sign-ups, listings and offers store the Terms version (`LEGAL_UPDATED`) they accepted.
 
@@ -284,7 +299,9 @@ One accepted offer per unit, enforced in a single database statement, so a doubl
 two. The other bidders keep their offers as backups and are told; if the deal falls through and the unit goes
 live again, the accepted offer is declined and backups are told the unit is available. A unit that is withdrawn,
 rejected or transferred closes its open offers; a seller who withdraws a unit under offer ends the deal (the buyer
-and admins are told; My listings warns as the listing's page does, and offers no Resume on a unit our team paused).
+and admins are told, also on a deal our team set by hand, and the admins' notice says when no buyer could be: none
+linked to it, or one who can't sign in yet; My listings warns as the listing's page does, and offers no Resume on a unit
+our team paused).
 `OFFERS.keepBackups` in `src/lib/config.ts` switches backups off. Every answer is about the offer on the page: if the
 buyer revised it after the page loaded (its amount, or only its financing or message), or the seller's counter changed,
 Accept, Counter or Decline decides nothing and the page shows the offer as it now is. A counter has to be above the
@@ -366,16 +383,18 @@ reaches only the Resend account owner); until then only the owner logins get the
 
 Anyone can leave an email address for the daily deals newsletter, no account needed: the band under the featured
 deals on the home page, the bar under the results on `/deals`, the footer of every page and `/newsletter` (with a
-sample issue). Double opt-in: the address is `pending` until the link in the confirmation email is opened
-(`/newsletter/confirm?t=…`, in the language it was left in); only confirmed addresses get issues. The
-`saved-search-alerts` job sends the issue at 09:00 Dubai, only on days the inventory changed
+sample issue). Double opt-in: the address is `pending` until "Confirm my subscription" is pressed on the page the
+confirmation email links to (`/newsletter/confirm?t=…`, in the language it was left in, with the masked address; opening
+the link alone changes nothing, so a mail gateway scanning links can't subscribe anyone); only confirmed addresses get
+issues. The `saved-search-alerts` job sends the issue at 09:00 Dubai, only on days the inventory changed
 (`src/lib/newsletter-issue.ts`): the adverts that went live, price drops with the old and new price, how many units are
 no longer available, the RERA details every advert carries, and a one-click unsubscribe link: `List-Unsubscribe` /
 `List-Unsubscribe-Post` headers (RFC 8058) naming `POST /api/newsletter/unsubscribe?t=…`, while the footer link opens
 `/newsletter/unsubscribe?t=…`, which shows the masked address and asks first (a GET never unsubscribes). A day with
 no new advert and no price drop sends nothing and doesn't close the window: the next issue that goes out also counts
-the units that left the market on those days. A price drop is measured from the price advertised when the window
-opened, so a unit raised and then cut by less isn't one. Consent is
+the units that left the market on those days. A price drop is measured from the price advertised, and the balance still
+owed to the developer, when the window opened, so a unit raised and then cut by less isn't one, nor one whose cut a
+corrected amount paid (saved apart from it) outweighs. Consent is
 recorded with the row: when, from which IP and where on the site; a signed-in subscriber is linked to their account
 (the Privacy Policy's newsletter bullets — data, consent, retention, emails — describe exactly that record).
 The forms say "check your inbox" whatever the address's state (only a non-address is refused), a filled honeypot is
@@ -488,7 +507,7 @@ and deploy; browsers drop the worker on their next visit.
    - Optional: `ANTHROPIC_API_KEY` turns on the AI assistant, a chat button above the WhatsApp one on every public page
      (`src/lib/assistant.ts`, `src/app/api/assistant/route.ts`). It answers buyers and sellers in English, Arabic or
      Chinese and searches the advertised units with two tools (the /deals search and a deal's details); it never sees
-     sellers' contact details or unadvertised units. `ASSISTANT_MODEL` picks the model (default `claude-opus-5-5`;
+     sellers' contact details or unadvertised units, and says when a unit is under offer (a backup offer only). `ASSISTANT_MODEL` picks the model (default `claude-opus-5-5`;
      `claude-haiku-5-5` costs far less per chat) and `ASSISTANT_DAILY_LIMIT` caps the chat messages a day across all
      visitors (default 300); each visitor also gets 15 messages per 10 minutes and 80 a day. Every answer logs one
      `{"assistant": …}` line with its token use in the Vercel logs.
