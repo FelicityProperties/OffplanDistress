@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-15T01:39:53Z",
+ "generatedAt": "2026-11-16T01:41:33Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -3192,7 +3192,7 @@
     "amountPaid": 1840445,
     "askingPrice": 1559557,
     "handoverDate": "2028-12-31",
-    "nextInstalmentDate": "2026-11-15",
+    "nextInstalmentDate": "2027-05-18",
     "nextInstalmentAmount": 368089,
     "paymentPlan": [
      {
@@ -3241,7 +3241,7 @@
      "url": "https://distressonly.deals/media/units/260/d6de46138ee3.webp"
     }
    ],
-   "notes": "Posted on DistressStock June 05, 2026: DISTRESS DEAL: 2-BR IN MARINA VIEWS - TOWER 3. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,828,124; selling price AED 3,400,000."
+   "notes": "Posted on DistressStock June 05, 2026: DISTRESS DEAL: 2-BR IN MARINA VIEWS - TOWER 3. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,828,124; selling price AED 3,400,000. 1 instalment(s) in the posted plan fall before today (15-NOV-2026): confirm whether they were paid."
   },
   {
    "ref": "SlA4Fo",
@@ -3594,6 +3594,60 @@
     }
    ],
    "notes": "Posted on DistressStock September 22, 2026: DISTRESS DEAL: 1-BR+STORAGE IN BLUEWATERS BAY - BUILDING 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,390,400; selling price AED 3,160,000."
+  },
+  {
+   "ref": "Va1oHO",
+   "url": "https://distressonly.deals/u/Va1oHO",
+   "posted": "2026-11-14",
+   "listing": {
+    "projectName": "Sobha One - Tower B",
+    "developer": "Sobha",
+    "developerOther": null,
+    "community": "Other",
+    "communityOther": "Ras Al Khor",
+    "unitType": "4br",
+    "sizeSqft": 3075,
+    "floor": "PODIUM",
+    "view": "Golf, Ras Al Khor",
+    "originalPrice": 7381368,
+    "amountPaid": 2952547,
+    "askingPrice": 1971179,
+    "handoverDate": "2027-04-30",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 4428821
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "Va1oHO-5c26e37e.webp",
+     "url": "https://distressonly.deals/media/units/443/d996bbf396af.webp"
+    },
+    {
+     "filename": "Va1oHO-29cc1c5b.webp",
+     "url": "https://distressonly.deals/media/units/443/1314511cf63a.webp"
+    },
+    {
+     "filename": "Va1oHO-89092498.webp",
+     "url": "https://distressonly.deals/media/units/443/8d773b777ee9.webp"
+    },
+    {
+     "filename": "Va1oHO-2937c200.webp",
+     "url": "https://distressonly.deals/media/units/443/5adb97819ef1.webp"
+    },
+    {
+     "filename": "Va1oHO-k0.webp",
+     "url": "https://distressonly.deals/media/units/443/58a1fa257e24.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 14, 2026: DISTRESS DEAL: 4-BR+MAID'S IN SOBHA ONE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 7,676,623; selling price AED 6,400,000."
   },
   {
    "ref": "VwEj0J",
