@@ -1979,6 +1979,28 @@
    "totalCosts": 3362050,
    "notes": "All checks pass. The plan has only an On Handover instalment."
   },
+  "Va1oHO": {
+   "image": "https://distressonly.deals/media/units/443/279e2402f4ed.webp",
+   "transcribedAt": "2026-11-16",
+   "legible": true,
+   "unitPrice": 6400000,
+   "paymentToSeller": 1971179,
+   "dldFee": 295295,
+   "trusteeFee": 5250,
+   "commission": 134400,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 4428821
+    }
+   ],
+   "totalOnTransfer": 2406124,
+   "totalRemaining": 4428821,
+   "totalCosts": 6834945,
+   "notes": "All checks pass: 1,971,179 + 4,428,821 = 6,400,000; one instalment, On Handover 4,428,821 (60% of an SPA price of about 7,381,368; no date printed); transfer rows sum to 2,406,124; 2,406,124 + 4,428,821 = 6,834,945."
+  },
   "VwEj0J": {
    "image": "https://distressonly.deals/media/units/49/b5c199351509.webp",
    "transcribedAt": "2026-10-27",
