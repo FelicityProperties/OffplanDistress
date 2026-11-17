@@ -628,21 +628,44 @@ function size(fields) {
   return null;
 }
 
+/**
+ * A bulk deal of houses posted with one house's figures ("Plot" and "BUA", no "Size", and a "Bedrooms" for each, as
+ * "Bulk Deal - 6 Townhouses" is): its built-up area is each unit's, so the lot's is that times the count. An apartment
+ * lot's "Size" is the lot's total already (24 apartments, 29,371 sq ft).
+ */
+function sizeIsEach(u) {
+  const f = u.fields;
+  return isBulk(u) && !pyStrip(f.Size) && !!pyStrip(f.BUA) && bulkCount(u) >= 2;
+}
+
 function description(u) {
   const f = u.fields;
   const feats = FEATURE_KEYS.filter((k) => ["✔", "✓"].includes(pyStrip(f[k])));
   const parts = [];
+  const each = sizeIsEach(u);
   if (isBulk(u)) {
     // The lot as a whole: how many units, the mix as posted ("1-BR (4), 2-BR (4), 3-BR (1)"), the total size.
     const n = bulkCount(u);
-    const mix = (u.extras ?? []).map(pyStrip).find((x) => /\(\d+\)/.test(x));
-    const total = pyStrip(f.Size ?? f.BUA);
-    parts.push(
-      `Bulk deal: ${n ? `${n} units` : "several units"} sold together${mix ? ` (${mix})` : ""}${total ? `, ${total} in total` : ""}. The price, size and payment plan are for the whole lot.`,
-    );
+    if (each) {
+      // One house's figures, posted for each of them: the kind, each one's area and plot, and the lot's total.
+      const type = pyStrip(f.Type);
+      const kind = /villa/i.test(type) ? "villas" : /townhouse/i.test(type) ? "townhouses" : "units";
+      const beds = pyStrip(f.Bedrooms);
+      const plot = pyStrip(f.Plot);
+      parts.push(
+        `Bulk deal: ${n} ${beds ? `${beds} ` : ""}${kind} sold together, each ${pyStrip(f.BUA)} built-up${plot ? ` on a ${plot} plot` : ""}, ${(size(f) * n).toLocaleString("en-US")} sq.ft in total. The price, size and payment plan are for the whole lot.`,
+      );
+    } else {
+      const mix = (u.extras ?? []).map(pyStrip).find((x) => /\(\d+\)/.test(x));
+      const total = pyStrip(f.Size ?? f.BUA);
+      parts.push(
+        `Bulk deal: ${n ? `${n} units` : "several units"} sold together${mix ? ` (${mix})` : ""}${total ? `, ${total} in total` : ""}. The price, size and payment plan are for the whole lot.`,
+      );
+    }
   }
   if (feats.length) parts.push(`Features: ${feats.join(", ")}.`);
-  if (f.Plot) parts.push(`Plot: ${f.Plot}.${f.BUA ? ` Built-up area: ${f.BUA}.` : ""}`);
+  // A lot's plot and area are in its first sentence, for each house.
+  if (f.Plot && !each) parts.push(`Plot: ${f.Plot}.${f.BUA ? ` Built-up area: ${f.BUA}.` : ""}`);
   if (f["Rented for"]) parts.push(`Currently rented for ${f["Rented for"]} a year.`);
   return cut(parts.join(" "), 3000);
 }
@@ -667,7 +690,8 @@ export function buildEntry(u, plan, today, rules) {
   const p = { ...plan, totalRemaining: remainingOf(plan) };
   const ut = isBulk(u) ? "bulk" : unitType(f);
   if (!ut) return { skip: `unit type not recognised (${f.Type ?? "—"}, ${f.Bedrooms ?? "—"})` };
-  const sz = size(f);
+  // A lot of houses posted with one house's area: the lot's size is that times the count (sizeIsEach).
+  const sz = sizeIsEach(u) ? size(f) * bulkCount(u) : size(f);
   if (!sz) return { skip: "no size" };
   // The page's wording drifting (a changed label, "AED 3.6M", square metres, "Q2-2028") must not change a listed unit's
   // figures: a line that is there but can't be read as it was yesterday keeps the previous entry, or leaves a new unit out.

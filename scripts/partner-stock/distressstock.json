@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-16T01:41:33Z",
+ "generatedAt": "2026-11-17T01:42:46Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -1303,7 +1303,8 @@
      "url": "https://distressonly.deals/media/units/394/fc5d3aff74f4.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 06, 2026: DISTRESS DEAL: 1-BR IN OCEAN POINT - TOWER 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 1,868,764; selling price AED 1,536,000."
+   "notes": "Posted on DistressStock October 06, 2026: DISTRESS DEAL: 1-BR IN OCEAN POINT - TOWER 2. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 1,868,764; selling price AED 1,536,000.",
+   "removed": "2026-11-17"
   },
   {
    "ref": "AfwDd8",
@@ -2050,7 +2051,8 @@
      "url": "https://distressonly.deals/media/units/367/1dc20f40b7fd.webp"
     }
    ],
-   "notes": "Posted on DistressStock September 14, 2026: DISTRESS DEAL: 2-BR IN AARK RESIDENCE. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 1,372,800; selling price AED 1,350,000. Ready property (handover done)."
+   "notes": "Posted on DistressStock September 14, 2026: DISTRESS DEAL: 2-BR IN AARK RESIDENCE. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 1,372,800; selling price AED 1,350,000. Ready property (handover done).",
+   "removed": "2026-11-17"
   },
   {
    "ref": "L6MsVJ",
@@ -2215,7 +2217,7 @@
     "view": "Backside",
     "originalPrice": 2868350,
     "amountPaid": 1434175,
-    "askingPrice": 1035825,
+    "askingPrice": 1015825,
     "handoverDate": "2028-12-31",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -2266,7 +2268,7 @@
      "url": "https://distressonly.deals/media/units/414/990268df9701.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 21, 2026: DISTRESS DEAL: 2-BR IN PIER POINT 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 2,500,000 (payment to seller 1,065,825 -> 1,035,825; commission 52,500 -> 51,870); DLD fee and plan unchanged (undated construction-percentage milestones; DLD fee implies original price 2,868,350). All checks pass. Source: original price + DLD 4% = AED 2,983,084; selling price AED 2,470,000."
+   "notes": "Posted on DistressStock October 21, 2026: DISTRESS DEAL: 2-BR IN PIER POINT 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 2,470,000 to 2,450,000 (payment to seller 1,035,825 -> 1,015,825; commission 51,870 -> 51,450); DLD fee and plan unchanged (undated construction-percentage milestones). All checks pass: 1,015,825 + 1,434,175 = 2,450,000; transfer rows sum to 1,187,299; 1,187,299 + 1,434,175 = 2,621,474. Source: original price + DLD 4% = AED 2,983,084; selling price AED 2,450,000."
   },
   {
    "ref": "Nf34Mu",
@@ -3244,6 +3246,67 @@
    "notes": "Posted on DistressStock June 05, 2026: DISTRESS DEAL: 2-BR IN MARINA VIEWS - TOWER 3. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,828,124; selling price AED 3,400,000. 1 instalment(s) in the posted plan fall before today (15-NOV-2026): confirm whether they were paid."
   },
   {
+   "ref": "ScXZIR",
+   "url": "https://distressonly.deals/u/ScXZIR",
+   "posted": "2026-11-11",
+   "listing": {
+    "projectName": "Morocco 1",
+    "developer": "DAMAC",
+    "developerOther": null,
+    "community": "Damac Lagoons",
+    "communityOther": null,
+    "unitType": "bulk",
+    "sizeSqft": 13710,
+    "lotUnits": 6,
+    "floor": "G+1",
+    "view": null,
+    "originalPrice": 17088000,
+    "amountPaid": 13157760,
+    "askingPrice": 12869760,
+    "handoverDate": "2027-03-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "80% Construction",
+      "dueDate": null,
+      "amount": 341760
+     },
+     {
+      "label": "90% Construction",
+      "dueDate": null,
+      "amount": 170880
+     },
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 3417600
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Bulk deal: 6 4-BR townhouses sold together, each 2,285 sq.ft built-up on a 1,550 sq.ft plot, 13,710 sq.ft in total. The price, size and payment plan are for the whole lot. Features: Balcony, Parking."
+   },
+   "photos": [
+    {
+     "filename": "ScXZIR-c1423b62.webp",
+     "url": "https://distressonly.deals/media/units/439/4c75f45b4bbb.webp"
+    },
+    {
+     "filename": "ScXZIR-f259e1f4.webp",
+     "url": "https://distressonly.deals/media/units/439/489bf9e75de8.webp"
+    },
+    {
+     "filename": "ScXZIR-58ae88bf.webp",
+     "url": "https://distressonly.deals/media/units/439/47bb275971a0.webp"
+    },
+    {
+     "filename": "ScXZIR-27d91ca3.webp",
+     "url": "https://distressonly.deals/media/units/439/c6d5e505acf4.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 11, 2026: DISTRESS DEAL: 4-BR IN BULK DEAL - 6 TOWNHOUSES IN MOROCCO 1. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Bulk deal of 6 townhouses; the figures are for the whole lot. SPA price AED 17,088,000 for the 6: the instalments are 2%, 1% and 20% of it. The sheet works from 17,771,520 = 17,088,000 x 1.04 (the purchase DLD 4% counted into the price): its DLD line and the page's Original Price + DLD 4% (18,482,381) overstate the original price, and the posted 9.1% discount with them. All checks pass: 12,869,760 + 3,930,240 = 16,800,000; 341,760 + 170,880 + 3,417,600 = 3,930,240; transfer rows sum to 13,938,711; 13,938,711 + 3,930,240 = 17,868,951. The 80% and 90% construction milestones carry no date. Source: original price + DLD 4% = AED 18,482,381; selling price AED 16,800,000."
+  },
+  {
    "ref": "SlA4Fo",
    "url": "https://distressonly.deals/u/SlA4Fo",
    "posted": "2026-10-29",
@@ -3539,7 +3602,8 @@
      "url": "https://distressonly.deals/media/units/337/a28c1535fa4b.webp"
     }
    ],
-   "notes": "Posted on DistressStock August 19, 2026: DISTRESS DEAL: 5-BR IN THE WILDS - RAVENNA. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 17,160,000; selling price AED 16,500,000."
+   "notes": "Posted on DistressStock August 19, 2026: DISTRESS DEAL: 5-BR IN THE WILDS - RAVENNA. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 17,160,000; selling price AED 16,500,000.",
+   "removed": "2026-11-17"
   },
   {
    "ref": "VMjI7I",
@@ -4244,7 +4308,8 @@
      "url": "https://distressonly.deals/media/units/438/27f354091a00.webp"
     }
    ],
-   "notes": "Posted on DistressStock November 11, 2026: DISTRESS DEAL: 5-BR IN ADDRESS VILLAS HILLCREST. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Ready and vacant villa, fully paid: no payment plan and no 'Total Remaining' row printed (0). DLD line labelled '4% + 40 AED', on the selling price (812,040 = 4% of 20,300,000 + 40); the original price comes from the page's 'Original Price + DLD 4%' (AED 23,054,870). Trustee fee 4,200 and a title deed fee of 580. All checks pass. Source: original price + DLD 4% = AED 23,054,870; selling price AED 20,300,000. Ready property (handover done)."
+   "notes": "Posted on DistressStock November 11, 2026: DISTRESS DEAL: 5-BR IN ADDRESS VILLAS HILLCREST. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Ready and vacant villa, fully paid: no payment plan and no 'Total Remaining' row printed (0). DLD line labelled '4% + 40 AED', on the selling price (812,040 = 4% of 20,300,000 + 40); the original price comes from the page's 'Original Price + DLD 4%' (AED 23,054,870). Trustee fee 4,200 and a title deed fee of 580. All checks pass. Source: original price + DLD 4% = AED 23,054,870; selling price AED 20,300,000. Ready property (handover done).",
+   "removed": "2026-11-17"
   },
   {
    "ref": "dafYpQ",
