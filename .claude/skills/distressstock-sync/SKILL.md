@@ -134,7 +134,8 @@ written); **1** a problem with the inputs (message says). The owner's standing r
 out**. A bulk deal (several units sold together) is listed as one listing of unit type `bulk`: its size is the lot's
 total, `lotUnits` its number of units (from the title or type; the cost estimates count a DLD transfer and an NOC per
 unit), its description gives the count and the mix as posted, and its gallery has no keyplan (that shows one of its
-units). Bulk deals stay off the project pages and the Distress Index, which count single units. Units are excluded for good only when they are shops or
+units). A lot of houses posted with one house's figures ("Plot" and "BUA", no "Size", as "Bulk Deal - 6 Townhouses" is)
+gets that BUA times the count as its size, and its description says each house's area and plot. Bulk deals stay off the project pages and the Distress Index, which count single units. Units are excluded for good only when they are shops or
 outside Dubai (a unit outside Dubai can't carry a Trakheesi permit); name them in the report.
 A unit is *skipped* (previous entry kept, a new one left out) when its page can't be read as before — size not in sq ft,
 a price line or the handover the parser can't read: the site's wording changed, so the parser needs updating; never

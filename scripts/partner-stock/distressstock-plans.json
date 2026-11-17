@@ -1131,14 +1131,14 @@
    "notes": "Checks pass: 2666000 + 834000 = 3500000, the one instalment equals the total remaining, the transfer rows add up to 2911590, and 2911590 + 834000 = 3745590. There is no On Handover row: the only payment plan row is 31-DEC-2026."
   },
   "NRDFPA": {
-   "image": "https://distressonly.deals/media/units/414/6aa181ae3558.webp",
-   "transcribedAt": "2026-11-13",
+   "image": "https://distressonly.deals/media/units/414/4720f3c672f5.webp",
+   "transcribedAt": "2026-11-17",
    "legible": true,
-   "unitPrice": 2470000,
-   "paymentToSeller": 1035825,
+   "unitPrice": 2450000,
+   "paymentToSeller": 1015825,
    "dldFee": 114774,
    "trusteeFee": 5250,
-   "commission": 51870,
+   "commission": 51450,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -1162,10 +1162,10 @@
      "amount": 573670
     }
    ],
-   "totalOnTransfer": 1207719,
+   "totalOnTransfer": 1187299,
    "totalRemaining": 1434175,
-   "totalCosts": 2641894,
-   "notes": "Re-posted image: price cut from 2,500,000 (payment to seller 1,065,825 -> 1,035,825; commission 52,500 -> 51,870); DLD fee and plan unchanged (undated construction-percentage milestones; DLD fee implies original price 2,868,350). All checks pass."
+   "totalCosts": 2621474,
+   "notes": "Re-posted image: price cut from 2,470,000 to 2,450,000 (payment to seller 1,035,825 -> 1,015,825; commission 51,870 -> 51,450); DLD fee and plan unchanged (undated construction-percentage milestones). All checks pass: 1,015,825 + 1,434,175 = 2,450,000; transfer rows sum to 1,187,299; 1,187,299 + 1,434,175 = 2,621,474."
   },
   "Nf34Mu": {
    "image": "https://distressonly.deals/media/units/386/57737279f1eb.webp",
@@ -1788,6 +1788,38 @@
    "totalRemaining": 1840443,
    "totalCosts": 3623926,
    "notes": "All checks pass: seller + remaining = unit price; instalments sum to total remaining; on-transfer lines sum to total on transfer; total costs = on transfer + remaining. Handover dueDate taken from the date printed in parentheses."
+  },
+  "ScXZIR": {
+   "image": "https://distressonly.deals/media/units/439/db6c88f9d5b2.webp",
+   "transcribedAt": "2026-11-17",
+   "legible": true,
+   "unitPrice": 16800000,
+   "paymentToSeller": 12869760,
+   "dldFee": 710901,
+   "trusteeFee": 5250,
+   "commission": 352800,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "80% Construction",
+     "dueDate": null,
+     "amount": 341760
+    },
+    {
+     "label": "90% Construction",
+     "dueDate": null,
+     "amount": 170880
+    },
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 3417600
+    }
+   ],
+   "totalOnTransfer": 13938711,
+   "totalRemaining": 3930240,
+   "totalCosts": 17868951,
+   "notes": "Bulk deal of 6 townhouses; the figures are for the whole lot. SPA price AED 17,088,000 for the 6: the instalments are 2%, 1% and 20% of it. The sheet works from 17,771,520 = 17,088,000 x 1.04 (the purchase DLD 4% counted into the price): its DLD line and the page's Original Price + DLD 4% (18,482,381) overstate the original price, and the posted 9.1% discount with them. All checks pass: 12,869,760 + 3,930,240 = 16,800,000; 341,760 + 170,880 + 3,417,600 = 3,930,240; transfer rows sum to 13,938,711; 13,938,711 + 3,930,240 = 17,868,951. The 80% and 90% construction milestones carry no date."
   },
   "SlA4Fo": {
    "image": "https://distressonly.deals/media/units/425/7df3481e73e8.webp",
