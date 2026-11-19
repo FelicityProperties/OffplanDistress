@@ -3901,6 +3901,218 @@
    "totalRemaining": 0,
    "totalCosts": 1267880,
    "notes": "The image adds up. It has no Payment Plan section and no Total Remaining row, so totalRemaining is null (in effect 0). This is a ready or fully paid unit: payment to seller equals the unit price. 1190000 + 47640 + 5250 + 24990 = 1267880, which matches both totals. There is no Title Deed Fee row and the trustee fee is 5250. The first reading wrongly listed the standard commission row in otherRows; it is removed here."
+  },
+  "zo8T0B": {
+   "image": "https://distressonly.deals/media/units/445/5a1ba63a5b11.webp",
+   "transcribedAt": "2026-11-19",
+   "legible": true,
+   "unitPrice": 2670000,
+   "paymentToSeller": 775260,
+   "dldFee": 109882,
+   "trusteeFee": 5250,
+   "commission": 56070,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "23-DEC-2026",
+     "dueDate": "2026-12-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-JAN-2027",
+     "dueDate": "2027-01-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-FEB-2027",
+     "dueDate": "2027-02-23",
+     "amount": 82380
+    },
+    {
+     "label": "23-MAR-2027",
+     "dueDate": "2027-03-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-APR-2027",
+     "dueDate": "2027-04-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-MAY-2027",
+     "dueDate": "2027-05-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-JUN-2027",
+     "dueDate": "2027-06-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-JUL-2027",
+     "dueDate": "2027-07-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-AUG-2027",
+     "dueDate": "2027-08-23",
+     "amount": 82380
+    },
+    {
+     "label": "23-SEP-2027",
+     "dueDate": "2027-09-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-OCT-2027",
+     "dueDate": "2027-10-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-NOV-2027",
+     "dueDate": "2027-11-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-DEC-2027",
+     "dueDate": "2027-12-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-JAN-2028",
+     "dueDate": "2028-01-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-FEB-2028",
+     "dueDate": "2028-02-23",
+     "amount": 82380
+    },
+    {
+     "label": "23-MAR-2028",
+     "dueDate": "2028-03-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-APR-2028",
+     "dueDate": "2028-04-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-MAY-2028",
+     "dueDate": "2028-05-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-JUN-2028",
+     "dueDate": "2028-06-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-JUL-2028",
+     "dueDate": "2028-07-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-AUG-2028",
+     "dueDate": "2028-08-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-SEP-2028",
+     "dueDate": "2028-09-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-OCT-2028",
+     "dueDate": "2028-10-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-NOV-2028",
+     "dueDate": "2028-11-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-DEC-2028",
+     "dueDate": "2028-12-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-JAN-2029",
+     "dueDate": "2029-01-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-FEB-2029",
+     "dueDate": "2029-02-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-MAR-2029",
+     "dueDate": "2029-03-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-APR-2029",
+     "dueDate": "2029-04-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-MAY-2029",
+     "dueDate": "2029-05-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-JUN-2029",
+     "dueDate": "2029-06-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-JUL-2029",
+     "dueDate": "2029-07-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-AUG-2029",
+     "dueDate": "2029-08-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-SEP-2029",
+     "dueDate": "2029-09-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-OCT-2029",
+     "dueDate": "2029-10-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-NOV-2029",
+     "dueDate": "2029-11-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-DEC-2029",
+     "dueDate": "2029-12-23",
+     "amount": 27460
+    },
+    {
+     "label": "23-JAN-2030",
+     "dueDate": "2030-01-23",
+     "amount": 27460
+    },
+    {
+     "label": "On Completion",
+     "dueDate": null,
+     "amount": 686500
+    }
+   ],
+   "totalOnTransfer": 946462,
+   "totalRemaining": 1894740,
+   "totalCosts": 2841202,
+   "notes": "Plan over two images: 1% a month (27,460) from 23-DEC-2026 to 23-JAN-2030 with 3% (82,380) in Feb 2027, Aug 2027 and Feb 2028, then 25% (686,500) on completion: shares of an original price of 2,746,000, which the page's Original Price + DLD 4% also gives (2,855,880 = 2,746,000 x 1.04 + 40); the DLD line (109,882) is 2 more than 4% + 40 of it (109,880). Handover June 2030 matches DLD's register (Damac Islands 2 - Cuba: completion 30 Jun 2030, 18% built). All checks pass."
   }
  }
 }
