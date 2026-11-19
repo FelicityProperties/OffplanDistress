@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-18T01:45:29Z",
+ "generatedAt": "2026-11-19T01:41:12Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -3805,7 +3805,7 @@
     "communityOther": "Bluewaters Island",
     "unitType": "2br",
     "sizeSqft": 1670,
-    "floor": "5-17",
+    "floor": "5-13",
     "view": "Sea",
     "originalPrice": 5459000,
     "amountPaid": 4391014,
@@ -6366,7 +6366,7 @@
     "originalPrice": 18968675,
     "amountPaid": 9819961,
     "askingPrice": 6051286,
-    "handoverDate": "2027-05-31",
+    "handoverDate": "2028-03-31",
     "nextInstalmentDate": "2028-03-31",
     "nextInstalmentAmount": 9148714,
     "paymentPlan": [
@@ -6631,6 +6631,250 @@
     }
    ],
    "notes": "Posted on DistressStock August 18, 2026: HOT LOT: 2-BR IN LUM1NAR 3. Figures are as posted — check the current statement of account with the listing broker before approval."
+  },
+  {
+   "ref": "zo8T0B",
+   "url": "https://distressonly.deals/u/zo8T0B",
+   "posted": "2026-11-18",
+   "listing": {
+    "projectName": "Cuba",
+    "developer": "DAMAC",
+    "developerOther": null,
+    "community": "Other",
+    "communityOther": "DAMAC Islands 2",
+    "unitType": "townhouse",
+    "sizeSqft": 2185,
+    "floor": "G+1",
+    "view": null,
+    "originalPrice": 2746000,
+    "amountPaid": 851260,
+    "askingPrice": 775260,
+    "handoverDate": "2030-06-30",
+    "nextInstalmentDate": "2026-12-23",
+    "nextInstalmentAmount": 27460,
+    "paymentPlan": [
+     {
+      "label": "23-DEC-2026",
+      "dueDate": "2026-12-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-JAN-2027",
+      "dueDate": "2027-01-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-FEB-2027",
+      "dueDate": "2027-02-23",
+      "amount": 82380
+     },
+     {
+      "label": "23-MAR-2027",
+      "dueDate": "2027-03-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-APR-2027",
+      "dueDate": "2027-04-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-MAY-2027",
+      "dueDate": "2027-05-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-JUN-2027",
+      "dueDate": "2027-06-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-JUL-2027",
+      "dueDate": "2027-07-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-AUG-2027",
+      "dueDate": "2027-08-23",
+      "amount": 82380
+     },
+     {
+      "label": "23-SEP-2027",
+      "dueDate": "2027-09-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-OCT-2027",
+      "dueDate": "2027-10-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-NOV-2027",
+      "dueDate": "2027-11-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-DEC-2027",
+      "dueDate": "2027-12-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-JAN-2028",
+      "dueDate": "2028-01-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-FEB-2028",
+      "dueDate": "2028-02-23",
+      "amount": 82380
+     },
+     {
+      "label": "23-MAR-2028",
+      "dueDate": "2028-03-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-APR-2028",
+      "dueDate": "2028-04-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-MAY-2028",
+      "dueDate": "2028-05-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-JUN-2028",
+      "dueDate": "2028-06-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-JUL-2028",
+      "dueDate": "2028-07-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-AUG-2028",
+      "dueDate": "2028-08-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-SEP-2028",
+      "dueDate": "2028-09-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-OCT-2028",
+      "dueDate": "2028-10-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-NOV-2028",
+      "dueDate": "2028-11-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-DEC-2028",
+      "dueDate": "2028-12-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-JAN-2029",
+      "dueDate": "2029-01-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-FEB-2029",
+      "dueDate": "2029-02-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-MAR-2029",
+      "dueDate": "2029-03-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-APR-2029",
+      "dueDate": "2029-04-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-MAY-2029",
+      "dueDate": "2029-05-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-JUN-2029",
+      "dueDate": "2029-06-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-JUL-2029",
+      "dueDate": "2029-07-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-AUG-2029",
+      "dueDate": "2029-08-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-SEP-2029",
+      "dueDate": "2029-09-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-OCT-2029",
+      "dueDate": "2029-10-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-NOV-2029",
+      "dueDate": "2029-11-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-DEC-2029",
+      "dueDate": "2029-12-23",
+      "amount": 27460
+     },
+     {
+      "label": "23-JAN-2030",
+      "dueDate": "2030-01-23",
+      "amount": 27460
+     },
+     {
+      "label": "On Completion",
+      "dueDate": null,
+      "amount": 686500
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony, Parking. Plot: 1,550 sq.ft. Built-up area: 2,185 sq.ft."
+   },
+   "photos": [
+    {
+     "filename": "zo8T0B-7dbdd130.webp",
+     "url": "https://distressonly.deals/media/units/445/8f606cb51751.webp"
+    },
+    {
+     "filename": "zo8T0B-3b95f1c6.webp",
+     "url": "https://distressonly.deals/media/units/445/89182f4efcef.webp"
+    },
+    {
+     "filename": "zo8T0B-433e8be8.webp",
+     "url": "https://distressonly.deals/media/units/445/39c21b8f2a4f.webp"
+    },
+    {
+     "filename": "zo8T0B-775a7854.webp",
+     "url": "https://distressonly.deals/media/units/445/6574eecfff6a.webp"
+    },
+    {
+     "filename": "zo8T0B-k0.webp",
+     "url": "https://distressonly.deals/media/units/445/dd9351a4d3fc.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 18, 2026: DISTRESS DEAL: 4-BR IN CUBA. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Plan over two images: 1% a month (27,460) from 23-DEC-2026 to 23-JAN-2030 with 3% (82,380) in Feb 2027, Aug 2027 and Feb 2028, then 25% (686,500) on completion: shares of an original price of 2,746,000, which the page's Original Price + DLD 4% also gives (2,855,880 = 2,746,000 x 1.04 + 40); the DLD line (109,882) is 2 more than 4% + 40 of it (109,880). Handover June 2030 matches DLD's register (Damac Islands 2 - Cuba: completion 30 Jun 2030, 18% built). All checks pass. Source: original price + DLD 4% = AED 2,855,880; selling price AED 2,670,000."
   }
  ]
 }
