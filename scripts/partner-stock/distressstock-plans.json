@@ -1873,6 +1873,28 @@
    "totalCosts": 2424370,
    "notes": "All checks pass. Sold at the original price (DLD fee implies original price 2 280 000 = unit price; the page's 'Original Price + DLD 4%' AED 2,277,421 is lower than that and looks like the broker's misprint); undated construction-percentage milestones."
   },
+  "SyYa3s": {
+   "image": "https://distressonly.deals/media/units/449/1fe4e7aeb6e7.webp",
+   "transcribedAt": "2026-11-23",
+   "legible": true,
+   "unitPrice": 1310000,
+   "paymentToSeller": 726824,
+   "dldFee": 58358,
+   "trusteeFee": 5250,
+   "commission": 27510,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "On Completion",
+     "dueDate": null,
+     "amount": 583176
+    }
+   ],
+   "totalOnTransfer": 817942,
+   "totalRemaining": 583176,
+   "totalCosts": 1401118,
+   "notes": "40% (583,176) left to pay on completion, of an original price of 1,457,939: the page's Original Price + DLD 4% (1,516,257 / 1.04), and the DLD line 58,358 is 4% of it + 40. DLD's register gives no completion date for Sobha One Tower B (86% built); the page's Q4 2026 stands. All checks pass."
+  },
   "TZlf8T": {
    "image": "https://distressonly.deals/media/units/282/4ea8a1b6704e.webp",
    "transcribedAt": "2026-10-27",
@@ -2473,6 +2495,24 @@
    "totalRemaining": 1356540,
    "totalCosts": 4769180,
    "notes": "Re-posted image: price cut from 4,500,000 (payment to seller 3,143,460 → 3,133,460; commission 94,500 → 94,290). The DLD line is labelled '4% + 40 AED' and moved with the price (180,040 → 179,640): it is 4% of the selling price, not the original, and the page gives no original price. All checks pass."
+  },
+  "dzVUpE": {
+   "image": "https://distressonly.deals/media/units/450/c3bc486f85bf.webp",
+   "transcribedAt": "2026-11-23",
+   "legible": true,
+   "unitPrice": 950000,
+   "paymentToSeller": 950000,
+   "dldFee": 46079,
+   "trusteeFee": 5250,
+   "commission": 19950,
+   "otherOnTransfer": [],
+   "instalments": [],
+   "totalOnTransfer": 1021279,
+   "totalRemaining": 0,
+   "totalCosts": 1021279,
+   "handoverDate": "2028-03-30",
+   "handoverNote": "DLD registers Essenlife Residence for completion on 30 Mar 2028, 7% built in Nov 2026; the page says Q4 2027.",
+   "notes": "No payment plan section and payment to seller = unit price: the unit is fully paid, nothing left to the developer. The DLD line (46,079 - 40) / 4% gives an original price of about 1,150,976, as the page's Original Price + DLD 4% (1,197,015 / 1.04) does. All checks pass."
   },
   "eBxh4J": {
    "image": "https://distressonly.deals/media/units/427/a7c7be2746bd.webp",
