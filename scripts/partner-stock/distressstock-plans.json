@@ -1873,6 +1873,28 @@
    "totalCosts": 2424370,
    "notes": "All checks pass. Sold at the original price (DLD fee implies original price 2 280 000 = unit price; the page's 'Original Price + DLD 4%' AED 2,277,421 is lower than that and looks like the broker's misprint); undated construction-percentage milestones."
   },
+  "SyYa3s": {
+   "image": "https://distressonly.deals/media/units/449/1fe4e7aeb6e7.webp",
+   "transcribedAt": "2026-11-23",
+   "legible": true,
+   "unitPrice": 1310000,
+   "paymentToSeller": 726824,
+   "dldFee": 58358,
+   "trusteeFee": 5250,
+   "commission": 27510,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "On Completion",
+     "dueDate": null,
+     "amount": 583176
+    }
+   ],
+   "totalOnTransfer": 817942,
+   "totalRemaining": 583176,
+   "totalCosts": 1401118,
+   "notes": "40% (583,176) left to pay on completion, of an original price of 1,457,939: the page's Original Price + DLD 4% (1,516,257 / 1.04), and the DLD line 58,358 is 4% of it + 40. DLD's register gives no completion date for Sobha One Tower B (86% built); the page's Q4 2026 stands. All checks pass."
+  },
   "TZlf8T": {
    "image": "https://distressonly.deals/media/units/282/4ea8a1b6704e.webp",
    "transcribedAt": "2026-10-27",
