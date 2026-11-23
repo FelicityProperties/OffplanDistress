@@ -184,6 +184,8 @@ const COM_MAP = {
   "dubailand residence complex": "Dubai Land Residence Complex",
   "dubai land residences complex": "Dubai Land Residence Complex",
   jvt: "Jumeirah Village Triangle",
+  // DLD: Essenlife Residence ("JVT District 3" on the site) is registered in Al Barsha South Fifth, which is JVT.
+  "jvt district 3": "Jumeirah Village Triangle",
   jvc: "Jumeirah Village Circle",
   jlt: "Jumeirah Lake Towers",
   "damac hills": "DAMAC Hills",

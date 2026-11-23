@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-21T01:42:52Z",
+ "generatedAt": "2026-11-23T01:41:10Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -3393,6 +3393,60 @@
    "removed": "2026-11-11"
   },
   {
+   "ref": "SyYa3s",
+   "url": "https://distressonly.deals/u/SyYa3s",
+   "posted": "2026-11-20",
+   "listing": {
+    "projectName": "Sobha One - Tower B",
+    "developer": "Sobha",
+    "developerOther": null,
+    "community": "Other",
+    "communityOther": "Ras Al Khor",
+    "unitType": "1br",
+    "sizeSqft": 681,
+    "floor": "40-45",
+    "view": "Ras Al Khor",
+    "originalPrice": 1457939,
+    "amountPaid": 874763,
+    "askingPrice": 726824,
+    "handoverDate": "2026-12-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "On Completion",
+      "dueDate": null,
+      "amount": 583176
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "SyYa3s-218b7008.webp",
+     "url": "https://distressonly.deals/media/units/449/c3120276a1f2.webp"
+    },
+    {
+     "filename": "SyYa3s-9b1d1380.webp",
+     "url": "https://distressonly.deals/media/units/449/72496f3beff2.webp"
+    },
+    {
+     "filename": "SyYa3s-7893d73f.webp",
+     "url": "https://distressonly.deals/media/units/449/6b7221834ca8.webp"
+    },
+    {
+     "filename": "SyYa3s-bce59bf3.webp",
+     "url": "https://distressonly.deals/media/units/449/261403a595fb.webp"
+    },
+    {
+     "filename": "SyYa3s-k0.webp",
+     "url": "https://distressonly.deals/media/units/449/eb89dbbbab41.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 20, 2026: DISTRESS DEAL: 1-BR+STUDY IN SOBHA ONE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: 40% (583,176) left to pay on completion, of an original price of 1,457,939: the page's Original Price + DLD 4% (1,516,257 / 1.04), and the DLD line 58,358 is 4% of it + 40. DLD's register gives no completion date for Sobha One Tower B (86% built); the page's Q4 2026 stands. All checks pass. Source: original price + DLD 4% = AED 1,516,257; selling price AED 1,310,000."
+  },
+  {
    "ref": "TZlf8T",
    "url": "https://distressonly.deals/u/TZlf8T",
    "posted": "2026-06-26",
@@ -4533,7 +4587,8 @@
      "url": "https://distressonly.deals/media/units/396/7e020756c5e5.webp"
     }
    ],
-   "notes": "Posted on DistressStock October 06, 2026: DISTRESS DEAL: BULK DEAL - 9 APARTMENTS IN BAYVIEW - TOWER 1. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 58,416,792; selling price AED 47,000,000. Handover: the page says Q2 2027; the listing shows 2028-07-31 (DLD registers Bayview Tower 1 for completion on 31 Jul 2028, 63% built in Nov 2026; another listing in this tower (PF6lLt, a 4-BR) says 2028)."
+   "notes": "Posted on DistressStock October 06, 2026: DISTRESS DEAL: BULK DEAL - 9 APARTMENTS IN BAYVIEW - TOWER 1. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 58,416,792; selling price AED 47,000,000. Handover: the page says Q2 2027; the listing shows 2028-07-31 (DLD registers Bayview Tower 1 for completion on 31 Jul 2028, 63% built in Nov 2026; another listing in this tower (PF6lLt, a 4-BR) says 2028).",
+   "removed": "2026-11-23"
   },
   {
    "ref": "dwK9fK",
@@ -4642,6 +4697,54 @@
     }
    ],
    "notes": "Posted on DistressStock September 22, 2026: HOT LOT: 3-BR IN NAYA 1. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 4,500,000 (payment to seller 3,143,460 → 3,133,460; commission 94,500 → 94,290). The DLD line is labelled '4% + 40 AED' and moved with the price (180,040 → 179,640): it is 4% of the selling price, not the original, and the page gives no original price. All checks pass."
+  },
+  {
+   "ref": "dzVUpE",
+   "url": "https://distressonly.deals/u/dzVUpE",
+   "posted": "2026-11-22",
+   "listing": {
+    "projectName": "Essenlife",
+    "developer": "Other",
+    "developerOther": "Object One",
+    "community": "Jumeirah Village Triangle",
+    "communityOther": null,
+    "unitType": "1br",
+    "sizeSqft": 823,
+    "floor": "9-15",
+    "view": "Jvt Villas",
+    "originalPrice": 1150976,
+    "amountPaid": 1150976,
+    "askingPrice": 950000,
+    "handoverDate": "2028-03-30",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "dzVUpE-034dc372.webp",
+     "url": "https://distressonly.deals/media/units/450/79ab650230ab.webp"
+    },
+    {
+     "filename": "dzVUpE-5f926753.webp",
+     "url": "https://distressonly.deals/media/units/450/039b20a30115.webp"
+    },
+    {
+     "filename": "dzVUpE-021e20b2.webp",
+     "url": "https://distressonly.deals/media/units/450/bcbf56aeb1c8.webp"
+    },
+    {
+     "filename": "dzVUpE-f3fb5d52.webp",
+     "url": "https://distressonly.deals/media/units/450/454b2863a118.webp"
+    },
+    {
+     "filename": "dzVUpE-k0.webp",
+     "url": "https://distressonly.deals/media/units/450/040a06658da0.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 22, 2026: DISTRESS DEAL: 1-BR IN ESSENLIFE. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: No payment plan section and payment to seller = unit price: the unit is fully paid, nothing left to the developer. The DLD line (46,079 - 40) / 4% gives an original price of about 1,150,976, as the page's Original Price + DLD 4% (1,197,015 / 1.04) does. All checks pass. Source: original price + DLD 4% = AED 1,197,015; selling price AED 950,000. Handover: the page says Q4 2027; the listing shows 2028-03-30 (DLD registers Essenlife Residence for completion on 30 Mar 2028, 7% built in Nov 2026; the page says Q4 2027.)."
   },
   {
    "ref": "eBxh4J",
