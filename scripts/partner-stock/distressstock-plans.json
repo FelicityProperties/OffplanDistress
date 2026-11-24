@@ -4001,6 +4001,33 @@
    "totalCosts": 1267880,
    "notes": "The image adds up. It has no Payment Plan section and no Total Remaining row, so totalRemaining is null (in effect 0). This is a ready or fully paid unit: payment to seller equals the unit price. 1190000 + 47640 + 5250 + 24990 = 1267880, which matches both totals. There is no Title Deed Fee row and the trustee fee is 5250. The first reading wrongly listed the standard commission row in otherRows; it is removed here."
   },
+  "zYovUp": {
+   "image": "https://distressonly.deals/media/units/451/92a93833928b.webp",
+   "transcribedAt": "2026-11-24",
+   "legible": true,
+   "unitPrice": 1070000,
+   "paymentToSeller": 688348,
+   "dldFee": 50927,
+   "trusteeFee": 5250,
+   "commission": 22470,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "16-DEC-2026",
+     "dueDate": "2026-12-16",
+     "amount": 127217
+    },
+    {
+     "label": "On Completion",
+     "dueDate": null,
+     "amount": 254435
+    }
+   ],
+   "totalOnTransfer": 766995,
+   "totalRemaining": 381652,
+   "totalCosts": 1148647,
+   "notes": "10% (127,217) on 16-DEC-2026 and 20% (254,435) on completion, of an original price of about 1,272,175: the DLD line (50,927 - 40) / 4%, and the page's Original Price + DLD 4% (1,323,060 / 1.04 = 1,272,173). Handover Q4 2027 on the page; DLD's register shows 30 Jun 2027 for 350 Riverside Crescent (58% built), so the page's later date stands. All checks pass."
+  },
   "zo8T0B": {
    "image": "https://distressonly.deals/media/units/445/5a1ba63a5b11.webp",
    "transcribedAt": "2026-11-19",
