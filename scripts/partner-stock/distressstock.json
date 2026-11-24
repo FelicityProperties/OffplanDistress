@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-23T01:41:10Z",
+ "generatedAt": "2026-11-24T01:40:31Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -6863,6 +6863,65 @@
     }
    ],
    "notes": "Posted on DistressStock August 18, 2026: HOT LOT: 2-BR IN LUM1NAR 3. Figures are as posted — check the current statement of account with the listing broker before approval."
+  },
+  {
+   "ref": "zYovUp",
+   "url": "https://distressonly.deals/u/zYovUp",
+   "posted": "2026-11-23",
+   "listing": {
+    "projectName": "350 Riverside Crescent",
+    "developer": "Sobha",
+    "developerOther": null,
+    "community": "Other",
+    "communityOther": "Sobha Hartland II",
+    "unitType": "1br",
+    "sizeSqft": 527,
+    "floor": "10-15",
+    "view": "Hartland Waterfront",
+    "originalPrice": 1272175,
+    "amountPaid": 890523,
+    "askingPrice": 688348,
+    "handoverDate": "2027-12-31",
+    "nextInstalmentDate": "2026-12-16",
+    "nextInstalmentAmount": 127217,
+    "paymentPlan": [
+     {
+      "label": "16-DEC-2026",
+      "dueDate": "2026-12-16",
+      "amount": 127217
+     },
+     {
+      "label": "On Completion",
+      "dueDate": null,
+      "amount": 254435
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "zYovUp-403d4253.webp",
+     "url": "https://distressonly.deals/media/units/451/c0bc361838c7.webp"
+    },
+    {
+     "filename": "zYovUp-cca731ae.webp",
+     "url": "https://distressonly.deals/media/units/451/6d399abdd294.webp"
+    },
+    {
+     "filename": "zYovUp-38d867d0.webp",
+     "url": "https://distressonly.deals/media/units/451/e888f4e71d56.webp"
+    },
+    {
+     "filename": "zYovUp-660fad29.webp",
+     "url": "https://distressonly.deals/media/units/451/59bd27790d70.webp"
+    },
+    {
+     "filename": "zYovUp-k0.webp",
+     "url": "https://distressonly.deals/media/units/451/e6262eae626e.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 23, 2026: DISTRESS DEAL: 1-BR IN 350 RIVERSIDE CRESCENT. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: 10% (127,217) on 16-DEC-2026 and 20% (254,435) on completion, of an original price of about 1,272,175: the DLD line (50,927 - 40) / 4%, and the page's Original Price + DLD 4% (1,323,060 / 1.04 = 1,272,173). Handover Q4 2027 on the page; DLD's register shows 30 Jun 2027 for 350 Riverside Crescent (58% built), so the page's later date stands. All checks pass. Source: original price + DLD 4% = AED 1,323,060; selling price AED 1,070,000."
   },
   {
    "ref": "zo8T0B",
