@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-24T01:40:31Z",
+ "generatedAt": "2026-11-25T01:40:59Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -808,6 +808,60 @@
     }
    ],
    "notes": "Posted on DistressStock November 09, 2026: DISTRESS DEAL: 3-BR IN SAFA TWO. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 4,050,840; selling price AED 3,670,000."
+  },
+  {
+   "ref": "5he5Bc",
+   "url": "https://distressonly.deals/u/5he5Bc",
+   "posted": "2026-11-24",
+   "listing": {
+    "projectName": "Canal Heights 2",
+    "developer": "DAMAC",
+    "developerOther": null,
+    "community": "Business Bay",
+    "communityOther": null,
+    "unitType": "2br",
+    "sizeSqft": 1346,
+    "floor": "20-25",
+    "view": "Canal Peninsula",
+    "originalPrice": 3683520,
+    "amountPaid": 1473408,
+    "askingPrice": 1178248,
+    "handoverDate": "2027-09-30",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 2210112
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony, Parking."
+   },
+   "photos": [
+    {
+     "filename": "5he5Bc-36fff364.webp",
+     "url": "https://distressonly.deals/media/units/453/fafef4a27b0c.webp"
+    },
+    {
+     "filename": "5he5Bc-2a74b752.webp",
+     "url": "https://distressonly.deals/media/units/453/efe3aa50a411.webp"
+    },
+    {
+     "filename": "5he5Bc-2949d5cc.webp",
+     "url": "https://distressonly.deals/media/units/453/db9c960b3ca7.webp"
+    },
+    {
+     "filename": "5he5Bc-1abb03a6.webp",
+     "url": "https://distressonly.deals/media/units/453/1126b347a996.webp"
+    },
+    {
+     "filename": "5he5Bc-k0.webp",
+     "url": "https://distressonly.deals/media/units/453/9198514681d7.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 24, 2026: DISTRESS DEAL: 2-BR IN CANAL HEIGHTS 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: The whole remaining 60% (2,210,112) is put on handover, of an original price of 3,683,520 (the page's Original Price + DLD 4% 3,830,901 = 3,683,520 x 1.04 + 40; the DLD line 147,381 is 4% of it + 40). The transfer rows add up to 1,402,035, one dirham over the printed total (VAT rounding). Handover Q3 2027 on the page; DLD's register shows 31 Mar 2027 for Canal Heights 2 (36% built), so the page's later date stands. All checks pass. Source: original price + DLD 4% = AED 3,830,901; selling price AED 3,388,360."
   },
   {
    "ref": "6FDbrU",

@@ -444,6 +444,28 @@
    "totalCosts": 3908162,
    "notes": "All checks pass. Original price 3,895,050 from the DLD line (4% + 40); the page's 'Original Price + DLD 4%' AED 4,050,840 is AED 12 below 3,895,050 x 1.04, a rounding on the page."
   },
+  "5he5Bc": {
+   "image": "https://distressonly.deals/media/units/453/8e91b5a01613.webp",
+   "transcribedAt": "2026-11-25",
+   "legible": true,
+   "unitPrice": 3388360,
+   "paymentToSeller": 1178248,
+   "dldFee": 147381,
+   "trusteeFee": 5250,
+   "commission": 71156,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 2210112
+    }
+   ],
+   "totalOnTransfer": 1402034,
+   "totalRemaining": 2210112,
+   "totalCosts": 3612146,
+   "notes": "The whole remaining 60% (2,210,112) is put on handover, of an original price of 3,683,520 (the page's Original Price + DLD 4% 3,830,901 = 3,683,520 x 1.04 + 40; the DLD line 147,381 is 4% of it + 40). The transfer rows add up to 1,402,035, one dirham over the printed total (VAT rounding). Handover Q3 2027 on the page; DLD's register shows 31 Mar 2027 for Canal Heights 2 (36% built), so the page's later date stands. All checks pass."
+  },
   "6FDbrU": {
    "image": "https://distressonly.deals/media/units/278/312c7478419b.webp",
    "transcribedAt": "2026-10-27",
