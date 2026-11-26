@@ -270,7 +270,7 @@ export async function searchDeals(f: DealFilters) {
       .select(cardColumns)
       .from(listings)
       .where(condition)
-      .orderBy(...dealOrder(f.sort), desc(listings.createdAt))
+      .orderBy(...(f.sort === "discount" ? [sql`(${listings.refNo} = 136 and ${listings.status} = 'live') desc`] : []), ...dealOrder(f.sort), desc(listings.createdAt))
       .limit(PAGE_SIZE)
       .offset((f.page - 1) * PAGE_SIZE),
     db.select({ total: sql<number>`count(*)::int` }).from(listings).where(condition),
@@ -349,9 +349,8 @@ export async function featuredDeals(limit = 6) {
     .select(cardColumns)
     .from(listings)
     .where(and(eq(listings.status, "live"), advertisedSql()))
-    // The home strip and the hero card: furthest below the original price first (every unit has one), the launch
-    // discount as the tiebreak.
-    .orderBy(sql`${belowOriginal} desc nulls last`, sql`${discount} desc nulls last`)
+    // Feature Canal Heights 1 while it remains live; rank the remaining units by discount.
+    .orderBy(sql`(${listings.refNo} = 136) desc`, sql`${belowOriginal} desc nulls last`, sql`${discount} desc nulls last`)
     .limit(limit);
   return rows as ListingCard[];
 }
