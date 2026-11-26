@@ -17,7 +17,7 @@ export default defineMessages({
     "search.label": "Search deals",
 
     "sort.label": "Sort",
-    "sort.discount": "Most below original price",
+    "sort.discount": "Featured (direct listings first)",
     "sort.cash": "Lowest cash at transfer",
     "sort.handover": "Handover soonest",
     "sort.newest": "Newest",
@@ -111,7 +111,7 @@ export default defineMessages({
     "search.label": "البحث في الصفقات",
 
     "sort.label": "الترتيب",
-    "sort.discount": "الأكثر انخفاضاً عن السعر الأصلي",
+    "sort.discount": "مميزة (البائعون المباشرون أولاً)",
     "sort.cash": "الأقل نقداً يوم نقل الملكية",
     "sort.handover": "الأقرب تسليماً",
     "sort.newest": "الأحدث",
@@ -204,7 +204,7 @@ export default defineMessages({
     "search.label": "搜索房源",
 
     "sort.label": "排序",
-    "sort.discount": "低于原始合同价最多",
+    "sort.discount": "精选（直接卖家优先）",
     "sort.cash": "过户所需现金最少",
     "sort.handover": "最早交房",
     "sort.newest": "最新发布",
