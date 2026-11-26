@@ -4,6 +4,7 @@ import { files, listings } from "@/db/schema";
 import { getT } from "@/i18n/server";
 import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth";
+import { advertisedSql } from "@/lib/permits";
 import { storedFileName } from "@/lib/uploads";
 import { isUuid } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]"
     .select({
       file: files,
       sellerId: listings.sellerId,
+      inPublicGallery: sql<boolean>`coalesce(${advertisedSql()} and ('/api/files/' || ${files.id}::text) = any(${listings.images}), false)`,
       // A listing our team entered for a seller (src/lib/claim.ts) that its account holder hasn't confirmed yet.
       awaitingSeller: sql<boolean>`coalesce(${listings.createdByStaff} and ${listings.ownershipConfirmedAt} is null, false)`,
     })
@@ -40,9 +42,8 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]"
   if (!row) return notFound();
 
   const { file } = row;
-  // Photos are published with the listing, so anyone with the address may load them, except those of a listing our team
-  // entered that its owner hasn't confirmed yet (an imported unit, say): until then they are our team's only.
-  const isPublic = file.kind === "photo" && !row.awaitingSeller;
+  // A photo is public only while approved in a publicly advertised listing's gallery.
+  const isPublic = file.kind === "photo" && row.inPublicGallery && !row.awaitingSeller;
   if (!isPublic) {
     // SPA, Oqood, statements and IDs: only the owner and our team. On a listing our team entered, the account it was
     // filed under only becomes its owner once its holder confirms through the claim link: until then a mistyped email
@@ -67,7 +68,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/files/[id]"
         file.kind === "photo" ? "inline" : "attachment",
         storedFileName(file.filename, file.mimeType, file.kind),
       ),
-      "Cache-Control": isPublic ? "public, max-age=31536000, immutable" : "private, no-store",
+      "Cache-Control": isPublic ? "public, max-age=300, must-revalidate" : "private, no-store",
       "X-Content-Type-Options": "nosniff",
     },
   });

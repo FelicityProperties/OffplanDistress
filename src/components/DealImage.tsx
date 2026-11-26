@@ -19,16 +19,16 @@ export function DealImage({
   className?: string;
   priority?: boolean;
 }) {
-  const [failed, setFailed] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const ref = useRef<HTMLImageElement>(null);
 
   // A server-rendered <img> can fail before React attaches onError, so check once on mount.
   useEffect(() => {
     const img = ref.current;
-    if (img?.complete && img.naturalWidth === 0) setFailed(true);
+    if (src && img?.complete && img.naturalWidth === 0) setFailedSrc(src);
   }, [src]);
 
-  if (!src || failed) {
+  if (!src || failedSrc === src) {
     return (
       <div
         className={cn("relative grid h-full w-full place-items-center overflow-hidden bg-ink-gradient", className)}
@@ -49,7 +49,7 @@ export function DealImage({
       alt={alt}
       loading={priority ? "eager" : "lazy"}
       fetchPriority={priority ? "high" : undefined}
-      onError={() => setFailed(true)}
+      onError={() => setFailedSrc(src)}
       className={cn("h-full w-full object-cover", className)}
     />
   );

@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState, useTransition } from "reac
 import { Archive, ArchiveRestore, Check, Copy, Eye, EyeOff, KeyRound, Loader2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
+  adminPublishPhoto,
   adminSetVisibility,
   adminUpdateListing,
   approveListing,
@@ -44,6 +45,24 @@ import { cn } from "@/lib/utils";
  * tap. Hide keeps the offers and tells nobody; Archive takes the unit off the market (offers closed, buyers told), so
  * it asks first. Which buttons show follows the status: a unit in a deal or sold has none (the editor handles those).
  */
+export function PublishPhotoButton({ listingId, fileId }: { listingId: string; fileId: string }) {
+  const t = useT("admin");
+  const [pending, start] = useTransition();
+  return (
+    <Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => start(async () => {
+      try {
+        const result = await adminPublishPhoto(listingId, fileId);
+        if ("error" in result && result.error) toast.error(result.error);
+        else toast.success(t("photo.published"));
+      } catch {
+        toast.error(t("photo.publishFailed"));
+      }
+    })}>
+      {pending ? <Loader2 className="animate-spin" /> : <Check />} {t("photo.add")}
+    </Button>
+  );
+}
+
 export function VisibilityButtons({
   listingId,
   savedAt,
