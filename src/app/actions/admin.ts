@@ -686,6 +686,29 @@ export async function adminUpdateListing(_prev: FormState, formData: FormData): 
   return { ok: true };
 }
 
+/** Publish one reviewed photo without saving unrelated listing fields or changing its status. */
+export async function adminPublishPhoto(listingId: string, fileId: string) {
+  const me = await currentAdmin();
+  if (!me) return refused();
+  const t = await getT("admin");
+  if (!isUuid(listingId) || !isUuid(fileId)) return { error: t("photo.publishFailed") };
+  const url = `/api/files/${fileId}`;
+  const [saved] = await db.update(listings)
+    .set({ images: sql`array_append(${listings.images}, ${url}::text)`, updatedAt: new Date() })
+    .where(and(
+      eq(listings.id, listingId),
+      sql`${listings.status} not in ('withdrawn', 'transferred')`,
+      sql`cardinality(${listings.images}) < 20`,
+      sql`not (${url}::text = any(${listings.images}))`,
+      sql`exists (select 1 from ${files} where ${files.id} = ${fileId}::uuid and ${files.listingId} = ${listingId}::uuid and ${files.kind} = 'photo' and ${files.mimeType} in ('image/jpeg', 'image/png', 'image/webp'))`,
+    ))
+    .returning({ id: listings.id });
+  if (!saved) return { error: t("photo.publishFailed") };
+  await audit({ actorId: me.id, action: "listing.update", entityType: "listing", entityId: listingId, diff: { photoAdded: fileId } });
+  refresh();
+  return { ok: true };
+}
+
 export async function setKycStatus(userId: string, status: "not_started" | "pending" | "verified") {
   const me = await currentAdmin();
   if (!me) return refused();

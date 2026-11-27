@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, ArrowLeft, ExternalLink, FileText, ImageIcon, UserCheck } from "lucide-react";
-import { AdminListingForm, ReviewButtons, VisibilityButtons } from "@/components/admin/AdminControls";
+import { AdminListingForm, PublishPhotoButton, ReviewButtons, VisibilityButtons } from "@/components/admin/AdminControls";
 import { ClaimLinkButtons } from "@/components/admin/ClaimLinkButtons";
 import { FormAConfirm, OwnerForm } from "@/components/admin/OwnerCard";
 import { PublishAttestedListingButton } from "@/components/admin/PublishAttested";
@@ -396,6 +396,7 @@ export default async function AdminListingPage({ params, searchParams }: PagePro
           <h2 className="font-sans text-lg font-semibold">{t("listing.documents")}</h2>
           <DocumentUploader listingId={l.id} kinds={["photo", "spa", "soa", "oqood", "id", "form_a", "other"]} />
         </div>
+        <p className="mt-3 text-sm text-muted-foreground">{t("photo.galleryCount", { n: l.images.length })}</p>
         {shownDocs.length ? (
           <ul className="mt-4 divide-y rounded-lg border">
             {shownDocs.map((d) => (
@@ -406,6 +407,18 @@ export default async function AdminListingPage({ params, searchParams }: PagePro
                     <bdi>{d.filename}</bdi>
                   </a>
                 </span>
+                {d.kind === "photo" && (
+                  l.images.includes(`/api/files/${d.id}`) ? (
+                    <span className="text-xs font-medium text-success">{t("photo.inGallery")}</span>
+                  ) : (
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{t("photo.notInGallery")}</span>
+                      {l.status !== "withdrawn" && l.status !== "transferred" && l.images.length < 20 && (
+                        <PublishPhotoButton listingId={l.id} fileId={d.id} />
+                      )}
+                    </span>
+                  )
+                )}
                 {/* Phones: the kind, size and date on a line of their own under the name (beside it, they ran past the card). */}
                 <span className="shrink-0 text-xs text-muted-foreground max-sm:basis-full">
                   {tc(`file.${d.kind}`)} · {t("listing.fileSize", { n: (d.size / 1024 / 1024).toFixed(1) })} ·{" "}

@@ -46,7 +46,7 @@ const TRUST = [
 
 const HERO_POINTS = ["rera", "spa", "dld"] as const;
 
-/** The floating "live deal" card in the hero: the deepest discount on the market right now. */
+/** The floating "live deal" card in the hero: the first featured opportunity. */
 async function HeroDeal({ deal, locale }: { deal: ListingCard; locale: Locale }) {
   const [t, tc] = await Promise.all([getT("home"), getT("common")]);
   const a = analyzeDeal(deal);
