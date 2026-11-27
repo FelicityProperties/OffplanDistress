@@ -1493,14 +1493,14 @@
    "notes": "Plan over two images: 1% a month (28,250) from 15-DEC-2026 to 15-JAN-2030 with 3% (84,750) in Feb 2027, Aug 2027 and Feb 2028, then 25% on handover; the DLD fee implies an original price of 2,825,000, as the page's 'Original Price + DLD 4%' does. All checks pass."
   },
   "QgAGrA": {
-   "image": "https://distressonly.deals/media/units/312/5d4b1a9f73c0.webp",
-   "transcribedAt": "2026-11-21",
+   "image": "https://distressonly.deals/media/units/312/ae029de11846.webp",
+   "transcribedAt": "2026-11-27",
    "legible": true,
-   "unitPrice": 3440000,
-   "paymentToSeller": 1946445,
+   "unitPrice": 3390000,
+   "paymentToSeller": 1896445,
    "dldFee": 149396,
    "trusteeFee": 5250,
-   "commission": 72240,
+   "commission": 71190,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -1524,10 +1524,10 @@
      "amount": 373388
     }
    ],
-   "totalOnTransfer": 2173331,
+   "totalOnTransfer": 2122281,
    "totalRemaining": 1493555,
-   "totalCosts": 3666886,
-   "notes": "Re-posted image: price cut from 3,485,000 to 3,440,000 (payment to seller 1,991,445 -> 1,946,445; commission 73,185 -> 72,240); DLD fee and plan unchanged (undated construction-percentage milestones). All checks pass."
+   "totalCosts": 3615836,
+   "notes": "Re-posted image: price cut from 3,440,000 to 3,390,000 (payment to seller 1,946,445 -> 1,896,445; commission 72,240 -> 71,190); DLD fee and plan unchanged (undated construction-percentage milestones; this image misspells them '40% Construcion' etc., kept as 'Construction'). All checks pass."
   },
   "Qhtgvw": {
    "image": "https://distressonly.deals/media/units/57/f0cdeb3cf468.webp",
@@ -2782,14 +2782,14 @@
    "notes": "All checks pass (seller+remaining=2050000; instalments sum 761804; on-transfer rows sum 1423601; 1423601+761804=2185405). DLD fee implies an original price of ~2176625, above the 2050000 resale price."
   },
   "iU7DHC": {
-   "image": "https://distressonly.deals/media/units/349/a3cdba516409.webp",
-   "transcribedAt": "2026-10-27",
+   "image": "https://distressonly.deals/media/units/349/e91bda0095ec.webp",
+   "transcribedAt": "2026-11-27",
    "legible": true,
-   "unitPrice": 3600000,
-   "paymentToSeller": 2313400,
+   "unitPrice": 3550000,
+   "paymentToSeller": 2263400,
    "dldFee": 147080,
    "trusteeFee": 5250,
-   "commission": 75600,
+   "commission": 74550,
    "otherOnTransfer": [],
    "instalments": [
     {
@@ -2803,10 +2803,10 @@
      "amount": 919000
     }
    ],
-   "totalOnTransfer": 2541330,
+   "totalOnTransfer": 2490280,
    "totalRemaining": 1286600,
-   "totalCosts": 3827930,
-   "notes": "All checks pass: 2313400+1286600 = 3600000. The instalments add up to 1286600. Transfer rows add up to 2541330. 2541330+1286600 = 3827930. There is no separate On Handover row; the last instalment is the dated 15-AUG-2028 row."
+   "totalCosts": 3776880,
+   "notes": "Re-posted image: price cut from 3,600,000 to 3,550,000 (payment to seller 2,313,400 -> 2,263,400; commission 75,600 -> 74,550); DLD fee and plan unchanged (10% on 15-DEC-2026 and 25% on 15-AUG-2028 of the original price 3,676,000; no separate On Handover row). All checks pass."
   },
   "k2wIdV": {
    "image": "https://distressonly.deals/media/units/358/7e7e9c6c3355.webp",
@@ -3788,6 +3788,33 @@
    "totalCosts": 12912116,
    "notes": "The instalments are construction milestones with no dates. 4x690905+4145440=6909060; 5190940+6909060=12100000; transfer lines sum to 6003056; total 12912116. All checks pass."
   },
+  "uOVvsk": {
+   "image": "https://distressonly.deals/media/units/455/be2696ba5219.webp",
+   "transcribedAt": "2026-11-27",
+   "legible": true,
+   "unitPrice": 10400000,
+   "paymentToSeller": 8212623,
+   "dldFee": 437516,
+   "trusteeFee": 5250,
+   "commission": 218400,
+   "otherOnTransfer": [],
+   "instalments": [
+    {
+     "label": "80% Construction",
+     "dueDate": null,
+     "amount": 1093689
+    },
+    {
+     "label": "On Handover",
+     "dueDate": null,
+     "amount": 1093688
+    }
+   ],
+   "totalOnTransfer": 8873789,
+   "totalRemaining": 2187377,
+   "totalCosts": 11061166,
+   "notes": "20% left: 10% at 80% construction (1,093,689) and 10% on handover (1,093,688), of an original price of 10,936,888 (the page's Original Price + DLD 4% 11,374,364 / 1.04; the DLD line 437,516 is 4% of it + 40). Handover July 2028 matches DLD's register (Bayview Tower 2: 31 Jul 2028, 63% built). All checks pass."
+  },
   "vJhtvU": {
    "image": "https://distressonly.deals/media/units/323/e063a01a92dd.webp",
    "transcribedAt": "2026-10-30",
@@ -3942,6 +3969,22 @@
    "totalRemaining": 0,
    "totalCosts": 8440240,
    "notes": "The image adds up. It has no Payment Plan section and no Total Remaining row, so totalRemaining is null (in effect 0). This is a ready or fully paid unit: payment to seller equals the unit price. 7950000 + 318040 + 5250 + 166950 = 8440240, which matches both totals. There is no Title Deed Fee row and the trustee fee is 5250. The first reading wrongly listed the standard commission row in otherRows; it is removed here."
+  },
+  "x2mjT1": {
+   "image": "https://distressonly.deals/media/units/454/2943a221aa6f.webp",
+   "transcribedAt": "2026-11-27",
+   "legible": true,
+   "unitPrice": 1180000,
+   "paymentToSeller": 1180000,
+   "dldFee": 50040,
+   "trusteeFee": 5250,
+   "commission": 24780,
+   "otherOnTransfer": [],
+   "instalments": [],
+   "totalOnTransfer": 1260070,
+   "totalRemaining": 0,
+   "totalCosts": 1260070,
+   "notes": "No payment plan section and payment to seller = unit price: the unit is fully paid, nothing left to the developer. Original price 1,250,000: the DLD line (50,040 - 40) / 4%, as the page's Original Price + DLD 4% (1,300,000 / 1.04) gives. Handover Q1 2027 on the page; DLD's register still shows 31 Mar 2026 for Binghatti Starlight (63% built), so the page's later date stands. All checks pass."
   },
   "yf9yI9": {
    "image": "https://distressonly.deals/media/units/355/c868beac3606.webp",

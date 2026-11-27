@@ -5,7 +5,7 @@
   "name": "DistressStock",
   "url": "https://distressonly.deals"
  },
- "generatedAt": "2026-11-26T01:38:49Z",
+ "generatedAt": "2026-11-27T16:35:53Z",
  "units": [
   {
    "ref": "0G2Q5c",
@@ -2773,7 +2773,7 @@
     "view": "Community",
     "originalPrice": 3733888,
     "amountPaid": 2240333,
-    "askingPrice": 1946445,
+    "askingPrice": 1896445,
     "handoverDate": "2028-07-31",
     "nextInstalmentDate": null,
     "nextInstalmentAmount": null,
@@ -2824,7 +2824,7 @@
      "url": "https://distressonly.deals/media/units/312/6c1406f23968.webp"
     }
    ],
-   "notes": "Posted on DistressStock July 24, 2026: DISTRESS DEAL: 3-BR IN OCEAN STAR - BUILDING 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 3,485,000 to 3,440,000 (payment to seller 1,991,445 -> 1,946,445; commission 73,185 -> 72,240); DLD fee and plan unchanged (undated construction-percentage milestones). All checks pass. Source: original price + DLD 4% = AED 3,883,244; selling price AED 3,440,000."
+   "notes": "Posted on DistressStock July 24, 2026: DISTRESS DEAL: 3-BR IN OCEAN STAR - BUILDING 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 3,440,000 to 3,390,000 (payment to seller 1,946,445 -> 1,896,445; commission 72,240 -> 71,190); DLD fee and plan unchanged (undated construction-percentage milestones; this image misspells them '40% Construcion' etc., kept as 'Construction'). All checks pass. Source: original price + DLD 4% = AED 3,883,244; selling price AED 3,390,000."
   },
   {
    "ref": "Qhtgvw",
@@ -5340,7 +5340,7 @@
     "view": "Burj Al Arab",
     "originalPrice": 3676000,
     "amountPaid": 2389400,
-    "askingPrice": 2313400,
+    "askingPrice": 2263400,
     "handoverDate": "2028-03-31",
     "nextInstalmentDate": "2026-12-15",
     "nextInstalmentAmount": 367600,
@@ -5381,7 +5381,7 @@
      "url": "https://distressonly.deals/media/units/349/0c9183c9a44e.webp"
     }
    ],
-   "notes": "Posted on DistressStock August 28, 2026: DISTRESS DEAL: 2-BR IN VERVE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Source: original price + DLD 4% = AED 3,823,040; selling price AED 3,600,000."
+   "notes": "Posted on DistressStock August 28, 2026: DISTRESS DEAL: 2-BR IN VERVE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: price cut from 3,600,000 to 3,550,000 (payment to seller 2,313,400 -> 2,263,400; commission 75,600 -> 74,550); DLD fee and plan unchanged (10% on 15-DEC-2026 and 25% on 15-AUG-2028 of the original price 3,676,000; no separate On Handover row). All checks pass. Source: original price + DLD 4% = AED 3,823,040; selling price AED 3,550,000."
   },
   {
    "ref": "k2wIdV",
@@ -6461,6 +6461,65 @@
    "notes": "Posted on DistressStock October 13, 2026: DISTRESS DEAL: 2-BR IN SAFA ONE - TOWER B. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: Re-posted image: unit price cut from 4,038,012 (payment to seller 2,916,342 → 2,730,517); DLD fee and plan unchanged. All checks pass. Source: original price + DLD 4% = AED 4,666,147; selling price AED 3,852,187."
   },
   {
+   "ref": "uOVvsk",
+   "url": "https://distressonly.deals/u/uOVvsk",
+   "posted": "2026-11-26",
+   "listing": {
+    "projectName": "Address Bayview - Tower 2",
+    "developer": "Emaar",
+    "developerOther": null,
+    "community": "Emaar Beachfront",
+    "communityOther": null,
+    "unitType": "3br",
+    "sizeSqft": 1828,
+    "floor": "30-35",
+    "view": "Full Palm, Sea",
+    "originalPrice": 10936888,
+    "amountPaid": 8749511,
+    "askingPrice": 8212623,
+    "handoverDate": "2028-07-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [
+     {
+      "label": "80% Construction",
+      "dueDate": null,
+      "amount": 1093689
+     },
+     {
+      "label": "On Handover",
+      "dueDate": null,
+      "amount": 1093688
+     }
+    ],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "uOVvsk-36e49767.webp",
+     "url": "https://distressonly.deals/media/units/455/048eb7122fa8.webp"
+    },
+    {
+     "filename": "uOVvsk-456b20fb.webp",
+     "url": "https://distressonly.deals/media/units/455/1bbeff291e32.webp"
+    },
+    {
+     "filename": "uOVvsk-b64735f0.webp",
+     "url": "https://distressonly.deals/media/units/455/9779a4a26522.webp"
+    },
+    {
+     "filename": "uOVvsk-cb5abc8a.webp",
+     "url": "https://distressonly.deals/media/units/455/6e6739b33e7a.webp"
+    },
+    {
+     "filename": "uOVvsk-k0.webp",
+     "url": "https://distressonly.deals/media/units/455/09a6aea942c5.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 26, 2026: DISTRESS DEAL: 3-BR IN ADDRESS BAYVIEW - TOWER 2. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: 20% left: 10% at 80% construction (1,093,689) and 10% on handover (1,093,688), of an original price of 10,936,888 (the page's Original Price + DLD 4% 11,374,364 / 1.04; the DLD line 437,516 is 4% of it + 40). Handover July 2028 matches DLD's register (Bayview Tower 2: 31 Jul 2028, 63% built). All checks pass. Source: original price + DLD 4% = AED 11,374,364; selling price AED 10,400,000."
+  },
+  {
    "ref": "vJhtvU",
    "url": "https://distressonly.deals/u/vJhtvU",
    "posted": "2026-08-06",
@@ -6801,6 +6860,54 @@
     }
    ],
    "notes": "Posted on DistressStock April 18, 2026: HOT LOT: 5-BR+MAID'S IN PARADISE HILLS. Figures are as posted — check the current statement of account with the listing broker before approval."
+  },
+  {
+   "ref": "x2mjT1",
+   "url": "https://distressonly.deals/u/x2mjT1",
+   "posted": "2026-11-25",
+   "listing": {
+    "projectName": "Binghatti Starlight",
+    "developer": "Binghatti",
+    "developerOther": null,
+    "community": "Al Jaddaf",
+    "communityOther": null,
+    "unitType": "1br",
+    "sizeSqft": 737,
+    "floor": "5-10",
+    "view": "Canal",
+    "originalPrice": 1250000,
+    "amountPaid": 1250000,
+    "askingPrice": 1180000,
+    "handoverDate": "2027-03-31",
+    "nextInstalmentDate": null,
+    "nextInstalmentAmount": null,
+    "paymentPlan": [],
+    "motivation": "motivated",
+    "description": "Features: Balcony."
+   },
+   "photos": [
+    {
+     "filename": "x2mjT1-9f5374b0.webp",
+     "url": "https://distressonly.deals/media/units/454/98913295ba21.webp"
+    },
+    {
+     "filename": "x2mjT1-afcf9958.webp",
+     "url": "https://distressonly.deals/media/units/454/d455ff82cfc7.webp"
+    },
+    {
+     "filename": "x2mjT1-474ea2f2.webp",
+     "url": "https://distressonly.deals/media/units/454/c78fd470c281.webp"
+    },
+    {
+     "filename": "x2mjT1-c9996550.webp",
+     "url": "https://distressonly.deals/media/units/454/7637c39e83f1.webp"
+    },
+    {
+     "filename": "x2mjT1-k0.webp",
+     "url": "https://distressonly.deals/media/units/454/1437b7225675.webp"
+    }
+   ],
+   "notes": "Posted on DistressStock November 25, 2026: DISTRESS DEAL: 1-BR IN BINGHATTI STARLIGHT. Figures are as posted — check the current statement of account with the listing broker before approval. Payment plan reading: No payment plan section and payment to seller = unit price: the unit is fully paid, nothing left to the developer. Original price 1,250,000: the DLD line (50,040 - 40) / 4%, as the page's Original Price + DLD 4% (1,300,000 / 1.04) gives. Handover Q1 2027 on the page; DLD's register still shows 31 Mar 2026 for Binghatti Starlight (63% built), so the page's later date stands. All checks pass. Source: original price + DLD 4% = AED 1,300,000; selling price AED 1,180,000."
   },
   {
    "ref": "ym6dtf",
